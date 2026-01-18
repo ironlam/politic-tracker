@@ -129,6 +129,7 @@ async function syncDeputy(
 
     const politicianData = {
       slug,
+      civility: dep.civ || null,
       firstName: dep.prenom,
       lastName: dep.nom,
       fullName,

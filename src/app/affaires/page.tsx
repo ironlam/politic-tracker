@@ -60,7 +60,12 @@ async function getAffairs(
         partyAtTime: { select: { id: true, shortName: true, name: true } },
         sources: { select: { id: true }, take: 1 },
       },
-      orderBy: { createdAt: "desc" },
+      // Order by most relevant date: verdict > start > created
+      orderBy: [
+        { verdictDate: { sort: "desc", nulls: "last" } },
+        { startDate: { sort: "desc", nulls: "last" } },
+        { createdAt: "desc" },
+      ],
       skip,
       take: limit,
     }),
@@ -251,12 +256,27 @@ export default async function AffairesPage({ searchParams }: PageProps) {
           <div className="space-y-4">
             {affairs.map((affair) => {
               const superCat = CATEGORY_TO_SUPER[affair.category];
+              // Get the most relevant date for display
+              const relevantDate = affair.verdictDate || affair.startDate || affair.factsDate;
+              const dateLabel = affair.verdictDate
+                ? "Verdict"
+                : affair.startDate
+                ? "Révélation"
+                : affair.factsDate
+                ? "Faits"
+                : null;
               return (
                 <Card key={affair.id}>
                   <CardContent className="pt-6">
                     <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                       <div className="flex-1">
                         <div className="flex items-start gap-2 mb-2 flex-wrap">
+                          {relevantDate && (
+                            <Badge variant="secondary" className="font-mono">
+                              {formatDate(relevantDate)}
+                              {dateLabel && <span className="ml-1 text-xs opacity-70">({dateLabel})</span>}
+                            </Badge>
+                          )}
                           <Badge className={AFFAIR_SUPER_CATEGORY_COLORS[superCat]}>
                             {AFFAIR_SUPER_CATEGORY_LABELS[superCat]}
                           </Badge>
@@ -299,16 +319,13 @@ export default async function AffairesPage({ searchParams }: PageProps) {
                         )}
                       </div>
 
-                      <div className="text-sm text-muted-foreground md:text-right">
-                        {affair.verdictDate && (
-                          <p>Verdict : {formatDate(affair.verdictDate)}</p>
-                        )}
+                      <div className="text-sm text-muted-foreground md:text-right md:min-w-[150px]">
                         {affair.sentence && (
-                          <p className="font-medium text-foreground">
+                          <p className="font-medium text-foreground mb-2">
                             {affair.sentence}
                           </p>
                         )}
-                        <p className="mt-2">
+                        <p>
                           {affair.sources.length} source
                           {affair.sources.length !== 1 ? "s" : ""}
                         </p>

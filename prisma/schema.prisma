@@ -51,6 +51,7 @@ model Party {
 
   politicians       Politician[]
   partyMemberships  PartyMembership[]
+  affairsAtTime     Affair[]          // Affairs where this was the party at time of conviction
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -133,6 +134,10 @@ model Affair {
   id           String         @id @default(cuid())
   politician   Politician     @relation(fields: [politicianId], references: [id], onDelete: Cascade)
   politicianId String
+
+  // Party at time of conviction/affair (for historical accuracy)
+  partyAtTime   Party?        @relation(fields: [partyAtTimeId], references: [id])
+  partyAtTimeId String?
 
   title        String         // Ex: "Affaire des emplois fictifs du MoDem"
   slug         String         @unique

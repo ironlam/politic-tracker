@@ -53,6 +53,9 @@ export async function GET(request: NextRequest) {
               },
             },
           },
+          partyAtTime: {
+            select: { shortName: true, name: true },
+          },
           sources: {
             select: {
               id: true,

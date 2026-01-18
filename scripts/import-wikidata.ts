@@ -46,6 +46,8 @@ interface WikidataResult {
   personLabel: { value: string };
   crimeLabel: { value: string };
   convictionDate?: { value: string };
+  birthDate?: { value: string };
+  deathDate?: { value: string };
   partyLabel?: { value: string };
   article?: { value: string };
 }
@@ -55,12 +57,14 @@ interface WikidataResult {
  */
 async function fetchWikidataConvictions(): Promise<WikidataResult[]> {
   const query = `
-    SELECT DISTINCT ?person ?personLabel ?crimeLabel ?convictionDate ?partyLabel ?article WHERE {
+    SELECT DISTINCT ?person ?personLabel ?crimeLabel ?convictionDate ?birthDate ?deathDate ?partyLabel ?article WHERE {
       ?person wdt:P27 wd:Q142 .
       ?person wdt:P106 wd:Q82955 .
       ?person p:P1399 ?conviction .
       ?conviction ps:P1399 ?crime .
       OPTIONAL { ?conviction pq:P585 ?convictionDate }
+      OPTIONAL { ?person wdt:P569 ?birthDate }
+      OPTIONAL { ?person wdt:P570 ?deathDate }
       OPTIONAL { ?person wdt:P102 ?party }
       OPTIONAL {
         ?article schema:about ?person ;
@@ -128,13 +132,96 @@ function mapCrimeToCategory(crime: string): AffairCategory {
   return "AUTRE";
 }
 
+// Map of known party name variations to standard shortNames
+const PARTY_SHORTNAME_MAP: Record<string, string> = {
+  "Les Républicains": "LR",
+  "La France insoumise": "LFI",
+  "Parti socialiste": "PS",
+  "Reconquête": "REC",
+  "Renaissance": "RE",
+  "Front national": "FN",
+  "Rassemblement national": "RN",
+  "Union pour un mouvement populaire": "UMP",
+  "Mouvement radical": "MR",
+  "Nouveau Parti anticapitaliste": "NPA",
+  "Union pour la démocratie française": "UDF",
+  "Parti socialiste unifié": "PSU",
+  "Parti communiste français": "PCF",
+  "Rassemblement pour la République": "RPR",
+  "Rassemblement du peuple français": "RPF",
+  "Union des démocrates pour la République": "UDR",
+  "Parti communiste breton": "PCB",
+  "Europe Écologie Les Verts": "EELV",
+  "Mouvement démocrate": "MoDem",
+  "Horizons": "HOR",
+  "Jeanne": "Jeanne",
+  "Droit de chasse": "CPNT",
+  "Parti républicain": "PR",
+};
+
+/**
+ * Find or create party by name
+ */
+async function findOrCreateParty(partyName: string): Promise<string | null> {
+  if (!partyName || partyName.startsWith("Q")) return null; // Skip unresolved Wikidata IDs
+
+  // Try to find existing party by name or shortName
+  let party = await db.party.findFirst({
+    where: {
+      OR: [
+        { name: { equals: partyName, mode: "insensitive" } },
+        { shortName: { equals: partyName, mode: "insensitive" } },
+      ],
+    },
+  });
+
+  if (party) {
+    return party.id;
+  }
+
+  // Determine shortName from map or generate one
+  let shortName = PARTY_SHORTNAME_MAP[partyName];
+  if (!shortName) {
+    // Generate initials from party name
+    shortName = partyName
+      .split(/\s+/)
+      .map(word => word[0]?.toUpperCase() || "")
+      .join("")
+      .substring(0, 10);
+  }
+
+  // Check if shortName already exists
+  const existingWithShortName = await db.party.findFirst({
+    where: { shortName: { equals: shortName, mode: "insensitive" } },
+  });
+  if (existingWithShortName) {
+    // Shortname conflict but different name - just link to existing party conceptually
+    console.log(`  Party shortName conflict: ${partyName} -> using existing ${existingWithShortName.name}`);
+    return null; // Don't link, as it's a different party
+  }
+
+  console.log(`  Creating new party: ${partyName} (${shortName})`);
+  try {
+    party = await db.party.create({
+      data: {
+        name: partyName,
+        shortName,
+      },
+    });
+    return party.id;
+  } catch (error) {
+    console.error(`  Failed to create party ${partyName}:`, error);
+    return null;
+  }
+}
+
 /**
  * Find or create politician
  */
 async function findOrCreatePolitician(
   firstName: string,
   lastName: string,
-  partyName?: string
+  birthDate?: Date | null
 ): Promise<string | null> {
   const fullName = `${firstName} ${lastName}`.trim();
   const slug = generateSlug(fullName);
@@ -156,6 +243,13 @@ async function findOrCreatePolitician(
   });
 
   if (politician) {
+    // Update birthDate if we have it and politician doesn't
+    if (birthDate && !politician.birthDate) {
+      await db.politician.update({
+        where: { id: politician.id },
+        data: { birthDate },
+      });
+    }
     return politician.id;
   }
 
@@ -168,6 +262,7 @@ async function findOrCreatePolitician(
         firstName,
         lastName,
         fullName,
+        birthDate,
         photoSource: "wikidata",
       },
     });
@@ -191,22 +286,28 @@ async function importConviction(
     ? new Date(result.convictionDate.value)
     : null;
 
-  // Skip convictions before Ve République (1958) - we want contemporary politics
-  if (convictionDate && convictionDate.getFullYear() < 1958) {
-    console.log(`  Skipping old: ${result.personLabel.value} (${convictionDate.getFullYear()})`);
+  // Ve République started in 1958
+  const VE_REPUBLIQUE_START = 1958;
+
+  // Parse dates
+  const birthDate = result.birthDate?.value ? new Date(result.birthDate.value) : null;
+  const deathDate = result.deathDate?.value ? new Date(result.deathDate.value) : null;
+
+  // Skip if died before Ve République - can't be a contemporary politician
+  if (deathDate && deathDate.getFullYear() < VE_REPUBLIQUE_START) {
+    console.log(`  Skipping (died ${deathDate.getFullYear()}): ${result.personLabel.value}`);
+    return false;
+  }
+
+  // Skip convictions before Ve République
+  if (convictionDate && convictionDate.getFullYear() < VE_REPUBLIQUE_START) {
+    console.log(`  Skipping (conviction ${convictionDate.getFullYear()}): ${result.personLabel.value}`);
     return false;
   }
 
   // Skip unresolved Wikidata IDs (Q followed by numbers)
   if (/^Q\d+$/.test(result.personLabel.value)) {
     console.log(`  Skipping unresolved: ${result.personLabel.value}`);
-    return false;
-  }
-
-  // Skip known historical figures
-  const historicalFigures = ['robespierre', 'bokassa', 'raousset-boulbon', 'napoleon', 'louis'];
-  if (historicalFigures.some(h => result.personLabel.value.toLowerCase().includes(h))) {
-    console.log(`  Skipping historical: ${result.personLabel.value}`);
     return false;
   }
 
@@ -222,7 +323,7 @@ async function importConviction(
   const politicianId = await findOrCreatePolitician(
     firstName,
     lastName,
-    result.partyLabel?.value
+    birthDate
   );
 
   if (!politicianId) {
@@ -241,6 +342,11 @@ async function importConviction(
     console.log(`  Skipping duplicate: ${result.personLabel.value} - ${crime}`);
     return false;
   }
+
+  // Find or create party at time of conviction
+  const partyAtTimeId = result.partyLabel?.value
+    ? await findOrCreateParty(result.partyLabel.value)
+    : null;
 
   // Create affair
   const category = mapCrimeToCategory(crime);
@@ -262,6 +368,7 @@ async function importConviction(
         status: "CONDAMNATION_DEFINITIVE" as AffairStatus,
         category,
         verdictDate: convictionDate,
+        partyAtTimeId,
         sources: {
           create: {
             url: result.article?.value || `https://www.wikidata.org/wiki/${result.person.value.split("/").pop()}`,

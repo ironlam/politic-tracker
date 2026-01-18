@@ -39,6 +39,9 @@ export async function GET(request: NextRequest, context: RouteContext) {
             sentence: true,
             appeal: true,
             createdAt: true,
+            partyAtTime: {
+              select: { shortName: true, name: true },
+            },
             sources: {
               select: {
                 id: true,

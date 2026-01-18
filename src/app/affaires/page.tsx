@@ -57,6 +57,7 @@ async function getAffairs(
         politician: {
           select: { id: true, fullName: true, slug: true, currentParty: true },
         },
+        partyAtTime: { select: { id: true, shortName: true, name: true } },
         sources: { select: { id: true }, take: 1 },
       },
       orderBy: { createdAt: "desc" },
@@ -276,10 +277,13 @@ export default async function AffairesPage({ searchParams }: PageProps) {
                           className="text-blue-600 hover:underline text-sm"
                         >
                           {affair.politician.fullName}
-                          {affair.politician.currentParty && (
+                          {(affair.partyAtTime || affair.politician.currentParty) && (
                             <span className="text-muted-foreground">
                               {" "}
-                              ({affair.politician.currentParty.shortName})
+                              ({affair.partyAtTime?.shortName || affair.politician.currentParty?.shortName})
+                              {affair.partyAtTime && affair.partyAtTime.id !== affair.politician.currentParty?.id && (
+                                <span className="text-xs"> à l&apos;époque</span>
+                              )}
                             </span>
                           )}
                         </Link>

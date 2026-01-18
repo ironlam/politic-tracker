@@ -16,17 +16,18 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Politic Tracker - Observatoire citoyen",
-    template: "%s | Politic Tracker",
+    default: "Transparence Politique",
+    template: "%s | Transparence Politique",
   },
   description:
-    "Observatoire citoyen de la transparence politique française. Accédez aux informations publiques sur les élus : mandats, patrimoine, affaires judiciaires.",
+    "Observatoire citoyen des représentants politiques français. Accédez aux informations publiques : mandats, patrimoine, affaires judiciaires.",
   keywords: [
     "politique",
     "france",
     "députés",
+    "sénateurs",
     "transparence",
-    "élus",
+    "représentants",
     "assemblée nationale",
   ],
 };

@@ -6,8 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Politiques",
-  description: "Liste des politiques français - députés, sénateurs, ministres",
+  title: "Représentants politiques",
+  description: "Liste des représentants politiques français - députés, sénateurs, ministres",
 };
 
 interface PageProps {
@@ -70,9 +70,9 @@ export default async function PolitiquesPage({ searchParams }: PageProps) {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Politiques</h1>
+        <h1 className="text-3xl font-bold mb-2">Représentants politiques</h1>
         <p className="text-muted-foreground">
-          {total} politiques référencés dans notre base
+          {total} représentants référencés dans notre base
         </p>
       </div>
 

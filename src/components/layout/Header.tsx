@@ -6,7 +6,7 @@ export function Header() {
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <span className="text-xl font-bold">Politic Tracker</span>
+            <span className="text-xl font-bold">Transparence Politique</span>
           </Link>
 
           <nav className="flex items-center gap-6">
@@ -14,7 +14,7 @@ export function Header() {
               href="/politiques"
               className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
             >
-              Politiques
+              Représentants
             </Link>
             <Link
               href="/affaires"

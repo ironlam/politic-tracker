@@ -34,14 +34,14 @@ export default async function HomePage() {
     <div className="container mx-auto px-4 py-8">
       {/* Hero */}
       <section className="text-center py-12">
-        <h1 className="text-4xl font-bold mb-4">Politic Tracker</h1>
+        <h1 className="text-4xl font-bold mb-4">Transparence Politique</h1>
         <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
-          Observatoire citoyen de la transparence politique française.
-          Consultez les informations publiques sur vos élus.
+          Observatoire citoyen des représentants politiques français.
+          Consultez les informations publiques sur ceux qui vous représentent.
         </p>
         <div className="flex gap-4 justify-center">
           <Button asChild size="lg">
-            <Link href="/politiques">Voir les politiques</Link>
+            <Link href="/politiques">Voir les représentants</Link>
           </Button>
         </div>
       </section>
@@ -51,7 +51,7 @@ export default async function HomePage() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Politiques
+              Représentants
             </CardTitle>
           </CardHeader>
           <CardContent>

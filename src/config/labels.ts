@@ -77,6 +77,69 @@ export const AFFAIR_CATEGORY_LABELS: Record<AffairCategory, string> = {
   AUTRE: "Autre",
 };
 
+// Super-categories for grouping
+export type AffairSuperCategory = "PROBITE" | "FINANCES" | "PERSONNES" | "EXPRESSION" | "AUTRE";
+
+export const AFFAIR_SUPER_CATEGORY_LABELS: Record<AffairSuperCategory, string> = {
+  PROBITE: "Atteintes à la probité",
+  FINANCES: "Infractions financières",
+  PERSONNES: "Atteintes aux personnes",
+  EXPRESSION: "Infractions d'expression",
+  AUTRE: "Autres infractions",
+};
+
+export const AFFAIR_SUPER_CATEGORY_DESCRIPTIONS: Record<AffairSuperCategory, string> = {
+  PROBITE: "Corruption, détournement de fonds, emplois fictifs, prise illégale d'intérêts",
+  FINANCES: "Fraude fiscale, blanchiment, abus de biens sociaux",
+  PERSONNES: "Harcèlement, agressions, violences",
+  EXPRESSION: "Diffamation, injure, incitation à la haine",
+  AUTRE: "Autres types d'infractions",
+};
+
+export const AFFAIR_SUPER_CATEGORY_COLORS: Record<AffairSuperCategory, string> = {
+  PROBITE: "bg-purple-100 text-purple-800 border-purple-300",
+  FINANCES: "bg-blue-100 text-blue-800 border-blue-300",
+  PERSONNES: "bg-red-100 text-red-800 border-red-300",
+  EXPRESSION: "bg-amber-100 text-amber-800 border-amber-300",
+  AUTRE: "bg-gray-100 text-gray-800 border-gray-300",
+};
+
+// Map categories to super-categories
+export const CATEGORY_TO_SUPER: Record<AffairCategory, AffairSuperCategory> = {
+  CORRUPTION: "PROBITE",
+  CORRUPTION_PASSIVE: "PROBITE",
+  TRAFIC_INFLUENCE: "PROBITE",
+  PRISE_ILLEGALE_INTERETS: "PROBITE",
+  FAVORITISME: "PROBITE",
+  DETOURNEMENT_FONDS_PUBLICS: "PROBITE",
+  EMPLOI_FICTIF: "PROBITE",
+  CONFLIT_INTERETS: "PROBITE",
+  FINANCEMENT_ILLEGAL_CAMPAGNE: "FINANCES",
+  FINANCEMENT_ILLEGAL_PARTI: "FINANCES",
+  FRAUDE_FISCALE: "FINANCES",
+  BLANCHIMENT: "FINANCES",
+  ABUS_BIENS_SOCIAUX: "FINANCES",
+  ABUS_CONFIANCE: "FINANCES",
+  RECEL: "FINANCES",
+  HARCELEMENT_MORAL: "PERSONNES",
+  HARCELEMENT_SEXUEL: "PERSONNES",
+  AGRESSION_SEXUELLE: "PERSONNES",
+  VIOLENCE: "PERSONNES",
+  MENACE: "PERSONNES",
+  DIFFAMATION: "EXPRESSION",
+  INJURE: "EXPRESSION",
+  INCITATION_HAINE: "EXPRESSION",
+  FAUX_ET_USAGE_FAUX: "AUTRE",
+  AUTRE: "AUTRE",
+};
+
+// Get categories for a super-category
+export function getCategoriesForSuper(superCat: AffairSuperCategory): AffairCategory[] {
+  return Object.entries(CATEGORY_TO_SUPER)
+    .filter(([, sc]) => sc === superCat)
+    .map(([cat]) => cat as AffairCategory);
+}
+
 export const MANDATE_TYPE_LABELS: Record<MandateType, string> = {
   DEPUTE: "Député",
   SENATEUR: "Sénateur",

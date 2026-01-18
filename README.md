@@ -75,6 +75,30 @@ src/
 └── types/                # Types TypeScript
 ```
 
+## Synchronisation des données
+
+### Commandes disponibles
+
+```bash
+# Importer/mettre à jour les députés depuis data.gouv.fr
+npm run sync:deputies
+
+# Voir les stats actuelles de la base
+npm run sync:stats
+```
+
+### Sources de données
+
+| Source | Données | Fréquence |
+|--------|---------|-----------|
+| [data.gouv.fr](https://www.data.gouv.fr/datasets/deputes-actifs-de-lassemblee-nationale-informations-et-statistiques) | Députés, partis | Quotidienne |
+
+### Mise à jour recommandée
+
+Exécuter `npm run sync:deputies` :
+- Après chaque élection / remaniement
+- Hebdomadairement pour les mises à jour mineures
+
 ## Documentation
 
 - [Spécification complète](./docs/SPECIFICATION.md)

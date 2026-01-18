@@ -43,6 +43,12 @@ export default async function AdminLayout({
                 >
                   Politiques
                 </Link>
+                <Link
+                  href="/admin/partis"
+                  className="hover:text-slate-300 transition-colors"
+                >
+                  Partis
+                </Link>
               </nav>
             </div>
             <div className="flex items-center gap-4">

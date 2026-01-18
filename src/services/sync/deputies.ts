@@ -59,13 +59,14 @@ async function fetchDeputiesCSV(): Promise<DeputeCSV[]> {
 
 /**
  * Sync parties from deputies data
+ * Returns a map from CSV groupeAbrev -> party ID for linking deputies
  */
 async function syncParties(
   deputies: DeputeCSV[]
-): Promise<{ created: number; updated: number }> {
+): Promise<{ created: number; updated: number; csvToPartyId: Map<string, string> }> {
   const uniqueGroups = new Map<string, string>();
 
-  // Extract unique groups
+  // Extract unique groups from CSV
   for (const dep of deputies) {
     if (dep.groupeAbrev && !uniqueGroups.has(dep.groupeAbrev)) {
       uniqueGroups.set(dep.groupeAbrev, dep.groupe);
@@ -74,32 +75,43 @@ async function syncParties(
 
   let created = 0;
   let updated = 0;
+  const csvToPartyId = new Map<string, string>();
 
-  for (const [shortName, fullName] of uniqueGroups) {
-    const mapping = PARTY_MAPPINGS[shortName];
+  for (const [csvAbrev, fullName] of uniqueGroups) {
+    const mapping = PARTY_MAPPINGS[csvAbrev];
     const partyData = {
       name: mapping?.fullName || fullName,
-      shortName: mapping?.shortName || shortName,
+      shortName: mapping?.shortName || csvAbrev,
       color: mapping?.color || "#888888",
     };
 
-    const existing = await db.party.findUnique({
+    // Try to find by shortName first, then by name
+    let existing = await db.party.findUnique({
       where: { shortName: partyData.shortName },
     });
 
+    if (!existing) {
+      existing = await db.party.findUnique({
+        where: { name: partyData.name },
+      });
+    }
+
     if (existing) {
+      // Update existing party (only color, keep existing name/shortName if different)
       await db.party.update({
         where: { id: existing.id },
-        data: partyData,
+        data: { color: partyData.color },
       });
+      csvToPartyId.set(csvAbrev, existing.id);
       updated++;
     } else {
-      await db.party.create({ data: partyData });
+      const newParty = await db.party.create({ data: partyData });
+      csvToPartyId.set(csvAbrev, newParty.id);
       created++;
     }
   }
 
-  return { created, updated };
+  return { created, updated, csvToPartyId };
 }
 
 /**
@@ -287,15 +299,15 @@ export async function syncDeputies(): Promise<SyncResult> {
     // 1. Fetch data
     const deputies = await fetchDeputiesCSV();
 
-    // 2. Sync parties first
+    // 2. Sync parties first and get CSV abbreviation -> party ID mapping
     console.log("Syncing parties...");
-    const partyResult = await syncParties(deputies);
-    result.partiesCreated = partyResult.created;
-    result.partiesUpdated = partyResult.updated;
+    const { created, updated, csvToPartyId } = await syncParties(deputies);
+    result.partiesCreated = created;
+    result.partiesUpdated = updated;
 
-    // 3. Build party map (shortName -> id)
-    const parties = await db.party.findMany();
-    const partyMap = new Map(parties.map((p) => [p.shortName, p.id]));
+    // 3. Build party map (CSV groupeAbrev -> id)
+    // This ensures we can look up by the CSV abbreviation, not the mapped shortName
+    const partyMap = csvToPartyId;
 
     // 4. Sync deputies
     console.log("Syncing deputies...");

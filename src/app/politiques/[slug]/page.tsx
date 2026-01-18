@@ -78,17 +78,19 @@ export default async function PoliticianPage({ params }: PageProps) {
         <div>
           <h1 className="text-3xl font-bold mb-2">{politician.fullName}</h1>
           {politician.currentParty && (
-            <Badge
-              className="text-sm"
-              style={{
-                backgroundColor: politician.currentParty.color
-                  ? `${politician.currentParty.color}20`
-                  : undefined,
-                color: politician.currentParty.color || undefined,
-              }}
-            >
-              {politician.currentParty.name}
-            </Badge>
+            <Link href={`/partis/${politician.currentParty.slug}`}>
+              <Badge
+                className="text-sm hover:opacity-80 transition-opacity cursor-pointer"
+                style={{
+                  backgroundColor: politician.currentParty.color
+                    ? `${politician.currentParty.color}20`
+                    : undefined,
+                  color: politician.currentParty.color || undefined,
+                }}
+              >
+                {politician.currentParty.name}
+              </Badge>
+            </Link>
           )}
           {politician.birthDate && (
             <p className="text-muted-foreground mt-2">

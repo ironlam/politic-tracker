@@ -80,8 +80,10 @@ enum DataSource {
 
 model Party {
   id          String   @id @default(cuid())
+  slug        String?  @unique // URL-friendly identifier
   name        String   @unique
   shortName   String   @unique // Ex: "RN", "LFI", "PS"
+  description String?  // Brief description for the party page
   color       String?  // Hex color for UI
   logoUrl     String?
 
@@ -92,6 +94,11 @@ model Party {
   ideology          String?   // Free text, e.g. "Social-démocratie, Socialisme démocratique"
   headquarters      String?
   website           String?
+
+  // Party evolution (succession chain)
+  predecessor       Party?   @relation("PartySuccession", fields: [predecessorId], references: [id])
+  predecessorId     String?
+  successors        Party[]  @relation("PartySuccession") // Parties that succeeded this one
 
   // Relations
   politicians       Politician[]

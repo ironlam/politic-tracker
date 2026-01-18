@@ -37,19 +37,21 @@ export interface PartyMapping {
   color: string;
 }
 
-// Known French political parties (2024-2026 legislature)
+// Known French political parties (17e legislature - 2024-2027)
+// Maps CSV groupeAbrev -> display shortName, fullName, color
 export const PARTY_MAPPINGS: Record<string, PartyMapping> = {
+  // Groupes parlementaires actuels (jan 2026)
   RN: { shortName: "RN", fullName: "Rassemblement National", color: "#0D378A" },
-  LFI: { shortName: "LFI", fullName: "La France Insoumise", color: "#CC2443" },
-  SOC: { shortName: "PS", fullName: "Socialistes et apparentés", color: "#FF8080" },
+  "LFI-NFP": { shortName: "LFI", fullName: "La France Insoumise - Nouveau Front Populaire", color: "#CC2443" },
+  SOC: { shortName: "SOC", fullName: "Socialistes et apparentés", color: "#FF8080" },
   EPR: { shortName: "EPR", fullName: "Ensemble pour la République", color: "#FFEB00" },
   DR: { shortName: "DR", fullName: "Droite Républicaine", color: "#0066CC" },
-  DEM: { shortName: "DEM", fullName: "Démocrates", color: "#FF9900" },
-  HOR: { shortName: "HOR", fullName: "Horizons", color: "#0001AA" },
+  DEM: { shortName: "DEM", fullName: "Les Démocrates", color: "#FF9900" },
+  HOR: { shortName: "HOR", fullName: "Horizons & Indépendants", color: "#0001AA" },
   LIOT: { shortName: "LIOT", fullName: "Libertés, Indépendants, Outre-mer et Territoires", color: "#AADDFF" },
-  ECO: { shortName: "ECO", fullName: "Écologiste et Social", color: "#00C000" },
+  ECOS: { shortName: "ECOS", fullName: "Écologiste et Social", color: "#00C000" },
   GDR: { shortName: "GDR", fullName: "Gauche Démocrate et Républicaine", color: "#DD0000" },
-  UDR: { shortName: "UDR", fullName: "Union des Droites pour la République", color: "#8040C0" },
+  UDDPLR: { shortName: "UDR", fullName: "Union des Droites pour la République", color: "#8040C0" },
   NI: { shortName: "NI", fullName: "Non-inscrits", color: "#AAAAAA" },
 };
 

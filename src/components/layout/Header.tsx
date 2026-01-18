@@ -17,6 +17,12 @@ export function Header() {
               Représentants
             </Link>
             <Link
+              href="/partis"
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Partis
+            </Link>
+            <Link
               href="/affaires"
               className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
             >

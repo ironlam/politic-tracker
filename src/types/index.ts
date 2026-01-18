@@ -10,6 +10,7 @@ import type {
   AffairCategory,
   MandateType,
   DataSource,
+  PoliticalPosition,
 } from "@/generated/prisma";
 
 // Re-export Prisma types
@@ -25,6 +26,7 @@ export type {
   AffairCategory,
   MandateType,
   DataSource,
+  PoliticalPosition,
 };
 
 // Extended types with relations

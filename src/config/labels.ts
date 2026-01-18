@@ -1,4 +1,4 @@
-import type { AffairStatus, AffairCategory, MandateType, DataSource } from "@/types";
+import type { AffairStatus, AffairCategory, MandateType, DataSource, PoliticalPosition } from "@/types";
 
 export const AFFAIR_STATUS_LABELS: Record<AffairStatus, string> = {
   ENQUETE_PRELIMINAIRE: "Enquête préliminaire",
@@ -193,3 +193,35 @@ export const DATA_SOURCE_URLS: Record<DataSource, string> = {
   WIKIPEDIA: "https://fr.wikipedia.org/wiki/",
   MANUAL: "",
 };
+
+// Political position labels (for parties)
+export const POLITICAL_POSITION_LABELS: Record<PoliticalPosition, string> = {
+  FAR_LEFT: "Extrême gauche",
+  LEFT: "Gauche",
+  CENTER_LEFT: "Centre gauche",
+  CENTER: "Centre",
+  CENTER_RIGHT: "Centre droit",
+  RIGHT: "Droite",
+  FAR_RIGHT: "Extrême droite",
+};
+
+export const POLITICAL_POSITION_COLORS: Record<PoliticalPosition, string> = {
+  FAR_LEFT: "#8B0000",    // Dark red
+  LEFT: "#FF6B6B",        // Light red
+  CENTER_LEFT: "#FFB6C1", // Pink
+  CENTER: "#FFEB3B",      // Yellow
+  CENTER_RIGHT: "#87CEEB",// Light blue
+  RIGHT: "#1E90FF",       // Blue
+  FAR_RIGHT: "#00008B",   // Dark blue
+};
+
+// Order for display (left to right)
+export const POLITICAL_POSITION_ORDER: PoliticalPosition[] = [
+  "FAR_LEFT",
+  "LEFT",
+  "CENTER_LEFT",
+  "CENTER",
+  "CENTER_RIGHT",
+  "RIGHT",
+  "FAR_RIGHT",
+];

@@ -238,7 +238,7 @@ async function findOrCreatePolitician(
     include: { politician: true },
   });
 
-  if (existingByWikidata) {
+  if (existingByWikidata?.politician) {
     const politician = existingByWikidata.politician;
     // Update birthDate if we have it and politician doesn't
     if (birthDate && !politician.birthDate) {

@@ -44,10 +44,15 @@ model Politician {
 }
 
 // External IDs from various data sources - enables multi-source matching
+// Supports both politicians and parties (polymorphic)
 model ExternalId {
   id            String      @id @default(cuid())
-  politician    Politician  @relation(fields: [politicianId], references: [id], onDelete: Cascade)
-  politicianId  String
+
+  // Polymorphic: either politician or party (one must be set)
+  politician    Politician? @relation(fields: [politicianId], references: [id], onDelete: Cascade)
+  politicianId  String?
+  party         Party?      @relation(fields: [partyId], references: [id], onDelete: Cascade)
+  partyId       String?
 
   source        DataSource
   externalId    String      // ID in the external system
@@ -58,6 +63,7 @@ model ExternalId {
 
   @@unique([source, externalId])  // One entry per source+ID combo
   @@index([politicianId])
+  @@index([partyId])
   @@index([source])
 }
 
@@ -79,12 +85,32 @@ model Party {
   color       String?  // Hex color for UI
   logoUrl     String?
 
+  // Enriched data (from Wikidata or other sources)
+  foundedDate       DateTime?
+  dissolvedDate     DateTime?
+  politicalPosition PoliticalPosition?
+  ideology          String?   // Free text, e.g. "Social-démocratie, Socialisme démocratique"
+  headquarters      String?
+  website           String?
+
+  // Relations
   politicians       Politician[]
   partyMemberships  PartyMembership[]
   affairsAtTime     Affair[]          // Affairs where this was the party at time of conviction
+  externalIds       ExternalId[]      // IDs from all external sources (Wikidata, etc.)
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+enum PoliticalPosition {
+  FAR_LEFT
+  LEFT
+  CENTER_LEFT
+  CENTER
+  CENTER_RIGHT
+  RIGHT
+  FAR_RIGHT
 }
 
 // Track party changes over time

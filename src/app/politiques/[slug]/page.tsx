@@ -89,7 +89,7 @@ export default async function PoliticianPage({ params }: PageProps) {
           )}
           {politician.birthDate && (
             <p className="text-muted-foreground mt-2">
-              Né{politician.firstName.endsWith("e") ? "e" : ""} le{" "}
+              Naissance le{" "}
               {formatDate(politician.birthDate)}
               {politician.birthPlace && ` à ${politician.birthPlace}`}
             </p>

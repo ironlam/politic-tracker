@@ -1,7 +1,7 @@
 # Politic Tracker - Document de Spécification
 
-> **Version**: 0.1.0
-> **Dernière mise à jour**: 2025-01-18
+> **Version**: 0.3.0
+> **Dernière mise à jour**: 2026-01-18
 > **Statut**: Draft - En cours de définition
 
 ---
@@ -393,9 +393,66 @@ Page `/mentions-legales` obligatoire :
 
 ---
 
+## 9. Complexité politique - Considérations
+
+### 9.1 Institutions couvertes (par priorité)
+
+| Institution | Effectif | Source données | Priorité | Statut |
+|-------------|----------|----------------|----------|--------|
+| Assemblée nationale | 577 députés | data.gouv.fr, API AN | P0 | FAIT |
+| Sénat | 348 sénateurs | data.senat.fr | P1 | À FAIRE |
+| Gouvernement | ~40 membres | Journal Officiel | P1 | À FAIRE |
+| Parlement européen (FR) | 81 eurodéputés | europarl.europa.eu | P2 | - |
+| Régions | 17 présidents | data.gouv.fr | P3 | - |
+| Grandes villes | ~40 maires | data.gouv.fr | P3 | - |
+
+### 9.2 Cycles politiques à gérer
+
+| Cycle | Fréquence | Impact |
+|-------|-----------|--------|
+| **Législature AN** | 5 ans (sauf dissolution) | Renouvellement complet des députés |
+| **Sénat** | 6 ans (1/2 tous les 3 ans) | Renouvellement partiel |
+| **Gouvernement** | Variable | Remaniements fréquents |
+| **Présidentielle** | 5 ans | Changement potentiel de majorité |
+| **Municipales** | 6 ans | - |
+| **Européennes** | 5 ans | - |
+
+### 9.3 Cas particuliers à gérer
+
+- **Candidats** : Personnes en campagne (pas encore élues) → Phase future
+- **Suppléants** : Députés remplaçants (quand titulaire devient ministre)
+- **Cumul des mandats** : Un élu peut avoir plusieurs mandats
+- **Changements de groupe** : Députés qui changent de parti en cours de mandat
+- **Démissions / Décès** : Mandats interrompus
+- **Élections partielles** : Remplacement en cours de législature
+
+### 9.4 Photos des élus
+
+**Options envisagées :**
+
+| Option | Avantages | Inconvénients |
+|--------|-----------|---------------|
+| **URL directe AN/Sénat** | Gratuit, toujours à jour | Dépendance externe, peut changer |
+| **Supabase Storage** | Contrôle total, rapide | Coût stockage, mise à jour manuelle |
+| **Wikidata/Wikipedia** | Gratuit, communautaire | Couverture incomplète |
+
+**Décision** : À définir. Commencer par URL directe AN, prévoir migration.
+
+### 9.5 Données à ajouter (Phase 2+)
+
+- [ ] Champ `civility` (M./Mme) pour genre correct
+- [ ] Champ `photoUrl` avec URL officielle AN/Sénat
+- [ ] Import déclarations HATVP (scraping PDF)
+- [ ] Import sénateurs (API Sénat)
+- [ ] Import gouvernement (Journal Officiel)
+- [ ] Historique des législatures
+
+---
+
 ## Historique des modifications
 
 | Date | Version | Changements |
 |------|---------|-------------|
 | 2025-01-18 | 0.1.0 | Création initiale du document |
 | 2025-01-18 | 0.2.0 | Décisions : historique 5 ans, contributions Phase 2, mentions légales Phase 1 |
+| 2026-01-18 | 0.3.0 | Section 9 : Complexité politique (institutions, cycles, photos, candidats) |

@@ -1,4 +1,4 @@
-import type { AffairStatus, AffairCategory, MandateType } from "@/types";
+import type { AffairStatus, AffairCategory, MandateType, DataSource } from "@/types";
 
 export const AFFAIR_STATUS_LABELS: Record<AffairStatus, string> = {
   ENQUETE_PRELIMINAIRE: "Enquête préliminaire",
@@ -169,4 +169,27 @@ export const MANDATE_SALARIES: Partial<Record<MandateType, number>> = {
   MINISTRE: 10647,
   SECRETAIRE_ETAT: 10135,
   MINISTRE_DELEGUE: 10135,
+};
+
+// Data source labels
+export const DATA_SOURCE_LABELS: Record<DataSource, string> = {
+  ASSEMBLEE_NATIONALE: "Assemblée nationale",
+  SENAT: "Sénat",
+  WIKIDATA: "Wikidata",
+  HATVP: "HATVP",
+  GOUVERNEMENT: "Gouvernement",
+  NOSDEPUTES: "NosDéputés.fr",
+  WIKIPEDIA: "Wikipédia",
+  MANUAL: "Saisie manuelle",
+};
+
+export const DATA_SOURCE_URLS: Record<DataSource, string> = {
+  ASSEMBLEE_NATIONALE: "https://www.assemblee-nationale.fr/dyn/deputes/",
+  SENAT: "https://www.senat.fr/senateur/",
+  WIKIDATA: "https://www.wikidata.org/wiki/",
+  HATVP: "https://www.hatvp.fr/",
+  GOUVERNEMENT: "https://www.gouvernement.fr/",
+  NOSDEPUTES: "https://www.nosdeputes.fr/",
+  WIKIPEDIA: "https://fr.wikipedia.org/wiki/",
+  MANUAL: "",
 };

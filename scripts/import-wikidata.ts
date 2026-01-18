@@ -1,4 +1,4 @@
-import { PrismaClient, AffairCategory, AffairStatus } from "../src/generated/prisma";
+import { PrismaClient, AffairCategory, AffairStatus, DataSource } from "../src/generated/prisma";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { Pool } from "pg";
 import { config } from "dotenv";
@@ -216,17 +216,41 @@ async function findOrCreateParty(partyName: string): Promise<string | null> {
 }
 
 /**
- * Find or create politician
+ * Find or create politician with Wikidata ID tracking
  */
 async function findOrCreatePolitician(
   firstName: string,
   lastName: string,
-  birthDate?: Date | null
+  birthDate: Date | null,
+  wikidataId: string
 ): Promise<string | null> {
   const fullName = `${firstName} ${lastName}`.trim();
   const slug = generateSlug(fullName);
 
-  // Try to find existing politician
+  // 1. Try to find by Wikidata ID first (most reliable)
+  const existingByWikidata = await db.externalId.findUnique({
+    where: {
+      source_externalId: {
+        source: DataSource.WIKIDATA,
+        externalId: wikidataId,
+      },
+    },
+    include: { politician: true },
+  });
+
+  if (existingByWikidata) {
+    const politician = existingByWikidata.politician;
+    // Update birthDate if we have it and politician doesn't
+    if (birthDate && !politician.birthDate) {
+      await db.politician.update({
+        where: { id: politician.id },
+        data: { birthDate },
+      });
+    }
+    return politician.id;
+  }
+
+  // 2. Try to find existing politician by name (fuzzy match)
   let politician = await db.politician.findFirst({
     where: {
       OR: [
@@ -243,6 +267,7 @@ async function findOrCreatePolitician(
   });
 
   if (politician) {
+    console.log(`  Matched existing politician: ${fullName}`);
     // Update birthDate if we have it and politician doesn't
     if (birthDate && !politician.birthDate) {
       await db.politician.update({
@@ -250,10 +275,12 @@ async function findOrCreatePolitician(
         data: { birthDate },
       });
     }
+    // Add Wikidata external ID
+    await upsertWikidataId(politician.id, wikidataId);
     return politician.id;
   }
 
-  // Create new politician if not found
+  // 3. Create new politician if not found
   console.log(`  Creating new politician: ${fullName}`);
   try {
     politician = await db.politician.create({
@@ -266,11 +293,37 @@ async function findOrCreatePolitician(
         photoSource: "wikidata",
       },
     });
+    // Add Wikidata external ID
+    await upsertWikidataId(politician.id, wikidataId);
     return politician.id;
   } catch (error) {
     console.error(`  Failed to create ${fullName}:`, error);
     return null;
   }
+}
+
+/**
+ * Upsert Wikidata external ID
+ */
+async function upsertWikidataId(politicianId: string, wikidataId: string): Promise<void> {
+  await db.externalId.upsert({
+    where: {
+      source_externalId: {
+        source: DataSource.WIKIDATA,
+        externalId: wikidataId,
+      },
+    },
+    create: {
+      politicianId,
+      source: DataSource.WIKIDATA,
+      externalId: wikidataId,
+      url: `https://www.wikidata.org/wiki/${wikidataId}`,
+    },
+    update: {
+      politicianId,
+      url: `https://www.wikidata.org/wiki/${wikidataId}`,
+    },
+  });
 }
 
 /**
@@ -319,11 +372,15 @@ async function importConviction(
     return false;
   }
 
+  // Extract Wikidata ID from URL (e.g., "http://www.wikidata.org/entity/Q123456" -> "Q123456")
+  const wikidataId = result.person.value.split("/").pop() || "";
+
   // Find or create politician
   const politicianId = await findOrCreatePolitician(
     firstName,
     lastName,
-    birthDate
+    birthDate,
+    wikidataId
   );
 
   if (!politicianId) {

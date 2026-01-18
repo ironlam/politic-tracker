@@ -115,12 +115,24 @@ export default async function AdminPoliticiansPage({ searchParams }: PageProps) 
                         <span className="text-muted-foreground">0</span>
                       )}
                     </td>
-                    <td className="py-3">
+                    <td className="py-3 space-x-3">
                       <Link
-                        href={`/admin/affaires/nouveau?politicianId=${politician.id}`}
+                        href={`/admin/politiques/${politician.id}`}
                         className="text-sm text-blue-600 hover:underline"
                       >
-                        Ajouter une affaire
+                        Voir
+                      </Link>
+                      <Link
+                        href={`/admin/politiques/${politician.id}/edit`}
+                        className="text-sm text-blue-600 hover:underline"
+                      >
+                        Modifier
+                      </Link>
+                      <Link
+                        href={`/admin/affaires/nouveau?politicianId=${politician.id}`}
+                        className="text-sm text-green-600 hover:underline"
+                      >
+                        + Affaire
                       </Link>
                     </td>
                   </tr>

@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { generateSlug } from "@/lib/utils";
-import { MandateType } from "@/generated/prisma";
+import { MandateType, DataSource } from "@/generated/prisma";
 import { DeputeCSV, PARTY_MAPPINGS, SyncResult } from "./types";
 import { parse } from "csv-parse/sync";
 
@@ -162,6 +162,9 @@ async function syncDeputy(
         data: politicianData,
       });
 
+      // Upsert external IDs
+      await upsertExternalIds(existing.id, dep.id, slug);
+
       // Update or create current mandate
       const existingMandate = existing.mandates.find(
         (m) => m.externalId === mandateData.externalId
@@ -187,7 +190,7 @@ async function syncDeputy(
       return "updated";
     } else {
       // Create new politician with mandate
-      await db.politician.create({
+      const newPolitician = await db.politician.create({
         data: {
           ...politicianData,
           mandates: {
@@ -195,6 +198,9 @@ async function syncDeputy(
           },
         },
       });
+
+      // Create external IDs
+      await upsertExternalIds(newPolitician.id, dep.id, slug);
 
       return "created";
     }
@@ -211,6 +217,55 @@ function getOrdinalSuffix(n: string): string {
   const num = parseInt(n, 10);
   if (num === 1) return "ère";
   return "ème";
+}
+
+/**
+ * Upsert external IDs for a politician
+ */
+async function upsertExternalIds(
+  politicianId: string,
+  anId: string,
+  slug: string
+): Promise<void> {
+  // Assemblée Nationale ID
+  await db.externalId.upsert({
+    where: {
+      source_externalId: {
+        source: DataSource.ASSEMBLEE_NATIONALE,
+        externalId: anId,
+      },
+    },
+    create: {
+      politicianId,
+      source: DataSource.ASSEMBLEE_NATIONALE,
+      externalId: anId,
+      url: `https://www.assemblee-nationale.fr/dyn/deputes/${anId}`,
+    },
+    update: {
+      politicianId,
+      url: `https://www.assemblee-nationale.fr/dyn/deputes/${anId}`,
+    },
+  });
+
+  // NosDéputés ID (uses slug)
+  await db.externalId.upsert({
+    where: {
+      source_externalId: {
+        source: DataSource.NOSDEPUTES,
+        externalId: slug,
+      },
+    },
+    create: {
+      politicianId,
+      source: DataSource.NOSDEPUTES,
+      externalId: slug,
+      url: `https://www.nosdeputes.fr/${slug}`,
+    },
+    update: {
+      politicianId,
+      url: `https://www.nosdeputes.fr/${slug}`,
+    },
+  });
 }
 
 /**

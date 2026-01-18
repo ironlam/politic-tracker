@@ -22,7 +22,7 @@ model Politician {
   birthPlace    String?
   photoUrl      String?   // URL de la photo
   photoSource   String?   // Source: "assemblee-nationale", "senat", "gouvernement", "hatvp", "manual"
-  officialId    String?   @unique // ID from official API (AN, Sénat)
+  officialId    String?   @unique // DEPRECATED: use externalIds instead
 
   // Current party (nullable if independent)
   currentParty   Party?   @relation(fields: [currentPartyId], references: [id])
@@ -33,6 +33,7 @@ model Politician {
   affairs       Affair[]
   declarations  Declaration[]
   partyHistory  PartyMembership[]
+  externalIds   ExternalId[]      // IDs from all external sources
 
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -40,6 +41,35 @@ model Politician {
   @@index([lastName])
   @@index([currentPartyId])
   @@index([fullName])
+}
+
+// External IDs from various data sources - enables multi-source matching
+model ExternalId {
+  id            String      @id @default(cuid())
+  politician    Politician  @relation(fields: [politicianId], references: [id], onDelete: Cascade)
+  politicianId  String
+
+  source        DataSource
+  externalId    String      // ID in the external system
+  url           String?     // Direct URL to the source page
+
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@unique([source, externalId])  // One entry per source+ID combo
+  @@index([politicianId])
+  @@index([source])
+}
+
+enum DataSource {
+  ASSEMBLEE_NATIONALE
+  SENAT
+  WIKIDATA
+  HATVP
+  GOUVERNEMENT
+  NOSDEPUTES
+  WIKIPEDIA
+  MANUAL
 }
 
 model Party {

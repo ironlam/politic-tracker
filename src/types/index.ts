@@ -5,9 +5,11 @@ import type {
   Affair,
   Source,
   Declaration,
+  ExternalId,
   AffairStatus,
   AffairCategory,
   MandateType,
+  DataSource,
 } from "@/generated/prisma";
 
 // Re-export Prisma types
@@ -18,9 +20,11 @@ export type {
   Affair,
   Source,
   Declaration,
+  ExternalId,
   AffairStatus,
   AffairCategory,
   MandateType,
+  DataSource,
 };
 
 // Extended types with relations

@@ -4,13 +4,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
 async function getStats() {
-  const [politicianCount, affairCount, partyCount] = await Promise.all([
+  const [politicianCount, affairCount, partyCount, externalIdCount] = await Promise.all([
     db.politician.count(),
     db.affair.count(),
     db.party.count(),
+    db.externalId.count(),
   ]);
 
-  return { politicianCount, affairCount, partyCount };
+  return { politicianCount, affairCount, partyCount, externalIdCount };
 }
 
 async function getRecentAffairs() {
@@ -37,7 +38,7 @@ export default async function AdminDashboard() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -68,6 +69,17 @@ export default async function AdminDashboard() {
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold">{stats.partyCount}</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              IDs externes liés
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold">{stats.externalIdCount}</p>
           </CardContent>
         </Card>
       </div>

@@ -1,0 +1,322 @@
+{
+  "description": "Condamnations définitives de personnalités politiques françaises",
+  "lastUpdated": "2026-01-18",
+  "sources": [
+    "Wikipedia - Liste de scandales politiques français",
+    "Articles de presse (Le Monde, Mediapart, AFP)"
+  ],
+  "condamnations": [
+    {
+      "politician": {
+        "firstName": "Nicolas",
+        "lastName": "Sarkozy",
+        "party": "LR"
+      },
+      "title": "Affaire Bygmalion",
+      "description": "Financement illégal de la campagne présidentielle de 2012. Dépassement du plafond des dépenses électorales via des fausses factures.",
+      "category": "FINANCEMENT_ILLEGAL_CAMPAGNE",
+      "status": "CONDAMNATION_DEFINITIVE",
+      "verdictDate": "2024-04-14",
+      "sentence": "1 an de prison ferme (aménageable)",
+      "sources": [
+        {
+          "url": "https://www.lemonde.fr/societe/article/2024/04/14/affaire-bygmalion-nicolas-sarkozy-condamne-en-appel-a-un-an-de-prison-ferme_6227634_3224.html",
+          "title": "Affaire Bygmalion : Nicolas Sarkozy condamné en appel à un an de prison ferme",
+          "publisher": "Le Monde",
+          "publishedAt": "2024-04-14"
+        }
+      ]
+    },
+    {
+      "politician": {
+        "firstName": "Nicolas",
+        "lastName": "Sarkozy",
+        "party": "LR"
+      },
+      "title": "Affaire des écoutes (Paul Bismuth)",
+      "description": "Corruption et trafic d'influence. Tentative de corruption d'un magistrat pour obtenir des informations sur une procédure judiciaire.",
+      "category": "CORRUPTION",
+      "status": "CONDAMNATION_DEFINITIVE",
+      "verdictDate": "2023-12-06",
+      "sentence": "3 ans de prison dont 1 an ferme sous bracelet électronique",
+      "sources": [
+        {
+          "url": "https://www.lemonde.fr/societe/article/2023/12/06/affaire-des-ecoutes-la-cour-de-cassation-confirme-la-condamnation-de-nicolas-sarkozy_6204156_3224.html",
+          "title": "Affaire des écoutes : la Cour de cassation confirme la condamnation de Nicolas Sarkozy",
+          "publisher": "Le Monde",
+          "publishedAt": "2023-12-06"
+        }
+      ]
+    },
+    {
+      "politician": {
+        "firstName": "François",
+        "lastName": "Fillon",
+        "party": "LR"
+      },
+      "title": "Affaire des emplois fictifs de Penelope Fillon",
+      "description": "Détournement de fonds publics. Emplois fictifs de son épouse Penelope et de ses enfants comme assistants parlementaires.",
+      "category": "EMPLOI_FICTIF",
+      "status": "CONDAMNATION_DEFINITIVE",
+      "verdictDate": "2024-04-24",
+      "sentence": "4 ans de prison dont 1 an ferme, 375 000 euros d'amende, 10 ans d'inéligibilité",
+      "sources": [
+        {
+          "url": "https://www.lemonde.fr/societe/article/2024/04/24/emplois-fictifs-francois-fillon-definitivement-condamne_6229476_3224.html",
+          "title": "Emplois fictifs : François Fillon définitivement condamné",
+          "publisher": "Le Monde",
+          "publishedAt": "2024-04-24"
+        }
+      ]
+    },
+    {
+      "politician": {
+        "firstName": "Jérôme",
+        "lastName": "Cahuzac",
+        "party": "PS"
+      },
+      "title": "Affaire Cahuzac - Fraude fiscale",
+      "description": "Fraude fiscale et blanchiment. Compte bancaire non déclaré en Suisse puis à Singapour.",
+      "category": "FRAUDE_FISCALE",
+      "status": "CONDAMNATION_DEFINITIVE",
+      "verdictDate": "2018-05-15",
+      "sentence": "2 ans de prison ferme, 5 ans d'inéligibilité",
+      "sources": [
+        {
+          "url": "https://www.lemonde.fr/societe/article/2018/05/15/jerome-cahuzac-definitivement-condamne-a-deux-ans-de-prison-ferme_5299437_3224.html",
+          "title": "Jérôme Cahuzac définitivement condamné à deux ans de prison ferme",
+          "publisher": "Le Monde",
+          "publishedAt": "2018-05-15"
+        }
+      ]
+    },
+    {
+      "politician": {
+        "firstName": "Patrick",
+        "lastName": "Balkany",
+        "party": "LR"
+      },
+      "title": "Affaire Balkany - Fraude fiscale et blanchiment",
+      "description": "Fraude fiscale et blanchiment de fraude fiscale. Patrimoine immobilier dissimulé à l'étranger.",
+      "category": "FRAUDE_FISCALE",
+      "status": "CONDAMNATION_DEFINITIVE",
+      "verdictDate": "2020-11-04",
+      "sentence": "4 ans de prison ferme, 10 ans d'inéligibilité",
+      "sources": [
+        {
+          "url": "https://www.lemonde.fr/societe/article/2020/11/04/fraude-fiscale-patrick-balkany-definitivement-condamne-a-quatre-ans-de-prison_6058455_3224.html",
+          "title": "Fraude fiscale : Patrick Balkany définitivement condamné à quatre ans de prison",
+          "publisher": "Le Monde",
+          "publishedAt": "2020-11-04"
+        }
+      ]
+    },
+    {
+      "politician": {
+        "firstName": "Claude",
+        "lastName": "Guéant",
+        "party": "LR"
+      },
+      "title": "Affaire des primes en liquide du ministère de l'Intérieur",
+      "description": "Détournement de fonds publics. Primes en liquide indûment perçues au ministère de l'Intérieur.",
+      "category": "DETOURNEMENT_FONDS_PUBLICS",
+      "status": "CONDAMNATION_DEFINITIVE",
+      "verdictDate": "2022-01-26",
+      "sentence": "1 an de prison ferme, 75 000 euros d'amende",
+      "sources": [
+        {
+          "url": "https://www.lemonde.fr/societe/article/2022/01/26/primes-en-liquide-claude-gueant-definitivement-condamne-a-un-an-de-prison-ferme_6111113_3224.html",
+          "title": "Primes en liquide : Claude Guéant définitivement condamné à un an de prison ferme",
+          "publisher": "Le Monde",
+          "publishedAt": "2022-01-26"
+        }
+      ]
+    },
+    {
+      "politician": {
+        "firstName": "Alain",
+        "lastName": "Juppé",
+        "party": "LR"
+      },
+      "title": "Affaire des emplois fictifs de la mairie de Paris",
+      "description": "Prise illégale d'intérêts et abus de confiance. Emplois fictifs du RPR financés par la mairie de Paris.",
+      "category": "EMPLOI_FICTIF",
+      "status": "CONDAMNATION_DEFINITIVE",
+      "verdictDate": "2004-12-01",
+      "sentence": "14 mois de prison avec sursis, 1 an d'inéligibilité",
+      "sources": [
+        {
+          "url": "https://www.lemonde.fr/societe/article/2004/12/01/emplois-fictifs-alain-juppe-condamne-a-14-mois-avec-sursis_388933_3224.html",
+          "title": "Emplois fictifs : Alain Juppé condamné à 14 mois avec sursis",
+          "publisher": "Le Monde",
+          "publishedAt": "2004-12-01"
+        }
+      ]
+    },
+    {
+      "politician": {
+        "firstName": "Charles",
+        "lastName": "Pasqua",
+        "party": "LR"
+      },
+      "title": "Affaire de la SOFREMI",
+      "description": "Trafic d'influence dans l'attribution de marchés de la SOFREMI (société d'armement).",
+      "category": "TRAFIC_INFLUENCE",
+      "status": "CONDAMNATION_DEFINITIVE",
+      "verdictDate": "2010-04-28",
+      "sentence": "1 an de prison avec sursis",
+      "sources": [
+        {
+          "url": "https://www.lemonde.fr/societe/article/2010/04/28/affaire-sofremi-pasqua-condamne-a-un-an-de-prison-avec-sursis_1343845_3224.html",
+          "title": "Affaire Sofremi : Pasqua condamné à un an de prison avec sursis",
+          "publisher": "Le Monde",
+          "publishedAt": "2010-04-28"
+        }
+      ]
+    },
+    {
+      "politician": {
+        "firstName": "Georges",
+        "lastName": "Tron",
+        "party": "LR"
+      },
+      "title": "Affaire de viols et agressions sexuelles",
+      "description": "Viols et agressions sexuelles sur deux anciennes employées municipales.",
+      "category": "AGRESSION_SEXUELLE",
+      "status": "CONDAMNATION_DEFINITIVE",
+      "verdictDate": "2022-02-16",
+      "sentence": "5 ans de prison dont 3 ans ferme",
+      "sources": [
+        {
+          "url": "https://www.lemonde.fr/societe/article/2022/02/16/georges-tron-definitivement-condamne-a-cinq-ans-de-prison-dont-trois-ferme-pour-viols_6113958_3224.html",
+          "title": "Georges Tron définitivement condamné à cinq ans de prison dont trois ferme pour viols",
+          "publisher": "Le Monde",
+          "publishedAt": "2022-02-16"
+        }
+      ]
+    },
+    {
+      "politician": {
+        "firstName": "Damien",
+        "lastName": "Abad",
+        "party": "LR"
+      },
+      "title": "Affaire de tentative de viol",
+      "description": "Tentative de viol sur une femme rencontrée dans un bar parisien en 2010.",
+      "category": "AGRESSION_SEXUELLE",
+      "status": "MISE_EN_EXAMEN",
+      "sentence": null,
+      "sources": [
+        {
+          "url": "https://www.mediapart.fr/journal/france/210523/affaire-damien-abad-le-parquet-requiert-un-proces-pour-tentative-de-viol",
+          "title": "Affaire Damien Abad : le parquet requiert un procès pour tentative de viol",
+          "publisher": "Mediapart",
+          "publishedAt": "2023-05-21"
+        }
+      ]
+    },
+    {
+      "politician": {
+        "firstName": "Jean-Christophe",
+        "lastName": "Lagarde",
+        "party": "UDI"
+      },
+      "title": "Affaire des emplois présumés fictifs",
+      "description": "Soupçons d'emplois fictifs d'assistants parlementaires au Parlement européen.",
+      "category": "EMPLOI_FICTIF",
+      "status": "MISE_EN_EXAMEN",
+      "sentence": null,
+      "sources": [
+        {
+          "url": "https://www.lemonde.fr/societe/article/2022/03/15/jean-christophe-lagarde-mis-en-examen-pour-detournement-de-fonds-publics_6117624_3224.html",
+          "title": "Jean-Christophe Lagarde mis en examen pour détournement de fonds publics",
+          "publisher": "Le Monde",
+          "publishedAt": "2022-03-15"
+        }
+      ]
+    },
+    {
+      "politician": {
+        "firstName": "Marine",
+        "lastName": "Le Pen",
+        "party": "RN"
+      },
+      "title": "Affaire des assistants parlementaires européens du FN",
+      "description": "Emplois fictifs présumés d'assistants parlementaires européens du Front National.",
+      "category": "EMPLOI_FICTIF",
+      "status": "RENVOI_TRIBUNAL",
+      "sentence": null,
+      "sources": [
+        {
+          "url": "https://www.lemonde.fr/societe/article/2024/03/11/affaire-des-assistants-du-fn-au-parlement-europeen-le-proces-de-marine-le-pen-s-ouvrira-le-30-septembre_6221373_3224.html",
+          "title": "Affaire des assistants du FN au Parlement européen : le procès de Marine Le Pen s'ouvrira le 30 septembre",
+          "publisher": "Le Monde",
+          "publishedAt": "2024-03-11"
+        }
+      ]
+    },
+    {
+      "politician": {
+        "firstName": "Éric",
+        "lastName": "Dupond-Moretti",
+        "party": "LREM"
+      },
+      "title": "Affaire des prises illégales d'intérêts",
+      "description": "Prise illégale d'intérêts. Utilisation de ses fonctions de ministre pour régler des comptes avec des magistrats.",
+      "category": "PRISE_ILLEGALE_INTERETS",
+      "status": "RELAXE",
+      "verdictDate": "2023-11-29",
+      "sentence": "Relaxe",
+      "sources": [
+        {
+          "url": "https://www.lemonde.fr/societe/article/2023/11/29/eric-dupond-moretti-relaxe-dans-l-affaire-des-prises-illegales-d-interets_6202934_3224.html",
+          "title": "Éric Dupond-Moretti relaxé dans l'affaire des prises illégales d'intérêts",
+          "publisher": "Le Monde",
+          "publishedAt": "2023-11-29"
+        }
+      ]
+    },
+    {
+      "politician": {
+        "firstName": "Christine",
+        "lastName": "Lagarde",
+        "party": "LR"
+      },
+      "title": "Affaire de l'arbitrage Tapie",
+      "description": "Négligence dans la gestion de l'arbitrage Tapie-Crédit Lyonnais ayant conduit à un préjudice de 400 millions d'euros pour l'État.",
+      "category": "AUTRE",
+      "status": "CONDAMNATION_DEFINITIVE",
+      "verdictDate": "2016-12-19",
+      "sentence": "Coupable mais dispensée de peine",
+      "sources": [
+        {
+          "url": "https://www.lemonde.fr/societe/article/2016/12/19/affaire-tapie-christine-lagarde-reconnue-coupable-de-negligence-mais-dispensee-de-peine_5051289_3224.html",
+          "title": "Affaire Tapie : Christine Lagarde reconnue coupable de négligence mais dispensée de peine",
+          "publisher": "Le Monde",
+          "publishedAt": "2016-12-19"
+        }
+      ]
+    },
+    {
+      "politician": {
+        "firstName": "Bernard",
+        "lastName": "Tapie",
+        "party": "PRG"
+      },
+      "title": "Affaire du Crédit Lyonnais - Escroquerie",
+      "description": "Escroquerie en bande organisée et détournement de fonds publics dans l'affaire de l'arbitrage.",
+      "category": "ABUS_CONFIANCE",
+      "status": "CONDAMNATION_PREMIERE_INSTANCE",
+      "verdictDate": "2019-07-09",
+      "sentence": "5 ans de prison dont 2 ans ferme (décédé en appel)",
+      "sources": [
+        {
+          "url": "https://www.lemonde.fr/societe/article/2019/07/09/affaire-tapie-l-homme-d-affaires-condamne-a-cinq-ans-de-prison-dont-deux-ferme_5487254_3224.html",
+          "title": "Affaire Tapie : l'homme d'affaires condamné à cinq ans de prison dont deux ferme",
+          "publisher": "Le Monde",
+          "publishedAt": "2019-07-09"
+        }
+      ]
+    }
+  ]
+}

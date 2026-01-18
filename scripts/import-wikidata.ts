@@ -191,8 +191,22 @@ async function importConviction(
     ? new Date(result.convictionDate.value)
     : null;
 
-  // Skip very old convictions (before 1980)
-  if (convictionDate && convictionDate.getFullYear() < 1980) {
+  // Skip convictions before Ve République (1958) - we want contemporary politics
+  if (convictionDate && convictionDate.getFullYear() < 1958) {
+    console.log(`  Skipping old: ${result.personLabel.value} (${convictionDate.getFullYear()})`);
+    return false;
+  }
+
+  // Skip unresolved Wikidata IDs (Q followed by numbers)
+  if (/^Q\d+$/.test(result.personLabel.value)) {
+    console.log(`  Skipping unresolved: ${result.personLabel.value}`);
+    return false;
+  }
+
+  // Skip known historical figures
+  const historicalFigures = ['robespierre', 'bokassa', 'raousset-boulbon', 'napoleon', 'louis'];
+  if (historicalFigures.some(h => result.personLabel.value.toLowerCase().includes(h))) {
+    console.log(`  Skipping historical: ${result.personLabel.value}`);
     return false;
   }
 

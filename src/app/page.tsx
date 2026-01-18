@@ -2,6 +2,7 @@ import Link from "next/link";
 import { db } from "@/lib/db";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { PoliticianCard } from "@/components/politicians/PoliticianCard";
 
 async function getStats() {
   const [politicianCount, partyCount, affairCount, deputeCount] =
@@ -103,30 +104,7 @@ export default async function HomePage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {recentPoliticians.map((politician) => (
-            <Link
-              key={politician.id}
-              href={`/politiques/${politician.slug}`}
-              className="block"
-            >
-              <Card className="hover:shadow-md transition-shadow">
-                <CardContent className="pt-6">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center text-lg font-semibold text-gray-600">
-                      {politician.firstName[0]}
-                      {politician.lastName[0]}
-                    </div>
-                    <div>
-                      <p className="font-semibold">{politician.fullName}</p>
-                      {politician.currentParty && (
-                        <p className="text-sm text-muted-foreground">
-                          {politician.currentParty.name}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
+            <PoliticianCard key={politician.id} politician={politician} />
           ))}
         </div>
       </section>

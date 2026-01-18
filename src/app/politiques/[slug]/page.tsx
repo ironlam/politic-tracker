@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/utils";
 import { MANDATE_TYPE_LABELS, AFFAIR_STATUS_LABELS, AFFAIR_STATUS_COLORS, AFFAIR_STATUS_NEEDS_PRESUMPTION } from "@/config/labels";
+import { PoliticianAvatar } from "@/components/politicians/PoliticianAvatar";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -68,10 +69,12 @@ export default async function PoliticianPage({ params }: PageProps) {
 
       {/* Header */}
       <div className="flex items-start gap-6 mb-8">
-        <div className="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center text-3xl font-semibold text-gray-600 flex-shrink-0">
-          {politician.firstName[0]}
-          {politician.lastName[0]}
-        </div>
+        <PoliticianAvatar
+          photoUrl={politician.photoUrl}
+          firstName={politician.firstName}
+          lastName={politician.lastName}
+          size="lg"
+        />
         <div>
           <h1 className="text-3xl font-bold mb-2">{politician.fullName}</h1>
           {politician.currentParty && (

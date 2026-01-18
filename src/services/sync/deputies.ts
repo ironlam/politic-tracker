@@ -127,6 +127,9 @@ async function syncDeputy(
       include: { mandates: true },
     });
 
+    // Photo URL from Assemblée Nationale
+    const photoUrl = `https://www.assemblee-nationale.fr/dyn/deputes/${dep.id}/image`;
+
     const politicianData = {
       slug,
       civility: dep.civ || null,
@@ -135,6 +138,8 @@ async function syncDeputy(
       fullName,
       birthDate,
       birthPlace: dep.villeNaissance || null,
+      photoUrl,
+      photoSource: "assemblee-nationale",
       officialId: dep.id,
       currentPartyId: partyId,
     };

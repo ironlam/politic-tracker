@@ -20,7 +20,8 @@ model Politician {
   fullName      String    // Computed: "firstName lastName" for search
   birthDate     DateTime?
   birthPlace    String?
-  photoUrl      String?
+  photoUrl      String?   // URL de la photo
+  photoSource   String?   // Source: "assemblee-nationale", "senat", "gouvernement", "hatvp", "manual"
   officialId    String?   @unique // ID from official API (AN, Sénat)
 
   // Current party (nullable if independent)

@@ -1,36 +1,88 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Politic Tracker
 
-## Getting Started
+Observatoire citoyen de la transparence politique française.
 
-First, run the development server:
+## Objectif
+
+Centraliser les informations publiques sur les élus français : patrimoine, mandats, rémunération, et affaires judiciaires documentées par la presse.
+
+## Principes
+
+- **Transparence** : Toute information est sourcée et vérifiable
+- **Neutralité** : Présentation factuelle, sans orientation politique
+- **Légalité** : Uniquement des données publiques
+
+## Stack technique
+
+- **Framework** : Next.js 14 (App Router)
+- **Base de données** : PostgreSQL (Supabase)
+- **ORM** : Prisma
+- **UI** : Tailwind CSS + shadcn/ui
+- **Hébergement** : Vercel
+
+## Installation
+
+### Prérequis
+
+- Node.js 18+
+- Compte Supabase (gratuit)
+
+### Setup
 
 ```bash
+# 1. Cloner le repo
+git clone https://github.com/ironlam/politic-tracker.git
+cd politic-tracker
+
+# 2. Installer les dépendances
+npm install
+
+# 3. Configurer la base de données
+cp .env.example .env
+# Éditer .env avec vos credentials Supabase
+
+# 4. Générer le client Prisma
+npx prisma generate
+
+# 5. Appliquer les migrations
+npx prisma db push
+
+# 6. Lancer le serveur de dev
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Configuration Supabase
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. Créer un projet sur [supabase.com](https://supabase.com)
+2. Aller dans **Project Settings > Database**
+3. Copier la **Connection string (URI)**
+4. Coller dans `.env` comme `DATABASE_URL`
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Structure du projet
 
-## Learn More
+```
+src/
+├── app/                  # Routes Next.js (App Router)
+│   ├── mentions-legales/ # Page mentions légales
+│   └── ...
+├── components/ui/        # Composants shadcn/ui
+├── config/               # Configuration (labels, constantes)
+├── lib/                  # Utilitaires (db, utils)
+├── services/             # Logique métier
+│   ├── politicians/      # Service politiciens
+│   ├── affairs/          # Service affaires judiciaires
+│   └── sync/             # Synchronisation API externes
+└── types/                # Types TypeScript
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Documentation
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- [Spécification complète](./docs/SPECIFICATION.md)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Licence
 
-## Deploy on Vercel
+MIT
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Avertissement
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Ce projet utilise exclusivement des données publiques. Les affaires judiciaires mentionnées sont documentées par des sources de presse vérifiables. La présomption d'innocence s'applique à toute personne mise en examen.

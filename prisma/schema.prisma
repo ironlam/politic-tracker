@@ -1,0 +1,307 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================
+// POLITICAL ENTITIES
+// ============================================
+
+model Politician {
+  id            String    @id @default(cuid())
+  slug          String    @unique
+  firstName     String
+  lastName      String
+  fullName      String    // Computed: "firstName lastName" for search
+  birthDate     DateTime?
+  birthPlace    String?
+  photoUrl      String?
+  officialId    String?   @unique // ID from official API (AN, Sénat)
+
+  // Current party (nullable if independent)
+  currentParty   Party?   @relation(fields: [currentPartyId], references: [id])
+  currentPartyId String?
+
+  // Relations
+  mandates      Mandate[]
+  affairs       Affair[]
+  declarations  Declaration[]
+  partyHistory  PartyMembership[]
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([lastName])
+  @@index([currentPartyId])
+  @@index([fullName])
+}
+
+model Party {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  shortName   String   @unique // Ex: "RN", "LFI", "PS"
+  color       String?  // Hex color for UI
+  logoUrl     String?
+
+  politicians       Politician[]
+  partyMemberships  PartyMembership[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// Track party changes over time
+model PartyMembership {
+  id           String    @id @default(cuid())
+  politician   Politician @relation(fields: [politicianId], references: [id], onDelete: Cascade)
+  politicianId String
+  party        Party      @relation(fields: [partyId], references: [id])
+  partyId      String
+  startDate    DateTime
+  endDate      DateTime?
+
+  createdAt    DateTime   @default(now())
+
+  @@index([politicianId])
+  @@index([partyId])
+}
+
+// ============================================
+// MANDATES & FUNCTIONS
+// ============================================
+
+model Mandate {
+  id           String      @id @default(cuid())
+  politician   Politician  @relation(fields: [politicianId], references: [id], onDelete: Cascade)
+  politicianId String
+
+  type         MandateType
+  title        String      // Ex: "Député de la 3ème circonscription du Rhône"
+  institution  String      // Ex: "Assemblée nationale"
+  constituency String?     // Ex: "Rhône (3ème)"
+
+  startDate    DateTime
+  endDate      DateTime?
+  isCurrent    Boolean     @default(true)
+
+  // Salary info (monthly, in euros)
+  baseSalary       Decimal?  @db.Decimal(10, 2)
+  totalAllowances  Decimal?  @db.Decimal(10, 2)
+
+  // External reference
+  externalId   String?     // ID from source API
+  sourceUrl    String?     // Link to official page
+
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  @@index([politicianId])
+  @@index([type])
+  @@index([isCurrent])
+}
+
+enum MandateType {
+  DEPUTE
+  SENATEUR
+  DEPUTE_EUROPEEN
+  PRESIDENT_REPUBLIQUE
+  PREMIER_MINISTRE
+  MINISTRE
+  SECRETAIRE_ETAT
+  MINISTRE_DELEGUE
+  PRESIDENT_REGION
+  PRESIDENT_DEPARTEMENT
+  MAIRE
+  ADJOINT_MAIRE
+  CONSEILLER_REGIONAL
+  CONSEILLER_DEPARTEMENTAL
+  CONSEILLER_MUNICIPAL
+  OTHER
+}
+
+// ============================================
+// JUDICIAL AFFAIRS
+// ============================================
+
+model Affair {
+  id           String         @id @default(cuid())
+  politician   Politician     @relation(fields: [politicianId], references: [id], onDelete: Cascade)
+  politicianId String
+
+  title        String         // Ex: "Affaire des emplois fictifs du MoDem"
+  slug         String         @unique
+  description  String         @db.Text
+
+  status       AffairStatus
+  category     AffairCategory
+
+  // Dates
+  factsDate    DateTime?      // Date of alleged facts
+  startDate    DateTime?      // When affair became public
+  verdictDate  DateTime?      // Date of verdict (if any)
+
+  // Outcome
+  sentence     String?        // Ex: "2 ans de prison avec sursis, 5 ans d'inéligibilité"
+  appeal       Boolean        @default(false)
+
+  // Sources (minimum 1 required - enforced at app level)
+  sources      Source[]
+
+  // Verification
+  verifiedAt   DateTime?
+  verifiedBy   String?        // Admin who verified
+
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  @@index([politicianId])
+  @@index([status])
+  @@index([category])
+}
+
+enum AffairStatus {
+  ENQUETE_PRELIMINAIRE
+  INSTRUCTION
+  MISE_EN_EXAMEN
+  RENVOI_TRIBUNAL
+  PROCES_EN_COURS
+  CONDAMNATION_PREMIERE_INSTANCE
+  APPEL_EN_COURS
+  CONDAMNATION_DEFINITIVE
+  RELAXE
+  ACQUITTEMENT
+  NON_LIEU
+  PRESCRIPTION
+  CLASSEMENT_SANS_SUITE
+}
+
+enum AffairCategory {
+  CORRUPTION
+  CORRUPTION_PASSIVE
+  TRAFIC_INFLUENCE
+  PRISE_ILLEGALE_INTERETS
+  FAVORITISME
+  DETOURNEMENT_FONDS_PUBLICS
+  FRAUDE_FISCALE
+  BLANCHIMENT
+  ABUS_BIENS_SOCIAUX
+  ABUS_CONFIANCE
+  EMPLOI_FICTIF
+  FINANCEMENT_ILLEGAL_CAMPAGNE
+  FINANCEMENT_ILLEGAL_PARTI
+  HARCELEMENT_MORAL
+  HARCELEMENT_SEXUEL
+  AGRESSION_SEXUELLE
+  VIOLENCE
+  MENACE
+  DIFFAMATION
+  INJURE
+  INCITATION_HAINE
+  FAUX_ET_USAGE_FAUX
+  RECEL
+  CONFLIT_INTERETS
+  AUTRE
+}
+
+// Sources for affairs (mandatory for credibility)
+model Source {
+  id          String   @id @default(cuid())
+  affair      Affair   @relation(fields: [affairId], references: [id], onDelete: Cascade)
+  affairId    String
+
+  url         String
+  title       String   // Article title
+  publisher   String   // Ex: "Mediapart", "Le Monde", "AFP"
+  publishedAt DateTime
+
+  // Archive for link rot protection
+  archivedUrl String?  // archive.org or archive.is URL
+  excerpt     String?  @db.Text // Key quote from article
+
+  createdAt   DateTime @default(now())
+
+  @@index([affairId])
+  @@index([publisher])
+}
+
+// ============================================
+// TRANSPARENCY (HATVP)
+// ============================================
+
+model Declaration {
+  id           String          @id @default(cuid())
+  politician   Politician      @relation(fields: [politicianId], references: [id], onDelete: Cascade)
+  politicianId String
+
+  type         DeclarationType
+  year         Int
+
+  // Patrimony summary (if available)
+  realEstate    Decimal?       @db.Decimal(12, 2)
+  securities    Decimal?       @db.Decimal(12, 2)
+  bankAccounts  Decimal?       @db.Decimal(12, 2)
+  otherAssets   Decimal?       @db.Decimal(12, 2)
+  liabilities   Decimal?       @db.Decimal(12, 2)
+  totalNet      Decimal?       @db.Decimal(12, 2)
+
+  // Source
+  hatvpUrl     String          // Link to HATVP page
+  pdfUrl       String?         // Direct PDF link
+
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  @@unique([politicianId, type, year])
+  @@index([politicianId])
+}
+
+enum DeclarationType {
+  PATRIMOINE_DEBUT_MANDAT
+  PATRIMOINE_FIN_MANDAT
+  PATRIMOINE_MODIFICATION
+  INTERETS
+}
+
+// ============================================
+// ADMIN & AUDIT
+// ============================================
+
+model AdminUser {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  role         AdminRole @default(EDITOR)
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  lastLoginAt  DateTime?
+}
+
+enum AdminRole {
+  SUPER_ADMIN  // Full access
+  ADMIN        // Can manage users
+  EDITOR       // Can create/edit content
+  MODERATOR    // Can verify/approve content
+}
+
+// Audit log for all changes
+model AuditLog {
+  id          String   @id @default(cuid())
+  action      String   // CREATE, UPDATE, DELETE
+  entityType  String   // Politician, Affair, etc.
+  entityId    String
+  changes     Json?    // What changed
+  userId      String?  // Admin who made the change
+  userEmail   String?
+  ipAddress   String?
+
+  createdAt   DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([userId])
+  @@index([createdAt])
+}

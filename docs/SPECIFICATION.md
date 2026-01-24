@@ -37,6 +37,7 @@ Créer un **observatoire citoyen de la transparence politique française** perme
 - [x] **Députés** : 577 (Assemblée nationale - XVIIe législature)
 - [x] **Sénateurs** : 348 (Sénat)
 - [x] **Gouvernement** : ~36 membres (ministres, secrétaires d'État)
+- [x] **Eurodéputés** : 81 (Parlement européen - députés français)
 
 #### Données par représentant
 - [x] **Identité** : Nom, prénom, civilité, photo, date de naissance/décès
@@ -44,6 +45,7 @@ Créer un **observatoire citoyen de la transparence politique française** perme
 - [x] **Parti politique** : Affiliation actuelle avec couleur
 - [x] **Déclarations HATVP** : Patrimoine et intérêts (3000+ déclarations)
 - [x] **Affaires judiciaires** : ~90 affaires documentées avec sources
+- [x] **Votes parlementaires** : Scrutins publics (NosDéputés - 16e législature)
 
 #### Fonctionnalités utilisateur
 - [x] Recherche par nom avec autocomplétion
@@ -62,11 +64,12 @@ Créer un **observatoire citoyen de la transparence politique française** perme
 - [x] Gestion des identifiants externes (multi-sources)
 - [x] Scripts de synchronisation automatique
 
-### 2.2 Phase 2 - Enrichissement (Futur)
+### 2.2 Phase 2 - Enrichissement (En cours)
 
-- [ ] Votes à l'Assemblée/Sénat avec positions
+- [x] Votes à l'Assemblée avec positions (NosDéputés - 16e législature)
+- [x] Eurodéputés (81 représentants français)
+- [ ] Votes du Sénat (NosSénateurs)
 - [ ] Taux de présence aux séances
-- [ ] Eurodéputés (81 représentants)
 - [ ] Historique des législatures
 - [ ] API publique documentée
 - [ ] Export des données (Open Data)
@@ -93,9 +96,10 @@ Chaque représentant politique peut avoir des données provenant de **plusieurs 
 | Assemblée Nationale | `ASSEMBLEE_NATIONALE` | Députés, mandats | Hebdomadaire |
 | Sénat | `SENAT` | Sénateurs, mandats | Hebdomadaire |
 | Gouvernement | `GOUVERNEMENT` | Ministres | À chaque remaniement |
+| Parlement Européen | `PARLEMENT_EUROPEEN` | Eurodéputés | Mensuelle |
 | HATVP | `HATVP` | Déclarations patrimoine | Mensuelle |
 | Wikidata | `WIKIDATA` | Condamnations, dates décès | Hebdomadaire |
-| NosDéputés | `NOSDEPUTES` | Photos, activité | Mensuelle |
+| NosDéputés | `NOSDEPUTES` | Photos, activité, votes | Mensuelle |
 | NosSénateurs | `NOSSENATEURS` | Photos, activité | Mensuelle |
 
 ### 3.3 Workflow de synchronisation
@@ -146,13 +150,15 @@ Chaque représentant politique peut avoir des données provenant de **plusieurs 
 
 | Métrique | Valeur |
 |----------|--------|
-| Représentants | ~1015 |
+| Représentants | ~1100 |
 | Députés actifs | 577 |
 | Sénateurs actifs | 348 |
+| Eurodéputés | 81 |
 | Membres gouvernement | 36 |
 | Partis politiques | 55+ |
 | Déclarations HATVP | 3000+ |
 | Affaires documentées | ~90 |
+| Scrutins (votes) | ~2000 (16e législature) |
 | Couverture photos | ~91% |
 
 ---
@@ -165,3 +171,4 @@ Chaque représentant politique peut avoir des données provenant de **plusieurs 
 | 2026-01-20 | 0.5.0 | Import sénateurs, gouvernement, HATVP |
 | 2026-01-22 | 0.8.0 | Affaires Wikidata, statistiques, filtres |
 | 2026-01-24 | 1.0.0 | Dark mode, recherche avancée, documentation |
+| 2026-01-24 | 1.1.0 | Eurodéputés, votes parlementaires, institutions |

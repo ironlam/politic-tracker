@@ -1,11 +1,12 @@
 import Link from "next/link";
+import { FOOTER_LINKS } from "@/config/navigation";
 
 export function Footer() {
   return (
     <footer className="border-t bg-muted/30 mt-auto">
       <div className="container mx-auto px-4 py-8 md:py-10">
         {/* Main footer content */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
           {/* About */}
           <div>
             <h3 className="font-semibold text-sm mb-3">À propos</h3>
@@ -15,13 +16,18 @@ export function Footer() {
             </p>
           </div>
 
-          {/* Links */}
+          {/* Primary navigation */}
           <div>
-            <h3 className="font-semibold text-sm mb-3">Navigation</h3>
+            <h3 className="font-semibold text-sm mb-3">Explorer</h3>
             <ul className="space-y-2 text-sm">
               <li>
                 <Link href="/politiques" className="text-muted-foreground hover:text-foreground transition-colors">
                   Représentants
+                </Link>
+              </li>
+              <li>
+                <Link href="/votes" className="text-muted-foreground hover:text-foreground transition-colors">
+                  Votes parlementaires
                 </Link>
               </li>
               <li>
@@ -34,11 +40,20 @@ export function Footer() {
                   Statistiques
                 </Link>
               </li>
-              <li>
-                <Link href="/sources" className="text-muted-foreground hover:text-foreground transition-colors">
-                  Méthodologie
-                </Link>
-              </li>
+            </ul>
+          </div>
+
+          {/* Secondary navigation */}
+          <div>
+            <h3 className="font-semibold text-sm mb-3">Découvrir</h3>
+            <ul className="space-y-2 text-sm">
+              {FOOTER_LINKS.map((link) => (
+                <li key={link.href}>
+                  <Link href={link.href} className="text-muted-foreground hover:text-foreground transition-colors">
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
 

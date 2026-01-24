@@ -83,11 +83,11 @@ Transparence Politique vise à rendre accessible l'information sur les représen
 
 ## 3. Priorité basse (nice-to-have)
 
-### 3.1 Eurodéputés
+### 3.1 Eurodéputés ✅ FAIT
 
-- Import depuis le Parlement Européen
-- Intégration dans la recherche unifiée
-- ~79 élus français
+- [x] Import depuis le Parlement Européen (81 MEPs)
+- [x] Groupes politiques européens avec couleurs
+- [x] Intégration dans la recherche unifiée
 
 ### 3.2 Candidats aux élections
 
@@ -95,12 +95,15 @@ Transparence Politique vise à rendre accessible l'information sur les représen
 - Historique des résultats
 - Évolution des scores
 
-### 3.3 Activité parlementaire
+### 3.3 Activité parlementaire (En cours)
 
-- Intégration NosDéputés/NosSénateurs
-- Présence en commission
-- Votes sur les textes majeurs
-- Questions au gouvernement
+- [x] Votes publics depuis NosDéputés (16e législature)
+- [x] Page /votes avec liste des scrutins
+- [x] Votes par politicien sur leur fiche
+- [ ] Votes du Sénat (NosSénateurs)
+- [ ] Votes de la 17e législature (quand disponible)
+- [ ] Présence en commission
+- [ ] Questions au gouvernement
 
 ### 3.4 Biographies enrichies
 
@@ -281,17 +284,33 @@ npm run sync:deceased       # Dates de décès (Wikidata)
 
 ## 11. Prochaines étapes immédiates
 
-1. [x] ~~Remplacer filtre "décédé" par "actifs/anciens"~~
-2. [x] ~~Afficher la circonscription sur les cartes politiques~~
-3. [x] ~~Améliorer l'affichage des carrières (MandateTimeline)~~
-4. [x] ~~Ajouter loaders sur les filtres~~
-5. [x] ~~Page "Mon député" (recherche par code postal)~~
-6. [x] ~~Ajouter OpenGraph metadata~~
-7. [x] ~~Créer sitemap.xml dynamique~~
-8. [x] ~~Créer robots.txt~~
-9. [x] ~~Page /departements avec liste des élus~~
-10. [x] ~~Améliorer image OG (PNG avec design via opengraph-image.tsx)~~
-11. [x] ~~Cron job sync automatique (GitHub Actions hebdomadaire)~~
+### Fait (janvier 2026)
+- [x] Remplacer filtre "décédé" par "actifs/anciens"
+- [x] Afficher la circonscription sur les cartes politiques
+- [x] Améliorer l'affichage des carrières (MandateTimeline)
+- [x] Ajouter loaders sur les filtres
+- [x] Page "Mon député" (recherche par code postal)
+- [x] Ajouter OpenGraph metadata
+- [x] Créer sitemap.xml dynamique
+- [x] Créer robots.txt
+- [x] Page /departements avec liste des élus
+- [x] Améliorer image OG (PNG avec design via opengraph-image.tsx)
+- [x] Cron job sync automatique (GitHub Actions hebdomadaire)
+- [x] Import eurodéputés (81 MEPs français)
+- [x] Page /institutions (AN, Sénat, PE, Gouvernement)
+- [x] Import votes parlementaires (NosDéputés - 16e législature)
+- [x] Page /votes avec liste des scrutins
+
+### En cours
+- [ ] Améliorer le script de sync votes (affichage progression)
+- [ ] Intégrer les votes sur les fiches politiciens
+- [ ] Statistiques de vote par parti
+
+### À faire court terme
+- [ ] Votes du Sénat (NosSénateurs)
+- [ ] Page comparative entre politiciens
+- [ ] Export CSV des données
+- [ ] JSON-LD pour SEO (Person, Organization)
 
 ### Configuration du Cron Job
 
@@ -300,3 +319,36 @@ Le workflow GitHub Actions `.github/workflows/sync-data.yml` s'exécute :
 - **Manuellement** : Via l'onglet Actions sur GitHub
 
 **Secret requis** : `DATABASE_URL` doit être configuré dans les secrets du repo GitHub.
+
+---
+
+## 12. Liste d'évolutions proposées (2026)
+
+### Court terme (1-2 semaines)
+
+| Évolution | Impact | Effort |
+|-----------|--------|--------|
+| Progression sync votes | UX dev | Faible |
+| Votes sur fiches politiciens | UX utilisateur | Moyen |
+| Stats votes par parti | Insight | Moyen |
+| Améliorer mobile menu | UX mobile | Faible |
+
+### Moyen terme (1-2 mois)
+
+| Évolution | Impact | Effort |
+|-----------|--------|--------|
+| Votes Sénat (NosSénateurs) | Complétude | Moyen |
+| Carte interactive départements | Visualisation | Élevé |
+| Comparateur politiciens | Feature | Moyen |
+| API documentée (OpenAPI) | Réutilisation | Moyen |
+| PWA (offline, install) | UX mobile | Moyen |
+
+### Long terme (3-6 mois)
+
+| Évolution | Impact | Effort |
+|-----------|--------|--------|
+| Recherche avancée (Meilisearch) | UX recherche | Élevé |
+| Graphe des relations | Visualisation | Élevé |
+| Alertes nouvelles affaires | Engagement | Moyen |
+| Widget embeddable | Distribution | Moyen |
+| i18n (anglais) | Audience | Élevé |

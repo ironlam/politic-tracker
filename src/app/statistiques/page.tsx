@@ -166,21 +166,35 @@ async function getTopPoliticians() {
   }));
 }
 
+// Hex colors for progress bars (Tailwind dynamic classes don't work)
+const SUPER_CATEGORY_BAR_COLORS: Record<AffairSuperCategory, string> = {
+  PROBITE: "#9333ea",    // purple-600
+  FINANCES: "#2563eb",   // blue-600
+  PERSONNES: "#dc2626",  // red-600
+  EXPRESSION: "#d97706", // amber-600
+  AUTRE: "#6b7280",      // gray-500
+};
+
 function ProgressBar({
   value,
   max,
-  color = "bg-primary",
+  color,
+  hexColor,
 }: {
   value: number;
   max: number;
   color?: string;
+  hexColor?: string;
 }) {
   const percentage = max > 0 ? (value / max) * 100 : 0;
   return (
     <div className="w-full bg-gray-100 rounded-full h-4 overflow-hidden">
       <div
-        className={`h-full rounded-full transition-all ${color}`}
-        style={{ width: `${percentage}%` }}
+        className={`h-full rounded-full transition-all ${color || ""}`}
+        style={{
+          width: `${percentage}%`,
+          backgroundColor: hexColor,
+        }}
       />
     </div>
   );
@@ -313,25 +327,21 @@ export default async function StatistiquesPage() {
             <CardTitle>Répartition par type</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            {byCategory.map(({ category, count }) => {
-              const colorClass = AFFAIR_SUPER_CATEGORY_COLORS[category];
-              const bgColor = colorClass.match(/bg-(\w+)-100/)?.[1] || "gray";
-              return (
-                <div key={category}>
-                  <div className="flex justify-between text-sm mb-1">
-                    <Badge className={colorClass} variant="outline">
-                      {AFFAIR_SUPER_CATEGORY_LABELS[category]}
-                    </Badge>
-                    <span className="font-medium">{count}</span>
-                  </div>
-                  <ProgressBar
-                    value={count}
-                    max={maxByCategory}
-                    color={`bg-${bgColor}-500`}
-                  />
+            {byCategory.map(({ category, count }) => (
+              <div key={category}>
+                <div className="flex justify-between text-sm mb-1">
+                  <Badge className={AFFAIR_SUPER_CATEGORY_COLORS[category]} variant="outline">
+                    {AFFAIR_SUPER_CATEGORY_LABELS[category]}
+                  </Badge>
+                  <span className="font-medium">{count}</span>
                 </div>
-              );
-            })}
+                <ProgressBar
+                  value={count}
+                  max={maxByCategory}
+                  hexColor={SUPER_CATEGORY_BAR_COLORS[category]}
+                />
+              </div>
+            ))}
           </CardContent>
         </Card>
       </div>

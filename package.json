@@ -10,8 +10,8 @@
     "db:push": "prisma db push",
     "db:generate": "prisma generate",
     "db:studio": "prisma studio",
-    "sync:deputies": "tsx scripts/sync-deputies.ts",
-    "sync:stats": "tsx scripts/sync-deputies.ts --stats",
+    "sync:assemblee": "tsx scripts/sync-assemblee.ts",
+    "sync:stats": "tsx scripts/sync-assemblee.ts --stats",
     "import:wikidata": "tsx scripts/import-wikidata.ts",
     "import:wikidata-parties": "tsx scripts/import-wikidata-parties.ts",
     "import:wikidata-memberships": "tsx scripts/import-wikidata-memberships.ts"

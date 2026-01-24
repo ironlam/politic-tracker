@@ -41,6 +41,17 @@ interface AffairFormData {
   verdictDate?: string;
   sentence?: string;
   appeal: boolean;
+  // Detailed sentence
+  prisonMonths?: number;
+  prisonSuspended?: boolean;
+  fineAmount?: number;
+  ineligibilityMonths?: number;
+  communityService?: number;
+  otherSentence?: string;
+  // Jurisdiction
+  court?: string;
+  chamber?: string;
+  caseNumber?: string;
   sources: Source[];
 }
 
@@ -294,17 +305,57 @@ export function AffairForm({ politicians, initialData }: AffairFormProps) {
 
       <Card>
         <CardHeader>
+          <CardTitle>Juridiction</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <Label htmlFor="court">Tribunal</Label>
+              <Input
+                id="court"
+                value={formData.court || ""}
+                onChange={(e) => updateField("court", e.target.value)}
+                placeholder="Ex: Tribunal correctionnel de Paris"
+              />
+            </div>
+            <div>
+              <Label htmlFor="chamber">Chambre</Label>
+              <Input
+                id="chamber"
+                value={formData.chamber || ""}
+                onChange={(e) => updateField("chamber", e.target.value)}
+                placeholder="Ex: 11ème chambre"
+              />
+            </div>
+            <div>
+              <Label htmlFor="caseNumber">N° d&apos;affaire</Label>
+              <Input
+                id="caseNumber"
+                value={formData.caseNumber || ""}
+                onChange={(e) => updateField("caseNumber", e.target.value)}
+                placeholder="Ex: 2023/12345"
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
           <CardTitle>Condamnation (si applicable)</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <Label htmlFor="sentence">Peine prononcée</Label>
+            <Label htmlFor="sentence">Résumé de la peine</Label>
             <Input
               id="sentence"
               value={formData.sentence || ""}
               onChange={(e) => updateField("sentence", e.target.value)}
               placeholder="Ex: 2 ans de prison avec sursis, 5 ans d'inéligibilité"
             />
+            <p className="text-xs text-muted-foreground mt-1">
+              Résumé textuel. Les champs détaillés ci-dessous sont prioritaires pour l&apos;affichage.
+            </p>
           </div>
 
           <div className="flex items-center gap-2">
@@ -316,6 +367,81 @@ export function AffairForm({ politicians, initialData }: AffairFormProps) {
               className="h-4 w-4"
             />
             <Label htmlFor="appeal">Appel en cours</Label>
+          </div>
+
+          <hr className="my-4" />
+          <h4 className="font-medium text-sm">Détails de la peine</h4>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div>
+              <Label htmlFor="prisonMonths">Prison (mois)</Label>
+              <Input
+                id="prisonMonths"
+                type="number"
+                min="0"
+                value={formData.prisonMonths || ""}
+                onChange={(e) => updateField("prisonMonths", e.target.value ? parseInt(e.target.value) : undefined)}
+                placeholder="0"
+              />
+            </div>
+
+            <div className="flex items-end gap-2 pb-2">
+              <input
+                type="checkbox"
+                id="prisonSuspended"
+                checked={formData.prisonSuspended || false}
+                onChange={(e) => updateField("prisonSuspended", e.target.checked)}
+                className="h-4 w-4"
+              />
+              <Label htmlFor="prisonSuspended">Avec sursis</Label>
+            </div>
+
+            <div>
+              <Label htmlFor="fineAmount">Amende (EUR)</Label>
+              <Input
+                id="fineAmount"
+                type="number"
+                min="0"
+                step="100"
+                value={formData.fineAmount || ""}
+                onChange={(e) => updateField("fineAmount", e.target.value ? parseFloat(e.target.value) : undefined)}
+                placeholder="0"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="ineligibilityMonths">Inéligibilité (mois)</Label>
+              <Input
+                id="ineligibilityMonths"
+                type="number"
+                min="0"
+                value={formData.ineligibilityMonths || ""}
+                onChange={(e) => updateField("ineligibilityMonths", e.target.value ? parseInt(e.target.value) : undefined)}
+                placeholder="0"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="communityService">TIG (heures)</Label>
+              <Input
+                id="communityService"
+                type="number"
+                min="0"
+                value={formData.communityService || ""}
+                onChange={(e) => updateField("communityService", e.target.value ? parseInt(e.target.value) : undefined)}
+                placeholder="0"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="otherSentence">Autre peine</Label>
+              <Input
+                id="otherSentence"
+                value={formData.otherSentence || ""}
+                onChange={(e) => updateField("otherSentence", e.target.value)}
+                placeholder="Ex: interdiction d'exercer"
+              />
+            </div>
           </div>
         </CardContent>
       </Card>

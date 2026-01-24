@@ -23,6 +23,17 @@ interface AffairInput {
   verdictDate?: string;
   sentence?: string;
   appeal?: boolean;
+  // Detailed sentence
+  prisonMonths?: number;
+  prisonSuspended?: boolean;
+  fineAmount?: number;
+  ineligibilityMonths?: number;
+  communityService?: number;
+  otherSentence?: string;
+  // Jurisdiction
+  court?: string;
+  chamber?: string;
+  caseNumber?: string;
   sources: SourceInput[];
 }
 
@@ -103,6 +114,17 @@ export async function POST(request: NextRequest) {
         verdictDate: data.verdictDate ? new Date(data.verdictDate) : null,
         sentence: data.sentence || null,
         appeal: data.appeal || false,
+        // Detailed sentence
+        prisonMonths: data.prisonMonths || null,
+        prisonSuspended: data.prisonSuspended ?? null,
+        fineAmount: data.fineAmount || null,
+        ineligibilityMonths: data.ineligibilityMonths || null,
+        communityService: data.communityService || null,
+        otherSentence: data.otherSentence || null,
+        // Jurisdiction
+        court: data.court || null,
+        chamber: data.chamber || null,
+        caseNumber: data.caseNumber || null,
         sources: {
           create: data.sources.map((s) => ({
             url: s.url,

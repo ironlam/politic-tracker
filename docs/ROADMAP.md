@@ -335,20 +335,20 @@ Le workflow GitHub Actions `.github/workflows/sync-data.yml` s'exécute :
 
 ### Moyen terme (1-2 mois)
 
-| Évolution | Impact | Effort |
-|-----------|--------|--------|
-| Votes Sénat (NosSénateurs) | Complétude | Moyen |
-| Carte interactive départements | Visualisation | Élevé |
-| Comparateur politiciens | Feature | Moyen |
-| API documentée (OpenAPI) | Réutilisation | Moyen |
-| PWA (offline, install) | UX mobile | Moyen |
+| Évolution | Impact | Effort | Statut |
+|-----------|--------|--------|--------|
+| Votes Sénat (NosSénateurs) | Complétude | Moyen | |
+| Carte interactive départements | Visualisation | Élevé | |
+| Comparateur politiciens | Feature | Moyen | |
+| API documentée (OpenAPI) | Réutilisation | Moyen | FAIT |
+| PWA (offline, install) | UX mobile | Moyen | |
 
 ### Long terme (3-6 mois)
 
-| Évolution | Impact | Effort |
-|-----------|--------|--------|
-| Recherche avancée (Meilisearch) | UX recherche | Élevé |
-| Graphe des relations | Visualisation | Élevé |
-| Alertes nouvelles affaires | Engagement | Moyen |
-| Widget embeddable | Distribution | Moyen |
-| i18n (anglais) | Audience | Élevé |
+| Évolution | Impact | Effort | Statut |
+|-----------|--------|--------|--------|
+| Recherche avancée (Meilisearch) | UX recherche | Élevé | |
+| Graphe des relations | Visualisation | Élevé | FAIT |
+| Alertes nouvelles affaires | Engagement | Moyen | |
+| Widget embeddable | Distribution | Moyen | |
+| i18n (anglais) | Audience | Élevé | |

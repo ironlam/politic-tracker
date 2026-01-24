@@ -6,6 +6,11 @@
  *   npx tsx scripts/sync-votes.ts --leg=16     # Sync specific legislature
  *   npx tsx scripts/sync-votes.ts --stats      # Show current stats
  *   npx tsx scripts/sync-votes.ts --help       # Show help
+ *
+ * Rate limiting:
+ *   - 500ms delay between each request (max 2 req/s)
+ *   - Extra 2s pause every 20 requests
+ *   - User-Agent identifies our app
  */
 
 import "dotenv/config";
@@ -55,6 +60,11 @@ Usage:
   npx tsx scripts/sync-votes.ts --help       Show this help message
 
 Data source: NosDéputés.fr
+
+Rate limiting:
+  - 500ms delay between requests (max 2 req/s)
+  - 2s pause every 20 requests
+  - User-Agent: TransparencePolitique/1.0
 
 Note: NosDéputés usually lags behind the current legislature.
       As of 2026, legislature 16 (2022-2024) is the latest available.

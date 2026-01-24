@@ -13,10 +13,23 @@ const DEFAULT_LEGISLATURE = 16; // NosDéputés n'a pas encore la 17e législatu
 const REQUEST_TIMEOUT = 30000; // 30 seconds
 const BATCH_SIZE = 50; // Process in batches for progress reporting
 
+// Rate limiting - be respectful to NosDéputés servers
+const REQUEST_DELAY_MS = 500; // Delay between each request (500ms = max 2 req/s)
+const BATCH_DELAY_MS = 2000; // Extra delay every N requests
+const BATCH_DELAY_INTERVAL = 20; // Apply extra delay every 20 requests
+const USER_AGENT = "TransparencePolitique/1.0 (https://politic-tracker.vercel.app; contact@transparence-politique.fr)";
+
 /**
  * Progress callback type
  */
 export type ProgressCallback = (current: number, total: number, message: string) => void;
+
+/**
+ * Sleep utility for rate limiting
+ */
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 /**
  * Native HTTPS GET request with redirect and timeout support
@@ -28,7 +41,14 @@ function httpsGet<T>(url: string, maxRedirects = 5): Promise<T> {
       return;
     }
 
-    const request = https.get(url, (res) => {
+    const options = {
+      headers: {
+        "User-Agent": USER_AGENT,
+        "Accept": "application/json",
+      },
+    };
+
+    const request = https.get(url, options, (res) => {
       // Handle redirects
       if (res.statusCode && res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
         const redirectUrl = res.headers.location.startsWith("http")
@@ -410,9 +430,15 @@ export async function syncVotes(
         log(`  ${progressMsg}...`);
       }
 
-      // Add delay to avoid rate limiting
-      if (i > 0 && i % 10 === 0) {
-        await new Promise((resolve) => setTimeout(resolve, 500));
+      // Rate limiting: delay after each request
+      if (i > 0) {
+        await sleep(REQUEST_DELAY_MS);
+
+        // Extra delay every N requests to be extra nice to the server
+        if (i % BATCH_DELAY_INTERVAL === 0) {
+          onProgress?.(percent, 100, `${progressMsg} (rate limit pause...)`);
+          await sleep(BATCH_DELAY_MS);
+        }
       }
 
       const syncResult = await syncScrutin(item, legislature, slugToId);

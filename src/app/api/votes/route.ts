@@ -2,15 +2,65 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
 /**
- * GET /api/votes
- * Public API to list parliamentary scrutins
- *
- * Query params:
- * - search: search in title
- * - result: filter by result (ADOPTED, REJECTED)
- * - legislature: filter by legislature number
- * - page: page number (default: 1)
- * - limit: items per page (default: 20, max: 100)
+ * @openapi
+ * /api/votes:
+ *   get:
+ *     summary: Liste des scrutins parlementaires
+ *     description: Retourne la liste paginée des scrutins publics (votes nominatifs)
+ *     tags: [Votes]
+ *     parameters:
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Recherche dans le titre du scrutin
+ *       - in: query
+ *         name: result
+ *         schema:
+ *           type: string
+ *           enum: [ADOPTED, REJECTED]
+ *         description: Filtrer par résultat (adopté ou rejeté)
+ *       - in: query
+ *         name: legislature
+ *         schema:
+ *           type: integer
+ *           example: 16
+ *         description: Filtrer par législature
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *           minimum: 1
+ *         description: Numéro de page
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *           minimum: 1
+ *           maximum: 100
+ *         description: Nombre d'éléments par page
+ *     responses:
+ *       200:
+ *         description: Liste des scrutins avec pagination
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Scrutin'
+ *                 pagination:
+ *                   $ref: '#/components/schemas/Pagination'
+ *       500:
+ *         description: Erreur serveur
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);

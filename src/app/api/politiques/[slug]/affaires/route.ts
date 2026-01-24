@@ -6,8 +6,44 @@ interface RouteContext {
 }
 
 /**
- * GET /api/politiques/[slug]/affaires
- * Public API to get affairs for a specific politician
+ * @openapi
+ * /api/politiques/{slug}/affaires:
+ *   get:
+ *     summary: Affaires d'un représentant
+ *     description: Retourne toutes les affaires judiciaires d'un représentant politique
+ *     tags: [Affaires]
+ *     parameters:
+ *       - in: path
+ *         name: slug
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Slug du représentant (ex. jean-dupont)
+ *         example: nicolas-sarkozy
+ *     responses:
+ *       200:
+ *         description: Affaires du représentant
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 politician:
+ *                   $ref: '#/components/schemas/PoliticianSummary'
+ *                 affairs:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Affair'
+ *                 total:
+ *                   type: integer
+ *       404:
+ *         description: Représentant non trouvé
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Erreur serveur
  */
 export async function GET(request: NextRequest, context: RouteContext) {
   const { slug } = await context.params;

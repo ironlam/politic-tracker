@@ -1,6 +1,33 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
+/**
+ * @openapi
+ * /api/search/politicians:
+ *   get:
+ *     summary: Recherche de représentants
+ *     description: Recherche par nom avec autocomplétion (retourne max 8 résultats)
+ *     tags: [Recherche]
+ *     parameters:
+ *       - in: query
+ *         name: q
+ *         required: true
+ *         schema:
+ *           type: string
+ *           minLength: 2
+ *         description: Terme de recherche (minimum 2 caractères)
+ *         example: "macron"
+ *     responses:
+ *       200:
+ *         description: Résultats de recherche
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/SearchResult'
+ *               maxItems: 8
+ */
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const query = searchParams.get("q") || "";

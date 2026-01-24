@@ -1,6 +1,50 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
+/**
+ * @openapi
+ * /api/deputies/by-department:
+ *   get:
+ *     summary: Députés par département
+ *     description: Retourne la liste des députés en exercice pour un département donné
+ *     tags: [Géographie]
+ *     parameters:
+ *       - in: query
+ *         name: department
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Nom du département
+ *         example: "Paris"
+ *     responses:
+ *       200:
+ *         description: Liste des députés du département
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: string
+ *                   slug:
+ *                     type: string
+ *                   fullName:
+ *                     type: string
+ *                   photoUrl:
+ *                     type: string
+ *                     nullable: true
+ *                   constituency:
+ *                     type: string
+ *                     example: "Paris (1)"
+ *                   party:
+ *                     $ref: '#/components/schemas/PartySummary'
+ *       400:
+ *         description: Paramètre department manquant
+ *       500:
+ *         description: Erreur serveur
+ */
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const department = searchParams.get("department");

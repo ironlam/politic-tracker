@@ -6,12 +6,57 @@ interface RouteContext {
 }
 
 /**
- * GET /api/politiques/[slug]/votes
- * Public API to get voting record for a specific politician
- *
- * Query params:
- * - page: page number (default: 1)
- * - limit: items per page (default: 20, max: 100)
+ * @openapi
+ * /api/politiques/{slug}/votes:
+ *   get:
+ *     summary: Votes d'un représentant
+ *     description: Retourne l'historique des votes parlementaires d'un représentant avec statistiques
+ *     tags: [Votes]
+ *     parameters:
+ *       - in: path
+ *         name: slug
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Slug du représentant
+ *         example: jean-luc-melenchon
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *           minimum: 1
+ *         description: Numéro de page
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *           minimum: 1
+ *           maximum: 100
+ *         description: Nombre d'éléments par page
+ *     responses:
+ *       200:
+ *         description: Votes du représentant avec statistiques
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 politician:
+ *                   $ref: '#/components/schemas/PoliticianSummary'
+ *                 stats:
+ *                   $ref: '#/components/schemas/VoteStats'
+ *                 votes:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Vote'
+ *                 pagination:
+ *                   $ref: '#/components/schemas/Pagination'
+ *       404:
+ *         description: Représentant non trouvé
+ *       500:
+ *         description: Erreur serveur
  */
 export async function GET(request: NextRequest, context: RouteContext) {
   const { slug } = await context.params;

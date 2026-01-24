@@ -2,14 +2,60 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
 /**
- * GET /api/affaires
- * Public API to list all documented affairs
- *
- * Query params:
- * - status: filter by status (e.g., CONDAMNATION_DEFINITIVE)
- * - category: filter by category (e.g., CORRUPTION)
- * - page: page number (default: 1)
- * - limit: items per page (default: 20, max: 100)
+ * @openapi
+ * /api/affaires:
+ *   get:
+ *     summary: Liste des affaires judiciaires
+ *     description: Retourne la liste paginée des affaires judiciaires documentées avec leurs sources
+ *     tags: [Affaires]
+ *     parameters:
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [ENQUETE_PRELIMINAIRE, MISE_EN_EXAMEN, PROCES_EN_COURS, CONDAMNATION_PREMIERE_INSTANCE, CONDAMNATION_DEFINITIVE, APPEL_EN_COURS, RELAXE, NON_LIEU, PRESCRIPTION]
+ *         description: Filtrer par statut judiciaire
+ *       - in: query
+ *         name: category
+ *         schema:
+ *           type: string
+ *           enum: [CORRUPTION, FRAUDE_FISCALE, BLANCHIMENT, TRAFIC_INFLUENCE, PRISE_ILLEGALE_INTERET, VIOLENCE, HARCELEMENT_SEXUEL, DIFFAMATION]
+ *         description: Filtrer par catégorie d'infraction
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *           minimum: 1
+ *         description: Numéro de page
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *           minimum: 1
+ *           maximum: 100
+ *         description: Nombre d'éléments par page
+ *     responses:
+ *       200:
+ *         description: Liste des affaires avec pagination
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Affair'
+ *                 pagination:
+ *                   $ref: '#/components/schemas/Pagination'
+ *       500:
+ *         description: Erreur serveur
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);

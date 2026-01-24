@@ -18,6 +18,7 @@ export const FOOTER_LINKS = [
   { href: "/departements", label: "Départements" },
   { href: "/institutions", label: "Institutions" },
   { href: "/sources", label: "Sources" },
+  { href: "/docs/api", label: "API" },
   { href: "/mentions-legales", label: "Mentions légales" },
 ] as const;
 

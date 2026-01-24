@@ -48,6 +48,9 @@
     "pg": "^8.17.1",
     "react": "19.2.3",
     "react-dom": "19.2.3",
+    "react-force-graph": "^1.48.1",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-react": "^5.31.0",
     "tailwind-merge": "^3.4.0",
     "zod": "^4.3.5"
   },
@@ -61,6 +64,7 @@
     "@types/pg": "^8.16.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/swagger-jsdoc": "^6.0.4",
     "@vitejs/plugin-react": "^5.1.2",
     "dotenv": "^17.2.3",
     "eslint": "^9",

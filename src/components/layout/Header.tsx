@@ -30,7 +30,14 @@ export function Header() {
                 {link.label}
               </Link>
             ))}
-            <div className="ml-2 border-l pl-2">
+            <div className="ml-2 border-l pl-2 flex items-center gap-1">
+              <Link
+                href="/docs/api"
+                className="px-2 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-accent rounded transition-colors"
+                title="Documentation API"
+              >
+                API
+              </Link>
               <ThemeToggle />
             </div>
           </nav>

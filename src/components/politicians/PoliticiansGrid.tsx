@@ -150,8 +150,9 @@ export function PoliticiansGrid({
               role="button"
               tabIndex={0}
               onKeyDown={(e) => e.key === "Enter" && navigateTo(buildUrl({ conviction: convictionFilter ? undefined : "true" }))}
+              title="Inclut les condamnations en 1ère instance (appel possible) et définitives"
             >
-              Avec condamnation ({counts.withConviction})
+              Avec décision de justice ({counts.withConviction})
             </Badge>
           </div>
         </div>

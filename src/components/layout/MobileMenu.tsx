@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
-import { NAV_LINKS } from "@/config/navigation";
+import { NAV_LINKS, FOOTER_LINKS } from "@/config/navigation";
 
 export function MobileMenu() {
   const [isOpen, setIsOpen] = useState(false);
@@ -75,6 +75,24 @@ export function MobileMenu() {
                 </li>
               ))}
             </ul>
+
+            {/* Secondary links */}
+            <div className="mt-4 pt-4 border-t">
+              <p className="px-4 text-xs text-muted-foreground uppercase tracking-wider mb-2">Plus</p>
+              <ul className="space-y-1" role="list">
+                {FOOTER_LINKS.filter(l => l.href !== "/mentions-legales").map((link) => (
+                  <li key={link.href}>
+                    <Link
+                      href={link.href}
+                      onClick={() => setIsOpen(false)}
+                      className="block px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg transition-colors"
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </nav>
         </div>
       )}

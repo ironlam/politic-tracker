@@ -111,14 +111,16 @@ export async function fetchScrutinDetails(
 /**
  * Convert NosDéputés sort to VotingResult
  */
-function parseVotingResult(sort: string): VotingResult {
+function parseVotingResult(sort: string | null | undefined): VotingResult {
+  if (!sort) return "REJECTED";
   return sort.toLowerCase() === "adopté" ? "ADOPTED" : "REJECTED";
 }
 
 /**
  * Convert NosDéputés position to VotePosition
  */
-function parseVotePosition(position: string): VotePosition {
+function parseVotePosition(position: string | null | undefined): VotePosition {
+  if (!position) return "ABSENT";
   switch (position.toLowerCase()) {
     case "pour":
       return "POUR";
@@ -287,14 +289,18 @@ export async function syncVotes(
     errors: [],
   };
 
+  // Use silent mode when progress callback is provided (CLI handles output)
+  const log = onProgress ? () => {} : console.log.bind(console);
+  const logError = console.error.bind(console); // Always log errors
+
   try {
     onProgress?.(0, 100, "Building slug to politician ID map...");
-    console.log(`\nBuilding slug to politician ID map...`);
+    log(`\nBuilding slug to politician ID map...`);
     const slugToId = await buildSlugToIdMap();
-    console.log(`Found ${slugToId.size} politicians in database`);
+    log(`Found ${slugToId.size} politicians in database`);
 
     onProgress?.(5, 100, `Fetching scrutins for legislature ${legislature}...`);
-    console.log(`\nFetching scrutins for legislature ${legislature}...`);
+    log(`\nFetching scrutins for legislature ${legislature}...`);
 
     let list: NosDeputesScrutinList;
     try {
@@ -302,9 +308,9 @@ export async function syncVotes(
     } catch (error) {
       const errMsg = error instanceof Error ? error.message : String(error);
       if (errMsg.includes("not available") || errMsg.includes("redirected")) {
-        console.error(`\n❌ Legislature ${legislature} is not available on NosDéputés.`);
-        console.error(`   NosDéputés usually lags behind the current legislature.`);
-        console.error(`   Try with --leg=16 for the 16th legislature.\n`);
+        logError(`\n❌ Legislature ${legislature} is not available on NosDéputés.`);
+        logError(`   NosDéputés usually lags behind the current legislature.`);
+        logError(`   Try with --leg=16 for the 16th legislature.\n`);
         result.errors.push(`Legislature ${legislature} not available on NosDéputés`);
         return result;
       }
@@ -313,7 +319,7 @@ export async function syncVotes(
 
     const scrutins = list.scrutins;
     const total = scrutins.length;
-    console.log(`Found ${total} scrutins\n`);
+    log(`Found ${total} scrutins\n`);
 
     // Process each scrutin
     for (let i = 0; i < scrutins.length; i++) {
@@ -325,7 +331,7 @@ export async function syncVotes(
 
       if ((i + 1) % BATCH_SIZE === 0 || i === 0) {
         onProgress?.(percent, 100, progressMsg);
-        console.log(`  ${progressMsg}...`);
+        log(`  ${progressMsg}...`);
       }
 
       // Add delay to avoid rate limiting

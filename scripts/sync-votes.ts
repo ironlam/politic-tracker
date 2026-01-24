@@ -11,6 +11,9 @@
 import "dotenv/config";
 import { syncVotes, getVotesStats, ProgressCallback } from "../src/services/sync";
 
+// Check if terminal supports interactive updates
+const isTTY = process.stdout.isTTY === true;
+
 // Progress bar rendering
 function renderProgressBar(current: number, total: number, width: number = 30): string {
   const percent = Math.round((current / total) * 100);
@@ -20,11 +23,22 @@ function renderProgressBar(current: number, total: number, width: number = 30): 
   return `[${bar}] ${percent}%`;
 }
 
+// Track last message length for proper clearing
+let lastMessageLength = 0;
+
 // Clear current line and write new content
 function updateLine(message: string): void {
-  process.stdout.clearLine?.(0);
-  process.stdout.cursorTo?.(0);
-  process.stdout.write(message);
+  if (isTTY) {
+    // Use ANSI escape codes for better cross-platform support
+    // \r = carriage return (go to start of line)
+    // \x1b[K = clear from cursor to end of line
+    process.stdout.write(`\r\x1b[K${message}`);
+  } else {
+    // Fallback: just overwrite with carriage return and spaces
+    const padding = " ".repeat(Math.max(0, lastMessageLength - message.length));
+    process.stdout.write(`\r${message}${padding}`);
+  }
+  lastMessageLength = message.length;
 }
 
 async function main() {

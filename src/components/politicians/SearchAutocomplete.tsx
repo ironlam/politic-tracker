@@ -32,6 +32,47 @@ interface SearchAutocompleteProps {
   onSearch?: (query: string) => void;
 }
 
+// Avatar component with error handling
+function ResultAvatar({ photoUrl, fullName }: { photoUrl: string | null; fullName: string }) {
+  const [hasError, setHasError] = useState(false);
+
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase();
+  };
+
+  // Reset error state when photoUrl changes
+  useEffect(() => {
+    setHasError(false);
+  }, [photoUrl]);
+
+  if (!photoUrl || hasError) {
+    return (
+      <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center shrink-0">
+        <span className="text-xs font-medium text-muted-foreground">
+          {getInitials(fullName)}
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-8 h-8 rounded-full overflow-hidden bg-muted shrink-0">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={photoUrl}
+        alt=""
+        className="w-full h-full object-cover"
+        onError={() => setHasError(true)}
+      />
+    </div>
+  );
+}
+
 export function SearchAutocomplete({
   defaultValue = "",
   placeholder = "Rechercher un représentant...",
@@ -126,15 +167,6 @@ export function SearchAutocomplete({
     }
   };
 
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .slice(0, 2)
-      .toUpperCase();
-  };
-
   return (
     <div ref={containerRef} className="relative w-full max-w-sm">
       <Input
@@ -168,20 +200,8 @@ export function SearchAutocomplete({
                     index === selectedIndex ? "bg-accent" : "hover:bg-accent/50"
                   }`}
                 >
-                  {/* Avatar */}
-                  <div className="w-8 h-8 rounded-full overflow-hidden bg-muted flex items-center justify-center shrink-0">
-                    {result.photoUrl ? (
-                      <img
-                        src={result.photoUrl}
-                        alt=""
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <span className="text-xs font-medium text-muted-foreground">
-                        {getInitials(result.fullName)}
-                      </span>
-                    )}
-                  </div>
+                  {/* Avatar with fallback */}
+                  <ResultAvatar photoUrl={result.photoUrl} fullName={result.fullName} />
 
                   {/* Info */}
                   <div className="flex-1 min-w-0">

@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PoliticianCard } from "@/components/politicians/PoliticianCard";
+import { formatDate } from "@/lib/utils";
 
 async function getStats() {
   const [politicianCount, partyCount, affairCount, deputeCount, senateurCount, gouvernementCount, declarationCount] =
@@ -37,7 +38,13 @@ async function getRecentPoliticians() {
 async function getRecentAffairs() {
   return db.affair.findMany({
     take: 4,
-    orderBy: { createdAt: "desc" },
+    // Order by most relevant date: verdict > start > facts > created
+    orderBy: [
+      { verdictDate: { sort: "desc", nulls: "last" } },
+      { startDate: { sort: "desc", nulls: "last" } },
+      { factsDate: { sort: "desc", nulls: "last" } },
+      { createdAt: "desc" },
+    ],
     include: {
       politician: { include: { currentParty: true } },
     },
@@ -133,32 +140,43 @@ export default async function HomePage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {recentAffairs.map((affair) => (
-                <Link
-                  key={affair.id}
-                  href={`/politiques/${affair.politician.slug}`}
-                  className="block"
-                >
-                  <Card className="h-full hover:shadow-lg transition-all hover:border-primary/20">
-                    <CardContent className="pt-6">
-                      <div className="flex items-start gap-4">
-                        <div className="w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center shrink-0">
-                          <span className="text-destructive text-lg">!</span>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-semibold truncate">{affair.title}</p>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            {affair.politician.fullName}
-                            {affair.politician.currentParty && (
-                              <span className="text-primary"> ({affair.politician.currentParty.shortName})</span>
+              {recentAffairs.map((affair) => {
+                // Get the most relevant date for display
+                const relevantDate = affair.verdictDate || affair.startDate || affair.factsDate;
+                return (
+                  <Link
+                    key={affair.id}
+                    href={`/politiques/${affair.politician.slug}`}
+                    className="block"
+                  >
+                    <Card className="h-full hover:shadow-lg transition-all hover:border-primary/20">
+                      <CardContent className="pt-6">
+                        <div className="flex items-start gap-4">
+                          <div className="w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center shrink-0">
+                            <span className="text-destructive text-lg">!</span>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <p className="font-semibold truncate">{affair.title}</p>
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                              {affair.politician.fullName}
+                              {affair.politician.currentParty && (
+                                <span className="text-primary"> ({affair.politician.currentParty.shortName})</span>
+                              )}
+                            </p>
+                            {relevantDate && (
+                              <p className="text-xs text-muted-foreground mt-2 font-mono">
+                                {formatDate(relevantDate)}
+                              </p>
                             )}
-                          </p>
+                          </div>
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-              ))}
+                      </CardContent>
+                    </Card>
+                  </Link>
+                );
+              })}
             </div>
           </div>
         </section>

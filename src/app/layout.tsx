@@ -47,21 +47,14 @@ export const metadata: Metadata = {
     title: "Transparence Politique",
     description:
       "Observatoire citoyen des représentants politiques français. Mandats, patrimoine, affaires judiciaires.",
-    images: [
-      {
-        url: "/og-image.svg",
-        width: 1200,
-        height: 630,
-        alt: "Transparence Politique - Observatoire citoyen",
-      },
-    ],
+    // Image generated automatically by opengraph-image.tsx
   },
   twitter: {
     card: "summary_large_image",
     title: "Transparence Politique",
     description:
       "Observatoire citoyen des représentants politiques français.",
-    images: ["/og-image.svg"],
+    // Image generated automatically by opengraph-image.tsx
   },
   robots: {
     index: true,

@@ -60,7 +60,7 @@ export default async function HomePage() {
     <div className="min-h-screen">
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-gradient-to-br from-primary/5 via-background to-accent/10">
-        <div className="container mx-auto px-4 py-20 md:py-28">
+        <div className="container mx-auto px-4 py-20 md:py-28 relative z-10">
           <div className="max-w-3xl mx-auto text-center">
             <Badge variant="secondary" className="mb-6 text-sm font-medium">
               Observatoire citoyen indépendant
@@ -84,9 +84,9 @@ export default async function HomePage() {
             </div>
           </div>
         </div>
-        {/* Decorative elements */}
-        <div className="absolute top-0 left-0 w-72 h-72 bg-primary/10 rounded-full -translate-x-1/2 -translate-y-1/2 blur-3xl" />
-        <div className="absolute bottom-0 right-0 w-96 h-96 bg-accent/20 rounded-full translate-x-1/3 translate-y-1/3 blur-3xl" />
+        {/* Decorative elements - pointer-events-none to not block clicks */}
+        <div className="absolute top-0 left-0 w-72 h-72 bg-primary/10 rounded-full -translate-x-1/2 -translate-y-1/2 blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 right-0 w-96 h-96 bg-accent/20 rounded-full translate-x-1/3 translate-y-1/3 blur-3xl pointer-events-none" />
       </section>
 
       {/* Stats Section */}

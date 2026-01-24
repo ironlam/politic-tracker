@@ -100,23 +100,29 @@ export function PoliticiansGrid({
         />
 
         {/* Party filter */}
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">Parti:</span>
-            <div className="flex flex-wrap gap-1">
+        <div className="flex flex-col sm:flex-row flex-wrap items-start sm:items-center gap-3 sm:gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto">
+            <span className="text-sm text-muted-foreground whitespace-nowrap">Parti:</span>
+            <div className="flex flex-wrap gap-1.5" role="group" aria-label="Filtrer par parti">
               <Badge
                 variant={partyFilter === "" ? "default" : "outline"}
-                className="cursor-pointer"
+                className="cursor-pointer hover:bg-primary/10 transition-colors"
                 onClick={() => navigateTo(buildUrl({ party: undefined }))}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => e.key === "Enter" && navigateTo(buildUrl({ party: undefined }))}
               >
                 Tous
               </Badge>
-              {parties.slice(0, 8).map((party) => (
+              {parties.slice(0, 6).map((party) => (
                 <Badge
                   key={party.id}
                   variant={partyFilter === party.id ? "default" : "outline"}
-                  className="cursor-pointer"
+                  className="cursor-pointer hover:opacity-80 transition-opacity"
                   onClick={() => navigateTo(buildUrl({ party: party.id }))}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => e.key === "Enter" && navigateTo(buildUrl({ party: party.id }))}
                   style={{
                     backgroundColor:
                       partyFilter === party.id ? party.color || undefined : undefined,
@@ -126,9 +132,9 @@ export function PoliticiansGrid({
                   {party.shortName}
                 </Badge>
               ))}
-              {parties.length > 8 && (
+              {parties.length > 6 && (
                 <PartySelect
-                  parties={parties.slice(8)}
+                  parties={parties.slice(6)}
                   currentValue={partyFilter}
                 />
               )}
@@ -136,11 +142,14 @@ export function PoliticiansGrid({
           </div>
 
           {/* Conviction filter */}
-          <div className="flex items-center gap-2 border-l pl-4">
+          <div className="flex items-center gap-2 sm:border-l sm:pl-4">
             <Badge
               variant={convictionFilter ? "destructive" : "outline"}
-              className="cursor-pointer"
+              className="cursor-pointer hover:bg-destructive/10 transition-colors"
               onClick={() => navigateTo(buildUrl({ conviction: convictionFilter ? undefined : "true" }))}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => e.key === "Enter" && navigateTo(buildUrl({ conviction: convictionFilter ? undefined : "true" }))}
             >
               Avec condamnation ({counts.withConviction})
             </Badge>
@@ -207,29 +216,33 @@ export function PoliticiansGrid({
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="mt-8 flex justify-center items-center gap-2">
-              {page > 1 && (
-                <button
-                  onClick={() => navigateTo(buildUrl({ page: String(page - 1) }))}
-                  className="px-4 py-2 border rounded-md hover:bg-muted disabled:opacity-50"
-                  disabled={isPending}
-                >
-                  Précédent
-                </button>
-              )}
-              <span className="px-4 py-2 text-muted-foreground">
-                Page {page} sur {totalPages}
+            <nav className="mt-8 flex justify-center items-center gap-2" aria-label="Pagination">
+              <button
+                onClick={() => navigateTo(buildUrl({ page: String(page - 1) }))}
+                className="inline-flex items-center gap-1 px-4 py-2 border rounded-md hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                disabled={isPending || page <= 1}
+                aria-label="Page précédente"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                  <path fillRule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clipRule="evenodd" />
+                </svg>
+                <span className="hidden sm:inline">Précédent</span>
+              </button>
+              <span className="px-4 py-2 text-sm text-muted-foreground tabular-nums">
+                Page <span className="font-medium text-foreground">{page}</span> sur <span className="font-medium text-foreground">{totalPages}</span>
               </span>
-              {page < totalPages && (
-                <button
-                  onClick={() => navigateTo(buildUrl({ page: String(page + 1) }))}
-                  className="px-4 py-2 border rounded-md hover:bg-muted disabled:opacity-50"
-                  disabled={isPending}
-                >
-                  Suivant
-                </button>
-              )}
-            </div>
+              <button
+                onClick={() => navigateTo(buildUrl({ page: String(page + 1) }))}
+                className="inline-flex items-center gap-1 px-4 py-2 border rounded-md hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                disabled={isPending || page >= totalPages}
+                aria-label="Page suivante"
+              >
+                <span className="hidden sm:inline">Suivant</span>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                  <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
+                </svg>
+              </button>
+            </nav>
           )}
         </>
       ) : (

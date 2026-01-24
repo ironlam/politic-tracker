@@ -34,12 +34,12 @@ export function PoliticianCard({ politician, showConvictionBadge = false }: Poli
   const mandateDisplay = formatMandateShort(currentMandate);
 
   return (
-    <Link href={`/politiques/${politician.slug}`} className="block group">
-      <Card className={`h-full transition-all duration-200 hover:shadow-lg hover:border-primary/20 ${hasConviction ? 'ring-1 ring-red-200' : ''}`}>
+    <Link href={`/politiques/${politician.slug}`} className="block group focus-visible:outline-none">
+      <Card className={`h-full transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-primary/30 focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2 ${hasConviction ? 'ring-1 ring-red-200 dark:ring-red-900/50' : ''}`}>
         <CardContent className="pt-6">
           <div className="flex items-start gap-4">
             <div className="relative">
-              <div className="transition-transform duration-200 group-hover:scale-105">
+              <div className="transition-transform duration-300 group-hover:scale-110">
                 <PoliticianAvatar
                   photoUrl={politician.photoUrl}
                   firstName={politician.firstName}
@@ -49,15 +49,16 @@ export function PoliticianCard({ politician, showConvictionBadge = false }: Poli
               </div>
               {showConvictionBadge && hasConviction && (
                 <div
-                  className="absolute -top-1 -right-1 w-5 h-5 bg-destructive rounded-full flex items-center justify-center shadow-sm"
+                  className="absolute -top-1 -right-1 w-5 h-5 bg-destructive rounded-full flex items-center justify-center shadow-md animate-pulse"
                   title="Condamnation"
+                  aria-label="Ce représentant a une condamnation"
                 >
                   <span className="text-white text-xs font-bold">!</span>
                 </div>
               )}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="font-semibold text-lg truncate group-hover:text-primary transition-colors">
+              <p className="font-semibold text-lg truncate group-hover:text-primary transition-colors duration-200">
                 {politician.fullName}
               </p>
               {mandateDisplay && (
@@ -65,11 +66,11 @@ export function PoliticianCard({ politician, showConvictionBadge = false }: Poli
                   {mandateDisplay}
                 </p>
               )}
-              <div className="flex items-center gap-2 mt-2 flex-wrap">
+              <div className="flex items-center gap-2 mt-3 flex-wrap">
                 {politician.currentParty && (
                   <Badge
                     variant="secondary"
-                    className="font-medium"
+                    className="font-medium transition-colors"
                     style={{
                       backgroundColor: politician.currentParty.color
                         ? `${politician.currentParty.color}15`
@@ -84,12 +85,12 @@ export function PoliticianCard({ politician, showConvictionBadge = false }: Poli
                   </Badge>
                 )}
                 {isDeceased && (
-                  <Badge variant="outline" className="text-xs text-muted-foreground bg-muted">
+                  <Badge variant="outline" className="text-xs text-muted-foreground bg-muted/50">
                     Décédé{politician.civility === 'Mme' ? 'e' : ''}
                   </Badge>
                 )}
                 {showConvictionBadge && affairCount > 0 && (
-                  <Badge variant="outline" className="text-xs text-destructive/70 border-destructive/30">
+                  <Badge variant="outline" className="text-xs text-destructive/80 border-destructive/40 bg-destructive/5">
                     {affairCount} affaire{affairCount > 1 ? 's' : ''}
                   </Badge>
                 )}

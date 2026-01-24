@@ -64,7 +64,7 @@ export function FilterBar({
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-4">
+    <div className="flex flex-col sm:flex-row flex-wrap items-start sm:items-center gap-3 sm:gap-4">
       {/* Loading indicator */}
       {isPending && (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -94,11 +94,12 @@ export function FilterBar({
 
       {/* Sort */}
       <div className="flex items-center gap-2">
-        <span className="text-sm text-muted-foreground">Tri:</span>
+        <label htmlFor="sort-select" className="text-sm text-muted-foreground whitespace-nowrap">Tri:</label>
         <select
+          id="sort-select"
           value={currentSort}
           onChange={(e) => updateParams("sort", e.target.value === "alpha" ? "" : e.target.value)}
-          className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+          className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 cursor-pointer hover:border-primary/50 transition-colors"
         >
           {Object.entries(SORT_OPTIONS).map(([value, label]) => (
             <option key={value} value={value}>
@@ -110,11 +111,12 @@ export function FilterBar({
 
       {/* Mandate type filter */}
       <div className="flex items-center gap-2">
-        <span className="text-sm text-muted-foreground">Mandat:</span>
+        <label htmlFor="mandate-select" className="text-sm text-muted-foreground whitespace-nowrap">Mandat:</label>
         <select
+          id="mandate-select"
           value={currentMandate}
           onChange={(e) => updateParams("mandate", e.target.value)}
-          className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+          className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 cursor-pointer hover:border-primary/50 transition-colors"
         >
           {Object.entries(MANDATE_OPTIONS).map(([value, label]) => {
             const count =
@@ -136,25 +138,34 @@ export function FilterBar({
       </div>
 
       {/* Status filter (active/former) */}
-      <div className="flex items-center gap-2 border-l pl-4">
+      <div className="flex items-center gap-2 sm:border-l sm:pl-4 w-full sm:w-auto" role="group" aria-label="Filtrer par statut">
         <Badge
           variant={currentStatus === "" ? "default" : "outline"}
-          className="cursor-pointer"
+          className="cursor-pointer hover:bg-primary/10 transition-colors"
           onClick={() => updateParams("status", "")}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => e.key === "Enter" && updateParams("status", "")}
         >
           Tous
         </Badge>
         <Badge
           variant={currentStatus === "active" ? "default" : "outline"}
-          className="cursor-pointer"
+          className="cursor-pointer hover:bg-primary/10 transition-colors"
           onClick={() => updateParams("status", currentStatus === "active" ? "" : "active")}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => e.key === "Enter" && updateParams("status", currentStatus === "active" ? "" : "active")}
         >
           Actifs ({counts.active})
         </Badge>
         <Badge
           variant={currentStatus === "former" ? "secondary" : "outline"}
-          className="cursor-pointer"
+          className="cursor-pointer hover:bg-muted transition-colors"
           onClick={() => updateParams("status", currentStatus === "former" ? "" : "former")}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => e.key === "Enter" && updateParams("status", currentStatus === "former" ? "" : "former")}
         >
           Anciens ({counts.former})
         </Badge>

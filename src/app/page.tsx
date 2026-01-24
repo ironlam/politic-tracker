@@ -98,9 +98,9 @@ export default async function HomePage() {
       </section>
 
       {/* Stats Section */}
-      <section className="py-16 border-y bg-card">
+      <section className="py-12 md:py-16 border-y bg-card">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-4 md:gap-6">
             <StatCard value={stats.politicianCount} label="Politiques" />
             <StatCard value={stats.deputeCount} label="Députés" highlight />
             <StatCard value={stats.senateurCount} label="Sénateurs" highlight />
@@ -222,9 +222,9 @@ function StatCard({
   variant?: "destructive";
 }) {
   return (
-    <div className="text-center">
+    <div className="text-center p-3 rounded-lg hover:bg-muted/50 transition-colors group">
       <p
-        className={`text-3xl md:text-4xl font-bold ${
+        className={`text-2xl sm:text-3xl md:text-4xl font-bold tabular-nums transition-transform group-hover:scale-105 ${
           variant === "destructive"
             ? "text-destructive"
             : highlight
@@ -234,7 +234,7 @@ function StatCard({
       >
         {value.toLocaleString("fr-FR")}
       </p>
-      <p className="text-sm text-muted-foreground mt-1">{label}</p>
+      <p className="text-xs sm:text-sm text-muted-foreground mt-1">{label}</p>
     </div>
   );
 }

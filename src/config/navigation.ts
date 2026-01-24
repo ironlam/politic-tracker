@@ -15,6 +15,7 @@ export const NAV_LINKS = [
 
 // Footer-only links (less frequently accessed)
 export const FOOTER_LINKS = [
+  { href: "/recherche", label: "Recherche avancée" },
   { href: "/departements", label: "Départements" },
   { href: "/institutions", label: "Institutions" },
   { href: "/sources", label: "Sources" },

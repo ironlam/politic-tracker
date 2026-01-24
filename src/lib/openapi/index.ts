@@ -27,11 +27,6 @@ Les endpoints de liste supportent la pagination avec les paramètres :
 - \`page\` : Numéro de page (défaut: 1)
 - \`limit\` : Éléments par page (défaut: 20, max: 100)
 
-## Authentification
-
-Les endpoints publics ne nécessitent pas d'authentification.
-Les endpoints admin (\`/api/admin/*\`) sont protégés par authentification.
-
 ## Rate limiting
 
 Pas de rate limiting pour le moment. Merci de faire un usage raisonnable de l'API.
@@ -85,12 +80,14 @@ Le projet est open source : [GitHub](https://github.com/ironlam/politic-tracker)
   apis: [
     "./src/lib/openapi/schemas.ts",
     "./src/app/api/affaires/route.ts",
-    "./src/app/api/politiques/*/affaires/route.ts",
-    "./src/app/api/politiques/*/votes/route.ts",
-    "./src/app/api/politiques/*/relations/route.ts",
+    "./src/app/api/politiques/[slug]/affaires/route.ts",
+    "./src/app/api/politiques/[slug]/votes/route.ts",
+    "./src/app/api/politiques/[slug]/relations/route.ts",
     "./src/app/api/votes/route.ts",
-    "./src/app/api/search/*/route.ts",
-    "./src/app/api/deputies/*/route.ts",
+    "./src/app/api/search/politicians/route.ts",
+    "./src/app/api/search/advanced/route.ts",
+    "./src/app/api/search/filters/route.ts",
+    "./src/app/api/deputies/by-department/route.ts",
   ],
 };
 

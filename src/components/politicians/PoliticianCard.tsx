@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { PoliticianAvatar } from "./PoliticianAvatar";
+import { MANDATE_TYPE_LABELS } from "@/config/labels";
 import type { PoliticianWithParty, PoliticianWithPartyAndCounts } from "@/types";
 
 interface PoliticianCardProps {
@@ -9,10 +10,28 @@ interface PoliticianCardProps {
   showConvictionBadge?: boolean;
 }
 
+// Format mandate for display (short version)
+function formatMandateShort(mandate: { type: string; constituency: string | null } | null | undefined): string | null {
+  if (!mandate) return null;
+
+  const typeLabel = MANDATE_TYPE_LABELS[mandate.type as keyof typeof MANDATE_TYPE_LABELS] || mandate.type;
+
+  if (mandate.constituency) {
+    // Extract department name from "Département (numéro)"
+    const match = mandate.constituency.match(/^([^(]+)/);
+    const dept = match ? match[1].trim() : mandate.constituency;
+    return `${typeLabel} · ${dept}`;
+  }
+
+  return typeLabel;
+}
+
 export function PoliticianCard({ politician, showConvictionBadge = false }: PoliticianCardProps) {
   const hasConviction = 'hasConviction' in politician && politician.hasConviction;
   const affairCount = '_count' in politician ? politician._count.affairs : 0;
   const isDeceased = politician.deathDate !== null;
+  const currentMandate = 'currentMandate' in politician ? politician.currentMandate : null;
+  const mandateDisplay = formatMandateShort(currentMandate);
 
   return (
     <Link href={`/politiques/${politician.slug}`} className="block group">
@@ -41,6 +60,11 @@ export function PoliticianCard({ politician, showConvictionBadge = false }: Poli
               <p className="font-semibold text-lg truncate group-hover:text-primary transition-colors">
                 {politician.fullName}
               </p>
+              {mandateDisplay && (
+                <p className="text-sm text-muted-foreground truncate mt-0.5">
+                  {mandateDisplay}
+                </p>
+              )}
               <div className="flex items-center gap-2 mt-2 flex-wrap">
                 {politician.currentParty && (
                   <Badge

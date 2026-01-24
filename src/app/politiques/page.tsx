@@ -125,6 +125,16 @@ async function getPoliticians(
           select: { id: true },
           take: 1,
         },
+        mandates: {
+          where: { isCurrent: true },
+          orderBy: { startDate: "desc" },
+          take: 1,
+          select: {
+            type: true,
+            title: true,
+            constituency: true,
+          },
+        },
       },
       orderBy,
       skip,
@@ -133,11 +143,13 @@ async function getPoliticians(
     db.politician.count({ where }),
   ]);
 
-  // Transform to add hasConviction flag
+  // Transform to add hasConviction flag and current mandate
   const politiciansWithConviction = politicians.map((p) => ({
     ...p,
     hasConviction: p.affairs.length > 0,
     affairs: undefined, // Remove the affairs array, keep only the flag
+    currentMandate: p.mandates[0] || null,
+    mandates: undefined, // Remove the mandates array
   }));
 
   return {

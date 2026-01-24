@@ -41,6 +41,12 @@ export type PoliticianWithPartyAndCounts = Politician & {
   };
   hasConviction?: boolean;
   isDeceased?: boolean;
+  // Current mandate info (for display on cards)
+  currentMandate?: {
+    type: MandateType;
+    title: string;
+    constituency: string | null;
+  } | null;
 };
 
 export type PoliticianWithMandates = Politician & {

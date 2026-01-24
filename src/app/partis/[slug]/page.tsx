@@ -24,6 +24,9 @@ async function getParty(slug: string) {
             where: { isCurrent: true },
             take: 1,
           },
+          _count: {
+            select: { affairs: true },
+          },
         },
       },
       // Membership history (for people who were members but aren't currently)
@@ -158,15 +161,29 @@ export default async function PartyPage({ params }: PageProps) {
                     <Link
                       key={politician.id}
                       href={`/politiques/${politician.slug}`}
-                      className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted transition-colors"
+                      className={`flex items-center gap-3 p-2 rounded-lg hover:bg-muted transition-colors ${
+                        politician._count.affairs > 0 ? "ring-1 ring-red-200 bg-red-50/50" : ""
+                      }`}
                     >
-                      <PoliticianAvatar
-                        photoUrl={politician.photoUrl}
-                        firstName={politician.firstName}
-                        lastName={politician.lastName}
-                        size="sm"
-                      />
-                      <div className="min-w-0">
+                      <div className="relative shrink-0">
+                        <PoliticianAvatar
+                          photoUrl={politician.photoUrl}
+                          firstName={politician.firstName}
+                          lastName={politician.lastName}
+                          size="sm"
+                        />
+                        {politician._count.affairs > 0 && (
+                          <div
+                            className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center"
+                            title={`${politician._count.affairs} affaire(s)`}
+                          >
+                            <span className="text-white text-[10px] font-bold">
+                              {politician._count.affairs}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
                         <p className="font-medium truncate">{politician.fullName}</p>
                         {politician.mandates[0] && (
                           <p className="text-xs text-muted-foreground truncate">

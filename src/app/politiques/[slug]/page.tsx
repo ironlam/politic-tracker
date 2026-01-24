@@ -5,7 +5,13 @@ import { db } from "@/lib/db";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/utils";
-import { MANDATE_TYPE_LABELS, AFFAIR_STATUS_LABELS, AFFAIR_STATUS_COLORS, AFFAIR_STATUS_NEEDS_PRESUMPTION } from "@/config/labels";
+import {
+  MANDATE_TYPE_LABELS,
+  AFFAIR_STATUS_LABELS,
+  AFFAIR_STATUS_COLORS,
+  AFFAIR_STATUS_NEEDS_PRESUMPTION,
+  AFFAIR_CATEGORY_LABELS,
+} from "@/config/labels";
 import { PoliticianAvatar } from "@/components/politicians/PoliticianAvatar";
 
 interface PageProps {
@@ -21,8 +27,11 @@ async function getPolitician(slug: string) {
         orderBy: { startDate: "desc" },
       },
       affairs: {
-        include: { sources: true },
-        orderBy: { createdAt: "desc" },
+        include: {
+          sources: true,
+          partyAtTime: true,
+        },
+        orderBy: { verdictDate: "desc" },
       },
       declarations: {
         orderBy: { year: "desc" },
@@ -146,30 +155,100 @@ export default async function PoliticianPage({ params }: PageProps) {
               {politician.affairs.length > 0 ? (
                 <div className="space-y-6">
                   {politician.affairs.map((affair) => (
-                    <div key={affair.id} className="border-b pb-4 last:border-0">
-                      <div className="flex items-start justify-between gap-4">
-                        <div>
-                          <h4 className="font-semibold">{affair.title}</h4>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            {affair.description}
-                          </p>
+                    <div
+                      key={affair.id}
+                      className={`border rounded-lg p-4 ${
+                        affair.status === "CONDAMNATION_DEFINITIVE"
+                          ? "border-red-200 bg-red-50/30"
+                          : affair.status === "CONDAMNATION_PREMIERE_INSTANCE"
+                            ? "border-orange-200 bg-orange-50/30"
+                            : "border-gray-200"
+                      }`}
+                    >
+                      {/* Header */}
+                      <div className="flex items-start justify-between gap-4 mb-3">
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-lg">{affair.title}</h4>
+                          <div className="flex flex-wrap items-center gap-2 mt-1">
+                            <Badge variant="outline" className="text-xs">
+                              {AFFAIR_CATEGORY_LABELS[affair.category]}
+                            </Badge>
+                            {affair.partyAtTime && (
+                              <Badge
+                                variant="outline"
+                                className="text-xs"
+                                style={{
+                                  borderColor: affair.partyAtTime.color || undefined,
+                                  color: affair.partyAtTime.color || undefined,
+                                }}
+                              >
+                                {affair.partyAtTime.shortName} à l&apos;époque
+                              </Badge>
+                            )}
+                          </div>
                         </div>
-                        <Badge className={AFFAIR_STATUS_COLORS[affair.status]}>
+                        <Badge className={`shrink-0 ${AFFAIR_STATUS_COLORS[affair.status]}`}>
                           {AFFAIR_STATUS_LABELS[affair.status]}
                         </Badge>
                       </div>
 
+                      {/* Description */}
+                      <p className="text-sm text-muted-foreground mb-3">
+                        {affair.description}
+                      </p>
+
+                      {/* Dates & details */}
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs mb-3">
+                        {affair.factsDate && (
+                          <div>
+                            <span className="text-muted-foreground">Faits :</span>{" "}
+                            <span className="font-medium">{formatDate(affair.factsDate)}</span>
+                          </div>
+                        )}
+                        {affair.startDate && (
+                          <div>
+                            <span className="text-muted-foreground">Révélation :</span>{" "}
+                            <span className="font-medium">{formatDate(affair.startDate)}</span>
+                          </div>
+                        )}
+                        {affair.verdictDate && (
+                          <div>
+                            <span className="text-muted-foreground">Verdict :</span>{" "}
+                            <span className="font-medium">{formatDate(affair.verdictDate)}</span>
+                          </div>
+                        )}
+                        {affair.appeal && (
+                          <div>
+                            <Badge variant="outline" className="text-xs bg-orange-50">
+                              En appel
+                            </Badge>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Sentence if convicted */}
+                      {affair.sentence && (
+                        <div className="bg-gray-100 rounded p-2 mb-3">
+                          <p className="text-xs text-muted-foreground mb-1">Condamnation :</p>
+                          <p className="text-sm font-medium">{affair.sentence}</p>
+                        </div>
+                      )}
+
+                      {/* Presumption of innocence */}
                       {AFFAIR_STATUS_NEEDS_PRESUMPTION[affair.status] && (
-                        <p className="text-xs text-amber-700 bg-amber-50 p-2 rounded mt-2">
+                        <p className="text-xs text-amber-700 bg-amber-50 p-2 rounded mb-3">
                           Présomption d&apos;innocence : cette affaire est en cours,
-                          la personne est présumée innocente.
+                          la personne est présumée innocente jusqu&apos;à condamnation définitive.
                         </p>
                       )}
 
+                      {/* Sources */}
                       {affair.sources.length > 0 && (
-                        <div className="mt-2">
-                          <p className="text-xs text-muted-foreground">Sources :</p>
-                          <ul className="text-xs">
+                        <details className="text-xs">
+                          <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
+                            Sources ({affair.sources.length})
+                          </summary>
+                          <ul className="mt-2 space-y-1 pl-4">
                             {affair.sources.map((source) => (
                               <li key={source.id}>
                                 <a
@@ -178,13 +257,15 @@ export default async function PoliticianPage({ params }: PageProps) {
                                   rel="noopener noreferrer"
                                   className="text-blue-600 hover:underline"
                                 >
-                                  {source.title} ({source.publisher},{" "}
-                                  {formatDate(source.publishedAt)})
+                                  {source.title}
                                 </a>
+                                <span className="text-muted-foreground">
+                                  {" "}— {source.publisher}, {formatDate(source.publishedAt)}
+                                </span>
                               </li>
                             ))}
                           </ul>
-                        </div>
+                        </details>
                       )}
                     </div>
                   ))}

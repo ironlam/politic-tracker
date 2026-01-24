@@ -175,6 +175,7 @@ export const MANDATE_SALARIES: Partial<Record<MandateType, number>> = {
 export const DATA_SOURCE_LABELS: Record<DataSource, string> = {
   ASSEMBLEE_NATIONALE: "Assemblée nationale",
   SENAT: "Sénat",
+  PARLEMENT_EUROPEEN: "Parlement européen",
   WIKIDATA: "Wikidata",
   HATVP: "HATVP",
   GOUVERNEMENT: "Gouvernement",
@@ -186,6 +187,7 @@ export const DATA_SOURCE_LABELS: Record<DataSource, string> = {
 export const DATA_SOURCE_URLS: Record<DataSource, string> = {
   ASSEMBLEE_NATIONALE: "https://www.assemblee-nationale.fr/dyn/deputes/",
   SENAT: "https://www.senat.fr/senateur/",
+  PARLEMENT_EUROPEEN: "https://www.europarl.europa.eu/meps/fr/",
   WIKIDATA: "https://www.wikidata.org/wiki/",
   HATVP: "https://www.hatvp.fr/",
   GOUVERNEMENT: "https://www.gouvernement.fr/",

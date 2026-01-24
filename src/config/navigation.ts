@@ -6,6 +6,7 @@ export const NAV_LINKS = [
   { href: "/partis", label: "Partis" },
   { href: "/affaires", label: "Affaires" },
   { href: "/statistiques", label: "Statistiques" },
+  { href: "/institutions", label: "Institutions" },
 ] as const;
 
 export type NavLink = (typeof NAV_LINKS)[number];

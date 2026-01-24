@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
+import { MANDATE_TYPE_LABELS } from "@/config/labels";
 
 interface SearchResult {
   id: string;
@@ -13,18 +14,6 @@ interface SearchResult {
   partyColor: string | null;
   mandate: string | null;
 }
-
-const MANDATE_LABELS: Record<string, string> = {
-  DEPUTE: "Député",
-  SENATEUR: "Sénateur",
-  MINISTRE: "Ministre",
-  PREMIER_MINISTRE: "Premier ministre",
-  SECRETAIRE_ETAT: "Secrétaire d'État",
-  MINISTRE_DELEGUE: "Ministre délégué",
-  DEPUTE_EUROPEEN: "Eurodéputé",
-  PRESIDENT_REPUBLIQUE: "Président",
-  MAIRE: "Maire",
-};
 
 interface SearchAutocompleteProps {
   defaultValue?: string;
@@ -208,7 +197,7 @@ export function SearchAutocomplete({
                     <p className="font-medium truncate">{result.fullName}</p>
                     <p className="text-xs text-muted-foreground flex items-center gap-1">
                       {result.mandate && (
-                        <span>{MANDATE_LABELS[result.mandate] || result.mandate}</span>
+                        <span>{MANDATE_TYPE_LABELS[result.mandate as keyof typeof MANDATE_TYPE_LABELS] || result.mandate}</span>
                       )}
                       {result.party && (
                         <>

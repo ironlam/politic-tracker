@@ -36,6 +36,13 @@ export const ALL_RELATION_TYPES: RelationType[] = [
   "PARTY_HISTORY",
 ];
 
+// Default types to show (less overwhelming)
+export const DEFAULT_RELATION_TYPES: RelationType[] = [
+  "SAME_PARTY",
+  "SAME_GOVERNMENT",
+  "SAME_CONSTITUENCY",
+];
+
 // Strength of each relation type (affects link thickness in graph)
 export const RELATION_TYPE_STRENGTH: Record<RelationType, number> = {
   SAME_PARTY: 8,

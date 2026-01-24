@@ -57,11 +57,20 @@ const DATA_SOURCES = [
   {
     name: "NosDéputés / NosSénateurs",
     shortName: "ND/NS",
-    description: "Activité parlementaire et données complémentaires",
+    description: "Activité parlementaire, votes nominatifs et données complémentaires",
     url: "https://www.nosdeputes.fr",
     frequency: "Quotidienne",
-    fields: ["Photos", "Activité", "Votes"],
+    fields: ["Photos", "Activité", "Votes nominatifs", "Scrutins"],
     color: "#FF6600",
+  },
+  {
+    name: "Parlement Européen",
+    shortName: "PE",
+    description: "Données sur les 81 eurodéputés français",
+    url: "https://data.europarl.europa.eu",
+    frequency: "Mensuelle",
+    fields: ["Identité", "Groupe politique", "Commission", "Photo"],
+    color: "#003399",
   },
 ];
 
@@ -223,6 +232,59 @@ export default function SourcesPage() {
         </Card>
       </section>
 
+      {/* Fonctionnalités */}
+      <section className="mb-12">
+        <h2 className="text-2xl font-bold mb-6">Fonctionnalités</h2>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">Votes parlementaires</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Consultez les votes nominatifs de chaque député sur les scrutins publics.
+                Importés depuis NosDéputés.fr pour la 16e législature.
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">Graphe de relations</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Visualisez les connexions entre politiciens : même parti, même gouvernement,
+                même législature, même département.
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">API publique</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Accédez à nos données via une API REST documentée avec OpenAPI/Swagger.
+                <Link href="/docs/api" className="text-blue-600 hover:underline ml-1">
+                  Voir la documentation
+                </Link>
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">Déclarations HATVP</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Liens directs vers les déclarations de patrimoine et d&apos;intérêts
+                publiées par la Haute Autorité pour la Transparence de la Vie Publique.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+
       {/* Architecture Technique */}
       <section className="mb-12">
         <h2 className="text-2xl font-bold mb-6">Architecture Technique</h2>
@@ -235,11 +297,11 @@ export default function SourcesPage() {
             <ul className="text-sm text-muted-foreground space-y-2 list-disc list-inside">
               <li>
                 <strong>Identifiants uniques</strong> : Chaque politicien est lié à ses
-                identifiants dans chaque source (AN, Sénat, Wikidata, HATVP)
+                identifiants dans chaque source (AN, Sénat, PE, Wikidata, HATVP)
               </li>
               <li>
                 <strong>Matching intelligent</strong> : Recherche par ID externe, puis par
-                nom si nécessaire
+                nom avec gestion des variantes (particules, accents)
               </li>
               <li>
                 <strong>Priorité des sources</strong> : Les données officielles (AN, Sénat, Gouvernement)
@@ -247,6 +309,9 @@ export default function SourcesPage() {
               </li>
               <li>
                 <strong>Traçabilité</strong> : Chaque donnée conserve sa source d&apos;origine
+              </li>
+              <li>
+                <strong>Synchronisation automatique</strong> : Mise à jour hebdomadaire via GitHub Actions
               </li>
             </ul>
           </CardContent>

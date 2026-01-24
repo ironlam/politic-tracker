@@ -1,6 +1,6 @@
 # Roadmap - Transparence Politique
 
-> **Dernière mise à jour** : 2026-01-24
+> **Dernière mise à jour** : 2026-01-25
 
 Ce document recense les évolutions envisagées pour le projet, classées par priorité et complexité.
 
@@ -123,7 +123,7 @@ Transparence Politique vise à rendre accessible l'information sur les représen
 
 ### 4.1 Analyse et dataviz
 
-- **Graphe des relations** : Qui a travaillé avec qui (gouvernements, cabinets)
+- **Graphe des relations** : ✅ FAIT - Visualisation des connexions (parti, gouvernement, législature, département)
 - **Timeline des affaires** : Visualisation chronologique
 - **Heatmap des condamnations** : Par année, par type
 
@@ -233,11 +233,11 @@ Le SEO et l'intuitivité priment sur la cohérence terminologique interne.
 | Élément | Statut |
 |---------|--------|
 | Title/description dynamiques | ✅ Fait |
-| OpenGraph images | À faire |
-| JSON-LD (Person, Organization) | À faire |
-| Sitemap dynamique | À faire |
-| robots.txt | À faire |
-| Canonical URLs | À faire |
+| OpenGraph images | ✅ Fait |
+| JSON-LD (Person, Organization, WebSite, FAQ) | ✅ Fait |
+| Sitemap dynamique | ✅ Fait |
+| robots.txt | ✅ Fait |
+| Canonical URLs | ✅ Fait (via metadataBase) |
 
 ### 8.4 GEO - Approche incrémentale
 
@@ -275,9 +275,12 @@ Le SEO et l'intuitivité priment sur la cohérence terminologique interne.
 npm run sync:assemblee      # Députés (577)
 npm run sync:senat          # Sénateurs (348)
 npm run sync:gouvernement   # Gouvernement actuel
+npm run sync:europarl       # Eurodéputés (81)
 npm run sync:hatvp          # Déclarations patrimoine
 npm run sync:photos         # Photos manquantes
 npm run sync:deceased       # Dates de décès (Wikidata)
+npm run sync:votes          # Votes parlementaires (NosDéputés)
+npm run sync:parties        # Partis politiques
 ```
 
 ---
@@ -300,17 +303,23 @@ npm run sync:deceased       # Dates de décès (Wikidata)
 - [x] Page /institutions (AN, Sénat, PE, Gouvernement)
 - [x] Import votes parlementaires (NosDéputés - 16e législature)
 - [x] Page /votes avec liste des scrutins
+- [x] **Documentation API** (OpenAPI/Swagger sur /docs/api)
+- [x] **Graphe de relations** entre politiciens (/politiques/[slug]/relations)
+- [x] **JSON-LD SEO** complet (WebSite, Person, Organization, FAQ, ItemList)
+- [x] Votes sur fiches politiciens (stats + derniers votes)
+- [x] Script sync-votes amélioré (barre de progression, matching fuzzy)
+- [x] Filtre "Avec décision de justice" (remplace "Avec condamnation")
+- [x] Lien API dans header + liens secondaires menu mobile
 
 ### En cours
-- [ ] Améliorer le script de sync votes (affichage progression)
-- [ ] Intégrer les votes sur les fiches politiciens
+- [ ] Améliorer le graphe de relations (trop dense, positionnement)
 - [ ] Statistiques de vote par parti
 
 ### À faire court terme
 - [ ] Votes du Sénat (NosSénateurs)
 - [ ] Page comparative entre politiciens
 - [ ] Export CSV des données
-- [ ] JSON-LD pour SEO (Person, Organization)
+- [ ] Carte interactive des départements
 
 ### Configuration du Cron Job
 
@@ -340,15 +349,17 @@ Le workflow GitHub Actions `.github/workflows/sync-data.yml` s'exécute :
 | Votes Sénat (NosSénateurs) | Complétude | Moyen | |
 | Carte interactive départements | Visualisation | Élevé | |
 | Comparateur politiciens | Feature | Moyen | |
-| API documentée (OpenAPI) | Réutilisation | Moyen | FAIT |
+| API documentée (OpenAPI) | Réutilisation | Moyen | ✅ FAIT |
 | PWA (offline, install) | UX mobile | Moyen | |
+| Export CSV | Data | Faible | |
 
 ### Long terme (3-6 mois)
 
 | Évolution | Impact | Effort | Statut |
 |-----------|--------|--------|--------|
 | Recherche avancée (Meilisearch) | UX recherche | Élevé | |
-| Graphe des relations | Visualisation | Élevé | FAIT |
+| Graphe des relations | Visualisation | Élevé | ✅ FAIT |
+| JSON-LD SEO avancé | SEO | Moyen | ✅ FAIT |
 | Alertes nouvelles affaires | Engagement | Moyen | |
 | Widget embeddable | Distribution | Moyen | |
 | i18n (anglais) | Audience | Élevé | |

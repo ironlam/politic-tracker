@@ -5,7 +5,7 @@ import { RelationsGraph } from "@/components/relations/RelationsGraph";
 import { RelationFilters } from "@/components/relations/RelationFilters";
 import { RelationLegend } from "@/components/relations/RelationLegend";
 import { RelationType, RelationsResponse } from "@/types/relations";
-import { ALL_RELATION_TYPES } from "@/config/relations";
+import { DEFAULT_RELATION_TYPES } from "@/config/relations";
 
 interface RelationsClientProps {
   slug: string;
@@ -13,7 +13,7 @@ interface RelationsClientProps {
 }
 
 export function RelationsClient({ slug, politicianName }: RelationsClientProps) {
-  const [selectedTypes, setSelectedTypes] = useState<RelationType[]>(ALL_RELATION_TYPES);
+  const [selectedTypes, setSelectedTypes] = useState<RelationType[]>(DEFAULT_RELATION_TYPES);
   const [data, setData] = useState<RelationsResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -25,7 +25,7 @@ export function RelationsClient({ slug, politicianName }: RelationsClientProps) 
     try {
       const params = new URLSearchParams();
       params.set("types", selectedTypes.join(","));
-      params.set("limit", "15");
+      params.set("limit", "8"); // Reduced for better visualization
 
       const response = await fetch(`/api/politiques/${slug}/relations?${params}`);
 

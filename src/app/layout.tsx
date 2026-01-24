@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { WebSiteJsonLd } from "@/components/seo/JsonLd";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -76,6 +77,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="fr" suppressHydrationWarning>
+      <head>
+        <WebSiteJsonLd
+          name="Transparence Politique"
+          description="Observatoire citoyen des représentants politiques français. Mandats, patrimoine, votes et affaires judiciaires."
+          url={siteUrl}
+        />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
       >

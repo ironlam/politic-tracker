@@ -144,9 +144,12 @@ export function RelationsGraph({
         linkDirectionalParticles={0}
         onNodeClick={handleNodeClick}
         cooldownTicks={100}
-        onEngineStop={() => graphRef.current?.zoomToFit(400, 50)}
+        onEngineStop={() => graphRef.current?.zoomToFit(400, 80)}
         enableZoomInteraction={true}
         enablePanInteraction={true}
+        // Improved force settings for better spacing
+        d3AlphaDecay={0.02}
+        d3VelocityDecay={0.3}
       />
     </div>
   );

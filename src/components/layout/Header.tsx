@@ -29,6 +29,12 @@ export function Header() {
               Affaires
             </Link>
             <Link
+              href="/statistiques"
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Statistiques
+            </Link>
+            <Link
               href="/mentions-legales"
               className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
             >

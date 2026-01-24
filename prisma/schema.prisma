@@ -71,6 +71,7 @@ model ExternalId {
 enum DataSource {
   ASSEMBLEE_NATIONALE
   SENAT
+  PARLEMENT_EUROPEEN
   WIKIDATA
   HATVP
   GOUVERNEMENT
@@ -159,6 +160,11 @@ model Mandate {
   baseSalary       Decimal?  @db.Decimal(10, 2)
   totalAllowances  Decimal?  @db.Decimal(10, 2)
 
+  // European Parliament specific (for MEPs)
+  europeanGroupCode  String?        // Legacy: group code as text, will be migrated
+  europeanGroup      EuropeanGroup? @relation(fields: [europeanGroupId], references: [id])
+  europeanGroupId    String?
+
   // External reference
   externalId   String?     // ID from source API
   sourceUrl    String?     // Link to official page
@@ -169,6 +175,32 @@ model Mandate {
   @@index([politicianId])
   @@index([type])
   @@index([isCurrent])
+  @@index([europeanGroupId])
+}
+
+// European Parliament political groups
+model EuropeanGroup {
+  id          String   @id @default(cuid())
+  code        String   @unique  // "PPE", "S&D", "Renew", etc.
+  name        String   @unique  // Full name
+  shortName   String?           // Display short name if different from code
+  color       String?           // Hex color for UI
+
+  // Political positioning
+  politicalPosition PoliticalPosition?
+
+  // External references
+  wikidataId  String?  @unique  // Wikidata Q-ID
+  website     String?
+
+  // Legislature info (groups can change between terms)
+  legislature Int?              // EP term number (e.g., 10 for 2024-2029)
+
+  // Relations
+  mandates    Mandate[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 enum MandateType {

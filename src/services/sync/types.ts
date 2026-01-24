@@ -226,3 +226,67 @@ export const SENATE_GROUP_MAPPINGS: Record<string, PartyMapping> = {
   "NI": { shortName: "NI", fullName: "Non-inscrits", color: "#AAAAAA" },
   "SENRI": { shortName: "NI", fullName: "Sénateurs ne figurant sur la liste d'aucun groupe", color: "#AAAAAA" },
 }
+
+// ============================================
+// EUROPEAN PARLIAMENT API TYPES
+// ============================================
+
+// From data.europarl.europa.eu API
+export interface EuroparlMEP {
+  id: string;                    // "person/97236"
+  type: string;                  // "Person"
+  identifier: string;            // "97236"
+  label: string;                 // "Marie TOUSSAINT"
+  familyName: string;            // "Toussaint"
+  givenName: string;             // "Marie"
+  sortLabel?: string;            // "TOUSSAINTMR"
+  officialFamilyName?: string;   // For non-Latin scripts
+  officialGivenName?: string;
+  "api:country-of-representation": string;  // "FR"
+  "api:political-group": string;            // "Verts/ALE"
+  bday?: string;                 // "1987-05-27"
+  hasEmail?: string;             // "mailto:..."
+  hasGender?: string;            // URI
+}
+
+export interface EuroparlMEPDetail extends EuroparlMEP {
+  hasMembership?: EuroparlMembership[];
+  image?: string;                // Photo URL
+}
+
+export interface EuroparlMembership {
+  id: string;
+  type: string;
+  identifier: string;
+  memberDuring?: {
+    startDate: string;
+    endDate?: string;
+  };
+  organization?: string;
+  role?: string;
+  membershipClassification?: string;
+  represents?: string[];
+}
+
+export interface EuroparlSyncResult {
+  success: boolean;
+  mepsCreated: number;
+  mepsUpdated: number;
+  mandatesCreated: number;
+  mandatesUpdated: number;
+  errors: string[];
+}
+
+// European Parliament political groups
+export const EU_POLITICAL_GROUP_MAPPINGS: Record<string, PartyMapping> = {
+  "PPE": { shortName: "PPE", fullName: "Parti populaire européen", color: "#3399FF" },
+  "S&D": { shortName: "S&D", fullName: "Alliance Progressiste des Socialistes et Démocrates", color: "#F0001C" },
+  "Renew": { shortName: "Renew", fullName: "Renew Europe", color: "#FFD700" },
+  "Verts/ALE": { shortName: "Verts/ALE", fullName: "Verts/Alliance libre européenne", color: "#009900" },
+  "ID": { shortName: "ID", fullName: "Identité et Démocratie", color: "#2B3856" },
+  "ECR": { shortName: "ECR", fullName: "Conservateurs et Réformistes européens", color: "#0054A5" },
+  "The Left": { shortName: "GUE/NGL", fullName: "La Gauche au Parlement européen", color: "#990000" },
+  "PfE": { shortName: "PfE", fullName: "Patriots for Europe", color: "#1E3A5F" },
+  "ESN": { shortName: "ESN", fullName: "Europe of Sovereign Nations", color: "#4A4A4A" },
+  "NI": { shortName: "NI", fullName: "Non-inscrits", color: "#999999" },
+}

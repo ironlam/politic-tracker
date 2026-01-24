@@ -14,31 +14,64 @@ const db = new PrismaClient({ adapter });
 const WIKIDATA_ENDPOINT = "https://query.wikidata.org/sparql";
 
 // Map Wikidata crime labels to our categories
+// IMPORTANT: Order matters! More specific terms must come before generic ones
+// The mapCrimeToCategory function uses includes(), so "violence" would match before "violences conjugales"
 const CRIME_CATEGORY_MAP: Record<string, AffairCategory> = {
-  "corruption": "CORRUPTION",
+  // Sexual crimes - be very careful with these!
+  "agression sexuelle": "AGRESSION_SEXUELLE",
+  "sexual assault": "AGRESSION_SEXUELLE",
+  "viol": "AGRESSION_SEXUELLE", // Viol is legally distinct but grouped here
+  "rape": "AGRESSION_SEXUELLE",
+  "harcèlement sexuel": "HARCELEMENT_SEXUEL",
+  "sexual harassment": "HARCELEMENT_SEXUEL",
+
+  // Violence - MUST check these BEFORE generic "violence" term
+  "violences conjugales": "VIOLENCE",
+  "intimate partner violence": "VIOLENCE",
+  "domestic violence": "VIOLENCE",
+  "violence domestique": "VIOLENCE",
+  "violences volontaires": "VIOLENCE",
+  "violences en réunion": "VIOLENCE",
+  "violences sur mineur": "VIOLENCE",
+  "violences sur ascendant": "VIOLENCE",
+  "coups et blessures": "VIOLENCE",
+  "assault": "VIOLENCE",
+  "battery": "VIOLENCE",
+  "violence": "VIOLENCE", // Generic - must be LAST in violence category
+
+  // Corruption and financial crimes
   "corruption passive": "CORRUPTION_PASSIVE",
+  "corruption": "CORRUPTION",
   "trafic d'influence": "TRAFIC_INFLUENCE",
   "prise illégale d'intérêts": "PRISE_ILLEGALE_INTERETS",
   "favoritisme": "FAVORITISME",
   "détournement de fonds publics": "DETOURNEMENT_FONDS_PUBLICS",
   "détournement de fonds": "DETOURNEMENT_FONDS_PUBLICS",
+  "embezzlement": "DETOURNEMENT_FONDS_PUBLICS",
   "fraude fiscale": "FRAUDE_FISCALE",
+  "tax evasion": "FRAUDE_FISCALE",
+  "tax fraud": "FRAUDE_FISCALE",
   "blanchiment d'argent": "BLANCHIMENT",
   "blanchiment": "BLANCHIMENT",
+  "money laundering": "BLANCHIMENT",
   "abus de biens sociaux": "ABUS_BIENS_SOCIAUX",
   "abus de confiance": "ABUS_CONFIANCE",
   "emploi fictif": "EMPLOI_FICTIF",
+  "financement illégal de parti politique": "FINANCEMENT_ILLEGAL_PARTI",
+  "illegal party financing": "FINANCEMENT_ILLEGAL_PARTI",
+
+  // Other crimes
   "harcèlement moral": "HARCELEMENT_MORAL",
-  "harcèlement sexuel": "HARCELEMENT_SEXUEL",
-  "agression sexuelle": "AGRESSION_SEXUELLE",
-  "viol": "AGRESSION_SEXUELLE",
-  "violence": "VIOLENCE",
   "diffamation": "DIFFAMATION",
+  "defamation": "DIFFAMATION",
   "injure": "INJURE",
   "faux et usage de faux": "FAUX_ET_USAGE_FAUX",
+  "forgery": "FAUX_ET_USAGE_FAUX",
   "recel": "RECEL",
   "subornation de témoin": "AUTRE",
-  "financement illégal de parti politique": "FINANCEMENT_ILLEGAL_PARTI",
+  "menace": "MENACE",
+  "threat": "MENACE",
+  "incitation à la haine": "INCITATION_HAINE",
 };
 
 interface WikidataResult {
@@ -121,14 +154,24 @@ function generateSlug(text: string): string {
 
 /**
  * Map crime to category
+ * Priority: longer/more specific matches first to avoid false positives
+ * e.g., "violences conjugales" should not match "agression sexuelle" just because both are crimes
  */
 function mapCrimeToCategory(crime: string): AffairCategory {
-  const normalized = crime.toLowerCase();
-  for (const [key, value] of Object.entries(CRIME_CATEGORY_MAP)) {
+  const normalized = crime.toLowerCase().trim();
+
+  // Sort keys by length (descending) to match more specific terms first
+  const sortedEntries = Object.entries(CRIME_CATEGORY_MAP)
+    .sort((a, b) => b[0].length - a[0].length);
+
+  for (const [key, value] of sortedEntries) {
     if (normalized.includes(key)) {
       return value;
     }
   }
+
+  // Log unmatched crimes for future improvement
+  console.warn(`  ⚠ Unmatched crime category: "${crime}" -> defaulting to AUTRE`);
   return "AUTRE";
 }
 

@@ -290,5 +290,13 @@ npm run sync:deceased       # Dates de décès (Wikidata)
 7. [x] ~~Créer sitemap.xml dynamique~~
 8. [x] ~~Créer robots.txt~~
 9. [x] ~~Page /departements avec liste des élus~~
-10. [ ] Améliorer image OG (PNG avec design)
-11. [ ] Cron job sync automatique
+10. [x] ~~Améliorer image OG (PNG avec design via opengraph-image.tsx)~~
+11. [x] ~~Cron job sync automatique (GitHub Actions hebdomadaire)~~
+
+### Configuration du Cron Job
+
+Le workflow GitHub Actions `.github/workflows/sync-data.yml` s'exécute :
+- **Automatiquement** : Tous les dimanches à 4h (heure Paris)
+- **Manuellement** : Via l'onglet Actions sur GitHub
+
+**Secret requis** : `DATABASE_URL` doit être configuré dans les secrets du repo GitHub.

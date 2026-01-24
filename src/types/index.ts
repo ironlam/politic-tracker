@@ -34,6 +34,14 @@ export type PoliticianWithParty = Politician & {
   currentParty: Party | null;
 };
 
+export type PoliticianWithPartyAndCounts = Politician & {
+  currentParty: Party | null;
+  _count: {
+    affairs: number;
+  };
+  hasConviction?: boolean;
+};
+
 export type PoliticianWithMandates = Politician & {
   currentParty: Party | null;
   mandates: Mandate[];

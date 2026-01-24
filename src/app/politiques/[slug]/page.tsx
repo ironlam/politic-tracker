@@ -182,6 +182,10 @@ export default async function PoliticianPage({ params }: PageProps) {
             <Card>
               <CardHeader>
                 <CardTitle>Parcours politique</CardTitle>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Liste des mandats nationaux et européens connus.
+                  Les mandats locaux (maire, conseiller, etc.) peuvent ne pas être listés.
+                </p>
               </CardHeader>
               <CardContent>
                 <MandateTimeline
@@ -398,8 +402,14 @@ export default async function PoliticianPage({ params }: PageProps) {
                 Dernière mise à jour : {formatDate(politician.updatedAt)}
               </p>
               <p className="text-xs text-muted-foreground mt-1">
-                Source : Assemblée nationale, data.gouv.fr
+                Sources : AN, Sénat, Gouvernement, HATVP, Wikidata
               </p>
+              <Link
+                href="/sources"
+                className="text-xs text-blue-600 hover:underline mt-2 inline-block"
+              >
+                Voir notre méthodologie
+              </Link>
             </CardContent>
           </Card>
         </div>

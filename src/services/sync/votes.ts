@@ -135,6 +135,54 @@ function parseVotePosition(position: string | null | undefined): VotePosition {
 }
 
 /**
+ * Normalize a slug by removing accents and handling common variations
+ */
+function normalizeSlug(slug: string): string {
+  return slug
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "") // Remove accents
+    .replace(/['']/g, "-") // Replace apostrophes with hyphens
+    .replace(/\s+/g, "-") // Replace spaces with hyphens
+    .replace(/-+/g, "-") // Collapse multiple hyphens
+    .replace(/^-|-$/g, ""); // Trim hyphens
+}
+
+/**
+ * Generate slug variants for better matching
+ * Handles: el-hairy vs elhairy, de-la-fontaine vs delafontaine, etc.
+ */
+function generateSlugVariants(slug: string): string[] {
+  const normalized = normalizeSlug(slug);
+  const variants = [normalized];
+
+  // Common French particles that might be written with or without hyphens
+  const particles = ["el", "le", "la", "de", "du", "des", "ben", "van", "von"];
+
+  // Try removing hyphens around particles: "sarah-el-hairy" -> "sarah-elhairy"
+  for (const particle of particles) {
+    const withHyphen = `-${particle}-`;
+    const withoutHyphen = `-${particle}`;
+    if (normalized.includes(withHyphen)) {
+      variants.push(normalized.replace(withHyphen, withoutHyphen));
+    }
+    // Also try the reverse: "sarah-elhairy" -> "sarah-el-hairy"
+    const pattern = new RegExp(`-${particle}([a-z])`, "g");
+    if (pattern.test(normalized)) {
+      variants.push(normalized.replace(pattern, `-${particle}-$1`));
+    }
+  }
+
+  // Try completely removing particles
+  for (const particle of particles) {
+    variants.push(normalized.replace(new RegExp(`-${particle}-`, "g"), "-"));
+    variants.push(normalized.replace(new RegExp(`-${particle}$`, "g"), ""));
+  }
+
+  return [...new Set(variants)];
+}
+
+/**
  * Build a map of NosDéputés slug -> politician ID
  */
 async function buildSlugToIdMap(): Promise<Map<string, string>> {
@@ -147,20 +195,40 @@ async function buildSlugToIdMap(): Promise<Map<string, string>> {
   const map = new Map<string, string>();
   for (const ext of externalIds) {
     if (ext.politicianId) {
-      map.set(ext.externalId.toLowerCase(), ext.politicianId);
+      // Add the original and normalized variants
+      const variants = generateSlugVariants(ext.externalId);
+      for (const variant of variants) {
+        if (!map.has(variant)) {
+          map.set(variant, ext.politicianId);
+        }
+      }
     }
   }
 
-  // Also try matching by slug for deputies without NOSDEPUTES external ID
+  // Also try matching by slug and name for deputies without NOSDEPUTES external ID
   const politicians = await db.politician.findMany({
-    select: { id: true, slug: true },
+    select: { id: true, slug: true, firstName: true, lastName: true },
   });
 
   for (const pol of politicians) {
-    // NosDéputés slug format: prenom-nom
-    const ndSlug = pol.slug.toLowerCase();
-    if (!map.has(ndSlug)) {
-      map.set(ndSlug, pol.id);
+    // Add variants of the politician's slug
+    const slugVariants = generateSlugVariants(pol.slug);
+    for (const variant of slugVariants) {
+      if (!map.has(variant)) {
+        map.set(variant, pol.id);
+      }
+    }
+
+    // Also add prenom-nom format
+    const nameSlug = normalizeSlug(`${pol.firstName}-${pol.lastName}`);
+    if (!map.has(nameSlug)) {
+      map.set(nameSlug, pol.id);
+    }
+
+    // And nom-prenom format (less common but possible)
+    const reverseNameSlug = normalizeSlug(`${pol.lastName}-${pol.firstName}`);
+    if (!map.has(reverseNameSlug)) {
+      map.set(reverseNameSlug, pol.id);
     }
   }
 
@@ -226,18 +294,26 @@ async function syncScrutin(
 
     for (const entry of detail.votes) {
       const vote = entry.vote;
-      const slug = vote.parlementaire_slug?.toLowerCase();
+      const rawSlug = vote.parlementaire_slug;
 
-      if (!slug) continue;
+      if (!rawSlug) continue;
 
-      const polId = slugToId.get(slug);
+      // Try to find politician using slug variants
+      const variants = generateSlugVariants(rawSlug);
+      let polId: string | undefined;
+
+      for (const variant of variants) {
+        polId = slugToId.get(variant);
+        if (polId) break;
+      }
+
       if (polId) {
         votesToCreate.push({
           politicianId: polId,
           position: parseVotePosition(vote.position),
         });
       } else {
-        notFound.push(slug);
+        notFound.push(rawSlug.toLowerCase());
       }
     }
 

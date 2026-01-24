@@ -1,10 +1,14 @@
 import { Metadata } from "next";
 import { db } from "@/lib/db";
 import { PoliticianCard } from "@/components/politicians/PoliticianCard";
+import { PartySelect } from "@/components/politicians/PartySelect";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { AffairStatus } from "@/generated/prisma";
+
+// Minimum members to show a party in filters (avoid cluttering with old/small parties)
+const MIN_PARTY_MEMBERS = 2;
 
 export const metadata: Metadata = {
   title: "Représentants politiques",
@@ -95,7 +99,7 @@ async function getPoliticians(
 }
 
 async function getParties() {
-  return db.party.findMany({
+  const parties = await db.party.findMany({
     where: {
       politicians: { some: {} }, // Only parties with members
     },
@@ -107,6 +111,9 @@ async function getParties() {
       _count: { select: { politicians: true } },
     },
   });
+
+  // Filter out parties with too few members (old/merged parties)
+  return parties.filter((p) => p._count.politicians >= MIN_PARTY_MEMBERS);
 }
 
 async function getConvictionStats() {
@@ -229,22 +236,10 @@ export default async function PolitiquesPage({ searchParams }: PageProps) {
                 </Link>
               ))}
               {parties.length > 8 && (
-                <select
-                  className="text-xs border rounded px-2 py-1"
-                  value={partyFilter}
-                  onChange={(e) => {
-                    if (e.target.value) {
-                      window.location.href = buildUrl({ party: e.target.value });
-                    }
-                  }}
-                >
-                  <option value="">+ autres...</option>
-                  {parties.slice(8).map((party) => (
-                    <option key={party.id} value={party.id}>
-                      {party.shortName} ({party._count.politicians})
-                    </option>
-                  ))}
-                </select>
+                <PartySelect
+                  parties={parties.slice(8)}
+                  currentValue={partyFilter}
+                />
               )}
             </div>
           </div>

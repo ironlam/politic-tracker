@@ -361,7 +361,7 @@ export default async function PoliticianPage({ params }: PageProps) {
           )}
 
           {/* Data source */}
-          <Card className="bg-gray-50">
+          <Card className="bg-muted">
             <CardContent className="pt-6">
               <p className="text-xs text-muted-foreground">
                 Dernière mise à jour : {formatDate(politician.updatedAt)}

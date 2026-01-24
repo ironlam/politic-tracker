@@ -55,7 +55,7 @@ export function SearchForm({
       {hasFilters && (
         <Link
           href="/politiques"
-          className="px-4 py-2 border rounded-md hover:bg-gray-50 text-muted-foreground"
+          className="px-4 py-2 border rounded-md hover:bg-muted text-muted-foreground"
         >
           Réinitialiser
         </Link>

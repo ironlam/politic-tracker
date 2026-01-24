@@ -384,7 +384,7 @@ export default async function PolitiquesPage({ searchParams }: PageProps) {
               {page > 1 && (
                 <Link
                   href={buildUrl({ page: String(page - 1) })}
-                  className="px-4 py-2 border rounded-md hover:bg-gray-50"
+                  className="px-4 py-2 border rounded-md hover:bg-muted"
                 >
                   Précédent
                 </Link>
@@ -395,7 +395,7 @@ export default async function PolitiquesPage({ searchParams }: PageProps) {
               {page < totalPages && (
                 <Link
                   href={buildUrl({ page: String(page + 1) })}
-                  className="px-4 py-2 border rounded-md hover:bg-gray-50"
+                  className="px-4 py-2 border rounded-md hover:bg-muted"
                 >
                   Suivant
                 </Link>

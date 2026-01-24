@@ -188,7 +188,7 @@ export function SearchAutocomplete({
       )}
 
       {isOpen && results.length > 0 && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-white border rounded-lg shadow-lg z-50 overflow-hidden">
+        <div className="absolute top-full left-0 right-0 mt-1 bg-popover border rounded-lg shadow-lg z-50 overflow-hidden">
           <ul className="py-1">
             {results.map((result, index) => (
               <li key={result.id}>

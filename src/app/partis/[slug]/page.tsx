@@ -403,7 +403,7 @@ export default async function PartyPage({ params }: PageProps) {
 
           {/* External links */}
           {party.externalIds.length > 0 && (
-            <Card className="bg-gray-50">
+            <Card className="bg-muted">
               <CardContent className="pt-6">
                 <p className="text-xs text-muted-foreground mb-2">Liens externes</p>
                 <div className="flex flex-wrap gap-2">

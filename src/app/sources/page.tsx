@@ -255,7 +255,7 @@ export default function SourcesPage() {
 
       {/* Contact */}
       <section>
-        <Card className="bg-gray-50">
+        <Card className="bg-muted">
           <CardContent className="pt-6 text-center">
             <h3 className="font-semibold mb-2">Une erreur ? Une suggestion ?</h3>
             <p className="text-sm text-muted-foreground mb-4">

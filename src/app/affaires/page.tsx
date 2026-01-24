@@ -347,7 +347,7 @@ export default async function AffairesPage({ searchParams }: PageProps) {
                     status: statusFilter,
                     supercat: superCatFilter,
                   })}
-                  className="px-4 py-2 border rounded-md hover:bg-gray-50"
+                  className="px-4 py-2 border rounded-md hover:bg-muted"
                 >
                   Précédent
                 </Link>
@@ -362,7 +362,7 @@ export default async function AffairesPage({ searchParams }: PageProps) {
                     status: statusFilter,
                     supercat: superCatFilter,
                   })}
-                  className="px-4 py-2 border rounded-md hover:bg-gray-50"
+                  className="px-4 py-2 border rounded-md hover:bg-muted"
                 >
                   Suivant
                 </Link>

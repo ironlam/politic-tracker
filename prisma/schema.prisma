@@ -19,6 +19,7 @@ model Politician {
   lastName      String
   fullName      String    // Computed: "firstName lastName" for search
   birthDate     DateTime?
+  deathDate     DateTime? // Date of death (if deceased)
   birthPlace    String?
   photoUrl      String?   // URL de la photo
   photoSource   String?   // Source: "assemblee-nationale", "senat", "gouvernement", "hatvp", "manual"

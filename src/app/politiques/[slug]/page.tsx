@@ -106,6 +106,11 @@ export default async function PoliticianPage({ params }: PageProps) {
               {politician.civility === "Mme" ? "Née" : "Né"} le{" "}
               {formatDate(politician.birthDate)}
               {politician.birthPlace && ` à ${politician.birthPlace}`}
+              {politician.deathDate && (
+                <span className="text-gray-500">
+                  {" "}- Décédé{politician.civility === "Mme" ? "e" : ""} le {formatDate(politician.deathDate)}
+                </span>
+              )}
             </p>
           )}
         </div>

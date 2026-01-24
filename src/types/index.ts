@@ -40,6 +40,7 @@ export type PoliticianWithPartyAndCounts = Politician & {
     affairs: number;
   };
   hasConviction?: boolean;
+  isDeceased?: boolean;
 };
 
 export type PoliticianWithMandates = Politician & {

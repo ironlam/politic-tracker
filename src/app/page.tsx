@@ -1,21 +1,28 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { PoliticianCard } from "@/components/politicians/PoliticianCard";
 
 async function getStats() {
-  const [politicianCount, partyCount, affairCount, deputeCount] =
+  const [politicianCount, partyCount, affairCount, deputeCount, senateurCount, gouvernementCount, declarationCount] =
     await Promise.all([
       db.politician.count(),
       db.party.count(),
       db.affair.count(),
+      db.mandate.count({ where: { type: "DEPUTE", isCurrent: true } }),
+      db.mandate.count({ where: { type: "SENATEUR", isCurrent: true } }),
       db.mandate.count({
-        where: { type: "DEPUTE", isCurrent: true },
+        where: {
+          type: { in: ["MINISTRE", "PREMIER_MINISTRE", "MINISTRE_DELEGUE", "SECRETAIRE_ETAT"] },
+          isCurrent: true,
+        },
       }),
+      db.declaration.count(),
     ]);
 
-  return { politicianCount, partyCount, affairCount, deputeCount };
+  return { politicianCount, partyCount, affairCount, deputeCount, senateurCount, gouvernementCount, declarationCount };
 }
 
 async function getRecentPoliticians() {
@@ -23,107 +30,184 @@ async function getRecentPoliticians() {
     take: 6,
     orderBy: { createdAt: "desc" },
     include: { currentParty: true },
+    where: { deathDate: null }, // Exclude deceased
+  });
+}
+
+async function getRecentAffairs() {
+  return db.affair.findMany({
+    take: 4,
+    orderBy: { createdAt: "desc" },
+    include: {
+      politician: { include: { currentParty: true } },
+    },
   });
 }
 
 export default async function HomePage() {
   const stats = await getStats();
   const recentPoliticians = await getRecentPoliticians();
+  const recentAffairs = await getRecentAffairs();
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Hero */}
-      <section className="text-center py-12">
-        <h1 className="text-4xl font-bold mb-4">Transparence Politique</h1>
-        <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
-          Observatoire citoyen des représentants politiques français.
-          Consultez les informations publiques sur ceux qui vous représentent.
-        </p>
-        <div className="flex gap-4 justify-center">
-          <Button asChild size="lg">
-            <Link href="/politiques">Voir les représentants</Link>
-          </Button>
-        </div>
-      </section>
-
-      {/* Stats */}
-      <section className="grid grid-cols-2 md:grid-cols-4 gap-4 py-8">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Représentants
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold">{stats.politicianCount}</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Députés en exercice
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold">{stats.deputeCount}</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Partis politiques
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold">{stats.partyCount}</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Affaires documentées
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold">{stats.affairCount}</p>
-          </CardContent>
-        </Card>
-      </section>
-
-      {/* Recent politicians */}
-      <section className="py-8">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold">Derniers ajouts</h2>
-          <Button variant="outline" asChild>
-            <Link href="/politiques">Voir tous</Link>
-          </Button>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {recentPoliticians.map((politician) => (
-            <PoliticianCard key={politician.id} politician={politician} />
-          ))}
-        </div>
-      </section>
-
-      {/* Info box */}
-      <section className="py-8">
-        <Card className="bg-blue-50 border-blue-200">
-          <CardContent className="pt-6">
-            <h3 className="font-semibold text-blue-900 mb-2">
-              Sources des données
-            </h3>
-            <p className="text-sm text-blue-800">
-              Toutes les informations proviennent de sources publiques :
-              Assemblée nationale, Sénat, HATVP, et articles de presse. Chaque
-              affaire judiciaire est documentée avec ses sources.
+    <div className="min-h-screen">
+      {/* Hero Section */}
+      <section className="relative overflow-hidden bg-gradient-to-br from-primary/5 via-background to-accent/10">
+        <div className="container mx-auto px-4 py-20 md:py-28">
+          <div className="max-w-3xl mx-auto text-center">
+            <Badge variant="secondary" className="mb-6 text-sm font-medium">
+              Observatoire citoyen indépendant
+            </Badge>
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6">
+              <span className="bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+                Transparence Politique
+              </span>
+            </h1>
+            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed">
+              Accédez aux informations publiques sur vos représentants politiques.
+              Mandats, déclarations de patrimoine, affaires judiciaires documentées.
             </p>
-          </CardContent>
-        </Card>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button asChild size="lg" className="text-base px-8 shadow-lg shadow-primary/20">
+                <Link href="/politiques">Explorer les représentants</Link>
+              </Button>
+              <Button asChild size="lg" variant="outline" className="text-base px-8">
+                <Link href="/statistiques">Voir les statistiques</Link>
+              </Button>
+            </div>
+          </div>
+        </div>
+        {/* Decorative elements */}
+        <div className="absolute top-0 left-0 w-72 h-72 bg-primary/10 rounded-full -translate-x-1/2 -translate-y-1/2 blur-3xl" />
+        <div className="absolute bottom-0 right-0 w-96 h-96 bg-accent/20 rounded-full translate-x-1/3 translate-y-1/3 blur-3xl" />
       </section>
+
+      {/* Stats Section */}
+      <section className="py-16 border-y bg-card">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-6">
+            <StatCard value={stats.politicianCount} label="Politiques" />
+            <StatCard value={stats.deputeCount} label="Députés" highlight />
+            <StatCard value={stats.senateurCount} label="Sénateurs" highlight />
+            <StatCard value={stats.gouvernementCount} label="Gouvernement" highlight />
+            <StatCard value={stats.partyCount} label="Partis" />
+            <StatCard value={stats.affairCount} label="Affaires" variant="destructive" />
+            <StatCard value={stats.declarationCount} label="Déclarations" />
+          </div>
+        </div>
+      </section>
+
+      {/* Recent Politicians */}
+      <section className="py-16">
+        <div className="container mx-auto px-4">
+          <div className="flex justify-between items-end mb-8">
+            <div>
+              <h2 className="text-2xl md:text-3xl font-bold mb-2">Représentants</h2>
+              <p className="text-muted-foreground">Les derniers profils ajoutés</p>
+            </div>
+            <Button variant="ghost" asChild className="text-primary">
+              <Link href="/politiques">Voir tous &rarr;</Link>
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {recentPoliticians.map((politician) => (
+              <PoliticianCard key={politician.id} politician={politician} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Recent Affairs */}
+      {recentAffairs.length > 0 && (
+        <section className="py-16 bg-muted/30">
+          <div className="container mx-auto px-4">
+            <div className="flex justify-between items-end mb-8">
+              <div>
+                <h2 className="text-2xl md:text-3xl font-bold mb-2">Affaires récentes</h2>
+                <p className="text-muted-foreground">Dernières affaires documentées</p>
+              </div>
+              <Button variant="ghost" asChild className="text-primary">
+                <Link href="/affaires">Voir toutes &rarr;</Link>
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {recentAffairs.map((affair) => (
+                <Link
+                  key={affair.id}
+                  href={`/politiques/${affair.politician.slug}`}
+                  className="block"
+                >
+                  <Card className="h-full hover:shadow-lg transition-all hover:border-primary/20">
+                    <CardContent className="pt-6">
+                      <div className="flex items-start gap-4">
+                        <div className="w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center shrink-0">
+                          <span className="text-destructive text-lg">!</span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold truncate">{affair.title}</p>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {affair.politician.fullName}
+                            {affair.politician.currentParty && (
+                              <span className="text-primary"> ({affair.politician.currentParty.shortName})</span>
+                            )}
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* CTA Section */}
+      <section className="py-20 bg-gradient-to-br from-primary/5 to-accent/10">
+        <div className="container mx-auto px-4 text-center">
+          <h2 className="text-2xl md:text-3xl font-bold mb-4">
+            Un projet citoyen transparent
+          </h2>
+          <p className="text-muted-foreground max-w-2xl mx-auto mb-8">
+            Toutes nos sources sont documentées. Notre méthodologie est publique.
+            Nous respectons la présomption d&apos;innocence et le droit de réponse.
+          </p>
+          <Button asChild variant="outline" size="lg">
+            <Link href="/sources">Découvrir notre méthodologie</Link>
+          </Button>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function StatCard({
+  value,
+  label,
+  highlight,
+  variant,
+}: {
+  value: number;
+  label: string;
+  highlight?: boolean;
+  variant?: "destructive";
+}) {
+  return (
+    <div className="text-center">
+      <p
+        className={`text-3xl md:text-4xl font-bold ${
+          variant === "destructive"
+            ? "text-destructive"
+            : highlight
+              ? "text-primary"
+              : ""
+        }`}
+      >
+        {value.toLocaleString("fr-FR")}
+      </p>
+      <p className="text-sm text-muted-foreground mt-1">{label}</p>
     </div>
   );
 }

@@ -1,45 +1,39 @@
 import Link from "next/link";
 
+const NAV_LINKS = [
+  { href: "/politiques", label: "Représentants" },
+  { href: "/partis", label: "Partis" },
+  { href: "/affaires", label: "Affaires" },
+  { href: "/statistiques", label: "Statistiques" },
+  { href: "/sources", label: "Sources" },
+];
+
 export function Header() {
   return (
-    <header className="border-b bg-white">
+    <header className="sticky top-0 z-50 w-full border-b bg-white/80 backdrop-blur-md supports-[backdrop-filter]:bg-white/60">
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <span className="text-xl font-bold">Transparence Politique</span>
+          <Link href="/" className="flex items-center gap-3 group">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow">
+              <span className="text-white font-bold text-lg">TP</span>
+            </div>
+            <div className="hidden sm:block">
+              <span className="text-xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+                Transparence Politique
+              </span>
+            </div>
           </Link>
 
-          <nav className="flex items-center gap-6">
-            <Link
-              href="/politiques"
-              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Représentants
-            </Link>
-            <Link
-              href="/partis"
-              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Partis
-            </Link>
-            <Link
-              href="/affaires"
-              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Affaires
-            </Link>
-            <Link
-              href="/statistiques"
-              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Statistiques
-            </Link>
-            <Link
-              href="/mentions-legales"
-              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Mentions légales
-            </Link>
+          <nav className="flex items-center gap-1">
+            {NAV_LINKS.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg transition-colors"
+              >
+                {link.label}
+              </Link>
+            ))}
           </nav>
         </div>
       </div>

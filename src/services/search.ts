@@ -1,6 +1,18 @@
 import { db } from "@/lib/db";
 import { Prisma, MandateType } from "@/generated/prisma";
 
+// FTS result type from raw query
+interface FTSResult {
+  id: string;
+  slug: string;
+  fullName: string;
+  firstName: string;
+  lastName: string;
+  photoUrl: string | null;
+  currentPartyId: string | null;
+  relevance: number;
+}
+
 export interface SearchFilters {
   query: string;
   partyId?: string;
@@ -39,8 +51,153 @@ export interface SearchResponse {
 }
 
 /**
- * Advanced search using PostgreSQL full-text search when available,
- * with fallback to ILIKE for basic substring matching
+ * Search using PostgreSQL Full-Text Search
+ * Uses the search_politicians function created in the FTS migration
+ */
+async function searchWithFTS(
+  filters: SearchFilters,
+  page: number,
+  limit: number
+): Promise<SearchResponse> {
+  const { query, partyId, mandateType, department, hasAffairs, isActive } = filters;
+  const skip = (page - 1) * limit;
+
+  // Use raw SQL with FTS for text search
+  // The search_politicians function handles accent-insensitive matching
+  const ftsResults = await db.$queryRaw<FTSResult[]>`
+    SELECT
+      p.id,
+      p.slug,
+      p."fullName",
+      p."firstName",
+      p."lastName",
+      p."photoUrl",
+      p."currentPartyId",
+      ts_rank(p."searchVector", plainto_tsquery('french', unaccent(${query}))) as relevance
+    FROM "Politician" p
+    WHERE p."searchVector" @@ plainto_tsquery('french', unaccent(${query}))
+       OR p."fullName" ILIKE ${`%${query}%`}
+       OR p."lastName" ILIKE ${`%${query}%`}
+    ORDER BY relevance DESC, p."lastName" ASC
+    LIMIT 500
+  `;
+
+  if (ftsResults.length === 0) {
+    // No FTS results, generate suggestions
+    const suggestions = await generateSuggestions(query);
+    return {
+      results: [],
+      total: 0,
+      page,
+      totalPages: 0,
+      suggestions,
+    };
+  }
+
+  // Get all matching IDs
+  let matchingIds = ftsResults.map((r) => r.id);
+
+  // Apply additional filters using Prisma on the ID set
+  if (partyId || mandateType || department || hasAffairs !== undefined || isActive !== undefined) {
+    const additionalFilters: Prisma.PoliticianWhereInput[] = [
+      { id: { in: matchingIds } },
+    ];
+
+    if (partyId) {
+      additionalFilters.push({ currentPartyId: partyId });
+    }
+
+    if (mandateType) {
+      additionalFilters.push({
+        mandates: { some: { type: mandateType, isCurrent: true } },
+      });
+    }
+
+    if (department) {
+      additionalFilters.push({
+        mandates: { some: { constituency: { startsWith: department, mode: "insensitive" }, isCurrent: true } },
+      });
+    }
+
+    if (hasAffairs === true) {
+      additionalFilters.push({ affairs: { some: {} } });
+    } else if (hasAffairs === false) {
+      additionalFilters.push({ affairs: { none: {} } });
+    }
+
+    if (isActive === true) {
+      additionalFilters.push({ mandates: { some: { isCurrent: true } } });
+    } else if (isActive === false) {
+      additionalFilters.push({ mandates: { none: { isCurrent: true } } });
+    }
+
+    const filteredPoliticians = await db.politician.findMany({
+      where: { AND: additionalFilters },
+      select: { id: true },
+    });
+
+    matchingIds = filteredPoliticians.map((p) => p.id);
+  }
+
+  const total = matchingIds.length;
+
+  // Get paginated results preserving FTS order
+  const orderedIds = ftsResults
+    .filter((r) => matchingIds.includes(r.id))
+    .slice(skip, skip + limit)
+    .map((r) => r.id);
+
+  // Fetch full data for the page
+  const politicians = await db.politician.findMany({
+    where: { id: { in: orderedIds } },
+    select: {
+      id: true,
+      slug: true,
+      fullName: true,
+      firstName: true,
+      lastName: true,
+      photoUrl: true,
+      currentParty: {
+        select: { id: true, shortName: true, color: true },
+      },
+      mandates: {
+        where: { isCurrent: true },
+        select: { type: true, constituency: true },
+        take: 1,
+      },
+      _count: { select: { affairs: true } },
+    },
+  });
+
+  // Reorder to match FTS relevance order
+  const politicianMap = new Map(politicians.map((p) => [p.id, p]));
+  const orderedPoliticians = orderedIds
+    .map((id) => politicianMap.get(id))
+    .filter(Boolean) as typeof politicians;
+
+  const results: SearchResult[] = orderedPoliticians.map((p) => ({
+    id: p.id,
+    slug: p.slug,
+    fullName: p.fullName,
+    firstName: p.firstName,
+    lastName: p.lastName,
+    photoUrl: p.photoUrl,
+    currentParty: p.currentParty,
+    currentMandate: p.mandates[0] || null,
+    affairsCount: p._count.affairs,
+  }));
+
+  return {
+    results,
+    total,
+    page,
+    totalPages: Math.ceil(total / limit),
+  };
+}
+
+/**
+ * Advanced search using PostgreSQL full-text search for text queries,
+ * combined with Prisma for other filters
  */
 export async function searchPoliticians(
   filters: SearchFilters,
@@ -50,20 +207,13 @@ export async function searchPoliticians(
   const { query, partyId, mandateType, department, hasAffairs, isActive } = filters;
   const skip = (page - 1) * limit;
 
-  // Build where clause for filters
-  const whereConditions: Prisma.PoliticianWhereInput[] = [];
-
-  // Text search - use ILIKE for now (FTS requires manual migration)
+  // If we have a text query, use PostgreSQL FTS via raw query
   if (query && query.length >= 2) {
-    whereConditions.push({
-      OR: [
-        { fullName: { contains: query, mode: "insensitive" } },
-        { lastName: { contains: query, mode: "insensitive" } },
-        { firstName: { contains: query, mode: "insensitive" } },
-        { slug: { contains: query.toLowerCase().replace(/\s+/g, "-") } },
-      ],
-    });
+    return searchWithFTS(filters, page, limit);
   }
+
+  // Build where clause for filters (no text search)
+  const whereConditions: Prisma.PoliticianWhereInput[] = [];
 
   // Party filter
   if (partyId) {
@@ -210,7 +360,7 @@ async function generateSuggestions(query: string): Promise<string[]> {
 }
 
 /**
- * Get autocomplete suggestions
+ * Get autocomplete suggestions using FTS for better performance
  */
 export async function getAutocompleteSuggestions(
   query: string,
@@ -220,14 +370,33 @@ export async function getAutocompleteSuggestions(
     return [];
   }
 
+  // Use FTS for fast autocomplete
+  const ftsResults = await db.$queryRaw<FTSResult[]>`
+    SELECT
+      p.id,
+      p.slug,
+      p."fullName",
+      p."firstName",
+      p."lastName",
+      p."photoUrl",
+      p."currentPartyId",
+      ts_rank(p."searchVector", plainto_tsquery('french', unaccent(${query}))) as relevance
+    FROM "Politician" p
+    WHERE p."searchVector" @@ plainto_tsquery('french', unaccent(${query}))
+       OR p."fullName" ILIKE ${`%${query}%`}
+       OR p."lastName" ILIKE ${`%${query}%`}
+    ORDER BY relevance DESC, p."lastName" ASC
+    LIMIT ${limit}
+  `;
+
+  if (ftsResults.length === 0) {
+    return [];
+  }
+
+  // Get full data with party info
+  const ids = ftsResults.map((r) => r.id);
   const politicians = await db.politician.findMany({
-    where: {
-      OR: [
-        { fullName: { contains: query, mode: "insensitive" } },
-        { lastName: { contains: query, mode: "insensitive" } },
-        { firstName: { contains: query, mode: "insensitive" } },
-      ],
-    },
+    where: { id: { in: ids } },
     select: {
       id: true,
       slug: true,
@@ -236,39 +405,33 @@ export async function getAutocompleteSuggestions(
       lastName: true,
       photoUrl: true,
       currentParty: {
-        select: {
-          id: true,
-          shortName: true,
-          color: true,
-        },
+        select: { id: true, shortName: true, color: true },
       },
       mandates: {
         where: { isCurrent: true },
-        select: {
-          type: true,
-          constituency: true,
-        },
+        select: { type: true, constituency: true },
         take: 1,
       },
-      _count: {
-        select: { affairs: true },
-      },
+      _count: { select: { affairs: true } },
     },
-    orderBy: { lastName: "asc" },
-    take: limit,
   });
 
-  return politicians.map((p) => ({
-    id: p.id,
-    slug: p.slug,
-    fullName: p.fullName,
-    firstName: p.firstName,
-    lastName: p.lastName,
-    photoUrl: p.photoUrl,
-    currentParty: p.currentParty,
-    currentMandate: p.mandates[0] || null,
-    affairsCount: p._count.affairs,
-  }));
+  // Preserve FTS order
+  const politicianMap = new Map(politicians.map((p) => [p.id, p]));
+  return ids
+    .map((id) => politicianMap.get(id))
+    .filter(Boolean)
+    .map((p) => ({
+      id: p!.id,
+      slug: p!.slug,
+      fullName: p!.fullName,
+      firstName: p!.firstName,
+      lastName: p!.lastName,
+      photoUrl: p!.photoUrl,
+      currentParty: p!.currentParty,
+      currentMandate: p!.mandates[0] || null,
+      affairsCount: p!._count.affairs,
+    }));
 }
 
 /**

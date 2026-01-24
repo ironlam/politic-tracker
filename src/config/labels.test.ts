@@ -1,0 +1,148 @@
+import { describe, it, expect } from "vitest";
+import {
+  AFFAIR_STATUS_LABELS,
+  AFFAIR_STATUS_COLORS,
+  AFFAIR_STATUS_NEEDS_PRESUMPTION,
+  AFFAIR_CATEGORY_LABELS,
+  CATEGORY_TO_SUPER,
+  getCategoriesForSuper,
+  MANDATE_TYPE_LABELS,
+  AFFAIR_EVENT_TYPE_LABELS,
+} from "./labels";
+
+describe("AFFAIR_STATUS_LABELS", () => {
+  it("should have labels for all statuses", () => {
+    const statuses = [
+      "ENQUETE_PRELIMINAIRE",
+      "INSTRUCTION",
+      "MISE_EN_EXAMEN",
+      "RENVOI_TRIBUNAL",
+      "PROCES_EN_COURS",
+      "CONDAMNATION_PREMIERE_INSTANCE",
+      "APPEL_EN_COURS",
+      "CONDAMNATION_DEFINITIVE",
+      "RELAXE",
+      "ACQUITTEMENT",
+      "NON_LIEU",
+      "PRESCRIPTION",
+      "CLASSEMENT_SANS_SUITE",
+    ];
+
+    statuses.forEach((status) => {
+      expect(AFFAIR_STATUS_LABELS).toHaveProperty(status);
+      expect(typeof AFFAIR_STATUS_LABELS[status as keyof typeof AFFAIR_STATUS_LABELS]).toBe("string");
+    });
+  });
+
+  it("should have matching colors for all statuses", () => {
+    Object.keys(AFFAIR_STATUS_LABELS).forEach((status) => {
+      expect(AFFAIR_STATUS_COLORS).toHaveProperty(status);
+    });
+  });
+
+  it("should have presumption flags for all statuses", () => {
+    Object.keys(AFFAIR_STATUS_LABELS).forEach((status) => {
+      expect(AFFAIR_STATUS_NEEDS_PRESUMPTION).toHaveProperty(status);
+      expect(typeof AFFAIR_STATUS_NEEDS_PRESUMPTION[status as keyof typeof AFFAIR_STATUS_NEEDS_PRESUMPTION]).toBe("boolean");
+    });
+  });
+});
+
+describe("AFFAIR_STATUS_NEEDS_PRESUMPTION", () => {
+  it("should return true for ongoing cases", () => {
+    expect(AFFAIR_STATUS_NEEDS_PRESUMPTION.ENQUETE_PRELIMINAIRE).toBe(true);
+    expect(AFFAIR_STATUS_NEEDS_PRESUMPTION.MISE_EN_EXAMEN).toBe(true);
+    expect(AFFAIR_STATUS_NEEDS_PRESUMPTION.PROCES_EN_COURS).toBe(true);
+    expect(AFFAIR_STATUS_NEEDS_PRESUMPTION.APPEL_EN_COURS).toBe(true);
+  });
+
+  it("should return false for final verdicts", () => {
+    expect(AFFAIR_STATUS_NEEDS_PRESUMPTION.CONDAMNATION_DEFINITIVE).toBe(false);
+    expect(AFFAIR_STATUS_NEEDS_PRESUMPTION.RELAXE).toBe(false);
+    expect(AFFAIR_STATUS_NEEDS_PRESUMPTION.ACQUITTEMENT).toBe(false);
+    expect(AFFAIR_STATUS_NEEDS_PRESUMPTION.NON_LIEU).toBe(false);
+  });
+});
+
+describe("AFFAIR_CATEGORY_LABELS", () => {
+  it("should have labels for sensitive categories", () => {
+    expect(AFFAIR_CATEGORY_LABELS.AGRESSION_SEXUELLE).toBe("Agression sexuelle");
+    expect(AFFAIR_CATEGORY_LABELS.HARCELEMENT_SEXUEL).toBe("Harcèlement sexuel");
+    expect(AFFAIR_CATEGORY_LABELS.VIOLENCE).toBe("Violence");
+  });
+
+  it("should have labels for financial categories", () => {
+    expect(AFFAIR_CATEGORY_LABELS.CORRUPTION).toBe("Corruption");
+    expect(AFFAIR_CATEGORY_LABELS.FRAUDE_FISCALE).toBe("Fraude fiscale");
+    expect(AFFAIR_CATEGORY_LABELS.DETOURNEMENT_FONDS_PUBLICS).toBe("Détournement de fonds publics");
+  });
+});
+
+describe("CATEGORY_TO_SUPER", () => {
+  it("should map financial categories to FINANCES", () => {
+    expect(CATEGORY_TO_SUPER.FRAUDE_FISCALE).toBe("FINANCES");
+    expect(CATEGORY_TO_SUPER.BLANCHIMENT).toBe("FINANCES");
+    expect(CATEGORY_TO_SUPER.ABUS_BIENS_SOCIAUX).toBe("FINANCES");
+  });
+
+  it("should map personal harm categories to PERSONNES", () => {
+    expect(CATEGORY_TO_SUPER.VIOLENCE).toBe("PERSONNES");
+    expect(CATEGORY_TO_SUPER.HARCELEMENT_MORAL).toBe("PERSONNES");
+    expect(CATEGORY_TO_SUPER.AGRESSION_SEXUELLE).toBe("PERSONNES");
+  });
+
+  it("should map probity categories to PROBITE", () => {
+    expect(CATEGORY_TO_SUPER.CORRUPTION).toBe("PROBITE");
+    expect(CATEGORY_TO_SUPER.EMPLOI_FICTIF).toBe("PROBITE");
+    expect(CATEGORY_TO_SUPER.TRAFIC_INFLUENCE).toBe("PROBITE");
+  });
+});
+
+describe("getCategoriesForSuper", () => {
+  it("should return categories for PERSONNES", () => {
+    const categories = getCategoriesForSuper("PERSONNES");
+    expect(categories).toContain("VIOLENCE");
+    expect(categories).toContain("HARCELEMENT_MORAL");
+    expect(categories).toContain("AGRESSION_SEXUELLE");
+  });
+
+  it("should return categories for FINANCES", () => {
+    const categories = getCategoriesForSuper("FINANCES");
+    expect(categories).toContain("FRAUDE_FISCALE");
+    expect(categories).toContain("BLANCHIMENT");
+  });
+
+  it("should return empty array for invalid super-category", () => {
+    // @ts-expect-error Testing invalid input
+    const categories = getCategoriesForSuper("INVALID");
+    expect(categories).toHaveLength(0);
+  });
+});
+
+describe("MANDATE_TYPE_LABELS", () => {
+  it("should have labels for common mandate types", () => {
+    expect(MANDATE_TYPE_LABELS.DEPUTE).toBe("Député");
+    expect(MANDATE_TYPE_LABELS.SENATEUR).toBe("Sénateur");
+    expect(MANDATE_TYPE_LABELS.MINISTRE).toBe("Ministre");
+    expect(MANDATE_TYPE_LABELS.PREMIER_MINISTRE).toBe("Premier ministre");
+  });
+
+  it("should have labels for local mandates", () => {
+    expect(MANDATE_TYPE_LABELS.MAIRE).toBe("Maire");
+    expect(MANDATE_TYPE_LABELS.CONSEILLER_MUNICIPAL).toBe("Conseiller municipal");
+  });
+});
+
+describe("AFFAIR_EVENT_TYPE_LABELS", () => {
+  it("should have labels for key judicial events", () => {
+    expect(AFFAIR_EVENT_TYPE_LABELS.MISE_EN_EXAMEN).toBe("Mise en examen");
+    expect(AFFAIR_EVENT_TYPE_LABELS.PROCES).toBe("Procès");
+    expect(AFFAIR_EVENT_TYPE_LABELS.CONDAMNATION).toBe("Condamnation");
+    expect(AFFAIR_EVENT_TYPE_LABELS.APPEL).toBe("Appel interjeté");
+  });
+
+  it("should have labels for all event types", () => {
+    const eventCount = Object.keys(AFFAIR_EVENT_TYPE_LABELS).length;
+    expect(eventCount).toBeGreaterThanOrEqual(20); // We defined 25 event types
+  });
+});

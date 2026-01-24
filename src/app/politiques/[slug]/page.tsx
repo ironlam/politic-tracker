@@ -6,13 +6,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/utils";
 import {
-  MANDATE_TYPE_LABELS,
   AFFAIR_STATUS_LABELS,
   AFFAIR_STATUS_COLORS,
   AFFAIR_STATUS_NEEDS_PRESUMPTION,
   AFFAIR_CATEGORY_LABELS,
 } from "@/config/labels";
 import { PoliticianAvatar } from "@/components/politicians/PoliticianAvatar";
+import { MandateTimeline } from "@/components/politicians/MandateTimeline";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -62,8 +62,7 @@ export default async function PoliticianPage({ params }: PageProps) {
     notFound();
   }
 
-  const currentMandates = politician.mandates.filter((m) => m.isCurrent);
-  const pastMandates = politician.mandates.filter((m) => !m.isCurrent);
+  const hasMandates = politician.mandates.length > 0;
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -119,34 +118,17 @@ export default async function PoliticianPage({ params }: PageProps) {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main content */}
         <div className="lg:col-span-2 space-y-8">
-          {/* Current mandates */}
-          {currentMandates.length > 0 && (
+          {/* Career / Mandates */}
+          {hasMandates && (
             <Card>
               <CardHeader>
-                <CardTitle>Mandat actuel</CardTitle>
+                <CardTitle>Parcours politique</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                {currentMandates.map((mandate) => (
-                  <div key={mandate.id} className="border-l-4 border-primary pl-4">
-                    <p className="font-semibold">
-                      {MANDATE_TYPE_LABELS[mandate.type] || mandate.type}
-                    </p>
-                    <p className="text-muted-foreground">{mandate.title}</p>
-                    <p className="text-sm text-muted-foreground">
-                      Depuis le {formatDate(mandate.startDate)}
-                    </p>
-                    {mandate.sourceUrl && (
-                      <a
-                        href={mandate.sourceUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sm text-blue-600 hover:underline"
-                      >
-                        Voir sur le site officiel
-                      </a>
-                    )}
-                  </div>
-                ))}
+              <CardContent>
+                <MandateTimeline
+                  mandates={politician.mandates}
+                  civility={politician.civility}
+                />
               </CardContent>
             </Card>
           )}
@@ -283,31 +265,6 @@ export default async function PoliticianPage({ params }: PageProps) {
             </CardContent>
           </Card>
 
-          {/* Past mandates */}
-          {pastMandates.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Mandats précédents</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-2">
-                  {pastMandates.map((mandate) => (
-                    <li key={mandate.id} className="text-sm">
-                      <span className="font-medium">
-                        {MANDATE_TYPE_LABELS[mandate.type] || mandate.type}
-                      </span>{" "}
-                      - {mandate.title}
-                      <span className="text-muted-foreground">
-                        {" "}
-                        ({formatDate(mandate.startDate)} -{" "}
-                        {mandate.endDate ? formatDate(mandate.endDate) : "..."})
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
-            </Card>
-          )}
         </div>
 
         {/* Sidebar */}

@@ -142,6 +142,18 @@ Transparence Politique vise à rendre accessible l'information sur les représen
 - Proposition de sources (modérées)
 - Traductions (anglais, allemand)
 
+### 4.5 Nouvelles idées (2026-01-24)
+
+| Idée | Description | Valeur |
+|------|-------------|--------|
+| **"Qui est mon député ?"** | Recherche par code postal → circo | Haute |
+| **Alertes affaires** | Email quand nouvelle affaire ajoutée | Haute |
+| **Comparateur** | Comparer 2 politiques côte à côte | Moyenne |
+| **Export PDF** | Générer une fiche PDF d'un politique | Moyenne |
+| **Badges de transparence** | "A déclaré son patrimoine", "Présent en commission" | Moyenne |
+| **Widget embeddable** | `<iframe>` pour intégration médias | Moyenne |
+| **Historique des changements** | Voir l'évolution des fiches (audit log public) | Basse |
+
 ---
 
 ## 5. Non prioritaire / Hors scope
@@ -233,11 +245,22 @@ Le SEO et l'intuitivité priment sur la cohérence terminologique interne.
 
 ---
 
-## 9. Prochaines étapes immédiates
+## 9. Améliorations UX identifiées
 
-1. [ ] Remplacer filtre "décédé" par "actifs/anciens"
-2. [ ] Afficher la circonscription sur les cartes politiques
-3. [ ] Masquer les décédés par défaut dans les listes
-4. [ ] Ajouter OpenGraph metadata
-5. [ ] Créer sitemap.xml dynamique
-6. [ ] Créer robots.txt
+| Problème | Solution | Priorité |
+|----------|----------|----------|
+| Pas de loader lors changement de filtres | Ajouter skeleton/spinner sur la grille | Haute |
+| Carrière politique peu lisible | Liste chronologique groupée (actuel/passé) | Haute |
+| Recherche par localisation absente | "Qui est mon député ?" par code postal | Moyenne |
+
+---
+
+## 10. Prochaines étapes immédiates
+
+1. [x] ~~Remplacer filtre "décédé" par "actifs/anciens"~~
+2. [x] ~~Afficher la circonscription sur les cartes politiques~~
+3. [ ] Améliorer l'affichage des carrières (liste chronologique)
+4. [ ] Ajouter loaders sur les filtres
+5. [ ] Ajouter OpenGraph metadata
+6. [ ] Créer sitemap.xml dynamique
+7. [ ] Créer robots.txt

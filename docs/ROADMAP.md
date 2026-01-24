@@ -289,5 +289,6 @@ npm run sync:deceased       # Dates de décès (Wikidata)
 6. [x] ~~Ajouter OpenGraph metadata~~
 7. [x] ~~Créer sitemap.xml dynamique~~
 8. [x] ~~Créer robots.txt~~
-9. [ ] Page /departements avec liste des élus
+9. [x] ~~Page /departements avec liste des élus~~
 10. [ ] Améliorer image OG (PNG avec design)
+11. [ ] Cron job sync automatique

@@ -15,7 +15,10 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://transparence-politique.fr";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: {
     default: "Transparence Politique",
     template: "%s | Transparence Politique",
@@ -30,7 +33,47 @@ export const metadata: Metadata = {
     "transparence",
     "représentants",
     "assemblée nationale",
+    "affaires judiciaires",
+    "patrimoine",
+    "HATVP",
   ],
+  authors: [{ name: "Transparence Politique" }],
+  creator: "Transparence Politique",
+  openGraph: {
+    type: "website",
+    locale: "fr_FR",
+    url: siteUrl,
+    siteName: "Transparence Politique",
+    title: "Transparence Politique",
+    description:
+      "Observatoire citoyen des représentants politiques français. Mandats, patrimoine, affaires judiciaires.",
+    images: [
+      {
+        url: "/og-image.svg",
+        width: 1200,
+        height: 630,
+        alt: "Transparence Politique - Observatoire citoyen",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Transparence Politique",
+    description:
+      "Observatoire citoyen des représentants politiques français.",
+    images: ["/og-image.svg"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
 };
 
 export default function RootLayout({

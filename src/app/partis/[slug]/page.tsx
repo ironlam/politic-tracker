@@ -60,9 +60,31 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     return { title: "Parti non trouvé" };
   }
 
+  const memberCount = party.politicians.length;
+  const description = `${party.name} (${party.shortName}) - ${memberCount} membre${memberCount > 1 ? "s" : ""} actuels. Consultez la liste des élus et l'historique du parti.`;
+
   return {
     title: `${party.name} (${party.shortName})`,
-    description: `Fiche du parti ${party.name} - membres, historique, évolution`,
+    description,
+    openGraph: {
+      title: `${party.name} | Transparence Politique`,
+      description,
+      type: "profile",
+      images: party.logoUrl
+        ? [
+            {
+              url: party.logoUrl,
+              alt: party.name,
+            },
+          ]
+        : undefined,
+    },
+    twitter: {
+      card: "summary",
+      title: `${party.name} (${party.shortName})`,
+      description,
+      images: party.logoUrl ? [party.logoUrl] : undefined,
+    },
   };
 }
 

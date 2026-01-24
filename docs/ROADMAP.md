@@ -255,12 +255,38 @@ Le SEO et l'intuitivité priment sur la cohérence terminologique interne.
 
 ---
 
-## 10. Prochaines étapes immédiates
+## 10. Automatisation et maintenance
+
+### 10.1 Synchronisation des données
+
+| Tâche | Description | Priorité |
+|-------|-------------|----------|
+| Cron job Vercel | Sync hebdomadaire automatique (assemblee, senat, hatvp) | Moyenne |
+| Logger les changements | Audit log des modifications détectées | Moyenne |
+| Email d'alerte | Notification si changements majeurs (décès, démission) | Basse |
+| Webhook data.gouv.fr | Être notifié des mises à jour des sources | Basse |
+
+### 10.2 Scripts existants
+
+```bash
+npm run sync:assemblee      # Députés (577)
+npm run sync:senat          # Sénateurs (348)
+npm run sync:gouvernement   # Gouvernement actuel
+npm run sync:hatvp          # Déclarations patrimoine
+npm run sync:photos         # Photos manquantes
+npm run sync:deceased       # Dates de décès (Wikidata)
+```
+
+---
+
+## 11. Prochaines étapes immédiates
 
 1. [x] ~~Remplacer filtre "décédé" par "actifs/anciens"~~
 2. [x] ~~Afficher la circonscription sur les cartes politiques~~
-3. [ ] Améliorer l'affichage des carrières (liste chronologique)
-4. [ ] Ajouter loaders sur les filtres
-5. [ ] Ajouter OpenGraph metadata
-6. [ ] Créer sitemap.xml dynamique
-7. [ ] Créer robots.txt
+3. [x] ~~Améliorer l'affichage des carrières (MandateTimeline)~~
+4. [x] ~~Ajouter loaders sur les filtres~~
+5. [x] ~~Page "Mon député" (recherche par code postal)~~
+6. [ ] Ajouter OpenGraph metadata
+7. [ ] Créer sitemap.xml dynamique
+8. [ ] Créer robots.txt
+9. [ ] Page /departements avec liste des élus

@@ -48,9 +48,37 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     return { title: "Politicien non trouvé" };
   }
 
+  const currentMandate = politician.mandates.find((m) => m.isCurrent);
+  const role = currentMandate
+    ? `${currentMandate.type === "DEPUTE" ? "Député" : currentMandate.type === "SENATEUR" ? "Sénateur" : "Représentant"}`
+    : "Représentant politique";
+
+  const description = `${role} ${politician.currentParty ? `(${politician.currentParty.shortName})` : ""} - Consultez ses mandats, déclarations de patrimoine et affaires judiciaires.`;
+
   return {
     title: politician.fullName,
-    description: `Fiche de ${politician.fullName} - mandats, déclarations, affaires judiciaires`,
+    description,
+    openGraph: {
+      title: `${politician.fullName} | Transparence Politique`,
+      description,
+      type: "profile",
+      images: politician.photoUrl
+        ? [
+            {
+              url: politician.photoUrl,
+              width: 200,
+              height: 200,
+              alt: politician.fullName,
+            },
+          ]
+        : undefined,
+    },
+    twitter: {
+      card: "summary",
+      title: politician.fullName,
+      description,
+      images: politician.photoUrl ? [politician.photoUrl] : undefined,
+    },
   };
 }
 

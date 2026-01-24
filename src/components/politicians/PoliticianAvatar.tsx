@@ -10,6 +10,7 @@ interface PoliticianAvatarProps {
   fullName?: string;
   size?: "sm" | "md" | "lg" | "xl";
   className?: string;
+  priority?: boolean; // Load immediately (above the fold)
 }
 
 const sizeClasses = {
@@ -26,6 +27,7 @@ export function PoliticianAvatar({
   fullName,
   size = "md",
   className = "",
+  priority = false,
 }: PoliticianAvatarProps) {
   const [imageError, setImageError] = useState(false);
 
@@ -53,8 +55,11 @@ export function PoliticianAvatar({
         src={photoUrl}
         alt={displayName}
         fill
+        sizes={size === "sm" ? "40px" : size === "md" ? "56px" : size === "lg" ? "96px" : "128px"}
         className="object-cover"
         onError={() => setImageError(true)}
+        loading={priority ? "eager" : "lazy"}
+        priority={priority}
         unoptimized // External images from AN
       />
     </div>

@@ -59,7 +59,7 @@
   --secondary: oklch(0.965 0.005 260);
   --secondary-foreground: oklch(0.205 0.015 260);
   --muted: oklch(0.965 0.005 260);
-  --muted-foreground: oklch(0.500 0.010 260);
+  --muted-foreground: oklch(0.400 0.010 260); /* Improved contrast for WCAG AA (was 0.500) */
   --accent: oklch(0.965 0.020 264);
   --accent-foreground: oklch(0.400 0.150 264);
   --destructive: oklch(0.577 0.245 27.325);
@@ -121,5 +121,45 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/* Accessibility improvements */
+@layer utilities {
+  /* Skip to main content link */
+  .skip-link {
+    @apply absolute -top-10 left-0 z-50 bg-primary text-primary-foreground px-4 py-2 rounded-br-md;
+    @apply focus:top-0 transition-all;
+  }
+
+  /* Improved focus styles for keyboard navigation */
+  .focus-visible-ring:focus-visible {
+    @apply outline-2 outline-offset-2 outline-ring;
+  }
+
+  /* Ensure minimum touch target size (44x44px for WCAG 2.1) */
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px];
+  }
+}
+
+/* Global focus-visible styles */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  @apply outline-2 outline-offset-2 outline-primary rounded-sm;
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

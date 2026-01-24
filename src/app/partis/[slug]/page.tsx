@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/utils";
 import { POLITICAL_POSITION_LABELS, POLITICAL_POSITION_COLORS } from "@/config/labels";
 import { PoliticianAvatar } from "@/components/politicians/PoliticianAvatar";
+import { OrganizationJsonLd, BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -108,10 +109,33 @@ export default async function PartyPage({ params }: PageProps) {
       return acc;
     }, [] as typeof party.partyMemberships);
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://transparence-politique.fr";
+  const wikidataId = party.externalIds.find((e) => e.source === "WIKIDATA")?.externalId;
+
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Breadcrumb */}
-      <nav className="text-sm text-muted-foreground mb-6">
+    <>
+      {/* JSON-LD Structured Data */}
+      <OrganizationJsonLd
+        name={party.name}
+        alternateName={party.shortName}
+        description={party.description || undefined}
+        logo={party.logoUrl || undefined}
+        url={`${siteUrl}/partis/${party.slug}`}
+        foundingDate={party.foundedDate?.toISOString().split("T")[0]}
+        dissolutionDate={party.dissolvedDate?.toISOString().split("T")[0]}
+        sameAs={wikidataId ? [`https://www.wikidata.org/wiki/${wikidataId}`] : undefined}
+      />
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Accueil", url: siteUrl },
+          { name: "Partis", url: `${siteUrl}/partis` },
+          { name: party.shortName, url: `${siteUrl}/partis/${party.slug}` },
+        ]}
+      />
+
+      <div className="container mx-auto px-4 py-8">
+        {/* Breadcrumb */}
+        <nav className="text-sm text-muted-foreground mb-6">
         <Link href="/partis" className="hover:text-foreground">
           Partis
         </Link>
@@ -448,6 +472,7 @@ export default async function PartyPage({ params }: PageProps) {
           )}
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 }

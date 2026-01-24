@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PoliticianCard } from "@/components/politicians/PoliticianCard";
 import { formatDate } from "@/lib/utils";
+import { WebSiteJsonLd } from "@/components/seo/JsonLd";
 
 async function getStats() {
   const [politicianCount, partyCount, affairCount, deputeCount, senateurCount, gouvernementCount, declarationCount] =
@@ -55,9 +56,16 @@ export default async function HomePage() {
   const stats = await getStats();
   const recentPoliticians = await getRecentPoliticians();
   const recentAffairs = await getRecentAffairs();
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://transparence-politique.fr";
 
   return (
-    <div className="min-h-screen">
+    <>
+      <WebSiteJsonLd
+        name="Transparence Politique"
+        description="Observatoire citoyen des représentants politiques français. Accédez aux informations publiques : mandats, patrimoine, affaires judiciaires."
+        url={siteUrl}
+      />
+      <div className="min-h-screen">
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-gradient-to-br from-primary/5 via-background to-accent/10">
         <div className="container mx-auto px-4 py-20 md:py-28 relative z-10">
@@ -197,7 +205,8 @@ export default async function HomePage() {
           </Button>
         </div>
       </section>
-    </div>
+      </div>
+    </>
   );
 }
 

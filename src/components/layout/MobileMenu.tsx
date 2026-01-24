@@ -64,9 +64,13 @@ export function MobileMenu() {
 
       {/* Mobile menu dropdown */}
       {isOpen && (
-        <div className="absolute top-16 left-0 right-0 bg-background border-b shadow-lg">
-          <nav className="container mx-auto px-4 py-4">
-            <ul className="space-y-1">
+        <div
+          className="absolute top-16 left-0 right-0 bg-background border-b shadow-lg"
+          role="dialog"
+          aria-label="Menu de navigation"
+        >
+          <nav className="container mx-auto px-4 py-4" aria-label="Navigation mobile">
+            <ul className="space-y-1" role="list">
               {NAV_LINKS.map((link) => (
                 <li key={link.href}>
                   <Link

@@ -10,9 +10,11 @@ import {
   AFFAIR_STATUS_COLORS,
   AFFAIR_STATUS_NEEDS_PRESUMPTION,
   AFFAIR_CATEGORY_LABELS,
+  MANDATE_TYPE_LABELS,
 } from "@/config/labels";
 import { PoliticianAvatar } from "@/components/politicians/PoliticianAvatar";
 import { MandateTimeline } from "@/components/politicians/MandateTimeline";
+import { PersonJsonLd, BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -91,11 +93,35 @@ export default async function PoliticianPage({ params }: PageProps) {
   }
 
   const hasMandates = politician.mandates.length > 0;
+  const currentMandate = politician.mandates.find((m) => m.isCurrent);
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://transparence-politique.fr";
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Breadcrumb */}
-      <nav className="text-sm text-muted-foreground mb-6">
+    <>
+      {/* JSON-LD Structured Data */}
+      <PersonJsonLd
+        name={politician.fullName}
+        givenName={politician.firstName}
+        familyName={politician.lastName}
+        jobTitle={currentMandate ? MANDATE_TYPE_LABELS[currentMandate.type] : undefined}
+        affiliation={politician.currentParty?.name}
+        image={politician.photoUrl || undefined}
+        birthDate={politician.birthDate?.toISOString().split("T")[0]}
+        deathDate={politician.deathDate?.toISOString().split("T")[0]}
+        birthPlace={politician.birthPlace || undefined}
+        url={`${siteUrl}/politiques/${politician.slug}`}
+      />
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Accueil", url: siteUrl },
+          { name: "Politiques", url: `${siteUrl}/politiques` },
+          { name: politician.fullName, url: `${siteUrl}/politiques/${politician.slug}` },
+        ]}
+      />
+
+      <div className="container mx-auto px-4 py-8">
+        {/* Breadcrumb */}
+        <nav className="text-sm text-muted-foreground mb-6">
         <Link href="/politiques" className="hover:text-foreground">
           Politiques
         </Link>
@@ -358,6 +384,7 @@ export default async function PoliticianPage({ params }: PageProps) {
           </Card>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 }

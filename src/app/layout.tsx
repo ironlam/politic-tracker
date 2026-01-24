@@ -80,8 +80,12 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
       >
         <ThemeProvider>
+          {/* Skip to main content link for keyboard navigation */}
+          <a href="#main-content" className="skip-link">
+            Aller au contenu principal
+          </a>
           <Header />
-          <main className="flex-1">{children}</main>
+          <main id="main-content" className="flex-1" tabIndex={-1}>{children}</main>
           <Footer />
         </ThemeProvider>
       </body>

@@ -67,12 +67,25 @@ async function getWikidataPhoto(wikidataId: string): Promise<string | null> {
 }
 
 /**
+ * Normalize name for HATVP photo URL (remove accents, lowercase)
+ */
+function normalizeForHatvp(name: string): string {
+  return name
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "") // Remove accents
+    .replace(/[^a-z]/g, ""); // Keep only letters
+}
+
+/**
  * Generate potential photo URLs based on politician data
  */
 async function getPotentialPhotoUrls(
   politician: {
     id: string;
     slug: string;
+    firstName: string;
+    lastName: string;
     externalIds: { source: DataSource; externalId: string }[];
     mandates: { type: MandateType; isCurrent: boolean }[];
   }
@@ -82,12 +95,13 @@ async function getPotentialPhotoUrls(
   // Check mandate types to determine which sources to try
   const hasDeputeMandate = politician.mandates.some((m) => m.type === MandateType.DEPUTE);
   const hasSenateurMandate = politician.mandates.some((m) => m.type === MandateType.SENATEUR);
+  const gouvernementTypes: MandateType[] = [MandateType.MINISTRE, MandateType.PREMIER_MINISTRE, MandateType.MINISTRE_DELEGUE, MandateType.SECRETAIRE_ETAT];
+  const hasGouvernementMandate = politician.mandates.some((m) => gouvernementTypes.includes(m.type));
 
   // Get external IDs
   const anId = politician.externalIds.find((e) => e.source === DataSource.ASSEMBLEE_NATIONALE)?.externalId;
   const senatId = politician.externalIds.find((e) => e.source === DataSource.SENAT)?.externalId;
   const wikidataId = politician.externalIds.find((e) => e.source === DataSource.WIKIDATA)?.externalId;
-  const hatvpId = politician.externalIds.find((e) => e.source === DataSource.HATVP)?.externalId;
 
   // 1. Assemblée Nationale (highest priority for deputies)
   if (anId && hasDeputeMandate) {
@@ -105,11 +119,12 @@ async function getPotentialPhotoUrls(
     });
   }
 
-  // 3. HATVP
-  if (hatvpId) {
-    // HATVP photo URLs are in the CSV, but we can try the pattern
+  // 3. HATVP photos (format: nom-prenom.jpg)
+  // Try for government members and anyone with HATVP declaration
+  if (hasGouvernementMandate || politician.externalIds.some((e) => e.source === DataSource.HATVP)) {
+    const hatvpName = `${normalizeForHatvp(politician.lastName)}-${normalizeForHatvp(politician.firstName)}`;
     urls.push({
-      url: `https://www.hatvp.fr/wordpress/wp-content/uploads/photos/${politician.slug}.jpg`,
+      url: `https://www.hatvp.fr/livraison/photos_gouvernement/${hatvpName}.jpg`,
       source: "hatvp",
     });
   }
@@ -165,6 +180,8 @@ export async function syncPhotos(options: { validateExisting?: boolean } = {}): 
       select: {
         id: true,
         slug: true,
+        firstName: true,
+        lastName: true,
         fullName: true,
         photoUrl: true,
         photoSource: true,

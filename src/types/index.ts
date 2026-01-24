@@ -3,11 +3,13 @@ import type {
   Party,
   Mandate,
   Affair,
+  AffairEvent,
   Source,
   Declaration,
   ExternalId,
   AffairStatus,
   AffairCategory,
+  AffairEventType,
   MandateType,
   DataSource,
   PoliticalPosition,
@@ -19,11 +21,13 @@ export type {
   Party,
   Mandate,
   Affair,
+  AffairEvent,
   Source,
   Declaration,
   ExternalId,
   AffairStatus,
   AffairCategory,
+  AffairEventType,
   MandateType,
   DataSource,
   PoliticalPosition,
@@ -63,6 +67,7 @@ export type PoliticianFull = Politician & {
 
 export type AffairWithSources = Affair & {
   sources: Source[];
+  events?: AffairEvent[];
 };
 
 export type AffairWithPolitician = Affair & {

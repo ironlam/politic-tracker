@@ -215,12 +215,28 @@ model Affair {
   startDate    DateTime?      // When affair became public
   verdictDate  DateTime?      // Date of verdict (if any)
 
-  // Outcome
+  // Outcome (legacy field kept for compatibility)
   sentence     String?        // Ex: "2 ans de prison avec sursis, 5 ans d'inéligibilité"
   appeal       Boolean        @default(false)
 
+  // Detailed sentence breakdown
+  prisonMonths        Int?           // Prison sentence in months (0 if none)
+  prisonSuspended     Boolean?       // True if suspended sentence (sursis)
+  fineAmount          Decimal?       @db.Decimal(12, 2) // Fine in euros
+  ineligibilityMonths Int?           // Ineligibility period in months
+  communityService    Int?           // Community service hours (TIG)
+  otherSentence       String?        // Other penalties (e.g., "interdiction d'exercer")
+
+  // Jurisdiction info
+  court              String?         // Ex: "Tribunal correctionnel de Paris"
+  chamber            String?         // Ex: "11ème chambre correctionnelle"
+  caseNumber         String?         // Ex: "2023/12345"
+
   // Sources (minimum 1 required - enforced at app level)
   sources      Source[]
+
+  // Timeline events
+  events       AffairEvent[]
 
   // Verification
   verifiedAt   DateTime?
@@ -232,6 +248,55 @@ model Affair {
   @@index([politicianId])
   @@index([status])
   @@index([category])
+}
+
+// Timeline events for an affair
+model AffairEvent {
+  id          String    @id @default(cuid())
+  affair      Affair    @relation(fields: [affairId], references: [id], onDelete: Cascade)
+  affairId    String
+
+  date        DateTime
+  type        AffairEventType
+  title       String           // Short description
+  description String?   @db.Text // Detailed description
+
+  // Optional source for this specific event
+  sourceUrl   String?
+  sourceTitle String?
+
+  createdAt   DateTime  @default(now())
+
+  @@index([affairId])
+  @@index([date])
+}
+
+enum AffairEventType {
+  FAITS                    // Les faits se produisent
+  REVELATION               // Révélation médiatique
+  PLAINTE                  // Dépôt de plainte
+  ENQUETE_PRELIMINAIRE     // Ouverture enquête préliminaire
+  INFORMATION_JUDICIAIRE   // Ouverture information judiciaire
+  PERQUISITION             // Perquisitions
+  GARDE_A_VUE              // Garde à vue
+  MISE_EN_EXAMEN           // Mise en examen
+  CONTROLE_JUDICIAIRE      // Placement sous contrôle judiciaire
+  DETENTION_PROVISOIRE     // Placement en détention provisoire
+  RENVOI_TRIBUNAL          // Renvoi devant le tribunal
+  PROCES                   // Procès
+  REQUISITOIRE             // Réquisitoire du procureur
+  JUGEMENT                 // Jugement rendu
+  APPEL                    // Appel interjeté
+  PROCES_APPEL             // Procès en appel
+  ARRET_APPEL              // Arrêt de la cour d'appel
+  POURVOI_CASSATION        // Pourvoi en cassation
+  ARRET_CASSATION          // Arrêt de la Cour de cassation
+  RELAXE                   // Relaxe
+  ACQUITTEMENT             // Acquittement
+  CONDAMNATION             // Condamnation
+  PRESCRIPTION             // Prescription
+  NON_LIEU                 // Non-lieu
+  AUTRE                    // Autre événement
 }
 
 enum AffairStatus {

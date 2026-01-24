@@ -1,4 +1,4 @@
-import type { AffairStatus, AffairCategory, MandateType, DataSource, PoliticalPosition } from "@/types";
+import type { AffairStatus, AffairCategory, MandateType, DataSource, PoliticalPosition, AffairEventType } from "@/types";
 
 export const AFFAIR_STATUS_LABELS: Record<AffairStatus, string> = {
   ENQUETE_PRELIMINAIRE: "Enquête préliminaire",
@@ -225,3 +225,61 @@ export const POLITICAL_POSITION_ORDER: PoliticalPosition[] = [
   "RIGHT",
   "FAR_RIGHT",
 ];
+
+// Affair event type labels (chronology)
+export const AFFAIR_EVENT_TYPE_LABELS: Record<AffairEventType, string> = {
+  FAITS: "Faits",
+  REVELATION: "Révélation médiatique",
+  PLAINTE: "Dépôt de plainte",
+  ENQUETE_PRELIMINAIRE: "Enquête préliminaire",
+  INFORMATION_JUDICIAIRE: "Information judiciaire",
+  PERQUISITION: "Perquisition",
+  GARDE_A_VUE: "Garde à vue",
+  MISE_EN_EXAMEN: "Mise en examen",
+  CONTROLE_JUDICIAIRE: "Contrôle judiciaire",
+  DETENTION_PROVISOIRE: "Détention provisoire",
+  RENVOI_TRIBUNAL: "Renvoi devant le tribunal",
+  PROCES: "Procès",
+  REQUISITOIRE: "Réquisitoire",
+  JUGEMENT: "Jugement",
+  APPEL: "Appel interjeté",
+  PROCES_APPEL: "Procès en appel",
+  ARRET_APPEL: "Arrêt de la cour d'appel",
+  POURVOI_CASSATION: "Pourvoi en cassation",
+  ARRET_CASSATION: "Arrêt de la Cour de cassation",
+  RELAXE: "Relaxe",
+  ACQUITTEMENT: "Acquittement",
+  CONDAMNATION: "Condamnation",
+  PRESCRIPTION: "Prescription",
+  NON_LIEU: "Non-lieu",
+  AUTRE: "Autre événement",
+};
+
+// Event type colors for timeline display
+export const AFFAIR_EVENT_TYPE_COLORS: Record<AffairEventType, string> = {
+  FAITS: "bg-gray-500",
+  REVELATION: "bg-yellow-500",
+  PLAINTE: "bg-orange-400",
+  ENQUETE_PRELIMINAIRE: "bg-orange-500",
+  INFORMATION_JUDICIAIRE: "bg-orange-600",
+  PERQUISITION: "bg-amber-500",
+  GARDE_A_VUE: "bg-amber-600",
+  MISE_EN_EXAMEN: "bg-red-400",
+  CONTROLE_JUDICIAIRE: "bg-red-500",
+  DETENTION_PROVISOIRE: "bg-red-600",
+  RENVOI_TRIBUNAL: "bg-purple-500",
+  PROCES: "bg-purple-600",
+  REQUISITOIRE: "bg-purple-700",
+  JUGEMENT: "bg-indigo-500",
+  APPEL: "bg-blue-400",
+  PROCES_APPEL: "bg-blue-500",
+  ARRET_APPEL: "bg-blue-600",
+  POURVOI_CASSATION: "bg-sky-500",
+  ARRET_CASSATION: "bg-sky-600",
+  RELAXE: "bg-green-500",
+  ACQUITTEMENT: "bg-green-600",
+  CONDAMNATION: "bg-red-700",
+  PRESCRIPTION: "bg-gray-400",
+  NON_LIEU: "bg-gray-500",
+  AUTRE: "bg-gray-600",
+};

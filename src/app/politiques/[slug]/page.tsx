@@ -15,6 +15,8 @@ import {
 import { PoliticianAvatar } from "@/components/politicians/PoliticianAvatar";
 import { MandateTimeline } from "@/components/politicians/MandateTimeline";
 import { PersonJsonLd, BreadcrumbJsonLd } from "@/components/seo/JsonLd";
+import { SentenceDetails } from "@/components/affairs/SentenceDetails";
+import { AffairTimeline } from "@/components/affairs/AffairTimeline";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -32,6 +34,9 @@ async function getPolitician(slug: string) {
         include: {
           sources: true,
           partyAtTime: true,
+          events: {
+            orderBy: { date: "asc" },
+          },
         },
         orderBy: { verdictDate: "desc" },
       },
@@ -267,11 +272,26 @@ export default async function PoliticianPage({ params }: PageProps) {
                         )}
                       </div>
 
-                      {/* Sentence if convicted */}
-                      {affair.sentence && (
-                        <div className="bg-gray-100 rounded p-2 mb-3">
-                          <p className="text-xs text-muted-foreground mb-1">Condamnation :</p>
-                          <p className="text-sm font-medium">{affair.sentence}</p>
+                      {/* Jurisdiction info */}
+                      {(affair.court || affair.caseNumber) && (
+                        <div className="text-xs text-muted-foreground mb-3">
+                          {affair.court && <span>{affair.court}</span>}
+                          {affair.chamber && <span> - {affair.chamber}</span>}
+                          {affair.caseNumber && (
+                            <span className="ml-2 font-mono">({affair.caseNumber})</span>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Sentence details */}
+                      <div className="mb-3">
+                        <SentenceDetails affair={affair} />
+                      </div>
+
+                      {/* Timeline */}
+                      {affair.events && affair.events.length > 0 && (
+                        <div className="mb-3 border-t pt-3">
+                          <AffairTimeline events={affair.events} />
                         </div>
                       )}
 

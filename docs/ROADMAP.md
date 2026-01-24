@@ -286,7 +286,8 @@ npm run sync:deceased       # Dates de décès (Wikidata)
 3. [x] ~~Améliorer l'affichage des carrières (MandateTimeline)~~
 4. [x] ~~Ajouter loaders sur les filtres~~
 5. [x] ~~Page "Mon député" (recherche par code postal)~~
-6. [ ] Ajouter OpenGraph metadata
-7. [ ] Créer sitemap.xml dynamique
-8. [ ] Créer robots.txt
+6. [x] ~~Ajouter OpenGraph metadata~~
+7. [x] ~~Créer sitemap.xml dynamique~~
+8. [x] ~~Créer robots.txt~~
 9. [ ] Page /departements avec liste des élus
+10. [ ] Améliorer image OG (PNG avec design)

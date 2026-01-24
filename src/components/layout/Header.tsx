@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
+import { MobileMenu } from "./MobileMenu";
 
 const NAV_LINKS = [
   { href: "/politiques", label: "Représentants" },
@@ -25,7 +26,8 @@ export function Header() {
             </div>
           </Link>
 
-          <nav className="flex items-center gap-1">
+          {/* Desktop navigation */}
+          <nav className="hidden md:flex items-center gap-1">
             {NAV_LINKS.map((link) => (
               <Link
                 key={link.href}
@@ -39,6 +41,9 @@ export function Header() {
               <ThemeToggle />
             </div>
           </nav>
+
+          {/* Mobile navigation */}
+          <MobileMenu />
         </div>
       </div>
     </header>

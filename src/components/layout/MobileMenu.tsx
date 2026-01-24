@@ -7,10 +7,10 @@ import { ThemeToggle } from "@/components/theme/ThemeToggle";
 const NAV_LINKS = [
   { href: "/mon-depute", label: "Mon député" },
   { href: "/politiques", label: "Représentants" },
+  { href: "/departements", label: "Départements" },
   { href: "/partis", label: "Partis" },
   { href: "/affaires", label: "Affaires" },
   { href: "/statistiques", label: "Statistiques" },
-  { href: "/sources", label: "Sources" },
 ];
 
 export function MobileMenu() {

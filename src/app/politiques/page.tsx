@@ -85,21 +85,27 @@ async function getPoliticians(
     };
   }
 
-  // Mandate type filter
+  // Build mandate filter conditions
+  // Note: mandate filter implies isCurrent: true (filtering by current role)
+  // Status filter: active = has any current mandate, former = no current mandate
   if (mandateFilter && MANDATE_GROUPS[mandateFilter]) {
+    // Filter by specific mandate type (always current)
     where.mandates = {
       some: {
         type: { in: MANDATE_GROUPS[mandateFilter] },
         isCurrent: true,
       },
     };
-  }
-
-  // Status filter (alive/deceased)
-  if (statusFilter === "alive") {
-    where.deathDate = null;
-  } else if (statusFilter === "deceased") {
-    where.deathDate = { not: null };
+  } else if (statusFilter === "active") {
+    // Has any current mandate
+    where.mandates = {
+      some: { isCurrent: true },
+    };
+  } else if (statusFilter === "former") {
+    // No current mandate (former representatives)
+    where.mandates = {
+      none: { isCurrent: true },
+    };
   }
 
   // Get order by config
@@ -161,7 +167,7 @@ async function getParties() {
 }
 
 async function getFilterCounts() {
-  const [withConviction, totalAffairs, deputes, senateurs, gouvernement, deceased, alive] =
+  const [withConviction, totalAffairs, deputes, senateurs, gouvernement, active, former] =
     await Promise.all([
       // Conviction counts
       db.politician.count({
@@ -199,12 +205,16 @@ async function getFilterCounts() {
           },
         },
       }),
-      // Status counts
+      // Status counts (active = has current mandate, former = no current mandate)
       db.politician.count({
-        where: { deathDate: { not: null } },
+        where: {
+          mandates: { some: { isCurrent: true } },
+        },
       }),
       db.politician.count({
-        where: { deathDate: null },
+        where: {
+          mandates: { none: { isCurrent: true } },
+        },
       }),
     ]);
 
@@ -214,8 +224,8 @@ async function getFilterCounts() {
     deputes,
     senateurs,
     gouvernement,
-    deceased,
-    alive,
+    active,
+    former,
   };
 }
 
@@ -296,8 +306,8 @@ export default async function PolitiquesPage({ searchParams }: PageProps) {
             deputes: counts.deputes,
             senateurs: counts.senateurs,
             gouvernement: counts.gouvernement,
-            deceased: counts.deceased,
-            alive: counts.alive,
+            active: counts.active,
+            former: counts.former,
           }}
         />
 

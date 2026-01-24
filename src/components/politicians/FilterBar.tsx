@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 
 export type SortOption = "alpha" | "alpha-desc" | "recent" | "affairs";
 export type MandateFilter = "" | "depute" | "senateur" | "gouvernement";
-export type StatusFilter = "" | "alive" | "deceased";
+export type StatusFilter = "" | "active" | "former";
 
 const SORT_OPTIONS: Record<SortOption, string> = {
   alpha: "A - Z",
@@ -29,8 +29,8 @@ interface FilterBarProps {
     deputes: number;
     senateurs: number;
     gouvernement: number;
-    deceased: number;
-    alive: number;
+    active: number;
+    former: number;
   };
 }
 
@@ -100,7 +100,7 @@ export function FilterBar({
         </select>
       </div>
 
-      {/* Status filter (alive/deceased) */}
+      {/* Status filter (active/former) */}
       <div className="flex items-center gap-2 border-l pl-4">
         <Badge
           variant={currentStatus === "" ? "default" : "outline"}
@@ -110,18 +110,18 @@ export function FilterBar({
           Tous
         </Badge>
         <Badge
-          variant={currentStatus === "alive" ? "default" : "outline"}
+          variant={currentStatus === "active" ? "default" : "outline"}
           className="cursor-pointer"
-          onClick={() => updateParams("status", currentStatus === "alive" ? "" : "alive")}
+          onClick={() => updateParams("status", currentStatus === "active" ? "" : "active")}
         >
-          En vie ({counts.alive})
+          Actifs ({counts.active})
         </Badge>
         <Badge
-          variant={currentStatus === "deceased" ? "secondary" : "outline"}
+          variant={currentStatus === "former" ? "secondary" : "outline"}
           className="cursor-pointer"
-          onClick={() => updateParams("status", currentStatus === "deceased" ? "" : "deceased")}
+          onClick={() => updateParams("status", currentStatus === "former" ? "" : "former")}
         >
-          Décédés ({counts.deceased})
+          Anciens ({counts.former})
         </Badge>
       </div>
     </div>

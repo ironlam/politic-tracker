@@ -1,0 +1,228 @@
+"use client";
+
+import { useState, useEffect, useRef, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import { Input } from "@/components/ui/input";
+
+interface SearchResult {
+  id: string;
+  fullName: string;
+  slug: string;
+  photoUrl: string | null;
+  party: string | null;
+  partyColor: string | null;
+  mandate: string | null;
+}
+
+const MANDATE_LABELS: Record<string, string> = {
+  DEPUTE: "Député",
+  SENATEUR: "Sénateur",
+  MINISTRE: "Ministre",
+  PREMIER_MINISTRE: "Premier ministre",
+  SECRETAIRE_ETAT: "Secrétaire d'État",
+  MINISTRE_DELEGUE: "Ministre délégué",
+  DEPUTE_EUROPEEN: "Eurodéputé",
+  PRESIDENT_REPUBLIQUE: "Président",
+  MAIRE: "Maire",
+};
+
+interface SearchAutocompleteProps {
+  defaultValue?: string;
+  placeholder?: string;
+  onSearch?: (query: string) => void;
+}
+
+export function SearchAutocomplete({
+  defaultValue = "",
+  placeholder = "Rechercher un représentant...",
+  onSearch,
+}: SearchAutocompleteProps) {
+  const [query, setQuery] = useState(defaultValue);
+  const [results, setResults] = useState<SearchResult[]>([]);
+  const [isOpen, setIsOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(-1);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+
+  // Debounced search
+  useEffect(() => {
+    if (query.length < 2) {
+      setResults([]);
+      setIsOpen(false);
+      return;
+    }
+
+    const timeoutId = setTimeout(async () => {
+      setIsLoading(true);
+      try {
+        const response = await fetch(`/api/search/politicians?q=${encodeURIComponent(query)}`);
+        const data = await response.json();
+        setResults(data);
+        setIsOpen(data.length > 0);
+        setSelectedIndex(-1);
+      } catch (error) {
+        console.error("Search error:", error);
+        setResults([]);
+      } finally {
+        setIsLoading(false);
+      }
+    }, 200);
+
+    return () => clearTimeout(timeoutId);
+  }, [query]);
+
+  // Click outside to close
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleSelect = useCallback(
+    (result: SearchResult) => {
+      setQuery(result.fullName);
+      setIsOpen(false);
+      router.push(`/politiques/${result.slug}`);
+    },
+    [router]
+  );
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!isOpen) {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        onSearch?.(query);
+      }
+      return;
+    }
+
+    switch (e.key) {
+      case "ArrowDown":
+        e.preventDefault();
+        setSelectedIndex((prev) => (prev < results.length - 1 ? prev + 1 : prev));
+        break;
+      case "ArrowUp":
+        e.preventDefault();
+        setSelectedIndex((prev) => (prev > 0 ? prev - 1 : -1));
+        break;
+      case "Enter":
+        e.preventDefault();
+        if (selectedIndex >= 0 && results[selectedIndex]) {
+          handleSelect(results[selectedIndex]);
+        } else {
+          setIsOpen(false);
+          onSearch?.(query);
+        }
+        break;
+      case "Escape":
+        setIsOpen(false);
+        break;
+    }
+  };
+
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase();
+  };
+
+  return (
+    <div ref={containerRef} className="relative w-full max-w-sm">
+      <Input
+        ref={inputRef}
+        type="search"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        onKeyDown={handleKeyDown}
+        onFocus={() => results.length > 0 && setIsOpen(true)}
+        placeholder={placeholder}
+        className="w-full"
+        autoComplete="off"
+      />
+
+      {isLoading && (
+        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+          <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+        </div>
+      )}
+
+      {isOpen && results.length > 0 && (
+        <div className="absolute top-full left-0 right-0 mt-1 bg-white border rounded-lg shadow-lg z-50 overflow-hidden">
+          <ul className="py-1">
+            {results.map((result, index) => (
+              <li key={result.id}>
+                <button
+                  type="button"
+                  onClick={() => handleSelect(result)}
+                  onMouseEnter={() => setSelectedIndex(index)}
+                  className={`w-full px-3 py-2 flex items-center gap-3 text-left transition-colors ${
+                    index === selectedIndex ? "bg-accent" : "hover:bg-accent/50"
+                  }`}
+                >
+                  {/* Avatar */}
+                  <div className="w-8 h-8 rounded-full overflow-hidden bg-muted flex items-center justify-center shrink-0">
+                    {result.photoUrl ? (
+                      <img
+                        src={result.photoUrl}
+                        alt=""
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-xs font-medium text-muted-foreground">
+                        {getInitials(result.fullName)}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Info */}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium truncate">{result.fullName}</p>
+                    <p className="text-xs text-muted-foreground flex items-center gap-1">
+                      {result.mandate && (
+                        <span>{MANDATE_LABELS[result.mandate] || result.mandate}</span>
+                      )}
+                      {result.party && (
+                        <>
+                          {result.mandate && <span>-</span>}
+                          <span
+                            style={{ color: result.partyColor || undefined }}
+                            className="font-medium"
+                          >
+                            {result.party}
+                          </span>
+                        </>
+                      )}
+                    </p>
+                  </div>
+                </button>
+              </li>
+            ))}
+          </ul>
+
+          {/* Search all link */}
+          <div className="border-t px-3 py-2">
+            <button
+              type="button"
+              onClick={() => {
+                setIsOpen(false);
+                onSearch?.(query);
+              }}
+              className="text-sm text-primary hover:underline"
+            >
+              Voir tous les résultats pour &quot;{query}&quot;
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

@@ -9,13 +9,13 @@ ADD COLUMN IF NOT EXISTS "searchVector" tsvector;
 CREATE INDEX IF NOT EXISTS idx_politician_search
 ON "Politician" USING GIN("searchVector");
 
--- 3. Create function to update search vector
+-- 3. Create function to update search vector (with unaccent for accent-insensitive search)
 CREATE OR REPLACE FUNCTION politician_search_vector_update() RETURNS trigger AS $$
 BEGIN
   NEW."searchVector" :=
-    setweight(to_tsvector('french', coalesce(NEW."firstName", '')), 'A') ||
-    setweight(to_tsvector('french', coalesce(NEW."lastName", '')), 'A') ||
-    setweight(to_tsvector('french', coalesce(NEW."fullName", '')), 'B') ||
+    setweight(to_tsvector('french', unaccent(coalesce(NEW."firstName", ''))), 'A') ||
+    setweight(to_tsvector('french', unaccent(coalesce(NEW."lastName", ''))), 'A') ||
+    setweight(to_tsvector('french', unaccent(coalesce(NEW."fullName", ''))), 'B') ||
     setweight(to_tsvector('simple', coalesce(NEW."slug", '')), 'C');
   RETURN NEW;
 END;
@@ -29,12 +29,12 @@ ON "Politician"
 FOR EACH ROW
 EXECUTE FUNCTION politician_search_vector_update();
 
--- 5. Populate search vector for existing rows
+-- 5. Populate search vector for existing rows (with unaccent)
 UPDATE "Politician" SET
   "searchVector" =
-    setweight(to_tsvector('french', coalesce("firstName", '')), 'A') ||
-    setweight(to_tsvector('french', coalesce("lastName", '')), 'A') ||
-    setweight(to_tsvector('french', coalesce("fullName", '')), 'B') ||
+    setweight(to_tsvector('french', unaccent(coalesce("firstName", ''))), 'A') ||
+    setweight(to_tsvector('french', unaccent(coalesce("lastName", ''))), 'A') ||
+    setweight(to_tsvector('french', unaccent(coalesce("fullName", ''))), 'B') ||
     setweight(to_tsvector('simple', coalesce("slug", '')), 'C');
 
 -- 6. Create unaccent extension for accent-insensitive search

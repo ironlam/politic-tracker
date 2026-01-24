@@ -11,12 +11,14 @@ import {
   AFFAIR_STATUS_NEEDS_PRESUMPTION,
   AFFAIR_CATEGORY_LABELS,
   MANDATE_TYPE_LABELS,
+  VOTE_POSITION_DOT_COLORS,
 } from "@/config/labels";
 import { PoliticianAvatar } from "@/components/politicians/PoliticianAvatar";
 import { MandateTimeline } from "@/components/politicians/MandateTimeline";
 import { PersonJsonLd, BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 import { SentenceDetails } from "@/components/affairs/SentenceDetails";
 import { AffairTimeline } from "@/components/affairs/AffairTimeline";
+import { VotePositionBadge, VotingResultBadge } from "@/components/votes";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -45,6 +47,65 @@ async function getPolitician(slug: string) {
       },
     },
   });
+}
+
+async function getVoteStats(politicianId: string) {
+  const [stats, recentVotes] = await Promise.all([
+    db.vote.groupBy({
+      by: ["position"],
+      where: { politicianId },
+      _count: true,
+    }),
+    db.vote.findMany({
+      where: { politicianId },
+      include: {
+        scrutin: {
+          select: {
+            id: true,
+            title: true,
+            votingDate: true,
+            result: true,
+          },
+        },
+      },
+      orderBy: { scrutin: { votingDate: "desc" } },
+      take: 5,
+    }),
+  ]);
+
+  const votingStats = {
+    total: 0,
+    pour: 0,
+    contre: 0,
+    abstention: 0,
+    absent: 0,
+    participationRate: 0,
+  };
+
+  for (const s of stats) {
+    votingStats.total += s._count;
+    switch (s.position) {
+      case "POUR":
+        votingStats.pour = s._count;
+        break;
+      case "CONTRE":
+        votingStats.contre = s._count;
+        break;
+      case "ABSTENTION":
+        votingStats.abstention = s._count;
+        break;
+      case "ABSENT":
+        votingStats.absent = s._count;
+        break;
+    }
+  }
+
+  const expressed = votingStats.pour + votingStats.contre + votingStats.abstention;
+  votingStats.participationRate = votingStats.total > 0
+    ? Math.round((expressed / votingStats.total) * 100)
+    : 0;
+
+  return { stats: votingStats, recentVotes };
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -100,6 +161,10 @@ export default async function PoliticianPage({ params }: PageProps) {
   const hasMandates = politician.mandates.length > 0;
   const currentMandate = politician.mandates.find((m) => m.isCurrent);
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://transparence-politique.fr";
+
+  // Get vote stats (only for deputies - they have votes tracked)
+  const isDepute = currentMandate?.type === "DEPUTE";
+  const voteData = isDepute ? await getVoteStats(politician.id) : null;
 
   return (
     <>
@@ -192,6 +257,79 @@ export default async function PoliticianPage({ params }: PageProps) {
                   mandates={politician.mandates}
                   civility={politician.civility}
                 />
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Votes (deputies only) */}
+          {voteData && voteData.stats.total > 0 && (
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle>Votes parlementaires</CardTitle>
+                  <Link
+                    href={`/politiques/${politician.slug}/votes`}
+                    className="text-sm text-primary hover:underline"
+                  >
+                    Voir tout →
+                  </Link>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Stats summary */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+                  <div className="p-2 bg-green-50 rounded-lg">
+                    <p className="text-lg font-bold text-green-600">{voteData.stats.pour}</p>
+                    <p className="text-xs text-muted-foreground">Pour</p>
+                  </div>
+                  <div className="p-2 bg-red-50 rounded-lg">
+                    <p className="text-lg font-bold text-red-600">{voteData.stats.contre}</p>
+                    <p className="text-xs text-muted-foreground">Contre</p>
+                  </div>
+                  <div className="p-2 bg-yellow-50 rounded-lg">
+                    <p className="text-lg font-bold text-yellow-600">{voteData.stats.abstention}</p>
+                    <p className="text-xs text-muted-foreground">Abstention</p>
+                  </div>
+                  <div className="p-2 bg-gray-50 rounded-lg">
+                    <p className="text-lg font-bold text-gray-600">{voteData.stats.absent}</p>
+                    <p className="text-xs text-muted-foreground">Absent</p>
+                  </div>
+                </div>
+
+                {/* Participation bar */}
+                <div>
+                  <div className="flex justify-between text-sm mb-1">
+                    <span className="text-muted-foreground">Participation</span>
+                    <span className="font-medium">{voteData.stats.participationRate}%</span>
+                  </div>
+                  <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-blue-500"
+                      style={{ width: `${voteData.stats.participationRate}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* Recent votes */}
+                {voteData.recentVotes.length > 0 && (
+                  <div>
+                    <p className="text-sm font-medium mb-2">Derniers votes</p>
+                    <div className="space-y-2">
+                      {voteData.recentVotes.map((vote) => (
+                        <div key={vote.id} className="flex items-center gap-2 text-sm">
+                          <span className={`w-2 h-2 rounded-full ${VOTE_POSITION_DOT_COLORS[vote.position]}`} />
+                          <Link
+                            href={`/votes/${vote.scrutin.id}`}
+                            className="flex-1 truncate hover:underline"
+                          >
+                            {vote.scrutin.title}
+                          </Link>
+                          <VotePositionBadge position={vote.position} size="sm" />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           )}
@@ -357,6 +495,12 @@ export default async function PoliticianPage({ params }: PageProps) {
                 <span className="text-muted-foreground">Mandats</span>
                 <span className="font-semibold">{politician.mandates.length}</span>
               </div>
+              {voteData && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Votes</span>
+                  <span className="font-semibold">{voteData.stats.total}</span>
+                </div>
+              )}
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Affaires</span>
                 <span className="font-semibold">{politician.affairs.length}</span>

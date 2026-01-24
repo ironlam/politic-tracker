@@ -26,6 +26,8 @@
     "sync:parties:stats": "tsx scripts/sync-parties.ts --stats",
     "sync:history": "tsx scripts/sync-mandate-history.ts",
     "sync:history:stats": "tsx scripts/sync-mandate-history.ts --stats",
+    "sync:votes": "tsx scripts/sync-votes.ts",
+    "sync:votes:stats": "tsx scripts/sync-votes.ts --stats",
     "sync:stats": "tsx scripts/sync-assemblee.ts --stats",
     "sync:senat:stats": "tsx scripts/sync-senat.ts --stats",
     "sync:gouvernement:stats": "tsx scripts/sync-gouvernement.ts --stats",

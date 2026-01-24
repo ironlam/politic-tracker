@@ -4,6 +4,7 @@ export const NAV_LINKS = [
   { href: "/politiques", label: "Représentants" },
   { href: "/departements", label: "Départements" },
   { href: "/partis", label: "Partis" },
+  { href: "/votes", label: "Votes" },
   { href: "/affaires", label: "Affaires" },
   { href: "/statistiques", label: "Statistiques" },
   { href: "/institutions", label: "Institutions" },

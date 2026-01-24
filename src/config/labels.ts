@@ -1,4 +1,4 @@
-import type { AffairStatus, AffairCategory, MandateType, DataSource, PoliticalPosition, AffairEventType } from "@/types";
+import type { AffairStatus, AffairCategory, MandateType, DataSource, PoliticalPosition, AffairEventType, VotePosition, VotingResult } from "@/types";
 
 export const AFFAIR_STATUS_LABELS: Record<AffairStatus, string> = {
   ENQUETE_PRELIMINAIRE: "Enquête préliminaire",
@@ -284,4 +284,39 @@ export const AFFAIR_EVENT_TYPE_COLORS: Record<AffairEventType, string> = {
   PRESCRIPTION: "bg-gray-400",
   NON_LIEU: "bg-gray-500",
   AUTRE: "bg-gray-600",
+};
+
+// ============================================
+// PARLIAMENTARY VOTES
+// ============================================
+
+export const VOTE_POSITION_LABELS: Record<VotePosition, string> = {
+  POUR: "Pour",
+  CONTRE: "Contre",
+  ABSTENTION: "Abstention",
+  ABSENT: "Absent",
+};
+
+export const VOTE_POSITION_COLORS: Record<VotePosition, string> = {
+  POUR: "bg-green-100 text-green-800 border-green-300",
+  CONTRE: "bg-red-100 text-red-800 border-red-300",
+  ABSTENTION: "bg-yellow-100 text-yellow-800 border-yellow-300",
+  ABSENT: "bg-gray-100 text-gray-500 border-gray-300",
+};
+
+export const VOTE_POSITION_DOT_COLORS: Record<VotePosition, string> = {
+  POUR: "bg-green-500",
+  CONTRE: "bg-red-500",
+  ABSTENTION: "bg-yellow-500",
+  ABSENT: "bg-gray-400",
+};
+
+export const VOTING_RESULT_LABELS: Record<VotingResult, string> = {
+  ADOPTED: "Adopté",
+  REJECTED: "Rejeté",
+};
+
+export const VOTING_RESULT_COLORS: Record<VotingResult, string> = {
+  ADOPTED: "bg-green-100 text-green-800",
+  REJECTED: "bg-red-100 text-red-800",
 };

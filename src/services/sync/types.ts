@@ -290,3 +290,71 @@ export const EU_POLITICAL_GROUP_MAPPINGS: Record<string, PartyMapping> = {
   "ESN": { shortName: "ESN", fullName: "Europe of Sovereign Nations", color: "#4A4A4A" },
   "NI": { shortName: "NI", fullName: "Non-inscrits", color: "#999999" },
 }
+
+// ============================================
+// NOSDEPUTES VOTES API TYPES
+// ============================================
+
+// From nosdeputes.fr/17/scrutins/json
+export interface NosDeputesScrutinList {
+  scrutins: NosDeputesScrutinSummary[];
+}
+
+export interface NosDeputesScrutinSummary {
+  scrutin: {
+    numero: number;
+    date: string;           // "2024-07-18"
+    titre: string;
+    nombre_votants: number;
+    nombre_pours: number;
+    nombre_contres: number;
+    nombre_abstentions: number;
+    sort: string;           // "adopté" or "rejeté"
+  };
+}
+
+// From nosdeputes.fr/17/scrutin/{id}/json
+export interface NosDeputesScrutinDetail {
+  scrutin: {
+    numero: number;
+    date: string;
+    seance: string;
+    titre: string;
+    nombre_votants: number;
+    nombre_pours: number;
+    nombre_contres: number;
+    nombre_abstentions: number;
+    sort: string;
+    synthese: {
+      groupe: {
+        organisme: string;
+        nombreMembresGroupe: number;
+        vote: {
+          positionMajoritaire: string;
+          nombreMembresGroupe?: number;
+          pour?: { votant: NosDeputesVotant | NosDeputesVotant[] };
+          contre?: { votant: NosDeputesVotant | NosDeputesVotant[] };
+          abstention?: { votant: NosDeputesVotant | NosDeputesVotant[] };
+          nonVotant?: { votant: NosDeputesVotant | NosDeputesVotant[] };
+        };
+      }[];
+    };
+  };
+}
+
+export interface NosDeputesVotant {
+  nom: string;
+  id: string;                 // NosDéputés slug (e.g., "jean-castex")
+  prenom?: string;
+  groupe?: string;
+  delegation?: string;        // "parDelegation" if delegated vote
+}
+
+export interface VotesSyncResult {
+  success: boolean;
+  scrutinsCreated: number;
+  scrutinsUpdated: number;
+  votesCreated: number;
+  politiciansNotFound: string[];
+  errors: string[];
+}

@@ -7,12 +7,16 @@ import type {
   Source,
   Declaration,
   ExternalId,
+  Scrutin,
+  Vote,
   AffairStatus,
   AffairCategory,
   AffairEventType,
   MandateType,
   DataSource,
   PoliticalPosition,
+  VotePosition,
+  VotingResult,
 } from "@/generated/prisma";
 
 // Re-export Prisma types
@@ -25,12 +29,16 @@ export type {
   Source,
   Declaration,
   ExternalId,
+  Scrutin,
+  Vote,
   AffairStatus,
   AffairCategory,
   AffairEventType,
   MandateType,
   DataSource,
   PoliticalPosition,
+  VotePosition,
+  VotingResult,
 };
 
 // Extended types with relations
@@ -120,4 +128,34 @@ export type CreateAffairInput = {
     publisher: string;
     publishedAt: Date;
   }[];
+};
+
+// Vote/Scrutin types
+export type ScrutinWithVotes = Scrutin & {
+  votes: (Vote & {
+    politician: PoliticianWithParty;
+  })[];
+};
+
+export type VoteWithScrutin = Vote & {
+  scrutin: Scrutin;
+};
+
+export type PoliticianVoteStats = {
+  total: number;
+  pour: number;
+  contre: number;
+  abstention: number;
+  absent: number;
+  participationRate: number;
+};
+
+export type ScrutinFilters = {
+  search?: string;
+  result?: VotingResult;
+  legislature?: number;
+  dateFrom?: Date;
+  dateTo?: Date;
+  page?: number;
+  limit?: number;
 };

@@ -35,6 +35,7 @@ model Politician {
   declarations  Declaration[]
   partyHistory  PartyMembership[]
   externalIds   ExternalId[]      // IDs from all external sources
+  votes         Vote[]            // Parliamentary votes
 
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -472,4 +473,60 @@ model AuditLog {
   @@index([entityType, entityId])
   @@index([userId])
   @@index([createdAt])
+}
+
+// ============================================
+// PARLIAMENTARY VOTES
+// ============================================
+
+model Scrutin {
+  id            String       @id @default(cuid())
+  externalId    String       @unique  // ID NosDéputés (ex: "1234")
+  title         String       @db.Text
+  description   String?      @db.Text
+  votingDate    DateTime
+  legislature   Int
+
+  // Global results
+  votesFor      Int
+  votesAgainst  Int
+  votesAbstain  Int
+
+  result        VotingResult  // ADOPTED, REJECTED
+  sourceUrl     String?
+
+  // Relations
+  votes         Vote[]
+
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@index([votingDate])
+  @@index([legislature])
+}
+
+model Vote {
+  id            String       @id @default(cuid())
+  scrutinId     String
+  scrutin       Scrutin      @relation(fields: [scrutinId], references: [id], onDelete: Cascade)
+  politicianId  String
+  politician    Politician   @relation(fields: [politicianId], references: [id], onDelete: Cascade)
+
+  position      VotePosition  // POUR, CONTRE, ABSTENTION, ABSENT
+
+  @@unique([scrutinId, politicianId])
+  @@index([politicianId])
+  @@index([scrutinId])
+}
+
+enum VotePosition {
+  POUR
+  CONTRE
+  ABSTENTION
+  ABSENT
+}
+
+enum VotingResult {
+  ADOPTED
+  REJECTED
 }

@@ -4,5 +4,5 @@ export { syncGovernment, getGovernmentStats } from "./government";
 export { syncHATVP, getHATVPStats } from "./hatvp";
 export { syncPhotos, getPhotoStats } from "./photos";
 export { syncEuroparl, getEuroparlStats } from "./europarl";
-export { syncVotes, getVotesStats } from "./votes";
+export { syncVotes, getVotesStats, isLegislatureAvailable } from "./votes";
 export type { DeputeCSV, SyncResult, SenateurAPI, SenatSyncResult, GouvernementCSV, GouvernementSyncResult, HATVPCSV, HATVPSyncResult, EuroparlMEP, EuroparlSyncResult, VotesSyncResult } from "./types";

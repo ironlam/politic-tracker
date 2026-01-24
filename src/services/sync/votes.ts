@@ -9,25 +9,77 @@ import {
 import https from "https";
 
 const NOSDEPUTES_BASE_URL = "https://www.nosdeputes.fr";
-const DEFAULT_LEGISLATURE = 17;
+const DEFAULT_LEGISLATURE = 16; // NosDéputés n'a pas encore la 17e législature
+const REQUEST_TIMEOUT = 30000; // 30 seconds
 
 /**
- * Native HTTPS GET request (more reliable than fetch in WSL2)
+ * Native HTTPS GET request with redirect and timeout support
  */
-function httpsGet<T>(url: string): Promise<T> {
+function httpsGet<T>(url: string, maxRedirects = 5): Promise<T> {
   return new Promise((resolve, reject) => {
-    https.get(url, (res) => {
+    if (maxRedirects <= 0) {
+      reject(new Error(`Too many redirects for ${url}`));
+      return;
+    }
+
+    const request = https.get(url, (res) => {
+      // Handle redirects
+      if (res.statusCode && res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+        const redirectUrl = res.headers.location.startsWith("http")
+          ? res.headers.location
+          : new URL(res.headers.location, url).href;
+
+        // Check if redirect goes to a different path (like archives)
+        if (redirectUrl.includes("/archives/") || !redirectUrl.includes("/json")) {
+          reject(new Error(`Legislature not available (redirected to: ${redirectUrl})`));
+          return;
+        }
+
+        httpsGet<T>(redirectUrl, maxRedirects - 1).then(resolve).catch(reject);
+        return;
+      }
+
+      // Check for non-2xx status
+      if (res.statusCode && (res.statusCode < 200 || res.statusCode >= 300)) {
+        reject(new Error(`HTTP ${res.statusCode} for ${url}`));
+        return;
+      }
+
       let data = "";
       res.on("data", (chunk) => (data += chunk));
       res.on("end", () => {
         try {
+          // Check if we got HTML instead of JSON (sign of redirect to web page)
+          if (data.trim().startsWith("<!") || data.trim().startsWith("<html")) {
+            reject(new Error(`Received HTML instead of JSON from ${url} - legislature may not be available`));
+            return;
+          }
           resolve(JSON.parse(data) as T);
         } catch (e) {
           reject(new Error(`Failed to parse JSON from ${url}: ${e}`));
         }
       });
-    }).on("error", reject);
+    });
+
+    request.on("error", reject);
+    request.setTimeout(REQUEST_TIMEOUT, () => {
+      request.destroy();
+      reject(new Error(`Request timeout after ${REQUEST_TIMEOUT}ms for ${url}`));
+    });
   });
+}
+
+/**
+ * Check if a legislature is available on NosDéputés
+ */
+export async function isLegislatureAvailable(legislature: number): Promise<boolean> {
+  const url = `${NOSDEPUTES_BASE_URL}/${legislature}/scrutins/json`;
+  try {
+    await httpsGet<NosDeputesScrutinList>(url);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 /**
@@ -234,7 +286,22 @@ export async function syncVotes(legislature: number = DEFAULT_LEGISLATURE): Prom
     console.log(`Found ${slugToId.size} politicians in database`);
 
     console.log(`\nFetching scrutins for legislature ${legislature}...`);
-    const list = await fetchScrutins(legislature);
+
+    let list: NosDeputesScrutinList;
+    try {
+      list = await fetchScrutins(legislature);
+    } catch (error) {
+      const errMsg = error instanceof Error ? error.message : String(error);
+      if (errMsg.includes("not available") || errMsg.includes("redirected")) {
+        console.error(`\n❌ Legislature ${legislature} is not available on NosDéputés.`);
+        console.error(`   NosDéputés usually lags behind the current legislature.`);
+        console.error(`   Try with --leg=16 for the 16th legislature.\n`);
+        result.errors.push(`Legislature ${legislature} not available on NosDéputés`);
+        return result;
+      }
+      throw error;
+    }
+
     const scrutins = list.scrutins;
     console.log(`Found ${scrutins.length} scrutins`);
 

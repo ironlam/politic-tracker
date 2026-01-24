@@ -19,12 +19,15 @@ async function main() {
 Transparence Politique - Votes Sync CLI
 
 Usage:
-  npx tsx scripts/sync-votes.ts              Full sync (legislature 17)
-  npx tsx scripts/sync-votes.ts --leg=16     Sync specific legislature
+  npx tsx scripts/sync-votes.ts              Full sync (legislature 16)
+  npx tsx scripts/sync-votes.ts --leg=15     Sync specific legislature
   npx tsx scripts/sync-votes.ts --stats      Show current database stats
   npx tsx scripts/sync-votes.ts --help       Show this help message
 
 Data source: NosDéputés.fr
+
+Note: NosDéputés usually lags behind the current legislature.
+      As of 2026, legislature 16 (2022-2024) is the latest available.
     `);
     process.exit(0);
   }
@@ -54,7 +57,7 @@ Data source: NosDéputés.fr
   }
 
   // Parse legislature option
-  let legislature = 17; // Default to current (17th)
+  let legislature = 16; // Default to 16th (latest on NosDéputés)
   const legArg = args.find((a) => a.startsWith("--leg="));
   if (legArg) {
     legislature = parseInt(legArg.split("=")[1], 10);

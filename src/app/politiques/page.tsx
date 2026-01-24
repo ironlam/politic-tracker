@@ -1,13 +1,9 @@
 import { Metadata } from "next";
 import { db } from "@/lib/db";
-import { PoliticianCard } from "@/components/politicians/PoliticianCard";
-import { PartySelect } from "@/components/politicians/PartySelect";
-import { SearchAutocomplete } from "@/components/politicians/SearchAutocomplete";
-import { FilterBar, type SortOption, type MandateFilter, type StatusFilter } from "@/components/politicians/FilterBar";
-import { Badge } from "@/components/ui/badge";
-import Link from "next/link";
+import { type SortOption, type MandateFilter, type StatusFilter } from "@/components/politicians/FilterBar";
 import { AffairStatus, MandateType } from "@/generated/prisma";
 import { SearchForm } from "@/components/politicians/SearchForm";
+import { PoliticiansGrid } from "@/components/politicians/PoliticiansGrid";
 
 // Minimum members to show a party in filters (avoid cluttering with old/small parties)
 const MIN_PARTY_MEMBERS = 2;
@@ -257,28 +253,6 @@ export default async function PolitiquesPage({ searchParams }: PageProps) {
     getFilterCounts(),
   ]);
 
-  // Build URL with current filters
-  function buildUrl(newParams: Record<string, string | undefined>) {
-    const url = new URLSearchParams();
-    const finalParams = {
-      search: search || undefined,
-      party: partyFilter || undefined,
-      conviction: convictionFilter ? "true" : undefined,
-      mandate: mandateFilter || undefined,
-      status: statusFilter || undefined,
-      sort: sortOption !== "alpha" ? sortOption : undefined,
-      page: undefined, // Reset page when changing filters
-      ...newParams,
-    };
-
-    Object.entries(finalParams).forEach(([key, value]) => {
-      if (value) url.set(key, value);
-    });
-
-    const queryString = url.toString();
-    return `/politiques${queryString ? `?${queryString}` : ""}`;
-  }
-
   // Count active filters
   const activeFilterCount = [partyFilter, convictionFilter, mandateFilter, statusFilter].filter(
     Boolean
@@ -307,132 +281,23 @@ export default async function PolitiquesPage({ searchParams }: PageProps) {
         />
       </div>
 
-      {/* Filters and sort */}
-      <div className="mb-6 space-y-4">
-        {/* Sort and mandate/status filters */}
-        <FilterBar
-          currentSort={sortOption}
-          currentMandate={mandateFilter}
-          currentStatus={statusFilter}
-          counts={{
-            deputes: counts.deputes,
-            senateurs: counts.senateurs,
-            gouvernement: counts.gouvernement,
-            active: counts.active,
-            former: counts.former,
-          }}
-        />
-
-        {/* Party filter */}
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">Parti:</span>
-            <div className="flex flex-wrap gap-1">
-              <Link href={buildUrl({ party: undefined })}>
-                <Badge
-                  variant={partyFilter === "" ? "default" : "outline"}
-                  className="cursor-pointer"
-                >
-                  Tous
-                </Badge>
-              </Link>
-              {parties.slice(0, 8).map((party) => (
-                <Link key={party.id} href={buildUrl({ party: party.id })}>
-                  <Badge
-                    variant={partyFilter === party.id ? "default" : "outline"}
-                    className="cursor-pointer"
-                    style={{
-                      backgroundColor:
-                        partyFilter === party.id ? party.color || undefined : undefined,
-                      borderColor: party.color || undefined,
-                    }}
-                  >
-                    {party.shortName}
-                  </Badge>
-                </Link>
-              ))}
-              {parties.length > 8 && (
-                <PartySelect
-                  parties={parties.slice(8)}
-                  currentValue={partyFilter}
-                />
-              )}
-            </div>
-          </div>
-
-          {/* Conviction filter */}
-          <div className="flex items-center gap-2 border-l pl-4">
-            <Link href={buildUrl({ conviction: convictionFilter ? undefined : "true" })}>
-              <Badge
-                variant={convictionFilter ? "destructive" : "outline"}
-                className="cursor-pointer"
-              >
-                Avec condamnation ({counts.withConviction})
-              </Badge>
-            </Link>
-          </div>
-        </div>
-
-        {/* Active filters summary */}
-        {activeFilterCount > 0 && (
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">Filtres actifs:</span>
-            <Link
-              href="/politiques"
-              className="text-sm text-primary hover:underline"
-            >
-              Tout effacer
-            </Link>
-          </div>
-        )}
-      </div>
-
-      {/* Results */}
-      {politicians.length > 0 ? (
-        <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {politicians.map((politician) => (
-              <PoliticianCard
-                key={politician.id}
-                politician={politician}
-                showConvictionBadge
-              />
-            ))}
-          </div>
-
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="mt-8 flex justify-center items-center gap-2">
-              {page > 1 && (
-                <Link
-                  href={buildUrl({ page: String(page - 1) })}
-                  className="px-4 py-2 border rounded-md hover:bg-muted"
-                >
-                  Précédent
-                </Link>
-              )}
-              <span className="px-4 py-2 text-muted-foreground">
-                Page {page} sur {totalPages}
-              </span>
-              {page < totalPages && (
-                <Link
-                  href={buildUrl({ page: String(page + 1) })}
-                  className="px-4 py-2 border rounded-md hover:bg-muted"
-                >
-                  Suivant
-                </Link>
-              )}
-            </div>
-          )}
-        </>
-      ) : (
-        <div className="text-center py-12">
-          <p className="text-muted-foreground">Aucun résultat trouvé</p>
-          <Link href="/politiques" className="text-primary hover:underline mt-2 inline-block">
-            Voir tous les représentants
-          </Link>
-        </div>
-      )}
+      {/* Filters, grid, and pagination with loading states */}
+      <PoliticiansGrid
+        politicians={politicians}
+        total={total}
+        page={page}
+        totalPages={totalPages}
+        parties={parties}
+        counts={counts}
+        filters={{
+          search,
+          partyFilter,
+          convictionFilter,
+          mandateFilter,
+          statusFilter,
+          sortOption,
+        }}
+      />
     </div>
   );
 }

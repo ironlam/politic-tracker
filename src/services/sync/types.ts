@@ -295,59 +295,54 @@ export const EU_POLITICAL_GROUP_MAPPINGS: Record<string, PartyMapping> = {
 // NOSDEPUTES VOTES API TYPES
 // ============================================
 
-// From nosdeputes.fr/17/scrutins/json
+// From nosdeputes.fr/16/scrutins/json
 export interface NosDeputesScrutinList {
   scrutins: NosDeputesScrutinSummary[];
 }
 
 export interface NosDeputesScrutinSummary {
   scrutin: {
-    numero: number;
-    date: string;           // "2024-07-18"
+    numero: string;           // "1" (string, not number!)
+    date: string;             // "2022-07-11"
+    type: string;             // "ordinaire" or "solennel"
     titre: string;
-    nombre_votants: number;
-    nombre_pours: number;
-    nombre_contres: number;
-    nombre_abstentions: number;
-    sort: string;           // "adopté" or "rejeté"
+    nombre_votants: string;   // "368" (string!)
+    nombre_pours: string;
+    nombre_contres: string;
+    nombre_abstentions: string;
+    sort: string;             // "adopté" or "rejeté"
+    url_nosdeputes: string;
+    url_nosdeputes_api: string;
   };
 }
 
-// From nosdeputes.fr/17/scrutin/{id}/json
+// From nosdeputes.fr/16/scrutin/{id}/json
+// Returns a list of individual votes, not a grouped synthesis
 export interface NosDeputesScrutinDetail {
-  scrutin: {
-    numero: number;
-    date: string;
-    seance: string;
-    titre: string;
-    nombre_votants: number;
-    nombre_pours: number;
-    nombre_contres: number;
-    nombre_abstentions: number;
-    sort: string;
-    synthese: {
-      groupe: {
-        organisme: string;
-        nombreMembresGroupe: number;
-        vote: {
-          positionMajoritaire: string;
-          nombreMembresGroupe?: number;
-          pour?: { votant: NosDeputesVotant | NosDeputesVotant[] };
-          contre?: { votant: NosDeputesVotant | NosDeputesVotant[] };
-          abstention?: { votant: NosDeputesVotant | NosDeputesVotant[] };
-          nonVotant?: { votant: NosDeputesVotant | NosDeputesVotant[] };
-        };
-      }[];
-    };
-  };
+  votes: NosDeputesVoteEntry[];
 }
 
-export interface NosDeputesVotant {
-  nom: string;
-  id: string;                 // NosDéputés slug (e.g., "jean-castex")
-  prenom?: string;
-  groupe?: string;
-  delegation?: string;        // "parDelegation" if delegated vote
+export interface NosDeputesVoteEntry {
+  vote: {
+    scrutin: {
+      numero: string;
+      date: string;
+      type: string;
+      titre: string;
+      nombre_votants: string;
+      nombre_pours: string;
+      nombre_contres: string;
+      nombre_abstentions: string;
+      sort: string;
+      url_nosdeputes: string;
+    };
+    parlementaire_groupe_acronyme: string;
+    parlementaire_slug: string;           // NosDéputés slug (e.g., "jean-castex")
+    position: string;                     // "pour", "contre", "abstention", "nonVotant"
+    position_groupe: string;
+    par_delegation: string | null;
+    mise_au_point_position: string | null;
+  };
 }
 
 export interface VotesSyncResult {

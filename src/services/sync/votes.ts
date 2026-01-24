@@ -3,7 +3,7 @@ import { VotePosition, VotingResult, DataSource } from "@/generated/prisma";
 import {
   NosDeputesScrutinList,
   NosDeputesScrutinDetail,
-  NosDeputesVotant,
+  NosDeputesScrutinSummary,
   VotesSyncResult,
 } from "./types";
 import https from "https";
@@ -11,6 +11,12 @@ import https from "https";
 const NOSDEPUTES_BASE_URL = "https://www.nosdeputes.fr";
 const DEFAULT_LEGISLATURE = 16; // NosDéputés n'a pas encore la 17e législature
 const REQUEST_TIMEOUT = 30000; // 30 seconds
+const BATCH_SIZE = 50; // Process in batches for progress reporting
+
+/**
+ * Progress callback type
+ */
+export type ProgressCallback = (current: number, total: number, message: string) => void;
 
 /**
  * Native HTTPS GET request with redirect and timeout support
@@ -95,7 +101,7 @@ export async function fetchScrutins(legislature: number = DEFAULT_LEGISLATURE): 
  * Fetch detailed scrutin with individual votes
  */
 export async function fetchScrutinDetails(
-  scrutinId: number,
+  scrutinId: string,
   legislature: number = DEFAULT_LEGISLATURE
 ): Promise<NosDeputesScrutinDetail> {
   const url = `${NOSDEPUTES_BASE_URL}/${legislature}/scrutin/${scrutinId}/json`;
@@ -107,6 +113,23 @@ export async function fetchScrutinDetails(
  */
 function parseVotingResult(sort: string): VotingResult {
   return sort.toLowerCase() === "adopté" ? "ADOPTED" : "REJECTED";
+}
+
+/**
+ * Convert NosDéputés position to VotePosition
+ */
+function parseVotePosition(position: string): VotePosition {
+  switch (position.toLowerCase()) {
+    case "pour":
+      return "POUR";
+    case "contre":
+      return "CONTRE";
+    case "abstention":
+      return "ABSTENTION";
+    case "nonvotant":
+    default:
+      return "ABSENT";
+  }
 }
 
 /**
@@ -143,134 +166,118 @@ async function buildSlugToIdMap(): Promise<Map<string, string>> {
 }
 
 /**
- * Extract votants from a vote object (handles single or array)
- */
-function extractVotants(votants: NosDeputesVotant | NosDeputesVotant[] | undefined): NosDeputesVotant[] {
-  if (!votants) return [];
-  return Array.isArray(votants) ? votants : [votants];
-}
-
-/**
  * Sync a single scrutin with all its votes
  */
-export async function syncScrutin(
-  detail: NosDeputesScrutinDetail,
+async function syncScrutin(
+  summary: NosDeputesScrutinSummary,
   legislature: number,
   slugToId: Map<string, string>
-): Promise<{ created: boolean; votesCreated: number; notFound: string[] }> {
-  const s = detail.scrutin;
-  const externalId = String(s.numero);
-  const sourceUrl = `${NOSDEPUTES_BASE_URL}/${legislature}/scrutin/${s.numero}`;
+): Promise<{ created: boolean; votesCreated: number; notFound: string[]; error?: string }> {
+  const s = summary.scrutin;
+  const externalId = s.numero;
+  const sourceUrl = s.url_nosdeputes || `${NOSDEPUTES_BASE_URL}/${legislature}/scrutin/${s.numero}`;
 
-  // Upsert scrutin
-  const existing = await db.scrutin.findUnique({
-    where: { externalId },
-  });
+  try {
+    // Fetch detailed votes
+    const detail = await fetchScrutinDetails(s.numero, legislature);
 
-  const scrutinData = {
-    externalId,
-    title: s.titre,
-    description: null,
-    votingDate: new Date(s.date),
-    legislature,
-    votesFor: s.nombre_pours,
-    votesAgainst: s.nombre_contres,
-    votesAbstain: s.nombre_abstentions,
-    result: parseVotingResult(s.sort),
-    sourceUrl,
-  };
+    if (!detail.votes || detail.votes.length === 0) {
+      return { created: false, votesCreated: 0, notFound: [], error: "No votes in detail" };
+    }
 
-  let scrutin;
-  let created = false;
-
-  if (existing) {
-    scrutin = await db.scrutin.update({
-      where: { id: existing.id },
-      data: scrutinData,
+    // Upsert scrutin
+    const existing = await db.scrutin.findUnique({
+      where: { externalId },
     });
-  } else {
-    scrutin = await db.scrutin.create({
-      data: scrutinData,
+
+    const scrutinData = {
+      externalId,
+      title: s.titre,
+      description: null,
+      votingDate: new Date(s.date),
+      legislature,
+      votesFor: parseInt(s.nombre_pours, 10) || 0,
+      votesAgainst: parseInt(s.nombre_contres, 10) || 0,
+      votesAbstain: parseInt(s.nombre_abstentions, 10) || 0,
+      result: parseVotingResult(s.sort),
+      sourceUrl,
+    };
+
+    let scrutin;
+    let created = false;
+
+    if (existing) {
+      scrutin = await db.scrutin.update({
+        where: { id: existing.id },
+        data: scrutinData,
+      });
+    } else {
+      scrutin = await db.scrutin.create({
+        data: scrutinData,
+      });
+      created = true;
+    }
+
+    // Process votes
+    const votesToCreate: { politicianId: string; position: VotePosition }[] = [];
+    const notFound: string[] = [];
+
+    for (const entry of detail.votes) {
+      const vote = entry.vote;
+      const slug = vote.parlementaire_slug?.toLowerCase();
+
+      if (!slug) continue;
+
+      const polId = slugToId.get(slug);
+      if (polId) {
+        votesToCreate.push({
+          politicianId: polId,
+          position: parseVotePosition(vote.position),
+        });
+      } else {
+        notFound.push(slug);
+      }
+    }
+
+    // Delete existing votes for this scrutin (to handle updates)
+    await db.vote.deleteMany({
+      where: { scrutinId: scrutin.id },
     });
-    created = true;
+
+    // Create all votes
+    if (votesToCreate.length > 0) {
+      await db.vote.createMany({
+        data: votesToCreate.map((v) => ({
+          scrutinId: scrutin.id,
+          politicianId: v.politicianId,
+          position: v.position,
+        })),
+        skipDuplicates: true,
+      });
+    }
+
+    return {
+      created,
+      votesCreated: votesToCreate.length,
+      notFound: [...new Set(notFound)],
+    };
+  } catch (error) {
+    return {
+      created: false,
+      votesCreated: 0,
+      notFound: [],
+      error: error instanceof Error ? error.message : String(error),
+    };
   }
-
-  // Collect all votes from all groups
-  const votesToCreate: { politicianId: string; position: VotePosition }[] = [];
-  const notFound: string[] = [];
-
-  for (const groupe of s.synthese.groupe) {
-    const vote = groupe.vote;
-
-    // Pour
-    for (const votant of extractVotants(vote.pour?.votant)) {
-      const polId = slugToId.get(votant.id.toLowerCase());
-      if (polId) {
-        votesToCreate.push({ politicianId: polId, position: "POUR" });
-      } else {
-        notFound.push(votant.id);
-      }
-    }
-
-    // Contre
-    for (const votant of extractVotants(vote.contre?.votant)) {
-      const polId = slugToId.get(votant.id.toLowerCase());
-      if (polId) {
-        votesToCreate.push({ politicianId: polId, position: "CONTRE" });
-      } else {
-        notFound.push(votant.id);
-      }
-    }
-
-    // Abstention
-    for (const votant of extractVotants(vote.abstention?.votant)) {
-      const polId = slugToId.get(votant.id.toLowerCase());
-      if (polId) {
-        votesToCreate.push({ politicianId: polId, position: "ABSTENTION" });
-      } else {
-        notFound.push(votant.id);
-      }
-    }
-
-    // Non-votant (absent)
-    for (const votant of extractVotants(vote.nonVotant?.votant)) {
-      const polId = slugToId.get(votant.id.toLowerCase());
-      if (polId) {
-        votesToCreate.push({ politicianId: polId, position: "ABSENT" });
-      } else {
-        notFound.push(votant.id);
-      }
-    }
-  }
-
-  // Delete existing votes for this scrutin (to handle updates)
-  await db.vote.deleteMany({
-    where: { scrutinId: scrutin.id },
-  });
-
-  // Create all votes
-  if (votesToCreate.length > 0) {
-    await db.vote.createMany({
-      data: votesToCreate.map((v) => ({
-        scrutinId: scrutin.id,
-        politicianId: v.politicianId,
-        position: v.position,
-      })),
-      skipDuplicates: true,
-    });
-  }
-
-  return {
-    created,
-    votesCreated: votesToCreate.length,
-    notFound: [...new Set(notFound)], // unique
-  };
 }
 
 /**
  * Main sync function - syncs all scrutins for a legislature
  */
-export async function syncVotes(legislature: number = DEFAULT_LEGISLATURE): Promise<VotesSyncResult> {
+export async function syncVotes(
+  legislature: number = DEFAULT_LEGISLATURE,
+  onProgress?: ProgressCallback
+): Promise<VotesSyncResult> {
   const result: VotesSyncResult = {
     success: false,
     scrutinsCreated: 0,
@@ -281,10 +288,12 @@ export async function syncVotes(legislature: number = DEFAULT_LEGISLATURE): Prom
   };
 
   try {
+    onProgress?.(0, 100, "Building slug to politician ID map...");
     console.log(`\nBuilding slug to politician ID map...`);
     const slugToId = await buildSlugToIdMap();
     console.log(`Found ${slugToId.size} politicians in database`);
 
+    onProgress?.(5, 100, `Fetching scrutins for legislature ${legislature}...`);
     console.log(`\nFetching scrutins for legislature ${legislature}...`);
 
     let list: NosDeputesScrutinList;
@@ -303,22 +312,32 @@ export async function syncVotes(legislature: number = DEFAULT_LEGISLATURE): Prom
     }
 
     const scrutins = list.scrutins;
-    console.log(`Found ${scrutins.length} scrutins`);
+    const total = scrutins.length;
+    console.log(`Found ${total} scrutins\n`);
 
     // Process each scrutin
-    let processed = 0;
-    for (const item of scrutins) {
-      const scrutinId = item.scrutin.numero;
+    for (let i = 0; i < scrutins.length; i++) {
+      const item = scrutins[i];
 
-      try {
-        // Add delay to avoid rate limiting
-        if (processed > 0 && processed % 10 === 0) {
-          await new Promise((resolve) => setTimeout(resolve, 1000));
-        }
+      // Progress update
+      const percent = Math.round(5 + ((i + 1) / total) * 90);
+      const progressMsg = `Processing scrutin ${i + 1}/${total} (${item.scrutin.numero})`;
 
-        const detail = await fetchScrutinDetails(scrutinId, legislature);
-        const syncResult = await syncScrutin(detail, legislature, slugToId);
+      if ((i + 1) % BATCH_SIZE === 0 || i === 0) {
+        onProgress?.(percent, 100, progressMsg);
+        console.log(`  ${progressMsg}...`);
+      }
 
+      // Add delay to avoid rate limiting
+      if (i > 0 && i % 10 === 0) {
+        await new Promise((resolve) => setTimeout(resolve, 500));
+      }
+
+      const syncResult = await syncScrutin(item, legislature, slugToId);
+
+      if (syncResult.error) {
+        result.errors.push(`Scrutin ${item.scrutin.numero}: ${syncResult.error}`);
+      } else {
         if (syncResult.created) {
           result.scrutinsCreated++;
         } else {
@@ -326,19 +345,13 @@ export async function syncVotes(legislature: number = DEFAULT_LEGISLATURE): Prom
         }
         result.votesCreated += syncResult.votesCreated;
         result.politiciansNotFound.push(...syncResult.notFound);
-
-        processed++;
-        if (processed % 50 === 0) {
-          console.log(`  Processed ${processed}/${scrutins.length} scrutins...`);
-        }
-      } catch (error) {
-        result.errors.push(`Scrutin ${scrutinId}: ${error}`);
       }
     }
 
     // Deduplicate not found list
     result.politiciansNotFound = [...new Set(result.politiciansNotFound)];
     result.success = true;
+    onProgress?.(100, 100, "Sync completed!");
   } catch (error) {
     result.errors.push(`Fatal error: ${error}`);
   }

@@ -3,13 +3,29 @@
  *
  * Usage:
  *   npx tsx scripts/sync-votes.ts              # Full sync (current legislature)
- *   npx tsx scripts/sync-votes.ts --leg=17     # Sync specific legislature
+ *   npx tsx scripts/sync-votes.ts --leg=16     # Sync specific legislature
  *   npx tsx scripts/sync-votes.ts --stats      # Show current stats
  *   npx tsx scripts/sync-votes.ts --help       # Show help
  */
 
 import "dotenv/config";
-import { syncVotes, getVotesStats } from "../src/services/sync";
+import { syncVotes, getVotesStats, ProgressCallback } from "../src/services/sync";
+
+// Progress bar rendering
+function renderProgressBar(current: number, total: number, width: number = 30): string {
+  const percent = Math.round((current / total) * 100);
+  const filled = Math.round((current / total) * width);
+  const empty = width - filled;
+  const bar = "█".repeat(filled) + "░".repeat(empty);
+  return `[${bar}] ${percent}%`;
+}
+
+// Clear current line and write new content
+function updateLine(message: string): void {
+  process.stdout.clearLine?.(0);
+  process.stdout.cursorTo?.(0);
+  process.stdout.write(message);
+}
 
 async function main() {
   const args = process.argv.slice(2);
@@ -72,16 +88,27 @@ Note: NosDéputés usually lags behind the current legislature.
   console.log("Transparence Politique - Votes Sync");
   console.log("=".repeat(50));
   console.log(`Legislature: ${legislature}e`);
-  console.log(`Started at: ${new Date().toISOString()}\n`);
+  console.log(`Started at: ${new Date().toISOString()}`);
+  console.log("");
 
   const startTime = Date.now();
-  const result = await syncVotes(legislature);
+
+  // Progress callback for real-time updates
+  const onProgress: ProgressCallback = (current, total, message) => {
+    const bar = renderProgressBar(current, total);
+    updateLine(`${bar} ${message}`);
+  };
+
+  const result = await syncVotes(legislature, onProgress);
+
+  // Clear progress line and show results
+  console.log("\n");
   const duration = ((Date.now() - startTime) / 1000).toFixed(2);
 
-  console.log("\n" + "=".repeat(50));
+  console.log("=".repeat(50));
   console.log("Sync Results:");
   console.log("=".repeat(50));
-  console.log(`Status: ${result.success ? "SUCCESS" : "FAILED"}`);
+  console.log(`Status: ${result.success ? "✅ SUCCESS" : "❌ FAILED"}`);
   console.log(`Duration: ${duration}s`);
   console.log(`\nScrutins:`);
   console.log(`  Created: ${result.scrutinsCreated}`);
@@ -97,7 +124,7 @@ Note: NosDéputés usually lags behind the current legislature.
   }
 
   if (result.errors.length > 0) {
-    console.log(`\nErrors (${result.errors.length}):`);
+    console.log(`\n⚠️  Errors (${result.errors.length}):`);
     result.errors.slice(0, 10).forEach((e) => console.log(`  - ${e}`));
     if (result.errors.length > 10) {
       console.log(`  ... and ${result.errors.length - 10} more`);

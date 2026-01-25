@@ -1,23 +1,20 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { isAuthenticated } from "@/lib/auth";
+import { cookies } from "next/headers";
 
 export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  // Skip auth check for login page
-  const isLoginPage =
-    typeof window === "undefined"
-      ? false
-      : window.location.pathname === "/admin/login";
+  // Check if user is authenticated (middleware handles redirect for protected routes)
+  const cookieStore = await cookies();
+  const session = cookieStore.get("admin_session");
+  const isAuthenticated = !!session?.value;
 
-  if (!isLoginPage) {
-    const authenticated = await isAuthenticated();
-    if (!authenticated) {
-      redirect("/admin/login");
-    }
+  // For login page (which has its own layout), just render children
+  // For other pages, show the full admin UI
+  if (!isAuthenticated) {
+    return <>{children}</>;
   }
 
   return (

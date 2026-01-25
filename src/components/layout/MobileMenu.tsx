@@ -1,12 +1,37 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { NAV_LINKS, FOOTER_LINKS } from "@/config/navigation";
 
 export function MobileMenu() {
   const [isOpen, setIsOpen] = useState(false);
+  const pathname = usePathname();
+  const menuRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+
+  // Close menu on Escape key
+  const handleKeyDown = useCallback((event: KeyboardEvent) => {
+    if (event.key === "Escape" && isOpen) {
+      setIsOpen(false);
+      buttonRef.current?.focus();
+    }
+  }, [isOpen]);
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    if (isOpen) {
+      document.addEventListener("keydown", handleKeyDown);
+      return () => document.removeEventListener("keydown", handleKeyDown);
+    }
+  }, [isOpen, handleKeyDown]);
+
+  // Close menu on route change
+  useEffect(() => {
+    setIsOpen(false);
+  }, [pathname]);
 
   return (
     <div className="md:hidden">
@@ -14,10 +39,12 @@ export function MobileMenu() {
       <div className="flex items-center gap-2">
         <ThemeToggle />
         <button
+          ref={buttonRef}
           onClick={() => setIsOpen(!isOpen)}
-          className="p-2 rounded-lg hover:bg-accent transition-colors"
+          className="p-2 rounded-lg hover:bg-accent transition-colors touch-target"
           aria-label={isOpen ? "Fermer le menu" : "Ouvrir le menu"}
           aria-expanded={isOpen}
+          aria-controls="mobile-menu"
         >
           {isOpen ? (
             // X icon
@@ -30,6 +57,7 @@ export function MobileMenu() {
               strokeLinecap="round"
               strokeLinejoin="round"
               className="w-6 h-6"
+              aria-hidden="true"
             >
               <path d="M18 6 6 18" />
               <path d="m6 6 12 12" />
@@ -45,6 +73,7 @@ export function MobileMenu() {
               strokeLinecap="round"
               strokeLinejoin="round"
               className="w-6 h-6"
+              aria-hidden="true"
             >
               <line x1="4" x2="20" y1="12" y2="12" />
               <line x1="4" x2="20" y1="6" y2="6" />
@@ -57,23 +86,34 @@ export function MobileMenu() {
       {/* Mobile menu dropdown */}
       {isOpen && (
         <div
+          ref={menuRef}
+          id="mobile-menu"
           className="absolute top-16 left-0 right-0 bg-background border-b shadow-lg"
           role="dialog"
+          aria-modal="true"
           aria-label="Menu de navigation"
         >
           <nav className="container mx-auto px-4 py-4" aria-label="Navigation mobile">
             <ul className="space-y-1" role="list">
-              {NAV_LINKS.map((link) => (
-                <li key={link.href}>
-                  <Link
-                    href={link.href}
-                    onClick={() => setIsOpen(false)}
-                    className="block px-4 py-3 text-base font-medium text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg transition-colors"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
+              {NAV_LINKS.map((link) => {
+                const isActive = pathname === link.href || pathname.startsWith(link.href + "/");
+                return (
+                  <li key={link.href}>
+                    <Link
+                      href={link.href}
+                      onClick={() => setIsOpen(false)}
+                      className={`block px-4 py-3 text-base font-medium rounded-lg transition-colors touch-target ${
+                        isActive
+                          ? "text-foreground bg-accent"
+                          : "text-muted-foreground hover:text-foreground hover:bg-accent"
+                      }`}
+                      aria-current={isActive ? "page" : undefined}
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                );
+              })}
             </ul>
 
             {/* Secondary links */}

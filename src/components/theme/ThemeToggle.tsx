@@ -43,6 +43,7 @@ export function ThemeToggle() {
           strokeLinecap="round"
           strokeLinejoin="round"
           className="w-5 h-5"
+          aria-hidden="true"
         >
           <circle cx="12" cy="12" r="4" />
           <path d="M12 2v2" />
@@ -65,6 +66,7 @@ export function ThemeToggle() {
           strokeLinecap="round"
           strokeLinejoin="round"
           className="w-5 h-5"
+          aria-hidden="true"
         >
           <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
         </svg>

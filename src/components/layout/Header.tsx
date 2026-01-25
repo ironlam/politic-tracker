@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { MobileMenu } from "./MobileMenu";
 import { NAV_LINKS } from "@/config/navigation";
+import { NavLink } from "./NavLink";
 
 export function Header() {
   return (
@@ -22,13 +23,14 @@ export function Header() {
           {/* Desktop navigation */}
           <nav className="hidden md:flex items-center gap-1" aria-label="Navigation principale">
             {NAV_LINKS.map((link) => (
-              <Link
+              <NavLink
                 key={link.href}
                 href={link.href}
                 className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                activeClassName="text-foreground bg-accent"
               >
                 {link.label}
-              </Link>
+              </NavLink>
             ))}
             <div className="ml-2 border-l pl-2 flex items-center gap-1">
               <Link

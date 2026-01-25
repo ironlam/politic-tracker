@@ -42,9 +42,11 @@ export function PoliticianAvatar({
   if (!photoUrl || imageError) {
     return (
       <div
+        role="img"
+        aria-label={`Avatar de ${displayName}`}
         className={`rounded-full bg-gray-200 flex items-center justify-center font-semibold text-gray-600 flex-shrink-0 ${sizeClass} ${className}`}
       >
-        {initials}
+        <span aria-hidden="true">{initials}</span>
       </div>
     );
   }

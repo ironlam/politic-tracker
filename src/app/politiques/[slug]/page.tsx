@@ -15,6 +15,7 @@ import {
 } from "@/config/labels";
 import { PoliticianAvatar } from "@/components/politicians/PoliticianAvatar";
 import { MandateTimeline } from "@/components/politicians/MandateTimeline";
+import { InteractiveTimeline } from "@/components/politicians/InteractiveTimeline";
 import { PersonJsonLd, BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 import { SentenceDetails } from "@/components/affairs/SentenceDetails";
 import { AffairTimeline } from "@/components/affairs/AffairTimeline";
@@ -242,6 +243,16 @@ export default async function PoliticianPage({ params }: PageProps) {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main content */}
         <div className="lg:col-span-2 space-y-8">
+          {/* Interactive Timeline */}
+          {(hasMandates || politician.affairs.length > 0) && (
+            <InteractiveTimeline
+              mandates={politician.mandates}
+              affairs={politician.affairs}
+              birthDate={politician.birthDate}
+              deathDate={politician.deathDate}
+            />
+          )}
+
           {/* Career / Mandates */}
           {hasMandates && (
             <Card>
@@ -345,7 +356,8 @@ export default async function PoliticianPage({ params }: PageProps) {
                   {politician.affairs.map((affair) => (
                     <div
                       key={affair.id}
-                      className={`border rounded-lg p-4 ${
+                      id={`affair-${affair.id}`}
+                      className={`border rounded-lg p-4 transition-all ${
                         affair.status === "CONDAMNATION_DEFINITIVE"
                           ? "border-red-200 bg-red-50/30"
                           : affair.status === "CONDAMNATION_PREMIERE_INSTANCE"

@@ -1,71 +1,135 @@
 /**
  * CLI script to enrich politicians with Wikidata IDs
  *
- * Matches existing politicians by name to Wikidata entities and stores the IDs.
- * This enables career enrichment via sync-careers.ts
+ * Strategy: For each politician in our DB, search Wikidata by name.
+ * This is more efficient than fetching all French politicians from Wikidata.
  *
  * Usage:
- *   npx tsx scripts/sync-wikidata-ids.ts              # Sync Wikidata IDs for all politicians
+ *   npx tsx scripts/sync-wikidata-ids.ts              # Sync Wikidata IDs
  *   npx tsx scripts/sync-wikidata-ids.ts --stats      # Show current stats
  *   npx tsx scripts/sync-wikidata-ids.ts --dry-run    # Preview without saving
+ *   npx tsx scripts/sync-wikidata-ids.ts --limit=100  # Process only 100 politicians
  */
 
 import "dotenv/config";
 import { db } from "../src/lib/db";
 import { DataSource } from "../src/generated/prisma";
 
-const WIKIDATA_ENDPOINT = "https://query.wikidata.org/sparql";
+const WIKIDATA_API = "https://www.wikidata.org/w/api.php";
 
-interface WikidataPoliticianResult {
-  person: { value: string };
-  personLabel: { value: string };
-  birthDate?: { value: string };
-  deathDate?: { value: string };
+// Rate limiting
+const DELAY_BETWEEN_REQUESTS_MS = 200;
+
+interface WikidataEntity {
+  id: string;
+  label: string;
+  description?: string;
+  birthDate?: string;
 }
 
 /**
- * Fetch French politicians from Wikidata
+ * Search Wikidata for a person by name using the search API (much faster than SPARQL)
  */
-async function fetchAllFrenchPoliticians(): Promise<WikidataPoliticianResult[]> {
-  const query = `
-    SELECT DISTINCT ?person ?personLabel ?birthDate ?deathDate WHERE {
-      ?person wdt:P27 wd:Q142 .           # French citizen
-      ?person wdt:P106 wd:Q82955 .        # occupation: politician
+async function searchWikidataByName(fullName: string): Promise<WikidataEntity[]> {
+  const url = new URL(WIKIDATA_API);
+  url.searchParams.set("action", "wbsearchentities");
+  url.searchParams.set("search", fullName);
+  url.searchParams.set("language", "fr");
+  url.searchParams.set("type", "item");
+  url.searchParams.set("limit", "5");
+  url.searchParams.set("format", "json");
 
-      OPTIONAL { ?person wdt:P569 ?birthDate }
-      OPTIONAL { ?person wdt:P570 ?deathDate }
-
-      # Filter to Ve République era (born after 1900 or died after 1958)
-      OPTIONAL { ?person wdt:P569 ?bd }
-      OPTIONAL { ?person wdt:P570 ?dd }
-      FILTER (
-        (!BOUND(?dd) || YEAR(?dd) >= 1958) &&
-        (!BOUND(?bd) || YEAR(?bd) >= 1900)
-      )
-
-      SERVICE wikibase:label { bd:serviceParam wikibase:language "fr,en" }
-    }
-    ORDER BY ?personLabel
-  `;
-
-  const url = new URL(WIKIDATA_ENDPOINT);
-  url.searchParams.set("query", query);
-
-  console.log("Fetching French politicians from Wikidata...");
   const response = await fetch(url.toString(), {
     headers: {
-      Accept: "application/json",
       "User-Agent": "TransparencePolitique/1.0 (https://politic-tracker.vercel.app)",
     },
   });
 
   if (!response.ok) {
-    throw new Error(`Wikidata query failed: ${response.status}`);
+    throw new Error(`Wikidata search failed: ${response.status}`);
   }
 
   const data = await response.json();
-  console.log(`Found ${data.results.bindings.length} French politicians in Wikidata`);
-  return data.results.bindings;
+
+  if (!data.search || data.search.length === 0) {
+    return [];
+  }
+
+  // Get entity IDs
+  const ids = data.search.map((s: { id: string }) => s.id);
+
+  // Fetch entity details to get birth date
+  return fetchEntityDetails(ids);
+}
+
+/**
+ * Fetch entity details (birth date, nationality) to verify it's a French politician
+ */
+async function fetchEntityDetails(ids: string[]): Promise<WikidataEntity[]> {
+  const url = new URL(WIKIDATA_API);
+  url.searchParams.set("action", "wbgetentities");
+  url.searchParams.set("ids", ids.join("|"));
+  url.searchParams.set("props", "labels|claims");
+  url.searchParams.set("languages", "fr|en");
+  url.searchParams.set("format", "json");
+
+  const response = await fetch(url.toString(), {
+    headers: {
+      "User-Agent": "TransparencePolitique/1.0 (https://politic-tracker.vercel.app)",
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Wikidata entities failed: ${response.status}`);
+  }
+
+  const data = await response.json();
+  const results: WikidataEntity[] = [];
+
+  for (const id of ids) {
+    const entity = data.entities?.[id];
+    if (!entity) continue;
+
+    // Check if French (P27 = Q142)
+    const nationalities = entity.claims?.P27 || [];
+    const isFrench = nationalities.some(
+      (n: { mainsnak?: { datavalue?: { value?: { id?: string } } } }) =>
+        n.mainsnak?.datavalue?.value?.id === "Q142"
+    );
+
+    if (!isFrench) continue;
+
+    // Check if human (P31 = Q5)
+    const instanceOf = entity.claims?.P31 || [];
+    const isHuman = instanceOf.some(
+      (i: { mainsnak?: { datavalue?: { value?: { id?: string } } } }) =>
+        i.mainsnak?.datavalue?.value?.id === "Q5"
+    );
+
+    if (!isHuman) continue;
+
+    // Get birth date (P569)
+    let birthDate: string | undefined;
+    const birthClaims = entity.claims?.P569 || [];
+    if (birthClaims.length > 0) {
+      const timeValue = birthClaims[0]?.mainsnak?.datavalue?.value?.time;
+      if (timeValue) {
+        // Format: "+1977-12-21T00:00:00Z" -> "1977-12-21"
+        birthDate = timeValue.replace(/^\+/, "").split("T")[0];
+      }
+    }
+
+    // Get label
+    const label = entity.labels?.fr?.value || entity.labels?.en?.value || id;
+
+    results.push({
+      id,
+      label,
+      birthDate,
+    });
+  }
+
+  return results;
 }
 
 /**
@@ -83,7 +147,7 @@ function normalizeName(name: string): string {
     .toLowerCase()
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "") // Remove accents
-    .replace(/[^a-z\s]/g, "") // Remove non-letters
+    .replace(/[^a-z\s-]/g, "") // Keep letters, spaces, hyphens
     .replace(/\s+/g, " ")
     .trim();
 }
@@ -102,7 +166,7 @@ function parseDate(dateStr?: string): Date | null {
 }
 
 /**
- * Check if two dates are within N days of each other
+ * Check if two dates match (within tolerance)
  */
 function datesMatch(date1: Date | null, date2: Date | null, toleranceDays = 5): boolean {
   if (!date1 || !date2) return true; // If one is missing, don't disqualify
@@ -111,49 +175,49 @@ function datesMatch(date1: Date | null, date2: Date | null, toleranceDays = 5): 
   return daysDiff <= toleranceDays;
 }
 
+/**
+ * Sleep helper
+ */
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 interface SyncResult {
   politiciansProcessed: number;
   idsCreated: number;
-  idsSkipped: number;
+  alreadyHadId: number;
   noMatch: number;
+  multipleMatches: number;
   errors: string[];
 }
 
 /**
  * Main sync function
  */
-async function syncWikidataIds(options: { dryRun?: boolean } = {}): Promise<SyncResult> {
-  const { dryRun = false } = options;
+async function syncWikidataIds(options: {
+  dryRun?: boolean;
+  limit?: number;
+} = {}): Promise<SyncResult> {
+  const { dryRun = false, limit } = options;
 
   const result: SyncResult = {
     politiciansProcessed: 0,
     idsCreated: 0,
-    idsSkipped: 0,
+    alreadyHadId: 0,
     noMatch: 0,
+    multipleMatches: 0,
     errors: [],
   };
 
-  // 1. Fetch all French politicians from Wikidata
-  const wikidataPoliticians = await fetchAllFrenchPoliticians();
+  // Get politicians without Wikidata ID
+  console.log("Fetching politicians from database...");
 
-  // 2. Build a lookup map by normalized name
-  const wikidataByName = new Map<string, WikidataPoliticianResult[]>();
-  for (const wp of wikidataPoliticians) {
-    const name = wp.personLabel.value;
-    // Skip unresolved Q-numbers
-    if (/^Q\d+$/.test(name)) continue;
-
-    const normalized = normalizeName(name);
-    if (!wikidataByName.has(normalized)) {
-      wikidataByName.set(normalized, []);
-    }
-    wikidataByName.get(normalized)!.push(wp);
-  }
-
-  console.log(`Built lookup map with ${wikidataByName.size} unique names`);
-
-  // 3. Get all politicians from our database
   const politicians = await db.politician.findMany({
+    where: {
+      externalIds: {
+        none: { source: DataSource.WIKIDATA },
+      },
+    },
     select: {
       id: true,
       fullName: true,
@@ -161,84 +225,57 @@ async function syncWikidataIds(options: { dryRun?: boolean } = {}): Promise<Sync
       lastName: true,
       birthDate: true,
       deathDate: true,
-      externalIds: {
-        where: { source: DataSource.WIKIDATA },
-        select: { externalId: true },
-      },
     },
+    take: limit,
+    orderBy: { lastName: "asc" },
   });
 
-  console.log(`Processing ${politicians.length} politicians from database...`);
+  console.log(`Found ${politicians.length} politicians without Wikidata ID\n`);
 
-  // 4. Match politicians
-  for (const politician of politicians) {
+  // Process one by one with rate limiting
+  for (let i = 0; i < politicians.length; i++) {
+    const politician = politicians[i];
     result.politiciansProcessed++;
 
-    // Skip if already has Wikidata ID
-    if (politician.externalIds.length > 0) {
-      result.idsSkipped++;
-      continue;
-    }
+    try {
+      // Search Wikidata by full name
+      const candidates = await searchWikidataByName(politician.fullName);
 
-    // Try to find match in Wikidata
-    const normalizedName = normalizeName(politician.fullName);
-    const candidates = wikidataByName.get(normalizedName) || [];
-
-    // Also try with lastName + firstName format
-    const altName = normalizeName(`${politician.lastName} ${politician.firstName}`);
-    const altCandidates = wikidataByName.get(altName) || [];
-
-    const allCandidates = [...candidates, ...altCandidates];
-
-    if (allCandidates.length === 0) {
-      result.noMatch++;
-      continue;
-    }
-
-    // Find best match by birth date
-    let bestMatch: WikidataPoliticianResult | null = null;
-
-    for (const candidate of allCandidates) {
-      const wdBirthDate = parseDate(candidate.birthDate?.value);
-      const wdDeathDate = parseDate(candidate.deathDate?.value);
-
-      // Check birth date match
-      if (politician.birthDate && wdBirthDate) {
-        if (datesMatch(politician.birthDate, wdBirthDate)) {
-          bestMatch = candidate;
-          break;
-        }
-      } else if (politician.deathDate && wdDeathDate) {
-        // Check death date if no birth date
-        if (datesMatch(politician.deathDate, wdDeathDate)) {
-          bestMatch = candidate;
-          break;
-        }
-      } else {
-        // No dates to compare, take first match if only one candidate
-        if (allCandidates.length === 1) {
-          bestMatch = candidate;
-        }
-      }
-    }
-
-    if (!bestMatch) {
-      // If multiple candidates and no date match, skip to avoid wrong matches
-      if (allCandidates.length > 1) {
+      if (candidates.length === 0) {
         result.noMatch++;
         continue;
       }
-      bestMatch = allCandidates[0];
-    }
 
-    const wikidataId = extractQId(bestMatch.person.value);
+      // Find best match
+      let bestMatch: WikidataEntity | null = null;
 
-    if (dryRun) {
-      console.log(`[DRY-RUN] ${politician.fullName} -> ${wikidataId}`);
-      result.idsCreated++;
-    } else {
-      try {
-        // Check if this Wikidata ID is already used by another politician
+      if (candidates.length === 1) {
+        bestMatch = candidates[0];
+      } else {
+        // Multiple candidates - match by birth date
+        for (const candidate of candidates) {
+          if (candidate.birthDate && politician.birthDate) {
+            const wdDate = parseDate(candidate.birthDate);
+            if (datesMatch(politician.birthDate, wdDate)) {
+              bestMatch = candidate;
+              break;
+            }
+          }
+        }
+
+        if (!bestMatch) {
+          result.multipleMatches++;
+          continue;
+        }
+      }
+
+      const wikidataId = bestMatch.id;
+
+      if (dryRun) {
+        console.log(`[DRY-RUN] ${politician.fullName} -> ${wikidataId}`);
+        result.idsCreated++;
+      } else {
+        // Check if this Wikidata ID is already used
         const existing = await db.externalId.findUnique({
           where: {
             source_externalId: {
@@ -249,8 +286,7 @@ async function syncWikidataIds(options: { dryRun?: boolean } = {}): Promise<Sync
         });
 
         if (existing) {
-          // ID already used, skip
-          result.idsSkipped++;
+          result.alreadyHadId++;
           continue;
         }
 
@@ -263,14 +299,20 @@ async function syncWikidataIds(options: { dryRun?: boolean } = {}): Promise<Sync
           },
         });
         result.idsCreated++;
-
-        if (result.idsCreated % 100 === 0) {
-          console.log(`  Progress: ${result.idsCreated} IDs created...`);
-        }
-      } catch (error) {
-        result.errors.push(`${politician.fullName}: ${error}`);
+        console.log(`✓ ${politician.fullName} -> ${wikidataId}`);
       }
+    } catch (error) {
+      result.errors.push(`${politician.fullName}: ${error}`);
     }
+
+    // Progress every 50
+    if ((i + 1) % 50 === 0) {
+      const progress = (((i + 1) / politicians.length) * 100).toFixed(0);
+      console.log(`\n--- Progress: ${progress}% (${i + 1}/${politicians.length}) | Created: ${result.idsCreated} ---\n`);
+    }
+
+    // Rate limiting
+    await sleep(DELAY_BETWEEN_REQUESTS_MS);
   }
 
   return result;
@@ -280,12 +322,19 @@ async function syncWikidataIds(options: { dryRun?: boolean } = {}): Promise<Sync
  * Show current stats
  */
 async function showStats(): Promise<void> {
-  const [totalPoliticians, withWikidata] = await Promise.all([
+  const [totalPoliticians, withWikidata, withoutWikidata] = await Promise.all([
     db.politician.count(),
     db.externalId.count({
       where: {
         source: DataSource.WIKIDATA,
         politicianId: { not: null },
+      },
+    }),
+    db.politician.count({
+      where: {
+        externalIds: {
+          none: { source: DataSource.WIKIDATA },
+        },
       },
     }),
   ]);
@@ -295,7 +344,7 @@ async function showStats(): Promise<void> {
   console.log("=".repeat(50));
   console.log(`Total politicians: ${totalPoliticians}`);
   console.log(`With Wikidata ID: ${withWikidata} (${((withWikidata / totalPoliticians) * 100).toFixed(1)}%)`);
-  console.log(`Without Wikidata ID: ${totalPoliticians - withWikidata}`);
+  console.log(`Without Wikidata ID: ${withoutWikidata}`);
 }
 
 async function main(): Promise<void> {
@@ -308,11 +357,12 @@ Politic Tracker - Wikidata ID Sync
 Usage:
   npx tsx scripts/sync-wikidata-ids.ts              Sync Wikidata IDs for all politicians
   npx tsx scripts/sync-wikidata-ids.ts --dry-run    Preview without saving
+  npx tsx scripts/sync-wikidata-ids.ts --limit=100  Process only first 100 politicians
   npx tsx scripts/sync-wikidata-ids.ts --stats      Show current stats
   npx tsx scripts/sync-wikidata-ids.ts --help       Show this help
 
-This script matches politicians by name to Wikidata entities and stores
-the Wikidata IDs. This enables career enrichment via sync-careers.ts.
+Strategy: For each politician in our DB, search Wikidata by name and match
+by birth date when there are multiple candidates.
     `);
     process.exit(0);
   }
@@ -323,15 +373,18 @@ the Wikidata IDs. This enables career enrichment via sync-careers.ts.
   }
 
   const dryRun = args.includes("--dry-run");
+  const limitArg = args.find((a) => a.startsWith("--limit="));
+  const limit = limitArg ? parseInt(limitArg.split("=")[1], 10) : undefined;
 
   console.log("=".repeat(50));
   console.log("Politic Tracker - Wikidata ID Sync");
   console.log("=".repeat(50));
   console.log(`Mode: ${dryRun ? "DRY RUN (no changes)" : "LIVE"}`);
+  if (limit) console.log(`Limit: ${limit} politicians`);
   console.log(`Started at: ${new Date().toISOString()}\n`);
 
   const startTime = Date.now();
-  const result = await syncWikidataIds({ dryRun });
+  const result = await syncWikidataIds({ dryRun, limit });
   const duration = ((Date.now() - startTime) / 1000).toFixed(2);
 
   console.log("\n" + "=".repeat(50));
@@ -340,8 +393,9 @@ the Wikidata IDs. This enables career enrichment via sync-careers.ts.
   console.log(`Duration: ${duration}s`);
   console.log(`Politicians processed: ${result.politiciansProcessed}`);
   console.log(`Wikidata IDs created: ${result.idsCreated}`);
-  console.log(`Already had ID (skipped): ${result.idsSkipped}`);
+  console.log(`ID already used by another: ${result.alreadyHadId}`);
   console.log(`No match found: ${result.noMatch}`);
+  console.log(`Multiple matches (skipped): ${result.multipleMatches}`);
 
   if (result.errors.length > 0) {
     console.log(`\nErrors (${result.errors.length}):`);

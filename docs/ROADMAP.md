@@ -314,6 +314,26 @@ npm run sync:parties        # Partis politiques
 ### En cours
 - [ ] Améliorer le graphe de relations (trop dense, positionnement)
 - [ ] Statistiques de vote par parti
+- [ ] Enrichir les carrières politiques via Wikidata (mandats historiques)
+
+### Refactoring - Scripts d'import/sync
+
+**Objectif** : Rendre les scripts d'import plus intelligents et robustes.
+
+| Amélioration | Description | Priorité |
+|--------------|-------------|----------|
+| **Pattern unifié** | Créer une classe/interface commune pour tous les scripts de sync | Haute |
+| **Gestion des erreurs** | Retry automatique, logging structuré, rapport de fin | Haute |
+| **Rate limiting centralisé** | Module partagé pour respecter les limites des APIs | Moyenne |
+| **Mode incrémental** | Ne récupérer que les changements depuis la dernière sync | Moyenne |
+| **Validation des données** | Schéma Zod pour valider les données avant insertion | Moyenne |
+| **Tests automatisés** | Tests unitaires pour les fonctions de parsing/matching | Basse |
+| **Dry-run partout** | Option `--dry-run` sur tous les scripts | Faible |
+
+**Leçons apprises Wikidata** :
+- SPARQL timeout sur gros volumes → utiliser l'API REST (`wbsearchentities`)
+- Toujours partir de notre base de données, pas de la source externe
+- Matcher par nom + date de naissance pour éviter les homonymes
 
 ### À faire court terme
 - [ ] Votes du Sénat (NosSénateurs)

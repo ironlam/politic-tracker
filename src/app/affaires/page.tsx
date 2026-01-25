@@ -272,8 +272,8 @@ export default async function AffairesPage({ searchParams }: PageProps) {
                       <div className="flex-1">
                         <div className="flex items-start gap-2 mb-2 flex-wrap">
                           {relevantDate && (
-                            <Badge variant="secondary" className="font-mono">
-                              {formatDate(relevantDate)}
+                            <Badge variant="secondary" className="font-mono text-base">
+                              {new Date(relevantDate).getFullYear()}
                               {dateLabel && <span className="ml-1 text-xs opacity-70">({dateLabel})</span>}
                             </Badge>
                           )}

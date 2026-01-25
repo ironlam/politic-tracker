@@ -356,7 +356,14 @@ export default async function PoliticianPage({ params }: PageProps) {
                       {/* Header */}
                       <div className="flex items-start justify-between gap-4 mb-3">
                         <div className="flex-1">
-                          <h4 className="font-semibold text-lg">{affair.title}</h4>
+                          <div className="flex items-center gap-2 mb-1">
+                            {(affair.verdictDate || affair.startDate || affair.factsDate) && (
+                              <Badge variant="secondary" className="font-mono text-base font-bold">
+                                {new Date(affair.verdictDate || affair.startDate || affair.factsDate!).getFullYear()}
+                              </Badge>
+                            )}
+                            <h4 className="font-semibold text-lg">{affair.title}</h4>
+                          </div>
                           <div className="flex flex-wrap items-center gap-2 mt-1">
                             <Badge variant="outline" className="text-xs">
                               {AFFAIR_CATEGORY_LABELS[affair.category]}

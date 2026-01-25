@@ -5,7 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PoliticianAvatar } from "@/components/politicians/PoliticianAvatar";
-import { DATA_SOURCE_LABELS } from "@/config/labels";
+import {
+  DATA_SOURCE_LABELS,
+  AFFAIR_STATUS_LABELS,
+  AFFAIR_STATUS_COLORS,
+  AFFAIR_CATEGORY_LABELS,
+} from "@/config/labels";
+import type { AffairStatus, AffairCategory } from "@/types";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -22,6 +28,19 @@ async function getPolitician(id: string) {
       mandates: {
         where: { isCurrent: true },
         take: 1,
+      },
+      affairs: {
+        orderBy: { verdictDate: "desc" },
+        select: {
+          id: true,
+          title: true,
+          slug: true,
+          status: true,
+          category: true,
+          verdictDate: true,
+          startDate: true,
+          factsDate: true,
+        },
       },
       _count: { select: { affairs: true } },
     },
@@ -199,20 +218,86 @@ export default async function AdminPoliticianPage({ params }: PageProps) {
         </Card>
       </div>
 
+      {/* Affaires judiciaires */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>
+            Affaires judiciaires ({politician.affairs.length})
+          </CardTitle>
+          <Button asChild size="sm">
+            <Link href={`/admin/affaires/nouveau?politicianId=${politician.id}`}>
+              + Ajouter
+            </Link>
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {politician.affairs.length > 0 ? (
+            <div className="space-y-3">
+              {politician.affairs.map((affair) => {
+                const date = affair.verdictDate || affair.startDate || affair.factsDate;
+                const year = date ? new Date(date).getFullYear() : null;
+                return (
+                  <div
+                    key={affair.id}
+                    className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent/50 transition-colors"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {year && (
+                          <Badge variant="outline" className="font-mono">
+                            {year}
+                          </Badge>
+                        )}
+                        <span className="font-medium truncate">{affair.title}</span>
+                      </div>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Badge
+                          variant="secondary"
+                          className={AFFAIR_STATUS_COLORS[affair.status as AffairStatus]}
+                        >
+                          {AFFAIR_STATUS_LABELS[affair.status as AffairStatus]}
+                        </Badge>
+                        <span className="text-sm text-muted-foreground">
+                          {AFFAIR_CATEGORY_LABELS[affair.category as AffairCategory]}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 ml-4">
+                      <Button variant="ghost" size="sm" asChild>
+                        <Link href={`/admin/affaires/${affair.id}`}>Voir</Link>
+                      </Button>
+                      <Button variant="outline" size="sm" asChild>
+                        <Link href={`/admin/affaires/${affair.id}/edit`}>
+                          Modifier
+                        </Link>
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-muted-foreground text-center py-4">
+              Aucune affaire documentée pour ce représentant politique.
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Actions rapides */}
       <Card>
         <CardHeader>
           <CardTitle>Actions rapides</CardTitle>
         </CardHeader>
         <CardContent className="flex gap-4">
-          <Button asChild>
-            <Link href={`/admin/affaires/nouveau?politicianId=${politician.id}`}>
-              Ajouter une affaire
-            </Link>
-          </Button>
           <Button variant="outline" asChild>
             <Link href={`/politiques/${politician.slug}`} target="_blank">
               Voir la page publique
+            </Link>
+          </Button>
+          <Button variant="outline" asChild>
+            <Link href={`/affaires?politician=${politician.slug}`} target="_blank">
+              Voir les affaires (public)
             </Link>
           </Button>
         </CardContent>

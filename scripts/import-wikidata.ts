@@ -474,7 +474,8 @@ async function importConviction(
             url: result.article?.value || `https://www.wikidata.org/wiki/${result.person.value.split("/").pop()}`,
             title: `Wikidata - ${result.personLabel.value}`,
             publisher: "Wikidata",
-            publishedAt: new Date(),
+            // Use conviction date as source date (not import date)
+            publishedAt: convictionDate || new Date(),
           },
         },
       },

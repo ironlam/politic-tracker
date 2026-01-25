@@ -145,6 +145,7 @@ export function FilterBar({
           onClick={() => updateParams("status", "")}
           role="button"
           tabIndex={0}
+          aria-pressed={currentStatus === ""}
           onKeyDown={(e) => e.key === "Enter" && updateParams("status", "")}
         >
           Tous
@@ -155,6 +156,7 @@ export function FilterBar({
           onClick={() => updateParams("status", currentStatus === "active" ? "" : "active")}
           role="button"
           tabIndex={0}
+          aria-pressed={currentStatus === "active"}
           onKeyDown={(e) => e.key === "Enter" && updateParams("status", currentStatus === "active" ? "" : "active")}
         >
           Actifs ({counts.active})
@@ -165,6 +167,7 @@ export function FilterBar({
           onClick={() => updateParams("status", currentStatus === "former" ? "" : "former")}
           role="button"
           tabIndex={0}
+          aria-pressed={currentStatus === "former"}
           onKeyDown={(e) => e.key === "Enter" && updateParams("status", currentStatus === "former" ? "" : "former")}
         >
           Anciens ({counts.former})

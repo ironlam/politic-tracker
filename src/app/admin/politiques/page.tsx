@@ -72,10 +72,10 @@ export default async function AdminPoliticiansPage({ searchParams }: PageProps) 
             <table className="w-full">
               <thead>
                 <tr className="border-b text-left">
-                  <th className="pb-3 font-medium">Nom</th>
-                  <th className="pb-3 font-medium">Parti</th>
-                  <th className="pb-3 font-medium text-center">Affaires</th>
-                  <th className="pb-3 font-medium">Actions</th>
+                  <th scope="col" className="pb-3 font-medium">Nom</th>
+                  <th scope="col" className="pb-3 font-medium">Parti</th>
+                  <th scope="col" className="pb-3 font-medium text-center">Affaires</th>
+                  <th scope="col" className="pb-3 font-medium">Actions</th>
                 </tr>
               </thead>
               <tbody>

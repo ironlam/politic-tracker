@@ -66,12 +66,12 @@ export default async function AdminPartiesPage({ searchParams }: PageProps) {
             <table className="w-full">
               <thead>
                 <tr className="border-b text-left">
-                  <th className="pb-3 font-medium">Nom</th>
-                  <th className="pb-3 font-medium">Position</th>
-                  <th className="pb-3 font-medium text-center">Membres</th>
-                  <th className="pb-3 font-medium text-center">Historique</th>
-                  <th className="pb-3 font-medium">Évolution</th>
-                  <th className="pb-3 font-medium">Actions</th>
+                  <th scope="col" className="pb-3 font-medium">Nom</th>
+                  <th scope="col" className="pb-3 font-medium">Position</th>
+                  <th scope="col" className="pb-3 font-medium text-center">Membres</th>
+                  <th scope="col" className="pb-3 font-medium text-center">Historique</th>
+                  <th scope="col" className="pb-3 font-medium">Évolution</th>
+                  <th scope="col" className="pb-3 font-medium">Actions</th>
                 </tr>
               </thead>
               <tbody>

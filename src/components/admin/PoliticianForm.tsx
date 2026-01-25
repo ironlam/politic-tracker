@@ -143,10 +143,10 @@ export function PoliticianForm({ initialData, parties }: PoliticianFormProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {error && (
-        <div className="bg-red-50 text-red-700 p-4 rounded-md">{error}</div>
+        <div role="alert" aria-live="assertive" className="bg-red-50 text-red-700 p-4 rounded-md">{error}</div>
       )}
       {success && (
-        <div className="bg-green-50 text-green-700 p-4 rounded-md">{success}</div>
+        <div role="status" aria-live="polite" className="bg-green-50 text-green-700 p-4 rounded-md">{success}</div>
       )}
 
       {/* Informations générales */}

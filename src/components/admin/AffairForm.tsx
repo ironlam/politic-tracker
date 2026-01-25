@@ -176,7 +176,7 @@ export function AffairForm({ politicians, initialData }: AffairFormProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {error && (
-        <div className="bg-red-50 text-red-700 p-4 rounded-md">{error}</div>
+        <div role="alert" aria-live="assertive" className="bg-red-50 text-red-700 p-4 rounded-md">{error}</div>
       )}
 
       <Card>

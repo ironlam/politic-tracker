@@ -6,24 +6,64 @@ import { usePathname } from "next/navigation";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { NAV_LINKS, FOOTER_LINKS } from "@/config/navigation";
 
+// Get all focusable elements within a container
+function getFocusableElements(container: HTMLElement): HTMLElement[] {
+  const elements = container.querySelectorAll<HTMLElement>(
+    'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
+  );
+  return Array.from(elements);
+}
+
 export function MobileMenu() {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
   const menuRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
-  // Close menu on Escape key
+  // Handle keyboard navigation (Escape to close, Tab for focus trap)
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
     if (event.key === "Escape" && isOpen) {
       setIsOpen(false);
       buttonRef.current?.focus();
+      return;
+    }
+
+    // Focus trap: keep Tab navigation within the menu
+    if (event.key === "Tab" && isOpen && menuRef.current) {
+      const focusableElements = getFocusableElements(menuRef.current);
+      if (focusableElements.length === 0) return;
+
+      const firstElement = focusableElements[0];
+      const lastElement = focusableElements[focusableElements.length - 1];
+
+      if (event.shiftKey) {
+        // Shift+Tab: if on first element, go to last
+        if (document.activeElement === firstElement) {
+          event.preventDefault();
+          lastElement.focus();
+        }
+      } else {
+        // Tab: if on last element, go to first
+        if (document.activeElement === lastElement) {
+          event.preventDefault();
+          firstElement.focus();
+        }
+      }
     }
   }, [isOpen]);
 
-  // Close menu when clicking outside
+  // Add/remove keyboard listener when menu opens/closes
   useEffect(() => {
     if (isOpen) {
       document.addEventListener("keydown", handleKeyDown);
+      // Focus first link when menu opens
+      if (menuRef.current) {
+        const focusableElements = getFocusableElements(menuRef.current);
+        if (focusableElements.length > 0) {
+          // Small delay to ensure DOM is ready
+          setTimeout(() => focusableElements[0].focus(), 10);
+        }
+      }
       return () => document.removeEventListener("keydown", handleKeyDown);
     }
   }, [isOpen, handleKeyDown]);

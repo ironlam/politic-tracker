@@ -301,7 +301,7 @@ export const VOTE_POSITION_COLORS: Record<VotePosition, string> = {
   POUR: "bg-green-100 text-green-800 border-green-300",
   CONTRE: "bg-red-100 text-red-800 border-red-300",
   ABSTENTION: "bg-yellow-100 text-yellow-800 border-yellow-300",
-  ABSENT: "bg-gray-100 text-gray-500 border-gray-300",
+  ABSENT: "bg-gray-100 text-gray-700 border-gray-300", // Changed from gray-500 for better contrast
 };
 
 export const VOTE_POSITION_DOT_COLORS: Record<VotePosition, string> = {

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -47,17 +48,24 @@ export default function AdminLoginPage() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
+              <Label htmlFor="password" className="sr-only">
+                Mot de passe
+              </Label>
               <Input
+                id="password"
                 type="password"
                 placeholder="Mot de passe admin"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                aria-required="true"
+                aria-invalid={!!error}
+                aria-describedby={error ? "password-error" : undefined}
                 autoFocus
               />
             </div>
             {error && (
-              <p className="text-sm text-red-600">{error}</p>
+              <p id="password-error" role="alert" aria-live="assertive" className="text-sm text-red-600">{error}</p>
             )}
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "Connexion..." : "Se connecter"}

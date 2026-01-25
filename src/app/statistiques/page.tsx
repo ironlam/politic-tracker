@@ -439,7 +439,7 @@ export default async function StatistiquesPage() {
       {/* Disclaimer */}
       <Card className="mt-8 bg-blue-50 border-blue-200">
         <CardContent className="pt-6">
-          <h3 className="font-semibold text-blue-900 mb-2">Note méthodologique</h3>
+          <h2 className="font-semibold text-blue-900 mb-2">Note méthodologique</h2>
           <p className="text-sm text-blue-800">
             Ces statistiques reflètent uniquement les affaires documentées dans notre base.
             Une affaire en cours ne préjuge pas de la culpabilité (présomption d&apos;innocence).

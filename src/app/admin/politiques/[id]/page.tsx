@@ -178,9 +178,9 @@ export default async function AdminPoliticianPage({ params }: PageProps) {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b">
-                      <th className="text-left pb-2 font-medium">Source</th>
-                      <th className="text-left pb-2 font-medium">ID</th>
-                      <th className="text-left pb-2 font-medium">URL</th>
+                      <th scope="col" className="text-left pb-2 font-medium">Source</th>
+                      <th scope="col" className="text-left pb-2 font-medium">ID</th>
+                      <th scope="col" className="text-left pb-2 font-medium">URL</th>
                     </tr>
                   </thead>
                   <tbody>

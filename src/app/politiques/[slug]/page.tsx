@@ -246,7 +246,7 @@ export default async function PoliticianPage({ params }: PageProps) {
           {hasMandates && (
             <Card>
               <CardHeader>
-                <CardTitle>Parcours politique</CardTitle>
+                <h2 className="leading-none font-semibold">Parcours politique</h2>
                 <p className="text-xs text-muted-foreground mt-1">
                   Liste des mandats nationaux et européens connus.
                   Les mandats locaux (maire, conseiller, etc.) peuvent ne pas être listés.
@@ -266,7 +266,7 @@ export default async function PoliticianPage({ params }: PageProps) {
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle>Votes parlementaires</CardTitle>
+                  <h2 className="leading-none font-semibold">Votes parlementaires</h2>
                   <Link
                     href={`/politiques/${politician.slug}/votes`}
                     className="text-sm text-primary hover:underline"
@@ -337,7 +337,7 @@ export default async function PoliticianPage({ params }: PageProps) {
           {/* Affairs */}
           <Card>
             <CardHeader>
-              <CardTitle>Affaires judiciaires</CardTitle>
+              <h2 className="leading-none font-semibold">Affaires judiciaires</h2>
             </CardHeader>
             <CardContent>
               {politician.affairs.length > 0 ? (
@@ -362,7 +362,7 @@ export default async function PoliticianPage({ params }: PageProps) {
                                 {new Date(affair.verdictDate || affair.startDate || affair.factsDate!).getFullYear()}
                               </Badge>
                             )}
-                            <h4 className="font-semibold text-lg">{affair.title}</h4>
+                            <h3 className="font-semibold text-lg">{affair.title}</h3>
                           </div>
                           <div className="flex flex-wrap items-center gap-2 mt-1">
                             <Badge variant="outline" className="text-xs">
@@ -495,7 +495,7 @@ export default async function PoliticianPage({ params }: PageProps) {
           {/* Quick stats */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">En bref</CardTitle>
+              <h2 className="leading-none font-semibold text-lg">En bref</h2>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex justify-between">
@@ -542,7 +542,7 @@ export default async function PoliticianPage({ params }: PageProps) {
           {politician.declarations.length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Déclarations HATVP</CardTitle>
+                <h2 className="leading-none font-semibold text-lg">Déclarations HATVP</h2>
               </CardHeader>
               <CardContent>
                 <ul className="space-y-2">

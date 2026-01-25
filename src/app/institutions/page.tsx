@@ -313,19 +313,19 @@ export default function InstitutionsPage() {
           </p>
           <div className="grid sm:grid-cols-3 gap-4">
             <div className="p-4 rounded-lg bg-background border">
-              <h4 className="font-semibold mb-1">Pouvoir exécutif</h4>
+              <p className="font-semibold mb-1">Pouvoir exécutif</p>
               <p className="text-xs text-muted-foreground">
                 Applique les lois. Président, Gouvernement.
               </p>
             </div>
             <div className="p-4 rounded-lg bg-background border">
-              <h4 className="font-semibold mb-1">Pouvoir législatif</h4>
+              <p className="font-semibold mb-1">Pouvoir législatif</p>
               <p className="text-xs text-muted-foreground">
                 Vote les lois. Assemblée nationale, Sénat.
               </p>
             </div>
             <div className="p-4 rounded-lg bg-background border">
-              <h4 className="font-semibold mb-1">Pouvoir judiciaire</h4>
+              <p className="font-semibold mb-1">Pouvoir judiciaire</p>
               <p className="text-xs text-muted-foreground">
                 Juge les litiges. Tribunaux, Cours.
               </p>

@@ -168,7 +168,18 @@ export function SearchAutocomplete({
         placeholder={placeholder}
         className="w-full"
         autoComplete="off"
+        aria-expanded={isOpen}
+        aria-controls="search-results"
+        aria-autocomplete="list"
+        aria-activedescendant={selectedIndex >= 0 ? `search-result-${selectedIndex}` : undefined}
       />
+
+      {/* Screen reader announcements */}
+      <div className="sr-only" aria-live="polite" aria-atomic="true">
+        {isLoading && "Recherche en cours..."}
+        {!isLoading && results.length > 0 && `${results.length} résultat${results.length > 1 ? 's' : ''} trouvé${results.length > 1 ? 's' : ''}`}
+        {!isLoading && query.length >= 2 && results.length === 0 && "Aucun résultat"}
+      </div>
 
       {isLoading && (
         <div className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -177,12 +188,19 @@ export function SearchAutocomplete({
       )}
 
       {isOpen && results.length > 0 && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-popover border rounded-lg shadow-lg z-50 overflow-hidden">
+        <div
+          id="search-results"
+          role="listbox"
+          className="absolute top-full left-0 right-0 mt-1 bg-popover border rounded-lg shadow-lg z-50 overflow-hidden"
+        >
           <ul className="py-1">
             {results.map((result, index) => (
               <li key={result.id}>
                 <button
+                  id={`search-result-${index}`}
                   type="button"
+                  role="option"
+                  aria-selected={index === selectedIndex}
                   onClick={() => handleSelect(result)}
                   onMouseEnter={() => setSelectedIndex(index)}
                   className={`w-full px-3 py-2 flex items-center gap-3 text-left transition-colors ${

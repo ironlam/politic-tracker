@@ -118,7 +118,11 @@ export function PostalCodeSearch() {
       {/* Search input */}
       <div className="flex gap-2">
         <div className="relative flex-1">
+          <label htmlFor="postal-code" className="sr-only">
+            Code postal
+          </label>
           <input
+            id="postal-code"
             type="text"
             inputMode="numeric"
             pattern="[0-9]*"
@@ -127,6 +131,7 @@ export function PostalCodeSearch() {
             value={postalCode}
             onChange={(e) => setPostalCode(e.target.value.replace(/\D/g, ""))}
             onKeyDown={handleKeyDown}
+            aria-describedby={error ? "postal-code-error" : undefined}
             className="w-full h-12 px-4 text-lg rounded-lg border border-input bg-background ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
           />
         </div>
@@ -167,14 +172,14 @@ export function PostalCodeSearch() {
 
       {/* Error message */}
       {error && (
-        <div className="p-4 bg-destructive/10 text-destructive rounded-lg text-center">
+        <div id="postal-code-error" role="alert" aria-live="assertive" className="p-4 bg-destructive/10 text-destructive rounded-lg text-center">
           {error}
         </div>
       )}
 
       {/* Results */}
       {result && (
-        <div className="space-y-4">
+        <div className="space-y-4" role="region" aria-live="polite" aria-label="Résultats de recherche">
           <div className="text-center p-4 bg-muted rounded-lg">
             <p className="text-sm text-muted-foreground">
               Résultats pour <strong>{result.commune}</strong> ({result.department})

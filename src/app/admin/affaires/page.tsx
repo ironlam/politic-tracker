@@ -41,13 +41,13 @@ export default async function AdminAffairsPage() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b text-left">
-                    <th className="pb-3 font-medium">Affaire</th>
-                    <th className="pb-3 font-medium">Politique</th>
-                    <th className="pb-3 font-medium">Catégorie</th>
-                    <th className="pb-3 font-medium">Statut</th>
-                    <th className="pb-3 font-medium">Sources</th>
-                    <th className="pb-3 font-medium">Ajouté le</th>
-                    <th className="pb-3 font-medium">Actions</th>
+                    <th scope="col" className="pb-3 font-medium">Affaire</th>
+                    <th scope="col" className="pb-3 font-medium">Politique</th>
+                    <th scope="col" className="pb-3 font-medium">Catégorie</th>
+                    <th scope="col" className="pb-3 font-medium">Statut</th>
+                    <th scope="col" className="pb-3 font-medium">Sources</th>
+                    <th scope="col" className="pb-3 font-medium">Ajouté le</th>
+                    <th scope="col" className="pb-3 font-medium">Actions</th>
                   </tr>
                 </thead>
                 <tbody>

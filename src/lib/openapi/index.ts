@@ -9,31 +9,27 @@ const options: swaggerJsdoc.Options = {
       description: `
 API publique pour accéder aux données des représentants politiques français.
 
-## Endpoints publics
+## Endpoints disponibles
 
 | Endpoint | Description |
 |----------|-------------|
-| \`/api/affaires\` | Affaires judiciaires documentées |
-| \`/api/politiques/[slug]/affaires\` | Affaires d'un représentant |
-| \`/api/politiques/[slug]/votes\` | Votes parlementaires d'un représentant |
-| \`/api/politiques/[slug]/relations\` | Relations d'un représentant |
+| \`/api/politiques\` | Liste des représentants politiques |
+| \`/api/politiques/{slug}\` | Détails d'un représentant |
+| \`/api/politiques/{slug}/affaires\` | Affaires judiciaires d'un représentant |
+| \`/api/politiques/{slug}/votes\` | Votes parlementaires d'un représentant |
+| \`/api/politiques/{slug}/relations\` | Relations d'un représentant |
+| \`/api/affaires\` | Toutes les affaires judiciaires documentées |
 | \`/api/votes\` | Liste des scrutins parlementaires |
-| \`/api/search/politicians\` | Recherche de représentants |
-| \`/api/deputies/by-department\` | Députés par département |
 
 ## Pagination
 
-Les endpoints de liste supportent la pagination avec les paramètres :
+Les endpoints de liste supportent la pagination :
 - \`page\` : Numéro de page (défaut: 1)
 - \`limit\` : Éléments par page (défaut: 20, max: 100)
 
-## Rate limiting
+## Utilisation responsable
 
-Pas de rate limiting pour le moment. Merci de faire un usage raisonnable de l'API.
-
-## Code source
-
-Le projet est open source : [GitHub](https://github.com/ironlam/politic-tracker)
+Merci de faire un usage raisonnable de l'API.
       `.trim(),
       contact: {
         name: "Transparence Politique",
@@ -44,17 +40,11 @@ Le projet est open source : [GitHub](https://github.com/ironlam/politic-tracker)
         url: "https://opensource.org/licenses/MIT",
       },
     },
-    servers: [
-      {
-        url: "https://politic-tracker.vercel.app",
-        description: "Production",
-      },
-      {
-        url: "http://localhost:3000",
-        description: "Développement local",
-      },
-    ],
     tags: [
+      {
+        name: "Politiques",
+        description: "Représentants politiques français",
+      },
       {
         name: "Affaires",
         description: "Affaires judiciaires documentées avec sources",
@@ -64,14 +54,6 @@ Le projet est open source : [GitHub](https://github.com/ironlam/politic-tracker)
         description: "Votes parlementaires (scrutins publics)",
       },
       {
-        name: "Recherche",
-        description: "Recherche et autocomplétion",
-      },
-      {
-        name: "Géographie",
-        description: "Données géographiques (départements, circonscriptions)",
-      },
-      {
         name: "Relations",
         description: "Relations entre représentants politiques",
       },
@@ -79,15 +61,13 @@ Le projet est open source : [GitHub](https://github.com/ironlam/politic-tracker)
   },
   apis: [
     "./src/lib/openapi/schemas.ts",
-    "./src/app/api/affaires/route.ts",
+    "./src/app/api/politiques/route.ts",
+    "./src/app/api/politiques/[slug]/route.ts",
     "./src/app/api/politiques/[slug]/affaires/route.ts",
     "./src/app/api/politiques/[slug]/votes/route.ts",
     "./src/app/api/politiques/[slug]/relations/route.ts",
+    "./src/app/api/affaires/route.ts",
     "./src/app/api/votes/route.ts",
-    "./src/app/api/search/politicians/route.ts",
-    "./src/app/api/search/advanced/route.ts",
-    "./src/app/api/search/filters/route.ts",
-    "./src/app/api/deputies/by-department/route.ts",
   ],
 };
 

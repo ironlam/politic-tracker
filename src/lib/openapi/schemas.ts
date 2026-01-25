@@ -53,6 +53,136 @@
  *         currentParty:
  *           $ref: '#/components/schemas/PartySummary'
  *
+ *     Politician:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           format: uuid
+ *         slug:
+ *           type: string
+ *           example: "jean-dupont"
+ *         fullName:
+ *           type: string
+ *           example: "Jean Dupont"
+ *         firstName:
+ *           type: string
+ *           example: "Jean"
+ *         lastName:
+ *           type: string
+ *           example: "Dupont"
+ *         civility:
+ *           type: string
+ *           enum: [M, MME]
+ *           nullable: true
+ *         birthDate:
+ *           type: string
+ *           format: date
+ *           nullable: true
+ *         deathDate:
+ *           type: string
+ *           format: date
+ *           nullable: true
+ *         birthPlace:
+ *           type: string
+ *           nullable: true
+ *         photoUrl:
+ *           type: string
+ *           nullable: true
+ *         currentParty:
+ *           $ref: '#/components/schemas/PartySummary'
+ *
+ *     Mandate:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           format: uuid
+ *         type:
+ *           type: string
+ *           enum: [DEPUTE, SENATEUR, DEPUTE_EUROPEEN, PRESIDENT, PREMIER_MINISTRE, MINISTRE, SECRETAIRE_ETAT, MAIRE, PRESIDENT_REGION, PRESIDENT_DEPARTEMENT, CONSEILLER_REGIONAL, CONSEILLER_DEPARTEMENTAL, CONSEILLER_MUNICIPAL]
+ *         title:
+ *           type: string
+ *           example: "Député de la 3ème circonscription du Rhône"
+ *         institution:
+ *           type: string
+ *           nullable: true
+ *         constituency:
+ *           type: string
+ *           nullable: true
+ *         startDate:
+ *           type: string
+ *           format: date
+ *         endDate:
+ *           type: string
+ *           format: date
+ *           nullable: true
+ *         isCurrent:
+ *           type: boolean
+ *
+ *     Declaration:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           format: uuid
+ *         type:
+ *           type: string
+ *           enum: [PATRIMOINE, INTERETS]
+ *         year:
+ *           type: integer
+ *           example: 2024
+ *         url:
+ *           type: string
+ *           format: uri
+ *           nullable: true
+ *
+ *     PoliticianDetails:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           format: uuid
+ *         slug:
+ *           type: string
+ *         fullName:
+ *           type: string
+ *         firstName:
+ *           type: string
+ *         lastName:
+ *           type: string
+ *         civility:
+ *           type: string
+ *           enum: [M, MME]
+ *           nullable: true
+ *         birthDate:
+ *           type: string
+ *           format: date
+ *           nullable: true
+ *         deathDate:
+ *           type: string
+ *           format: date
+ *           nullable: true
+ *         birthPlace:
+ *           type: string
+ *           nullable: true
+ *         photoUrl:
+ *           type: string
+ *           nullable: true
+ *         currentParty:
+ *           $ref: '#/components/schemas/PartySummary'
+ *         mandates:
+ *           type: array
+ *           items:
+ *             $ref: '#/components/schemas/Mandate'
+ *         declarations:
+ *           type: array
+ *           items:
+ *             $ref: '#/components/schemas/Declaration'
+ *         affairsCount:
+ *           type: integer
+ *           description: Nombre d'affaires judiciaires
+ *
  *     Source:
  *       type: object
  *       properties:

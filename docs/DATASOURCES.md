@@ -196,7 +196,81 @@ npm run sync:photos --validate   # Valider + sync
 
 ---
 
-## 8. Crédits et remerciements
+## 8. Embeddings RAG (Chatbot IA)
+
+### 8.1 Vue d'ensemble
+
+Le chatbot utilise des embeddings vectoriels pour la recherche sémantique. Les embeddings sont générés par **Voyage AI** (gratuit, 200M tokens/mois).
+
+| Type | Contenu indexé | Quantité |
+|------|----------------|----------|
+| POLITICIAN | Nom, parti, mandats, affaires | ~1000 |
+| PARTY | Nom, idéologie, membres | ~150 |
+| AFFAIR | Titre, description, sources | ~90 |
+| DOSSIER | Titre, résumé, statut | ~1700 |
+| SCRUTIN | Titre, date, résultat | ~5000 |
+
+### 8.2 Commandes
+
+```bash
+# Voir les stats actuelles
+npm run index:embeddings:stats
+
+# Indexer un type spécifique
+npm run index:embeddings -- --type=POLITICIAN
+npm run index:embeddings -- --type=PARTY
+npm run index:embeddings -- --type=AFFAIR
+npm run index:embeddings -- --type=DOSSIER
+npm run index:embeddings -- --type=SCRUTIN
+
+# Indexer tout (long ~30min)
+npm run index:embeddings
+
+# Limiter le nombre (pour tests)
+npm run index:embeddings -- --type=POLITICIAN --limit=100
+```
+
+### 8.3 Quand ré-indexer ?
+
+| Événement | Action |
+|-----------|--------|
+| Après `sync:assemblee` | `index:embeddings -- --type=POLITICIAN` |
+| Après `sync:senat` | `index:embeddings -- --type=POLITICIAN` |
+| Après `sync:parties` | `index:embeddings -- --type=PARTY` |
+| Après ajout d'affaires | `index:embeddings -- --type=AFFAIR` |
+| Après `sync:legislation` | `index:embeddings -- --type=DOSSIER` |
+| Après `sync:votes` | `index:embeddings -- --type=SCRUTIN` |
+
+### 8.4 Automatisation recommandée
+
+Ajouter après chaque sync dans le cron GitHub Actions :
+
+```yaml
+# .github/workflows/sync-data.yml
+- name: Re-index embeddings
+  run: |
+    npm run index:embeddings -- --type=POLITICIAN
+    npm run index:embeddings -- --type=PARTY
+  env:
+    VOYAGE_API_KEY: ${{ secrets.VOYAGE_API_KEY }}
+```
+
+### 8.5 Configuration requise
+
+```env
+VOYAGE_API_KEY=pa-xxxxxxxx  # Obtenir sur https://dash.voyageai.com
+```
+
+### 8.6 Modèle utilisé
+
+- **Modèle** : `voyage-3-lite` (512 dimensions, optimisé latence)
+- **Alternative** : `voyage-3` (1024 dims) ou `voyage-3-large` (meilleure qualité)
+
+Pour changer de modèle, modifier `src/services/embeddings.ts`.
+
+---
+
+## 9. Crédits et remerciements
 
 Les données utilisées proviennent de sources officielles et de projets citoyens :
 

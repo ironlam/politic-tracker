@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronDown } from "lucide-react";
@@ -11,13 +11,35 @@ interface NavDropdownProps {
   group: NavGroup;
 }
 
+// Global state to track which dropdown is open (only one at a time)
+let closeAllDropdowns: (() => void)[] = [];
+
 export function NavDropdown({ group }: NavDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const pathname = usePathname();
 
   // Check if any item in the group is active
   const isGroupActive = group.items.some((item) => pathname.startsWith(item.href));
+
+  const closeDropdown = useCallback(() => {
+    setIsOpen(false);
+  }, []);
+
+  const openDropdown = useCallback(() => {
+    // Close all other dropdowns first
+    closeAllDropdowns.forEach((close) => close());
+    setIsOpen(true);
+  }, []);
+
+  // Register this dropdown's close function
+  useEffect(() => {
+    closeAllDropdowns.push(closeDropdown);
+    return () => {
+      closeAllDropdowns = closeAllDropdowns.filter((fn) => fn !== closeDropdown);
+    };
+  }, [closeDropdown]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -48,11 +70,39 @@ export function NavDropdown({ group }: NavDropdownProps) {
     setIsOpen(false);
   }, [pathname]);
 
+  // Clean up timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+
+  const handleMouseEnter = () => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    openDropdown();
+  };
+
+  const handleMouseLeave = () => {
+    // Small delay before closing to allow moving to dropdown content
+    timeoutRef.current = setTimeout(() => {
+      setIsOpen(false);
+    }, 150);
+  };
+
   return (
-    <div ref={dropdownRef} className="relative">
+    <div
+      ref={dropdownRef}
+      className="relative"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
       <button
         onClick={() => setIsOpen(!isOpen)}
-        onMouseEnter={() => setIsOpen(true)}
         className={cn(
           "flex items-center gap-1 px-3 py-2 text-sm font-medium rounded-lg transition-colors",
           "hover:text-foreground hover:bg-accent",
@@ -73,10 +123,7 @@ export function NavDropdown({ group }: NavDropdownProps) {
 
       {/* Dropdown menu */}
       {isOpen && (
-        <div
-          className="absolute top-full left-0 mt-1 w-64 bg-popover border rounded-lg shadow-lg py-2 z-50"
-          onMouseLeave={() => setIsOpen(false)}
-        >
+        <div className="absolute top-full left-0 mt-1 min-w-[280px] bg-popover border rounded-lg shadow-lg py-2 z-50">
           {group.items.map((item) => {
             const isActive = pathname.startsWith(item.href);
             return (
@@ -96,7 +143,7 @@ export function NavDropdown({ group }: NavDropdownProps) {
                   </span>
                 </div>
                 {item.description && (
-                  <p className="text-xs text-muted-foreground mt-0.5 ml-0">
+                  <p className="text-xs text-muted-foreground mt-0.5">
                     {item.description}
                   </p>
                 )}

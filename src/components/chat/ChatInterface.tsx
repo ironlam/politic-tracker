@@ -18,152 +18,8 @@ const SUGGESTED_QUESTIONS = [
   "Quelles affaires judiciaires concernent des élus ?",
   "Quels dossiers sont discutés à l'Assemblée ?",
   "Qui est le Premier ministre ?",
-  "Combien de députés et sénateurs ?",
+  "Combien y a-t-il de députés ?",
 ];
-
-// Extract politician name from response
-function extractPoliticianName(content: string): string | null {
-  // Look for patterns like "est **Name**" or "Premier ministre est Name"
-  const patterns = [
-    /est\s+\*\*([^*]+)\*\*/i,
-    /ministre\s+est\s+([A-ZÀ-Ü][a-zà-ü]+(?:\s+[A-ZÀ-Ü][a-zà-ü]+)+)/,
-    /président\s+est\s+([A-ZÀ-Ü][a-zà-ü]+(?:\s+[A-ZÀ-Ü][a-zà-ü]+)+)/,
-    /député[e]?\s+([A-ZÀ-Ü][a-zà-ü]+(?:\s+[A-ZÀ-Ü][a-zà-ü]+)+)/,
-    /sénateur(?:rice)?\s+([A-ZÀ-Ü][a-zà-ü]+(?:\s+[A-ZÀ-Ü][a-zà-ü]+)+)/,
-  ];
-
-  for (const pattern of patterns) {
-    const match = content.match(pattern);
-    if (match) return match[1].trim();
-  }
-
-  // Look for bold names
-  const boldMatch = content.match(/\*\*([A-ZÀ-Ü][^*]{2,30})\*\*/);
-  if (boldMatch) return boldMatch[1].trim();
-
-  return null;
-}
-
-// Extract party name from response
-function extractPartyName(content: string): string | null {
-  const partyPatterns = [
-    /(MoDem|Modem|Mouvement Démocrate)/i,
-    /(Renaissance|LREM|En Marche)/i,
-    /(Rassemblement National|RN)/i,
-    /(La France [Ii]nsoumise|LFI)/i,
-    /(Les Républicains|LR)/i,
-    /(Parti [Ss]ocialiste|PS)/i,
-    /(Europe Écologie|EELV|Les Verts)/i,
-    /(Parti [Cc]ommuniste|PCF)/i,
-  ];
-
-  for (const pattern of partyPatterns) {
-    const match = content.match(pattern);
-    if (match) return match[1];
-  }
-  return null;
-}
-
-// Generate contextual follow-up suggestions based on the conversation
-function generateFollowUpSuggestions(lastAssistantMessage: string, lastUserMessage: string): string[] {
-  const suggestions: string[] = [];
-  const content = lastAssistantMessage.toLowerCase();
-  const question = lastUserMessage.toLowerCase();
-
-  // Extract entities for personalized suggestions
-  const politicianName = extractPoliticianName(lastAssistantMessage);
-  const partyName = extractPartyName(lastAssistantMessage);
-
-  // Detect themes in the response
-  const themes = {
-    agriculture: content.includes("agricol") || content.includes("paysan") || content.includes("ferme"),
-    environnement: content.includes("environnement") || content.includes("écolog") || content.includes("climat"),
-    santé: content.includes("santé") || content.includes("hôpital") || content.includes("médic"),
-    éducation: content.includes("éducation") || content.includes("école") || content.includes("étudiant"),
-    retraite: content.includes("retraite") || content.includes("pension"),
-    immigration: content.includes("immigration") || content.includes("migrant") || content.includes("asile"),
-    sécurité: content.includes("sécurité") || content.includes("police") || content.includes("délinquance"),
-    économie: content.includes("économi") || content.includes("entreprise") || content.includes("emploi"),
-    logement: content.includes("logement") || content.includes("loyer") || content.includes("hlm"),
-  };
-
-  // Detect content types
-  const hasAffaires = content.includes("affaire") || content.includes("condamn") || content.includes("judiciaire");
-  const hasDossiers = content.includes("dossier") || content.includes("projet de loi") || content.includes("proposition de loi");
-  const hasVotes = content.includes("vote") || content.includes("scrutin") || content.includes("adopté") || content.includes("rejeté");
-  const hasPolitician = content.includes("/politiques/") || content.includes("député") || content.includes("sénateur") || content.includes("ministre");
-  const hasParty = content.includes("parti") || content.includes("groupe politique") || content.includes("/partis/");
-
-  // Find the active theme
-  const activeTheme = Object.entries(themes).find(([, active]) => active)?.[0];
-
-  // Citizen-oriented suggestions based on context
-  if (hasDossiers || hasDossiers) {
-    if (activeTheme) {
-      suggestions.push(`Quels partis défendent ${activeTheme === "environnement" ? "l'" : "la "}${activeTheme} ?`);
-      suggestions.push(`Autres lois sur ${activeTheme === "environnement" ? "l'" : "la "}${activeTheme} ?`);
-    }
-    suggestions.push("Quels députés ont voté pour ?");
-    suggestions.push("Ce texte a-t-il été adopté ?");
-  }
-
-  if (hasAffaires) {
-    suggestions.push("Quels partis ont le plus d'élus concernés ?");
-    suggestions.push("Y a-t-il des condamnations définitives ?");
-    suggestions.push("Affaires les plus récentes ?");
-  }
-
-  if (hasPolitician && !hasAffaires) {
-    if (politicianName) {
-      suggestions.push(`Quels sont les votes de ${politicianName} ?`);
-      suggestions.push(`${politicianName} a-t-il des affaires judiciaires ?`);
-      if (partyName) {
-        suggestions.push(`Qui sont les autres élus du ${partyName} ?`);
-      }
-    } else {
-      suggestions.push("Quels sont ses votes récents ?");
-      suggestions.push("A-t-il des affaires judiciaires ?");
-    }
-  }
-
-  if (hasParty || partyName) {
-    const party = partyName || "ce parti";
-    suggestions.push(`Combien de députés au ${party} ?`);
-    suggestions.push(`Quelles sont les positions du ${party} ?`);
-    suggestions.push(`Des affaires concernent le ${party} ?`);
-  }
-
-  if (hasVotes) {
-    suggestions.push("Comment ont voté les différents partis ?");
-    suggestions.push("Qui a voté contre ?");
-  }
-
-  // Theme-specific citizen questions
-  if (activeTheme && suggestions.length < 3) {
-    const themeQuestions: Record<string, string[]> = {
-      agriculture: ["Quels députés sont agriculteurs ?", "Aides aux agriculteurs votées ?"],
-      environnement: ["Lois climat récentes ?", "Quels partis sont écologistes ?"],
-      santé: ["Réformes santé en cours ?", "Budget hôpitaux voté ?"],
-      éducation: ["Réformes éducation récentes ?", "Budget éducation ?"],
-      retraite: ["Où en est la réforme des retraites ?", "Qui a voté la réforme ?"],
-      immigration: ["Lois immigration récentes ?", "Positions des partis sur l'immigration ?"],
-      sécurité: ["Lois sécurité votées ?", "Budget police et justice ?"],
-      économie: ["Mesures pour l'emploi ?", "Aides aux entreprises votées ?"],
-      logement: ["Lois sur le logement ?", "Encadrement des loyers ?"],
-    };
-    suggestions.push(...(themeQuestions[activeTheme] || []));
-  }
-
-  // Default suggestions if nothing specific detected
-  if (suggestions.length === 0) {
-    suggestions.push("Quels sont les dossiers prioritaires actuellement ?");
-    suggestions.push("Quels partis sont représentés à l'Assemblée ?");
-    suggestions.push("Y a-t-il des affaires judiciaires en cours ?");
-  }
-
-  // Return unique suggestions, max 3
-  return [...new Set(suggestions)].slice(0, 3);
-}
 
 // Ghost text autocomplete - single suggestion that completes what user is typing
 const AUTOCOMPLETE_COMPLETIONS: Record<string, string> = {
@@ -231,7 +87,6 @@ export function ChatInterface() {
   const [isRateLimited, setIsRateLimited] = useState(false);
   const [retryAfter, setRetryAfter] = useState(0);
   const [ghostText, setGhostText] = useState<string | null>(null);
-  const [followUpSuggestions, setFollowUpSuggestions] = useState<string[]>([]);
   // Scroll within chat container only (not page)
   const scrollToBottom = useCallback(() => {
     const container = messagesContainerRef.current;
@@ -262,13 +117,6 @@ export function ChatInterface() {
       return () => clearTimeout(timer);
     }
   }, [retryAfter]);
-
-  // Clear follow-up suggestions when user starts typing
-  useEffect(() => {
-    if (input.length > 0 && followUpSuggestions.length > 0) {
-      setFollowUpSuggestions([]);
-    }
-  }, [input, followUpSuggestions.length]);
 
   // Ghost text autocomplete - find completion that starts with user input
   useEffect(() => {
@@ -376,9 +224,6 @@ export function ChatInterface() {
         );
       }
 
-      // Generate follow-up suggestions based on the response
-      const suggestions = generateFollowUpSuggestions(assistantContent, messageContent);
-      setFollowUpSuggestions(suggestions);
     } catch (err) {
       setError(err instanceof Error ? err : new Error("Erreur inconnue"));
       // Remove the empty assistant message on error
@@ -522,27 +367,6 @@ export function ChatInterface() {
                 )}
               </div>
             ))}
-
-            {/* Follow-up suggestions */}
-            {!isLoading && followUpSuggestions.length > 0 && messages.length > 0 && (
-              <div className="flex flex-col gap-2 ml-11 mt-2">
-                <p className="text-xs text-muted-foreground">Questions suggérées :</p>
-                <div className="flex flex-wrap gap-2">
-                  {followUpSuggestions.map((suggestion, index) => (
-                    <button
-                      key={index}
-                      onClick={() => {
-                        setFollowUpSuggestions([]);
-                        sendMessage(suggestion);
-                      }}
-                      className="text-left text-sm px-3 py-1.5 rounded-full border bg-background hover:bg-muted transition-colors"
-                    >
-                      {suggestion}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
 
             {/* Error display */}
             {error && !isRateLimited && (

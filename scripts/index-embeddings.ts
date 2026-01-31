@@ -13,6 +13,7 @@ import "dotenv/config";
 import {
   indexAllOfType,
   getEmbeddingStats,
+  indexGlobalStats,
 } from "../src/services/embeddings";
 import type { EmbeddingType } from "../src/generated/prisma";
 
@@ -82,6 +83,10 @@ async function main() {
     totalIndexed += indexed;
     totalErrors += errors;
   }
+
+  // Index global statistics
+  console.log("\n📊 Indexing global statistics...");
+  await indexGlobalStats();
 
   console.log("\n" + "=".repeat(50));
   console.log(`✅ Total indexed: ${totalIndexed}`);

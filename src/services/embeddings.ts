@@ -355,7 +355,7 @@ export async function indexAffair(affairId: string): Promise<void> {
 }
 
 /**
- * Index a political party
+ * Index a political party with detailed mandate statistics
  */
 export async function indexParty(partyId: string): Promise<void> {
   const party = await db.party.findUnique({
@@ -367,10 +367,46 @@ export async function indexParty(partyId: string): Promise<void> {
 
   if (!party) return;
 
+  // Get mandate counts by type for this party
+  const mandateCounts = await db.mandate.groupBy({
+    by: ["type"],
+    where: {
+      isCurrent: true,
+      politician: { currentPartyId: partyId },
+    },
+    _count: true,
+  });
+
+  const countByType: Record<string, number> = {};
+  for (const m of mandateCounts) {
+    countByType[m.type] = m._count;
+  }
+
+  const deputyCount = countByType["DEPUTE"] || 0;
+  const senatorCount = countByType["SENATEUR"] || 0;
+  const ministerCount = (countByType["MINISTRE"] || 0) +
+                        (countByType["MINISTRE_DELEGUE"] || 0) +
+                        (countByType["SECRETAIRE_ETAT"] || 0);
+  const mepCount = countByType["DEPUTE_EUROPEEN"] || 0;
+
   const parts: string[] = [
     `${party.name} (${party.shortName})`,
-    `${party._count.politicians} membre(s)`,
   ];
+
+  // Add detailed mandate counts
+  const mandateParts: string[] = [];
+  if (deputyCount > 0) mandateParts.push(`${deputyCount} député${deputyCount > 1 ? "s" : ""}`);
+  if (senatorCount > 0) mandateParts.push(`${senatorCount} sénateur${senatorCount > 1 ? "s" : ""}`);
+  if (ministerCount > 0) mandateParts.push(`${ministerCount} ministre${ministerCount > 1 ? "s" : ""}`);
+  if (mepCount > 0) mandateParts.push(`${mepCount} eurodéputé${mepCount > 1 ? "s" : ""}`);
+
+  if (mandateParts.length > 0) {
+    parts.push(`Le ${party.shortName} a ${mandateParts.join(", ")}`);
+    parts.push(`Combien de députés au ${party.shortName} ? ${deputyCount}`);
+    parts.push(`Combien de sénateurs au ${party.shortName} ? ${senatorCount}`);
+  } else {
+    parts.push(`${party._count.politicians} membre(s)`);
+  }
 
   if (party.description) {
     parts.push(party.description);
@@ -405,8 +441,82 @@ export async function indexParty(partyId: string): Promise<void> {
       slug: party.slug,
       color: party.color,
       memberCount: party._count.politicians,
+      deputyCount,
+      senatorCount,
+      ministerCount,
+      mepCount,
     },
   });
+}
+
+/**
+ * Index global statistics (deputies, senators, parties, etc.)
+ */
+export async function indexGlobalStats(): Promise<void> {
+  // Get mandate counts by type
+  const mandateCounts = await db.mandate.groupBy({
+    by: ["type"],
+    where: { isCurrent: true },
+    _count: true,
+  });
+
+  const countByType: Record<string, number> = {};
+  for (const m of mandateCounts) {
+    countByType[m.type] = m._count;
+  }
+
+  const deputyCount = countByType["DEPUTE"] || 0;
+  const senatorCount = countByType["SENATEUR"] || 0;
+  const mepCount = countByType["DEPUTE_EUROPEEN"] || 0;
+  const ministerCount = (countByType["MINISTRE"] || 0) +
+                        (countByType["MINISTRE_DELEGUE"] || 0) +
+                        (countByType["SECRETAIRE_ETAT"] || 0) +
+                        (countByType["PREMIER_MINISTRE"] || 0);
+
+  // Get affair counts
+  const affairCount = await db.affair.count();
+  const condemnedCount = await db.affair.count({
+    where: { status: "CONDAMNATION_DEFINITIVE" },
+  });
+
+  // Get party count
+  const partyCount = await db.party.count();
+
+  // Get dossier count
+  const dossierCount = await db.legislativeDossier.count();
+
+  const content = `
+Statistiques de l'Assemblée nationale et du Parlement français.
+Combien de députés ? Il y a ${deputyCount} députés à l'Assemblée nationale.
+Combien de sénateurs ? Il y a ${senatorCount} sénateurs au Sénat.
+Combien de membres du gouvernement ? Il y a ${ministerCount} membres du gouvernement (ministres et secrétaires d'État).
+Combien d'eurodéputés français ? Il y a ${mepCount} eurodéputés français au Parlement européen.
+Combien de partis politiques ? Il y a ${partyCount} partis politiques référencés.
+Combien d'affaires judiciaires ? Il y a ${affairCount} affaires judiciaires référencées, dont ${condemnedCount} condamnations définitives.
+Combien de dossiers législatifs ? Il y a ${dossierCount} dossiers législatifs référencés.
+L'Assemblée nationale compte 577 sièges de députés.
+Le Sénat compte 348 sièges de sénateurs.
+La France dispose de 81 sièges au Parlement européen.
+  `.trim();
+
+  await indexDocument({
+    entityType: "PARTY", // Using PARTY type for global stats
+    entityId: "global-stats",
+    content,
+    metadata: {
+      type: "global-stats",
+      deputyCount,
+      senatorCount,
+      mepCount,
+      ministerCount,
+      partyCount,
+      affairCount,
+      condemnedCount,
+      dossierCount,
+    },
+  });
+
+  console.log("Indexed global statistics");
 }
 
 /**

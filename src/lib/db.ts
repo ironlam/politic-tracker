@@ -5,6 +5,7 @@ import { Pool } from "pg";
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
   pool: Pool | undefined;
+  shutdownRegistered: boolean | undefined;
 };
 
 function createPrismaClient(): PrismaClient {
@@ -26,7 +27,7 @@ function createPrismaClient(): PrismaClient {
     adapter,
     log:
       process.env.NODE_ENV === "development"
-        ? ["query", "error", "warn"]
+        ? ["error", "warn"]
         : ["error"],
   });
 }
@@ -37,7 +38,10 @@ if (process.env.NODE_ENV !== "production") {
   globalForPrisma.prisma = db;
 }
 
-// Graceful shutdown
-process.on("beforeExit", async () => {
-  await globalForPrisma.pool?.end();
-});
+// Graceful shutdown - only register once to avoid memory leak
+if (!globalForPrisma.shutdownRegistered) {
+  globalForPrisma.shutdownRegistered = true;
+  process.on("beforeExit", async () => {
+    await globalForPrisma.pool?.end();
+  });
+}

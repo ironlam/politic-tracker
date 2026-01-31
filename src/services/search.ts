@@ -471,12 +471,14 @@ export async function getSearchFilterOptions() {
       distinct: ["constituency"],
     }),
 
-    // Get mandate type counts
-    db.mandate.groupBy({
-      by: ["type"],
-      where: { isCurrent: true },
-      _count: true,
-    }),
+    // Get mandate type counts (counting distinct politicians, not mandates)
+    db.$queryRaw<Array<{ type: MandateType; count: bigint }>>`
+      SELECT m.type, COUNT(DISTINCT m."politicianId") as count
+      FROM "Mandate" m
+      WHERE m."isCurrent" = true
+      GROUP BY m.type
+      ORDER BY count DESC
+    `,
   ]);
 
   // Extract unique department names
@@ -499,7 +501,7 @@ export async function getSearchFilterOptions() {
     departments: uniqueDepartments,
     mandateTypes: mandateTypes.map((m) => ({
       type: m.type,
-      count: m._count,
+      count: Number(m.count),
     })),
   };
 }

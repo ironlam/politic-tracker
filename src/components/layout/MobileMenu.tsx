@@ -4,7 +4,8 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
-import { NAV_LINKS, FOOTER_LINKS } from "@/config/navigation";
+import { NAV_GROUPS, CTA_LINK } from "@/config/navigation";
+import { MapPin } from "lucide-react";
 
 // Get all focusable elements within a container
 function getFocusableElements(container: HTMLElement): HTMLElement[] {
@@ -21,36 +22,39 @@ export function MobileMenu() {
   const buttonRef = useRef<HTMLButtonElement>(null);
 
   // Handle keyboard navigation (Escape to close, Tab for focus trap)
-  const handleKeyDown = useCallback((event: KeyboardEvent) => {
-    if (event.key === "Escape" && isOpen) {
-      setIsOpen(false);
-      buttonRef.current?.focus();
-      return;
-    }
+  const handleKeyDown = useCallback(
+    (event: KeyboardEvent) => {
+      if (event.key === "Escape" && isOpen) {
+        setIsOpen(false);
+        buttonRef.current?.focus();
+        return;
+      }
 
-    // Focus trap: keep Tab navigation within the menu
-    if (event.key === "Tab" && isOpen && menuRef.current) {
-      const focusableElements = getFocusableElements(menuRef.current);
-      if (focusableElements.length === 0) return;
+      // Focus trap: keep Tab navigation within the menu
+      if (event.key === "Tab" && isOpen && menuRef.current) {
+        const focusableElements = getFocusableElements(menuRef.current);
+        if (focusableElements.length === 0) return;
 
-      const firstElement = focusableElements[0];
-      const lastElement = focusableElements[focusableElements.length - 1];
+        const firstElement = focusableElements[0];
+        const lastElement = focusableElements[focusableElements.length - 1];
 
-      if (event.shiftKey) {
-        // Shift+Tab: if on first element, go to last
-        if (document.activeElement === firstElement) {
-          event.preventDefault();
-          lastElement.focus();
-        }
-      } else {
-        // Tab: if on last element, go to first
-        if (document.activeElement === lastElement) {
-          event.preventDefault();
-          firstElement.focus();
+        if (event.shiftKey) {
+          // Shift+Tab: if on first element, go to last
+          if (document.activeElement === firstElement) {
+            event.preventDefault();
+            lastElement.focus();
+          }
+        } else {
+          // Tab: if on last element, go to first
+          if (document.activeElement === lastElement) {
+            event.preventDefault();
+            firstElement.focus();
+          }
         }
       }
-    }
-  }, [isOpen]);
+    },
+    [isOpen]
+  );
 
   // Add/remove keyboard listener when menu opens/closes
   useEffect(() => {
@@ -128,51 +132,64 @@ export function MobileMenu() {
         <div
           ref={menuRef}
           id="mobile-menu"
-          className="absolute top-16 left-0 right-0 bg-background border-b shadow-lg"
+          className="absolute top-16 left-0 right-0 bg-background border-b shadow-lg max-h-[calc(100vh-4rem)] overflow-y-auto"
           role="dialog"
           aria-modal="true"
           aria-label="Menu de navigation"
         >
-          <nav className="container mx-auto px-4 py-4" aria-label="Navigation mobile">
-            <ul className="space-y-1" role="list">
-              {NAV_LINKS.map((link) => {
-                const isActive = pathname === link.href || pathname.startsWith(link.href + "/");
-                return (
-                  <li key={link.href}>
-                    <Link
-                      href={link.href}
-                      onClick={() => setIsOpen(false)}
-                      className={`block px-4 py-3 text-base font-medium rounded-lg transition-colors touch-target ${
-                        isActive
-                          ? "text-foreground bg-accent"
-                          : "text-muted-foreground hover:text-foreground hover:bg-accent"
-                      }`}
-                      aria-current={isActive ? "page" : undefined}
-                    >
-                      {link.label}
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
+          <nav
+            className="container mx-auto px-4 py-4"
+            aria-label="Navigation mobile"
+          >
+            {/* CTA Button - Mon député */}
+            <Link
+              href={CTA_LINK.href}
+              onClick={() => setIsOpen(false)}
+              className="flex items-center justify-center gap-2 w-full px-4 py-3 mb-4 bg-primary text-primary-foreground font-medium rounded-lg"
+            >
+              <MapPin className="h-5 w-5" />
+              {CTA_LINK.label}
+            </Link>
 
-            {/* Secondary links */}
-            <div className="mt-4 pt-4 border-t">
-              <p className="px-4 text-xs text-muted-foreground uppercase tracking-wider mb-2">Plus</p>
-              <ul className="space-y-1" role="list">
-                {FOOTER_LINKS.filter(l => l.href !== "/mentions-legales").map((link) => (
-                  <li key={link.href}>
-                    <Link
-                      href={link.href}
-                      onClick={() => setIsOpen(false)}
-                      className="block px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg transition-colors"
-                    >
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
+            {/* Navigation groups */}
+            {NAV_GROUPS.map((group) => (
+              <div key={group.label} className="mb-4">
+                <p className="px-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                  {group.label}
+                </p>
+                <ul className="space-y-1" role="list">
+                  {group.items.map((item) => {
+                    const isActive =
+                      pathname === item.href ||
+                      pathname.startsWith(item.href + "/");
+                    return (
+                      <li key={item.href}>
+                        <Link
+                          href={item.href}
+                          onClick={() => setIsOpen(false)}
+                          className={`flex items-center gap-3 px-3 py-2.5 text-base rounded-lg transition-colors ${
+                            isActive
+                              ? "text-foreground bg-accent font-medium"
+                              : "text-muted-foreground hover:text-foreground hover:bg-accent"
+                          }`}
+                          aria-current={isActive ? "page" : undefined}
+                        >
+                          {item.icon && <span>{item.icon}</span>}
+                          <div>
+                            <span>{item.label}</span>
+                            {item.description && (
+                              <p className="text-xs text-muted-foreground mt-0.5">
+                                {item.description}
+                              </p>
+                            )}
+                          </div>
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            ))}
           </nav>
         </div>
       )}

@@ -15,10 +15,10 @@ import {
 } from "lucide-react";
 
 const SUGGESTED_QUESTIONS = [
-  "Qui est le Premier ministre actuel ?",
-  "Combien de députés à l'Assemblée nationale ?",
-  "Quels sont les principaux partis politiques ?",
-  "Comment fonctionne le vote d'une loi ?",
+  "Parle-moi de Marine Le Pen",
+  "Quels sont les derniers votes à l'Assemblée ?",
+  "Qui sont les députés du Rassemblement National ?",
+  "Quelles affaires judiciaires concernent des élus ?",
 ];
 
 interface Message {
@@ -29,6 +29,7 @@ interface Message {
 
 export function ChatInterface() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -36,11 +37,24 @@ export function ChatInterface() {
   const [error, setError] = useState<Error | null>(null);
   const [isRateLimited, setIsRateLimited] = useState(false);
   const [retryAfter, setRetryAfter] = useState(0);
+  const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
 
-  // Auto-scroll to bottom
+  // Check if user is near bottom of scroll
+  const handleScroll = useCallback(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    const { scrollTop, scrollHeight, clientHeight } = container;
+    const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
+    setShouldAutoScroll(isNearBottom);
+  }, []);
+
+  // Auto-scroll only if user is at bottom
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    if (shouldAutoScroll) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages, shouldAutoScroll]);
 
   // Rate limit countdown
   useEffect(() => {
@@ -165,7 +179,11 @@ export function ChatInterface() {
   return (
     <div className="flex flex-col h-[600px] max-h-[80vh]">
       {/* Messages area */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div
+        ref={messagesContainerRef}
+        onScroll={handleScroll}
+        className="flex-1 overflow-y-auto p-4 space-y-4"
+      >
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center space-y-6">
             <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">

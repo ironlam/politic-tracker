@@ -21,11 +21,58 @@ const SUGGESTED_QUESTIONS = [
   "Combien de députés et sénateurs ?",
 ];
 
+// Extract politician name from response
+function extractPoliticianName(content: string): string | null {
+  // Look for patterns like "est **Name**" or "Premier ministre est Name"
+  const patterns = [
+    /est\s+\*\*([^*]+)\*\*/i,
+    /ministre\s+est\s+([A-ZÀ-Ü][a-zà-ü]+(?:\s+[A-ZÀ-Ü][a-zà-ü]+)+)/,
+    /président\s+est\s+([A-ZÀ-Ü][a-zà-ü]+(?:\s+[A-ZÀ-Ü][a-zà-ü]+)+)/,
+    /député[e]?\s+([A-ZÀ-Ü][a-zà-ü]+(?:\s+[A-ZÀ-Ü][a-zà-ü]+)+)/,
+    /sénateur(?:rice)?\s+([A-ZÀ-Ü][a-zà-ü]+(?:\s+[A-ZÀ-Ü][a-zà-ü]+)+)/,
+  ];
+
+  for (const pattern of patterns) {
+    const match = content.match(pattern);
+    if (match) return match[1].trim();
+  }
+
+  // Look for bold names
+  const boldMatch = content.match(/\*\*([A-ZÀ-Ü][^*]{2,30})\*\*/);
+  if (boldMatch) return boldMatch[1].trim();
+
+  return null;
+}
+
+// Extract party name from response
+function extractPartyName(content: string): string | null {
+  const partyPatterns = [
+    /(MoDem|Modem|Mouvement Démocrate)/i,
+    /(Renaissance|LREM|En Marche)/i,
+    /(Rassemblement National|RN)/i,
+    /(La France [Ii]nsoumise|LFI)/i,
+    /(Les Républicains|LR)/i,
+    /(Parti [Ss]ocialiste|PS)/i,
+    /(Europe Écologie|EELV|Les Verts)/i,
+    /(Parti [Cc]ommuniste|PCF)/i,
+  ];
+
+  for (const pattern of partyPatterns) {
+    const match = content.match(pattern);
+    if (match) return match[1];
+  }
+  return null;
+}
+
 // Generate contextual follow-up suggestions based on the conversation
 function generateFollowUpSuggestions(lastAssistantMessage: string, lastUserMessage: string): string[] {
   const suggestions: string[] = [];
   const content = lastAssistantMessage.toLowerCase();
   const question = lastUserMessage.toLowerCase();
+
+  // Extract entities for personalized suggestions
+  const politicianName = extractPoliticianName(lastAssistantMessage);
+  const partyName = extractPartyName(lastAssistantMessage);
 
   // Detect themes in the response
   const themes = {
@@ -67,15 +114,23 @@ function generateFollowUpSuggestions(lastAssistantMessage: string, lastUserMessa
   }
 
   if (hasPolitician && !hasAffaires) {
-    suggestions.push("Quels sont ses votes récents ?");
-    suggestions.push("A-t-il des affaires judiciaires ?");
-    suggestions.push("Qui sont les autres élus de son parti ?");
+    if (politicianName) {
+      suggestions.push(`Quels sont les votes de ${politicianName} ?`);
+      suggestions.push(`${politicianName} a-t-il des affaires judiciaires ?`);
+      if (partyName) {
+        suggestions.push(`Qui sont les autres élus du ${partyName} ?`);
+      }
+    } else {
+      suggestions.push("Quels sont ses votes récents ?");
+      suggestions.push("A-t-il des affaires judiciaires ?");
+    }
   }
 
-  if (hasParty) {
-    suggestions.push("Combien de députés dans ce parti ?");
-    suggestions.push("Quelles sont leurs positions principales ?");
-    suggestions.push("Des affaires concernent-elles ce parti ?");
+  if (hasParty || partyName) {
+    const party = partyName || "ce parti";
+    suggestions.push(`Combien de députés au ${party} ?`);
+    suggestions.push(`Quelles sont les positions du ${party} ?`);
+    suggestions.push(`Des affaires concernent le ${party} ?`);
   }
 
   if (hasVotes) {

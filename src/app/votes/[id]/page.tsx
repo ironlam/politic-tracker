@@ -109,7 +109,11 @@ export default async function ScrutinPage({ params }: PageProps) {
               className="flex items-center gap-1 text-primary hover:underline"
             >
               <ExternalLink className="h-4 w-4" />
-              Voir sur NosDéputés.fr
+              {scrutin.sourceUrl.includes("assemblee-nationale.fr")
+                ? "Voir sur Assemblée nationale"
+                : scrutin.sourceUrl.includes("nosdeputes.fr")
+                  ? "Voir sur NosDéputés.fr"
+                  : "Voir la source"}
             </a>
           )}
         </div>

@@ -267,7 +267,9 @@ async function syncVotesAN(legislature: number = LEGISLATURE, dryRun: boolean = 
         const votesAgainst = parseInt(s.syntheseVote?.decompte?.contre || "0", 10);
         const votesAbstain = parseInt(s.syntheseVote?.decompte?.abstentions || "0", 10);
 
-        const sourceUrl = `https://www.assemblee-nationale.fr/dyn/${legislature}/scrutins/${s.uid}`;
+        // Extract scrutin number from UID (e.g., VTANR5L17V5283 -> 5283)
+        const scrutinNumber = s.numero || s.uid.replace(/^VTANR5L\d+V/, '');
+        const sourceUrl = `https://www.assemblee-nationale.fr/dyn/${legislature}/scrutins/${scrutinNumber}`;
 
         // Extract individual votes
         const individualVotes = extractVotes(data);

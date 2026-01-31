@@ -301,13 +301,14 @@ export default async function VotesPage({ searchParams }: PageProps) {
         <p>
           Données issues de{" "}
           <a
-            href="https://www.nosdeputes.fr"
+            href="https://data.assemblee-nationale.fr"
             target="_blank"
             rel="noopener noreferrer"
             className="text-primary hover:underline"
           >
-            NosDéputés.fr
+            data.assemblee-nationale.fr
           </a>
+          {" "}(Open Data officiel)
         </p>
       </div>
     </div>

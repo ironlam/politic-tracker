@@ -56,7 +56,7 @@ export default function ChatPage() {
             <div>
               <h2 className="font-semibold">Chat avec l&apos;assistant</h2>
               <p className="text-sm text-muted-foreground">
-                Alimenté par Claude et notre base de données
+                Alimenté par notre IA et base de données
               </p>
             </div>
           </div>

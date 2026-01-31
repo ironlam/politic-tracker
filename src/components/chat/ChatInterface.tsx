@@ -15,11 +15,60 @@ import {
 } from "lucide-react";
 
 const SUGGESTED_QUESTIONS = [
-  "Parle-moi de Marine Le Pen",
-  "Quels sont les derniers votes à l'Assemblée ?",
-  "Qui sont les députés du Rassemblement National ?",
   "Quelles affaires judiciaires concernent des élus ?",
+  "Quels dossiers sont discutés à l'Assemblée ?",
+  "Qui est le Premier ministre ?",
+  "Combien de députés et sénateurs ?",
 ];
+
+// Ghost text autocomplete - single suggestion that completes what user is typing
+const AUTOCOMPLETE_COMPLETIONS: Record<string, string> = {
+  // Questions sur les personnes
+  "qui est": "Qui est le Premier ministre ?",
+  "qui est le p": "Qui est le Premier ministre ?",
+  "qui est le prem": "Qui est le Premier ministre ?",
+  "qui est mar": "Qui est Marine Le Pen ?",
+  "parle": "Parle-moi du gouvernement actuel",
+  "parle-moi": "Parle-moi du gouvernement actuel",
+  "parle-moi de": "Parle-moi de Marine Le Pen",
+  // Questions sur les affaires
+  "quelle": "Quelles affaires judiciaires concernent des élus ?",
+  "quelles aff": "Quelles affaires judiciaires concernent des élus ?",
+  "quelles affaires": "Quelles affaires judiciaires concernent des élus ?",
+  "affaire": "Affaires judiciaires en cours",
+  "condamn": "Quels élus ont été condamnés ?",
+  // Questions sur les votes/lois
+  "vote": "Votes récents à l'Assemblée",
+  "derniers v": "Derniers votes à l'Assemblée",
+  "loi": "Lois en discussion à l'Assemblée",
+  "lois": "Lois en discussion à l'Assemblée",
+  "dossier": "Dossiers législatifs en cours",
+  "quels dossiers": "Quels dossiers sont discutés à l'Assemblée ?",
+  // Questions thématiques
+  "agricul": "Lois sur l'agriculture",
+  "écolog": "Dossiers sur l'environnement",
+  "santé": "Dossiers sur la santé",
+  "retraite": "Réforme des retraites",
+  "immigration": "Lois sur l'immigration",
+  // Questions sur les institutions
+  "assemblée": "Dossiers en cours à l'Assemblée",
+  "sénat": "Qui sont les sénateurs ?",
+  "gouvernement": "Composition du gouvernement actuel",
+  "député": "Qui sont les députés ?",
+  "sénateur": "Qui sont les sénateurs ?",
+  // Questions sur les partis
+  "parti": "Quels sont les partis politiques ?",
+  "rn": "Députés du Rassemblement National",
+  "lfi": "Députés de La France Insoumise",
+  "républicain": "Députés des Républicains",
+  "macron": "Parle-moi d'Emmanuel Macron",
+  "le pen": "Parle-moi de Marine Le Pen",
+  "mélenchon": "Parle-moi de Jean-Luc Mélenchon",
+  // Questions générales
+  "combien": "Combien de députés et sénateurs ?",
+  "combien de": "Combien de députés et sénateurs ?",
+  "statistique": "Statistiques des affaires judiciaires",
+};
 
 interface Message {
   id: string;
@@ -37,6 +86,7 @@ export function ChatInterface() {
   const [error, setError] = useState<Error | null>(null);
   const [isRateLimited, setIsRateLimited] = useState(false);
   const [retryAfter, setRetryAfter] = useState(0);
+  const [ghostText, setGhostText] = useState<string | null>(null);
   // Scroll within chat container only (not page)
   const scrollToBottom = useCallback(() => {
     const container = messagesContainerRef.current;
@@ -67,6 +117,44 @@ export function ChatInterface() {
       return () => clearTimeout(timer);
     }
   }, [retryAfter]);
+
+  // Ghost text autocomplete - find completion that starts with user input
+  useEffect(() => {
+    if (input.length < 3) {
+      setGhostText(null);
+      return;
+    }
+
+    const lowerInput = input.toLowerCase().trim();
+
+    // Find the best matching completion
+    let bestMatch: string | null = null;
+
+    // First, try exact prefix match in completions
+    for (const [trigger, completion] of Object.entries(AUTOCOMPLETE_COMPLETIONS)) {
+      if (lowerInput === trigger || lowerInput.startsWith(trigger + " ")) {
+        // Check if completion starts with what user typed (case insensitive)
+        if (completion.toLowerCase().startsWith(lowerInput)) {
+          bestMatch = completion;
+          break;
+        }
+        // Otherwise use the completion as suggestion
+        bestMatch = completion;
+        break;
+      }
+      // Partial trigger match
+      if (trigger.startsWith(lowerInput) && !bestMatch) {
+        bestMatch = completion;
+      }
+    }
+
+    // Only show ghost if it's different and extends the input
+    if (bestMatch && bestMatch.toLowerCase() !== lowerInput && bestMatch.toLowerCase().startsWith(lowerInput)) {
+      setGhostText(bestMatch);
+    } else {
+      setGhostText(null);
+    }
+  }, [input]);
 
   const sendMessage = useCallback(async (messageContent: string) => {
     if (!messageContent.trim() || isLoading) return;
@@ -152,6 +240,21 @@ export function ChatInterface() {
 
   // Handle keyboard shortcuts
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    // Tab to accept ghost text completion
+    if (e.key === "Tab" && ghostText) {
+      e.preventDefault();
+      setInput(ghostText);
+      setGhostText(null);
+      return;
+    }
+
+    // Escape to dismiss ghost text
+    if (e.key === "Escape" && ghostText) {
+      setGhostText(null);
+      return;
+    }
+
+    // Send message on Enter (without Shift)
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       sendMessage(input);
@@ -161,6 +264,7 @@ export function ChatInterface() {
   // Handle suggested question click
   const handleSuggestedQuestion = (question: string) => {
     setInput(question);
+    setGhostText(null);
     inputRef.current?.focus();
   };
 
@@ -197,15 +301,15 @@ export function ChatInterface() {
                 leurs mandats, les votes parlementaires ou les dossiers législatifs.
               </p>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full max-w-lg">
+            <div className="flex flex-col gap-2 w-full max-w-md">
               {SUGGESTED_QUESTIONS.map((question, index) => (
                 <Button
                   key={index}
                   variant="outline"
-                  className="text-left h-auto py-3 px-4 justify-start"
+                  className="text-left h-auto py-2.5 px-4 justify-start whitespace-normal"
                   onClick={() => handleSuggestedQuestion(question)}
                 >
-                  <span className="line-clamp-2 text-sm">{question}</span>
+                  <span className="text-sm">{question}</span>
                 </Button>
               ))}
             </div>
@@ -313,25 +417,45 @@ export function ChatInterface() {
       {/* Input area */}
       <div className="border-t p-4 bg-background">
         <form onSubmit={handleSubmit} className="flex gap-2">
-          <textarea
-            ref={inputRef}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Posez votre question..."
-            disabled={isLoading || isRateLimited}
-            rows={1}
-            className={cn(
-              "flex-1 resize-none rounded-lg border bg-background px-4 py-3",
-              "focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent",
-              "disabled:opacity-50 disabled:cursor-not-allowed",
-              "min-h-[48px] max-h-[120px]"
+          <div className="flex-1 relative">
+            {/* Ghost text overlay */}
+            {ghostText && (
+              <div
+                className="absolute inset-0 px-4 py-3 pointer-events-none overflow-hidden"
+                aria-hidden="true"
+              >
+                <span className="invisible">{input}</span>
+                <span className="text-muted-foreground/50">
+                  {ghostText.slice(input.length)}
+                </span>
+              </div>
             )}
-            style={{
-              height: "auto",
-              minHeight: "48px",
-            }}
-          />
+            <textarea
+              ref={inputRef}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Posez votre question..."
+              disabled={isLoading || isRateLimited}
+              rows={1}
+              className={cn(
+                "w-full resize-none rounded-lg border bg-transparent px-4 py-3",
+                "focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent",
+                "disabled:opacity-50 disabled:cursor-not-allowed",
+                "min-h-[48px] max-h-[120px]"
+              )}
+              style={{
+                height: "auto",
+                minHeight: "48px",
+              }}
+            />
+            {/* Tab hint */}
+            {ghostText && (
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                Tab ↹
+              </div>
+            )}
+          </div>
           <Button
             type="submit"
             disabled={isLoading || !input.trim() || isRateLimited}
@@ -391,15 +515,35 @@ function ChatMessageContent({ content }: { content: string }) {
           );
         }
 
-        // Handle source links (→)
+        // Handle source links (→ /path or → https://...)
         if (line.startsWith("→ ")) {
+          const linkContent = line.slice(2).trim();
+          const url = extractUrl(line);
+
+          // Generate friendly label based on path
+          let label = linkContent;
+          if (url === "/affaires") label = "Voir toutes les affaires";
+          else if (url === "/assemblee") label = "Voir tous les dossiers législatifs";
+          else if (url === "/politiques") label = "Voir tous les élus";
+          else if (url === "/statistiques") label = "Voir les statistiques";
+          else if (url === "/institutions") label = "Comprendre les institutions";
+          else if (url.startsWith("/politiques/")) {
+            const name = url.split("/").pop()?.replace(/-/g, " ") || "";
+            label = `Voir la fiche de ${name}`;
+          }
+          else if (url.startsWith("http")) label = "Voir la source officielle";
+
+          const isExternal = url.startsWith("http");
+
           return (
-            <div key={index} className="text-sm">
+            <div key={index} className="mt-2">
               <a
-                href={extractUrl(line)}
-                className="text-primary hover:underline inline-flex items-center gap-1"
+                href={url}
+                className="inline-flex items-center gap-2 text-primary hover:underline font-medium bg-primary/5 px-3 py-1.5 rounded-md"
+                target={isExternal ? "_blank" : undefined}
+                rel={isExternal ? "noopener noreferrer" : undefined}
               >
-                → {line.slice(2).replace(/https?:\/\/[^\s]+/, "").trim() || "Voir la source"}
+                → {label}
               </a>
             </div>
           );
@@ -435,46 +579,100 @@ function ChatMessageContent({ content }: { content: string }) {
 
 // Helper to render inline formatting (bold, links)
 function renderInlineFormatting(text: string): React.ReactNode {
-  // Handle bold text (**text**)
-  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  // First, handle markdown links [text](url)
+  const withLinks = text.split(/(\[[^\]]+\]\([^)]+\))/g);
 
-  return parts.map((part, index) => {
-    if (part.startsWith("**") && part.endsWith("**")) {
+  return withLinks.map((segment, segIndex) => {
+    // Check if this is a markdown link
+    const linkMatch = segment.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
+    if (linkMatch) {
+      const [, linkText, url] = linkMatch;
+      // Fix malformed URLs (http:/www -> https://www)
+      let fixedUrl = url;
+      if (url.startsWith("http:/www") || url.startsWith("http:/assemblee")) {
+        fixedUrl = url.replace("http:/", "https://");
+      } else if (url.startsWith("www.") || url.startsWith("assemblee-nationale")) {
+        fixedUrl = `https://${url}`;
+      }
+      const isExternal = fixedUrl.startsWith("http");
       return (
-        <strong key={index} className="font-semibold">
-          {part.slice(2, -2)}
-        </strong>
+        <a
+          key={segIndex}
+          href={fixedUrl}
+          className="text-primary hover:underline"
+          target={isExternal ? "_blank" : undefined}
+          rel={isExternal ? "noopener noreferrer" : undefined}
+        >
+          {linkText}
+        </a>
       );
     }
 
-    // Handle links in the remaining text
-    const linkParts = part.split(/(\/politiques\/[^\s,.)]+|\/partis\/[^\s,.)]+|https?:\/\/[^\s,.)]+)/g);
+    // Handle bold text (**text**)
+    const parts = segment.split(/(\*\*[^*]+\*\*)/g);
 
-    return linkParts.map((linkPart, linkIndex) => {
-      if (
-        linkPart.startsWith("/politiques/") ||
-        linkPart.startsWith("/partis/") ||
-        linkPart.startsWith("http")
-      ) {
+    return parts.map((part, index) => {
+      if (part.startsWith("**") && part.endsWith("**")) {
         return (
-          <a
-            key={`${index}-${linkIndex}`}
-            href={linkPart}
-            className="text-primary hover:underline"
-            target={linkPart.startsWith("http") ? "_blank" : undefined}
-            rel={linkPart.startsWith("http") ? "noopener noreferrer" : undefined}
-          >
-            {linkPart.startsWith("http") ? "Source" : linkPart}
-          </a>
+          <strong key={`${segIndex}-${index}`} className="font-semibold">
+            {part.slice(2, -2)}
+          </strong>
         );
       }
-      return linkPart;
+
+      // Handle raw links in the remaining text (including partial paths like /politiques/)
+      const linkParts = part.split(/(\/politiques(?:\/[^\s,.)]*)?|\/partis(?:\/[^\s,.)]*)?|\/affaires(?:\/[^\s,.)]*)?|\/assemblee(?:\/[^\s,.)]*)?|\/statistiques|\/institutions|https?:\/\/[^\s,.)]+)/g);
+
+      return linkParts.map((linkPart, linkIndex) => {
+        const isInternalLink =
+          linkPart.startsWith("/politiques") ||
+          linkPart.startsWith("/partis") ||
+          linkPart.startsWith("/affaires") ||
+          linkPart.startsWith("/assemblee") ||
+          linkPart.startsWith("/statistiques") ||
+          linkPart.startsWith("/institutions");
+        const isExternalLink = linkPart.startsWith("http");
+
+        if (isInternalLink || isExternalLink) {
+          // Generate friendly label for internal links
+          let label = linkPart;
+          if (linkPart === "/politiques" || linkPart === "/politiques/") label = "Voir tous les élus";
+          else if (linkPart === "/affaires" || linkPart === "/affaires/") label = "Voir toutes les affaires";
+          else if (linkPart === "/assemblee" || linkPart === "/assemblee/") label = "Voir les dossiers législatifs";
+          else if (linkPart === "/statistiques") label = "Voir les statistiques";
+          else if (linkPart === "/institutions") label = "Voir les institutions";
+          else if (linkPart.startsWith("/politiques/")) label = linkPart.split("/").pop() || linkPart;
+          else if (linkPart.startsWith("/partis/")) label = linkPart.split("/").pop() || linkPart;
+          else if (isExternalLink) label = "Source officielle";
+
+          // Clean trailing slash for href
+          const href = linkPart.endsWith("/") ? linkPart.slice(0, -1) : linkPart;
+
+          return (
+            <a
+              key={`${segIndex}-${index}-${linkIndex}`}
+              href={href}
+              className="text-primary hover:underline font-medium"
+              target={isExternalLink ? "_blank" : undefined}
+              rel={isExternalLink ? "noopener noreferrer" : undefined}
+            >
+              {label}
+            </a>
+          );
+        }
+        return linkPart;
+      });
     });
   });
 }
 
 // Helper to extract URL from text
 function extractUrl(text: string): string {
-  const match = text.match(/(\/[^\s]+|https?:\/\/[^\s]+)/);
-  return match ? match[1] : "#";
+  // Match internal paths (/xxx) or external URLs (https://...)
+  const match = text.match(/(\/[a-z][a-z0-9-/]*|https?:\/\/[^\s]+)/i);
+  if (match) {
+    // Clean trailing punctuation
+    return match[1].replace(/[.,;:!?]+$/, "");
+  }
+  return "#";
 }

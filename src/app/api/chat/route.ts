@@ -11,28 +11,47 @@ export const runtime = "nodejs";
 export const maxDuration = 30;
 
 // System prompt for the chatbot - STRICT RAG RULES
-const SYSTEM_PROMPT = `Tu es l'assistant IA intégré au site Transparence Politique.
+const SYSTEM_PROMPT = `Tu es l'assistant IA de Transparence Politique.
 
-INTERDICTIONS ABSOLUES :
-- Ne JAMAIS dire "consultez le site", "recherchez sur le site", "visitez Transparence Politique"
-- Ne JAMAIS mentionner "contexte fourni", "base de données fournie", "informations fournies"
-- Ne JAMAIS inventer d'information non présente dans le CONTEXTE
+RÈGLES ABSOLUES :
+- Ne JAMAIS dire "consultez le site" - l'utilisateur EST DÉJÀ sur le site
+- Ne JAMAIS mentionner "contexte", "données fournies", "informations transmises"
+- Ne JAMAIS inventer d'information
 
 SI TU N'AS PAS L'INFO :
-Dis simplement : "Je n'ai pas trouvé d'information sur ce sujet dans nos données."
-Ne propose PAS d'aller chercher ailleurs.
+Dis : "Je n'ai pas cette information dans nos données."
 
-POUR LES AFFAIRES JUDICIAIRES :
-Rappelle toujours : "Rappel : toute personne est présumée innocente jusqu'à preuve du contraire."
+POUR LES AFFAIRES :
+- Rappelle la présomption d'innocence
+- Termine TOUJOURS par : "→ Retrouvez toutes les affaires : /affaires"
 
-FORMAT DE RÉPONSE :
-- Phrases complètes et terminées
-- Listes avec tirets (-)
-- Liens internes : [Nom](/politiques/slug) ou [Voir le vote](/votes/123)
-- Jamais de "Source: contexte" - cite les vraies pages
+POUR LES DOSSIERS LÉGISLATIFS :
+- Termine TOUJOURS par : "→ Voir tous les dossiers : /assemblee"
+
+POUR LES POLITIQUES :
+- Termine par le lien vers leur fiche : /politiques/prenom-nom
+
+LIENS - FORMAT OBLIGATOIRE :
+Les liens internes doivent être écrits SEULS sur une ligne, précédés de "→" :
+→ /affaires
+→ /assemblee
+→ /politiques/emmanuel-macron
+→ /statistiques
+
+NE PAS écrire : "sur /politiques/" ou "disponible sur notre site : /affaires"
+ÉCRIRE : une phrase, puis à la ligne "→ /affaires"
+
+EXEMPLE DE BONNE RÉPONSE :
+"Voici 3 affaires judiciaires récentes :
+• Affaire X impliquant Y
+• Affaire Z impliquant W
+
+Rappel : toute personne est présumée innocente.
+
+→ /affaires"
 
 CONTEXTE :
-Tu reçois des données extraites de notre base. Utilise-les directement sans mentionner leur origine.`;
+Tu reçois des données de notre base. Utilise-les naturellement.`;
 
 // Rate limiting configuration
 let ratelimit: Ratelimit | null = null;
@@ -78,13 +97,56 @@ async function getClientIP(): Promise<string> {
   return "unknown";
 }
 
+// Get global stats for context enrichment
+async function getGlobalStats(): Promise<{
+  totalAffairs: number;
+  totalPoliticians: number;
+  totalDossiers: number;
+  totalVotes: number;
+}> {
+  const [totalAffairs, totalPoliticians, totalDossiers, totalVotes] = await Promise.all([
+    db.affair.count(),
+    db.politician.count(),
+    db.legislativeDossier.count(),
+    db.scrutin.count(),
+  ]);
+  return { totalAffairs, totalPoliticians, totalDossiers, totalVotes };
+}
+
 // Build context from RAG search results
-function buildContext(results: SearchResult[]): string {
+async function buildContext(results: SearchResult[], query: string): Promise<string> {
   if (results.length === 0) {
     return "Aucune information trouvée dans la base de données pour cette requête.";
   }
 
   const sections: string[] = [];
+  const lowerQuery = query.toLowerCase();
+
+  // Add global stats if query is broad
+  const isBroadQuery =
+    lowerQuery.includes("affaire") ||
+    lowerQuery.includes("élu") ||
+    lowerQuery.includes("député") ||
+    lowerQuery.includes("sénateur") ||
+    lowerQuery.includes("dossier") ||
+    lowerQuery.includes("vote");
+
+  if (isBroadQuery) {
+    const stats = await getGlobalStats();
+    let statsInfo = "STATISTIQUES GLOBALES:\n";
+    if (lowerQuery.includes("affaire")) {
+      statsInfo += `- Total affaires judiciaires référencées: ${stats.totalAffairs}\n`;
+      statsInfo += `- Rubrique complète: /affaires\n`;
+    }
+    if (lowerQuery.includes("dossier") || lowerQuery.includes("loi") || lowerQuery.includes("législat")) {
+      statsInfo += `- Total dossiers législatifs: ${stats.totalDossiers}\n`;
+      statsInfo += `- Rubrique complète: /assemblee\n`;
+    }
+    if (lowerQuery.includes("vote") || lowerQuery.includes("scrutin")) {
+      statsInfo += `- Total votes enregistrés: ${stats.totalVotes}\n`;
+    }
+    sections.push(statsInfo);
+  }
 
   for (const result of results) {
     const metadata = result.metadata || {};
@@ -103,7 +165,7 @@ function buildContext(results: SearchResult[]): string {
         section += `**${metadata.title || "Dossier législatif"}**\n`;
         section += result.content;
         if (metadata.sourceUrl) {
-          section += `\n→ Source: ${metadata.sourceUrl}`;
+          section += `\n→ Source officielle: ${metadata.sourceUrl}`;
         }
         break;
 
@@ -111,7 +173,7 @@ function buildContext(results: SearchResult[]): string {
         section += `**Vote: ${metadata.title || "Scrutin"}**\n`;
         section += result.content;
         if (metadata.sourceUrl) {
-          section += `\n→ Source: ${metadata.sourceUrl}`;
+          section += `\n→ Source officielle: ${metadata.sourceUrl}`;
         }
         break;
 
@@ -437,7 +499,7 @@ export async function POST(request: Request) {
           threshold: 0.45, // Lower threshold to get more semantic matches
         });
         if (searchResults.length > 0) {
-          context = buildContext(searchResults);
+          context = await buildContext(searchResults, userQuery);
         }
       } catch (error) {
         console.error("RAG search error:", error);
@@ -497,7 +559,7 @@ export async function POST(request: Request) {
 // Health check endpoint
 export async function GET() {
   const hasAnthropic = !!process.env.ANTHROPIC_API_KEY;
-  const hasOpenAI = !!process.env.OPENAI_API_KEY;
+  const hasVoyage = !!process.env.VOYAGE_API_KEY;
   const hasUpstash =
     !!process.env.UPSTASH_REDIS_REST_URL &&
     !!process.env.UPSTASH_REDIS_REST_TOKEN;
@@ -507,7 +569,7 @@ export async function GET() {
       status: "ok",
       features: {
         chat: hasAnthropic,
-        rag: hasOpenAI,
+        rag: hasVoyage,
         rateLimit: hasUpstash,
       },
     }),

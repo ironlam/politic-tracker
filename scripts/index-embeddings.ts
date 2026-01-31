@@ -47,9 +47,9 @@ async function main() {
     }
   }
 
-  // Check for OpenAI API key
-  if (!process.env.OPENAI_API_KEY) {
-    console.error("❌ OPENAI_API_KEY environment variable is not set");
+  // Check for Voyage AI API key
+  if (!process.env.VOYAGE_API_KEY) {
+    console.error("❌ VOYAGE_API_KEY environment variable is not set");
     process.exit(1);
   }
 

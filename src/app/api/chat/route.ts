@@ -11,25 +11,28 @@ export const runtime = "nodejs";
 export const maxDuration = 30;
 
 // System prompt for the chatbot - STRICT RAG RULES
-const SYSTEM_PROMPT = `Tu es l'assistant du site Transparence Politique. L'utilisateur est DÉJÀ sur le site.
+const SYSTEM_PROMPT = `Tu es l'assistant IA intégré au site Transparence Politique.
 
-RÈGLES :
-1. Réponds UNIQUEMENT avec les données du CONTEXTE fourni ci-dessous
-2. Si l'info n'est pas dans le contexte, dis : "Je n'ai pas cette information. Essayez de rechercher directement sur le site."
-3. Ne dis JAMAIS "consultez le site" ou "visitez Transparence Politique" - l'utilisateur Y EST DÉJÀ
-4. Pour les affaires judiciaires : rappelle la présomption d'innocence
-5. Reste factuel, neutre, sans opinion politique
+INTERDICTIONS ABSOLUES :
+- Ne JAMAIS dire "consultez le site", "recherchez sur le site", "visitez Transparence Politique"
+- Ne JAMAIS mentionner "contexte fourni", "base de données fournie", "informations fournies"
+- Ne JAMAIS inventer d'information non présente dans le CONTEXTE
 
-FORMAT :
-- Réponses concises et complètes
-- Utilise des tirets pour les listes
-- Pour les liens, utilise le format : [Voir la fiche](/politiques/nom-slug)
-- Termine TOUJOURS tes phrases
+SI TU N'AS PAS L'INFO :
+Dis simplement : "Je n'ai pas trouvé d'information sur ce sujet dans nos données."
+Ne propose PAS d'aller chercher ailleurs.
 
-SOURCES :
-- Quand tu cites une fiche politique : [Nom Complet](/politiques/slug)
-- Quand tu cites un vote : lien vers /votes/id si disponible
-- Ne cite PAS "contexte fourni" ou "base de données" comme source`;
+POUR LES AFFAIRES JUDICIAIRES :
+Rappelle toujours : "Rappel : toute personne est présumée innocente jusqu'à preuve du contraire."
+
+FORMAT DE RÉPONSE :
+- Phrases complètes et terminées
+- Listes avec tirets (-)
+- Liens internes : [Nom](/politiques/slug) ou [Voir le vote](/votes/123)
+- Jamais de "Source: contexte" - cite les vraies pages
+
+CONTEXTE :
+Tu reçois des données extraites de notre base. Utilise-les directement sans mentionner leur origine.`;
 
 // Rate limiting configuration
 let ratelimit: Ratelimit | null = null;
@@ -189,16 +192,37 @@ async function fetchDirectContext(query: string): Promise<string | null> {
   return null;
 }
 
+// Thematic keyword expansion
+const THEME_KEYWORDS: Record<string, string[]> = {
+  agriculture: ["agricole", "agriculteur", "paysan", "ferme", "exploitation", "pac", "élevage", "culture"],
+  santé: ["santé", "hôpital", "médecin", "soin", "maladie", "sécu", "médical"],
+  éducation: ["éducation", "école", "enseignant", "professeur", "étudiant", "université", "scolaire"],
+  environnement: ["environnement", "écologie", "climat", "carbone", "énergie", "pollution", "vert"],
+  économie: ["économie", "entreprise", "emploi", "travail", "chômage", "salaire", "fiscal"],
+  retraite: ["retraite", "pension", "âge", "cotisation"],
+  logement: ["logement", "loyer", "locataire", "propriétaire", "hlm", "immobilier"],
+  sécurité: ["sécurité", "police", "gendarmerie", "délinquance", "criminalité"],
+  immigration: ["immigration", "migrant", "asile", "frontière", "étranger"],
+};
+
 // Keyword-based database search (no embeddings required)
 async function searchDatabaseByKeywords(query: string): Promise<string | null> {
   const lowerQuery = query.toLowerCase();
   const results: string[] = [];
 
   // Extract potential keywords
-  const words = lowerQuery
+  let words = lowerQuery
     .replace(/[?!.,;:]/g, "")
     .split(/\s+/)
     .filter((w) => w.length > 2);
+
+  // Expand thematic keywords
+  for (const [theme, keywords] of Object.entries(THEME_KEYWORDS)) {
+    if (keywords.some((kw) => lowerQuery.includes(kw))) {
+      words = [...words, theme, ...keywords.slice(0, 3)];
+      break;
+    }
+  }
 
   // Search for politicians by name
   if (words.length > 0) {
@@ -253,26 +277,65 @@ async function searchDatabaseByKeywords(query: string): Promise<string | null> {
     }
   }
 
-  // Check for vote-related questions
-  if (lowerQuery.includes("vote") || lowerQuery.includes("scrutin") || lowerQuery.includes("loi")) {
-    const scrutins = await db.scrutin.findMany({
-      where: {
-        title: {
-          contains: words.find((w) => w.length > 4) || words[0] || "",
-          mode: "insensitive",
-        },
-      },
-      orderBy: { votingDate: "desc" },
-      take: 3,
-    });
+  // Check for thematic or vote-related questions (loi, vote, or theme keywords)
+  const isThematicQuery = Object.values(THEME_KEYWORDS).some((keywords) =>
+    keywords.some((kw) => lowerQuery.includes(kw))
+  );
+  const isVoteQuery = lowerQuery.includes("vote") || lowerQuery.includes("scrutin") || lowerQuery.includes("loi");
 
-    for (const s of scrutins) {
-      const result = s.result === "ADOPTED" ? "Adopté" : "Rejeté";
-      results.push(
-        `**Vote: ${s.title.slice(0, 100)}${s.title.length > 100 ? "..." : ""}**\n` +
-        `Date: ${s.votingDate.toLocaleDateString("fr-FR")} - ${result}\n` +
-        `Pour: ${s.votesFor}, Contre: ${s.votesAgainst}, Abstention: ${s.votesAbstain}`
-      );
+  if (isThematicQuery || isVoteQuery) {
+    // Search for relevant dossiers
+    const searchTerms = words.filter((w) => w.length > 3);
+    if (searchTerms.length > 0) {
+      const dossiers = await db.legislativeDossier.findMany({
+        where: {
+          OR: searchTerms.map((term) => ({
+            OR: [
+              { title: { contains: term, mode: "insensitive" as const } },
+              { shortTitle: { contains: term, mode: "insensitive" as const } },
+              { category: { contains: term, mode: "insensitive" as const } },
+            ],
+          })),
+        },
+        orderBy: { filingDate: "desc" },
+        take: 3,
+      });
+
+      for (const d of dossiers) {
+        const statusLabels: Record<string, string> = {
+          EN_COURS: "En discussion",
+          ADOPTE: "Adopté",
+          REJETE: "Rejeté",
+          RETIRE: "Retiré",
+        };
+        results.push(
+          `**${d.shortTitle || d.title.slice(0, 80)}**\n` +
+          `Statut: ${statusLabels[d.status] || d.status}` +
+          (d.category ? ` | Catégorie: ${d.category}` : "") +
+          (d.filingDate ? `\nDate: ${d.filingDate.toLocaleDateString("fr-FR")}` : "") +
+          `\n→ [Voir le dossier](/assemblee/${d.id})`
+        );
+      }
+
+      // Also search for votes
+      const scrutins = await db.scrutin.findMany({
+        where: {
+          OR: searchTerms.map((term) => ({
+            title: { contains: term, mode: "insensitive" as const },
+          })),
+        },
+        orderBy: { votingDate: "desc" },
+        take: 3,
+      });
+
+      for (const s of scrutins) {
+        const result = s.result === "ADOPTED" ? "Adopté" : "Rejeté";
+        results.push(
+          `**Vote: ${s.title.slice(0, 100)}${s.title.length > 100 ? "..." : ""}**\n` +
+          `Date: ${s.votingDate.toLocaleDateString("fr-FR")} - ${result}\n` +
+          `Pour: ${s.votesFor}, Contre: ${s.votesAgainst}, Abstention: ${s.votesAbstain}`
+        );
+      }
     }
   }
 

@@ -10,6 +10,30 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async redirects() {
+    return [
+      {
+        source: "/stats",
+        destination: "/statistiques",
+        permanent: true,
+      },
+      {
+        source: "/api-docs",
+        destination: "/docs/api",
+        permanent: true,
+      },
+      {
+        source: "/politique/:slug",
+        destination: "/politiques/:slug",
+        permanent: true,
+      },
+      {
+        source: "/parti/:slug",
+        destination: "/partis/:slug",
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

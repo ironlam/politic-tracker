@@ -428,28 +428,30 @@ export async function POST(request: Request) {
     // First try direct context lookup from database
     let context = await fetchDirectContext(userQuery);
 
-    // If no direct context, try keyword-based database search
-    if (!context) {
-      context = await searchDatabaseByKeywords(userQuery);
-    }
-
-    // Optional: Use RAG with embeddings if Voyage AI is configured
+    // PRIORITY 1: Use semantic RAG search with Voyage AI embeddings
     if (!context && process.env.VOYAGE_API_KEY) {
       try {
         const searchResults = await searchSimilar({
           query: userQuery,
-          limit: 5,
-          threshold: 0.65,
+          limit: 8,
+          threshold: 0.45, // Lower threshold to get more semantic matches
         });
-        context = buildContext(searchResults);
+        if (searchResults.length > 0) {
+          context = buildContext(searchResults);
+        }
       } catch (error) {
         console.error("RAG search error:", error);
       }
     }
 
+    // PRIORITY 2: Fallback to keyword search if RAG found nothing
+    if (!context) {
+      context = await searchDatabaseByKeywords(userQuery);
+    }
+
     // Fallback message
     if (!context) {
-      context = "Je n'ai pas trouvé d'information précise dans ma base de données pour cette question. Essayez de reformuler ou consultez les fiches détaillées sur le site.";
+      context = "Aucune information trouvée pour cette requête.";
     }
 
     // Check for Anthropic API key

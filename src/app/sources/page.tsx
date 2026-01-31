@@ -97,6 +97,39 @@ const METHODOLOGY_POINTS = [
   },
 ];
 
+const INCLUSION_CRITERIA = [
+  {
+    title: "Politiciens français uniquement",
+    description:
+      "Seuls les responsables politiques français sont référencés : élus nationaux, locaux, ministres et candidats aux élections majeures.",
+    included: true,
+  },
+  {
+    title: "Pertinence temporelle",
+    description:
+      "Les personnes décédées depuis plus de 10 ans ne sont pas incluses, sauf cas historiques exceptionnels liés à la Ve République.",
+    included: true,
+  },
+  {
+    title: "Mandat ou notoriété politique",
+    description:
+      "Les personnes référencées doivent avoir exercé un mandat politique OU être impliquées dans une affaire judiciaire en lien direct avec la politique française.",
+    included: true,
+  },
+  {
+    title: "Personnalités étrangères",
+    description:
+      "Les dirigeants étrangers, même impliqués dans des affaires avec la France, ne sont pas référencés.",
+    included: false,
+  },
+  {
+    title: "Figures historiques anciennes",
+    description:
+      "Les personnalités de l'Ancien Régime, des Républiques précédentes ou décédées avant 1958 sont exclues.",
+    included: false,
+  },
+];
+
 export default function SourcesPage() {
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
@@ -193,6 +226,34 @@ export default function SourcesPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">{point.description}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </section>
+
+      {/* Inclusion Criteria */}
+      <section className="mb-12">
+        <h2 className="text-2xl font-bold mb-6">Critères de Pertinence</h2>
+        <p className="text-muted-foreground mb-6">
+          Pour garantir la qualité et la pertinence des données, nous appliquons des critères
+          stricts de sélection des personnes référencées.
+        </p>
+        <div className="grid gap-4">
+          {INCLUSION_CRITERIA.map((criterion) => (
+            <Card key={criterion.title} className={criterion.included ? "border-green-200 dark:border-green-900" : "border-red-200 dark:border-red-900"}>
+              <CardContent className="pt-6">
+                <div className="flex items-start gap-3">
+                  <span className={`text-lg ${criterion.included ? "text-green-600" : "text-red-600"}`}>
+                    {criterion.included ? "✓" : "✗"}
+                  </span>
+                  <div>
+                    <h3 className="font-semibold mb-1">
+                      {criterion.included ? "Inclus" : "Exclus"} : {criterion.title}
+                    </h3>
+                    <p className="text-sm text-muted-foreground">{criterion.description}</p>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           ))}

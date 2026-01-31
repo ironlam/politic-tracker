@@ -243,14 +243,16 @@ export default async function PoliticianPage({ params }: PageProps) {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main content */}
         <div className="lg:col-span-2 space-y-8">
-          {/* Interactive Timeline */}
+          {/* Interactive Timeline - Desktop only */}
           {(hasMandates || politician.affairs.length > 0) && (
-            <InteractiveTimeline
-              mandates={politician.mandates}
-              affairs={politician.affairs}
-              birthDate={politician.birthDate}
-              deathDate={politician.deathDate}
-            />
+            <div className="hidden lg:block">
+              <InteractiveTimeline
+                mandates={politician.mandates}
+                affairs={politician.affairs}
+                birthDate={politician.birthDate}
+                deathDate={politician.deathDate}
+              />
+            </div>
           )}
 
           {/* Career / Mandates */}

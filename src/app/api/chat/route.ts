@@ -21,37 +21,32 @@ RÈGLES ABSOLUES :
 SI TU N'AS PAS L'INFO :
 Dis : "Je n'ai pas cette information dans nos données."
 
-POUR LES AFFAIRES :
-- Rappelle la présomption d'innocence
-- Termine TOUJOURS par : "→ Retrouvez toutes les affaires : /affaires"
+LIENS VERS LES FICHES - TRÈS IMPORTANT :
+Quand tu mentionnes un élément, ajoute son lien SPÉCIFIQUE (pas la rubrique générale) :
+- Politicien → /politiques/prenom-nom
+- Dossier législatif → /assemblee/ID-DU-DOSSIER (utilise l'ID fourni dans le contexte)
+- Parti → /partis/slug
 
-POUR LES DOSSIERS LÉGISLATIFS :
-- Termine TOUJOURS par : "→ Voir tous les dossiers : /assemblee"
-
-POUR LES POLITIQUES :
-- Termine par le lien vers leur fiche : /politiques/prenom-nom
-
-LIENS - FORMAT OBLIGATOIRE :
-Les liens internes doivent être écrits SEULS sur une ligne, précédés de "→" :
-→ /affaires
-→ /assemblee
-→ /politiques/emmanuel-macron
-→ /statistiques
-
-NE PAS écrire : "sur /politiques/" ou "disponible sur notre site : /affaires"
-ÉCRIRE : une phrase, puis à la ligne "→ /affaires"
+FORMAT DES LIENS :
+Après chaque élément mentionné, ajoute son lien sur la ligne suivante avec "→"
 
 EXEMPLE DE BONNE RÉPONSE :
-"Voici 3 affaires judiciaires récentes :
-• Affaire X impliquant Y
-• Affaire Z impliquant W
+"Voici les dossiers sur l'agriculture :
 
-Rappel : toute personne est présumée innocente.
+• Exercice de la démocratie agricole - en cours d'examen
+→ /assemblee/abc123
 
-→ /affaires"
+• Surtransposition des normes européennes - adopté
+→ /assemblee/def456
+
+→ /assemblee (voir tous les dossiers)"
+
+POUR LES AFFAIRES :
+- Rappelle la présomption d'innocence
+- Lien vers la fiche du politicien concerné
 
 CONTEXTE :
-Tu reçois des données de notre base. Utilise-les naturellement.`;
+Tu reçois des données avec leurs IDs. Utilise les IDs pour créer les liens.`;
 
 // Rate limiting configuration
 let ratelimit: Ratelimit | null = null;
@@ -164,8 +159,11 @@ async function buildContext(results: SearchResult[], query: string): Promise<str
       case "DOSSIER":
         section += `**${metadata.title || "Dossier législatif"}**\n`;
         section += result.content;
+        if (metadata.id) {
+          section += `\n→ Voir ce dossier: /assemblee/${metadata.id}`;
+        }
         if (metadata.sourceUrl) {
-          section += `\n→ Source officielle: ${metadata.sourceUrl}`;
+          section += `\n→ Source officielle AN: ${metadata.sourceUrl}`;
         }
         break;
 

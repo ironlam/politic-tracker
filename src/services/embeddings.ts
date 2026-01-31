@@ -261,6 +261,7 @@ export async function indexDossier(dossierId: string): Promise<void> {
     entityId: dossierId,
     content,
     metadata: {
+      id: dossierId,
       title: dossier.shortTitle || dossier.title,
       number: dossier.number,
       status: dossier.status,

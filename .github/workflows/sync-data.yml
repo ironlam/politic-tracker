@@ -13,7 +13,7 @@ env:
 jobs:
   sync:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
 
     steps:
       - name: Checkout repository
@@ -49,6 +49,10 @@ jobs:
 
       - name: Sync Deceased (from Wikidata)
         run: npm run sync:deceased
+        continue-on-error: true
+
+      - name: Sync Votes (17th Legislature - Official AN)
+        run: npm run sync:votes-an
         continue-on-error: true
 
       - name: Show sync stats

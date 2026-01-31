@@ -1,0 +1,42 @@
+{
+  "_comment": "Corrections manuelles pour les données gouvernementales - appliquées après sync data.gouv.fr",
+  "_updated": "2026-02-01",
+
+  "endMandates": [
+    {
+      "_comment": "François Bayrou n'est plus Premier ministre depuis janvier 2026",
+      "politicianName": "François Bayrou",
+      "mandateType": "PREMIER_MINISTRE",
+      "endDate": "2026-01-03"
+    }
+  ],
+
+  "newMembers": [
+    {
+      "_comment": "Sébastien Lecornu nommé Premier ministre le 3 janvier 2026",
+      "firstName": "Sébastien",
+      "lastName": "Lecornu",
+      "fullName": "Sébastien Lecornu",
+      "civility": "M.",
+      "birthDate": "1986-06-11",
+      "mandate": {
+        "type": "PREMIER_MINISTRE",
+        "title": "Premier ministre",
+        "startDate": "2026-01-03",
+        "government": "Gouvernement Sébastien Lecornu"
+      },
+      "party": "Renaissance"
+    }
+  ],
+
+  "updateMembers": [
+    {
+      "_comment": "Exemple: mise à jour d'un membre existant",
+      "_disabled": true,
+      "politicianName": "Exemple Nom",
+      "updates": {
+        "currentParty": "Nouveau Parti"
+      }
+    }
+  ]
+}

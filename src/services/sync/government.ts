@@ -3,6 +3,38 @@ import { generateSlug } from "@/lib/utils";
 import { MandateType, DataSource } from "@/generated/prisma";
 import { parse } from "csv-parse/sync";
 import { GouvernementCSV, GouvernementSyncResult, GOUV_FUNCTION_MAPPING } from "./types";
+import * as fs from "fs";
+import * as path from "path";
+
+// Local corrections file path
+const CORRECTIONS_FILE = path.join(process.cwd(), "data", "government-corrections.json");
+
+interface GovernmentCorrections {
+  endMandates: Array<{
+    politicianName: string;
+    mandateType: string;
+    endDate: string;
+  }>;
+  newMembers: Array<{
+    firstName: string;
+    lastName: string;
+    fullName: string;
+    civility?: string;
+    birthDate?: string;
+    mandate: {
+      type: string;
+      title: string;
+      startDate: string;
+      government: string;
+    };
+    party?: string;
+  }>;
+  updateMembers: Array<{
+    politicianName: string;
+    updates: Record<string, unknown>;
+    _disabled?: boolean;
+  }>;
+}
 
 const DATA_GOUV_CSV_URL =
   "https://static.data.gouv.fr/resources/historique-des-gouvernements-de-la-veme-republique/20250313-105416/liste-membres-gouvernements-5eme-republique.csv";
@@ -280,11 +312,177 @@ export async function syncGovernment(options: { currentOnly?: boolean } = {}): P
       if (mandateCreated) result.mandatesCreated++;
     }
 
+    // 4. Apply local corrections (for data not yet in data.gouv.fr)
+    const corrections = await applyLocalCorrections();
+    result.membersCreated += corrections.applied;
+    result.errors.push(...corrections.errors);
+
     result.success = true;
     console.log("Sync completed:", result);
   } catch (error) {
     result.errors.push(String(error));
     console.error("Sync failed:", error);
+  }
+
+  return result;
+}
+
+/**
+ * Apply local corrections from JSON file
+ */
+async function applyLocalCorrections(): Promise<{ applied: number; errors: string[] }> {
+  const result = { applied: 0, errors: [] as string[] };
+
+  if (!fs.existsSync(CORRECTIONS_FILE)) {
+    console.log("No corrections file found, skipping local corrections");
+    return result;
+  }
+
+  console.log("\n📝 Applying local corrections...");
+
+  try {
+    const correctionsData = fs.readFileSync(CORRECTIONS_FILE, "utf-8");
+    const corrections: GovernmentCorrections = JSON.parse(correctionsData);
+
+    // 1. End mandates
+    for (const endMandate of corrections.endMandates || []) {
+      try {
+        const politician = await db.politician.findFirst({
+          where: { fullName: { equals: endMandate.politicianName, mode: "insensitive" } },
+        });
+
+        if (politician) {
+          const mandateType = endMandate.mandateType as MandateType;
+          const updated = await db.mandate.updateMany({
+            where: {
+              politicianId: politician.id,
+              type: mandateType,
+              isCurrent: true,
+            },
+            data: {
+              endDate: new Date(endMandate.endDate),
+              isCurrent: false,
+            },
+          });
+
+          if (updated.count > 0) {
+            console.log(`   ✓ Ended mandate for ${endMandate.politicianName} (${endMandate.mandateType})`);
+            result.applied++;
+          }
+        } else {
+          result.errors.push(`Politician not found: ${endMandate.politicianName}`);
+        }
+      } catch (e) {
+        result.errors.push(`Error ending mandate for ${endMandate.politicianName}: ${e}`);
+      }
+    }
+
+    // 2. New members
+    for (const newMember of corrections.newMembers || []) {
+      try {
+        const slug = generateSlug(`${newMember.firstName}-${newMember.lastName}`);
+
+        // Find or create politician
+        let politician = await db.politician.findUnique({ where: { slug } });
+
+        if (!politician) {
+          politician = await db.politician.findFirst({
+            where: {
+              firstName: { equals: newMember.firstName, mode: "insensitive" },
+              lastName: { equals: newMember.lastName, mode: "insensitive" },
+            },
+          });
+        }
+
+        // Find party if specified
+        let partyId: string | null = null;
+        if (newMember.party) {
+          const party = await db.party.findFirst({
+            where: {
+              OR: [
+                { name: { contains: newMember.party, mode: "insensitive" } },
+                { shortName: { equals: newMember.party, mode: "insensitive" } },
+              ],
+            },
+          });
+          partyId = party?.id || null;
+        }
+
+        const mandateType = newMember.mandate.type as MandateType;
+        const startDate = new Date(newMember.mandate.startDate);
+
+        if (!politician) {
+          // Create new politician
+          politician = await db.politician.create({
+            data: {
+              slug,
+              firstName: newMember.firstName,
+              lastName: newMember.lastName,
+              fullName: newMember.fullName,
+              civility: newMember.civility,
+              birthDate: newMember.birthDate ? new Date(newMember.birthDate) : null,
+              currentPartyId: partyId,
+            },
+          });
+          console.log(`   ✓ Created politician: ${newMember.fullName}`);
+        }
+
+        // Check if mandate already exists
+        const existingMandate = await db.mandate.findFirst({
+          where: {
+            politicianId: politician.id,
+            type: mandateType,
+            startDate,
+          },
+        });
+
+        if (!existingMandate) {
+          await db.mandate.create({
+            data: {
+              politicianId: politician.id,
+              type: mandateType,
+              title: newMember.mandate.title,
+              institution: `Gouvernement ${newMember.mandate.government}`,
+              startDate,
+              isCurrent: true,
+              sourceUrl: "https://www.info.gouv.fr/composition-du-gouvernement",
+            },
+          });
+          console.log(`   ✓ Created mandate: ${newMember.fullName} - ${newMember.mandate.title}`);
+          result.applied++;
+        } else {
+          console.log(`   - Mandate already exists for ${newMember.fullName}`);
+        }
+      } catch (e) {
+        result.errors.push(`Error adding member ${newMember.fullName}: ${e}`);
+      }
+    }
+
+    // 3. Update members
+    for (const updateMember of corrections.updateMembers || []) {
+      if (updateMember._disabled) continue;
+
+      try {
+        const updated = await db.politician.updateMany({
+          where: { fullName: { equals: updateMember.politicianName, mode: "insensitive" } },
+          data: updateMember.updates as Record<string, unknown>,
+        });
+
+        if (updated.count > 0) {
+          console.log(`   ✓ Updated ${updateMember.politicianName}`);
+          result.applied++;
+        }
+      } catch (e) {
+        result.errors.push(`Error updating ${updateMember.politicianName}: ${e}`);
+      }
+    }
+
+    console.log(`\n   Corrections applied: ${result.applied}`);
+    if (result.errors.length > 0) {
+      console.log(`   Errors: ${result.errors.length}`);
+    }
+  } catch (e) {
+    result.errors.push(`Error reading corrections file: ${e}`);
   }
 
   return result;

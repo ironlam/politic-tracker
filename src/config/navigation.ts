@@ -40,6 +40,12 @@ export const NAV_GROUPS: NavGroup[] = [
       { href: "/docs/api", label: "API", description: "Accès programmatique aux données" },
     ],
   },
+  {
+    label: "Assistant IA",
+    items: [
+      { href: "/chat", label: "Poser une question", icon: "💬", description: "Chatbot alimenté par nos données" },
+    ],
+  },
 ] as const;
 
 // CTA button (separate from dropdowns)
@@ -67,7 +73,7 @@ export const FOOTER_SECTIONS = [
       { href: "/statistiques", label: "Statistiques" },
       { href: "/institutions", label: "Institutions" },
       { href: "/sources", label: "Sources" },
-      { href: "/recherche", label: "Recherche avancée" },
+      { href: "/chat", label: "Assistant IA" },
     ],
   },
   {

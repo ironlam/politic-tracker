@@ -600,3 +600,75 @@ enum AmendmentStatus {
   RETIRE          // Retiré
   TOMBE           // Tombé (sans objet)
 }
+
+// ============================================
+// AI CHAT & EMBEDDINGS (RAG)
+// ============================================
+
+// Embeddings for semantic search (RAG)
+// Uses pgvector for efficient similarity search
+model ChatEmbedding {
+  id            String          @id @default(cuid())
+
+  // What this embedding represents
+  entityType    EmbeddingType
+  entityId      String          // ID of the politician, dossier, etc.
+
+  // The text that was embedded
+  content       String          @db.Text
+
+  // Embedding vector (stored as JSON array, queried via raw SQL with pgvector)
+  // OpenAI text-embedding-3-small produces 1536 dimensions
+  embedding     Json            // Float[] stored as JSON
+
+  // Metadata for filtering
+  metadata      Json?           // Extra context (party, mandate type, etc.)
+
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  @@unique([entityType, entityId])
+  @@index([entityType])
+}
+
+enum EmbeddingType {
+  POLITICIAN        // Politicians bio, mandates
+  DOSSIER           // Legislative dossiers
+  SCRUTIN           // Voting records
+  AFFAIR            // Judicial affairs
+  PARTY             // Political parties
+}
+
+// Chat conversation history (optional, for context)
+model ChatConversation {
+  id            String          @id @default(cuid())
+  sessionId     String          // Anonymous session identifier
+
+  messages      ChatMessage[]
+
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  @@index([sessionId])
+}
+
+model ChatMessage {
+  id              String            @id @default(cuid())
+  conversation    ChatConversation  @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  conversationId  String
+
+  role            ChatRole
+  content         String            @db.Text
+
+  // Sources cited in assistant responses
+  sources         Json?             // Array of { type, id, title, url }
+
+  createdAt       DateTime          @default(now())
+
+  @@index([conversationId])
+}
+
+enum ChatRole {
+  USER
+  ASSISTANT
+}

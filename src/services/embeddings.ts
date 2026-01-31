@@ -1,0 +1,539 @@
+/**
+ * Embedding Service for RAG (Retrieval-Augmented Generation)
+ *
+ * Uses OpenAI text-embedding-3-small for generating embeddings.
+ * Stores embeddings in PostgreSQL as JSON arrays.
+ * For MVP, similarity search is done in JavaScript.
+ * Can be upgraded to pgvector for better performance.
+ */
+
+import OpenAI from "openai";
+import { db } from "@/lib/db";
+import type { EmbeddingType, Prisma } from "@/generated/prisma";
+
+const EMBEDDING_MODEL = "text-embedding-3-small";
+const EMBEDDING_DIMENSIONS = 1536;
+
+// Initialize OpenAI client
+function getOpenAIClient(): OpenAI {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) {
+    throw new Error("OPENAI_API_KEY environment variable is not set");
+  }
+  return new OpenAI({ apiKey });
+}
+
+/**
+ * Generate embedding vector for a text
+ */
+export async function generateEmbedding(text: string): Promise<number[]> {
+  const openai = getOpenAIClient();
+
+  const response = await openai.embeddings.create({
+    model: EMBEDDING_MODEL,
+    input: text.slice(0, 8000), // Truncate to avoid token limits
+  });
+
+  return response.data[0].embedding;
+}
+
+/**
+ * Calculate cosine similarity between two vectors
+ */
+function cosineSimilarity(a: number[], b: number[]): number {
+  if (a.length !== b.length) return 0;
+
+  let dotProduct = 0;
+  let normA = 0;
+  let normB = 0;
+
+  for (let i = 0; i < a.length; i++) {
+    dotProduct += a[i] * b[i];
+    normA += a[i] * a[i];
+    normB += b[i] * b[i];
+  }
+
+  if (normA === 0 || normB === 0) return 0;
+  return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
+}
+
+/**
+ * Index a document (create or update embedding)
+ */
+export async function indexDocument(params: {
+  entityType: EmbeddingType;
+  entityId: string;
+  content: string;
+  metadata?: Record<string, unknown>;
+}): Promise<void> {
+  const { entityType, entityId, content, metadata } = params;
+
+  if (!content.trim()) {
+    console.warn(`Empty content for ${entityType}:${entityId}, skipping`);
+    return;
+  }
+
+  const embedding = await generateEmbedding(content);
+
+  await db.chatEmbedding.upsert({
+    where: {
+      entityType_entityId: { entityType, entityId },
+    },
+    create: {
+      entityType,
+      entityId,
+      content,
+      embedding: embedding as unknown as Prisma.InputJsonValue,
+      metadata: metadata as Prisma.InputJsonValue ?? null,
+    },
+    update: {
+      content,
+      embedding: embedding as unknown as Prisma.InputJsonValue,
+      metadata: metadata as Prisma.InputJsonValue ?? null,
+      updatedAt: new Date(),
+    },
+  });
+}
+
+/**
+ * Search result with similarity score
+ */
+export interface SearchResult {
+  entityType: EmbeddingType;
+  entityId: string;
+  content: string;
+  metadata: Record<string, unknown> | null;
+  similarity: number;
+}
+
+/**
+ * Search for similar documents by query
+ */
+export async function searchSimilar(params: {
+  query: string;
+  limit?: number;
+  threshold?: number;
+  entityTypes?: EmbeddingType[];
+}): Promise<SearchResult[]> {
+  const { query, limit = 5, threshold = 0.7, entityTypes } = params;
+
+  // Generate query embedding
+  const queryEmbedding = await generateEmbedding(query);
+
+  // Build where clause
+  const where: Prisma.ChatEmbeddingWhereInput = {};
+  if (entityTypes && entityTypes.length > 0) {
+    where.entityType = { in: entityTypes };
+  }
+
+  // Fetch all embeddings (for MVP - can be optimized with pgvector later)
+  const embeddings = await db.chatEmbedding.findMany({
+    where,
+    select: {
+      entityType: true,
+      entityId: true,
+      content: true,
+      embedding: true,
+      metadata: true,
+    },
+  });
+
+  // Calculate similarities
+  const results: SearchResult[] = embeddings
+    .map((doc) => {
+      const docEmbedding = doc.embedding as unknown as number[];
+      const similarity = cosineSimilarity(queryEmbedding, docEmbedding);
+      return {
+        entityType: doc.entityType,
+        entityId: doc.entityId,
+        content: doc.content,
+        metadata: doc.metadata as Record<string, unknown> | null,
+        similarity,
+      };
+    })
+    .filter((r) => r.similarity >= threshold)
+    .sort((a, b) => b.similarity - a.similarity)
+    .slice(0, limit);
+
+  return results;
+}
+
+/**
+ * Index a politician with their relevant information
+ */
+export async function indexPolitician(politicianId: string): Promise<void> {
+  const politician = await db.politician.findUnique({
+    where: { id: politicianId },
+    include: {
+      currentParty: true,
+      mandates: {
+        where: { isCurrent: true },
+        take: 5,
+      },
+      affairs: {
+        take: 5,
+        include: { sources: { take: 1 } },
+      },
+    },
+  });
+
+  if (!politician) return;
+
+  // Build content for embedding
+  const parts: string[] = [
+    `${politician.civility || ""} ${politician.fullName}`,
+    politician.currentParty ? `Parti: ${politician.currentParty.name}` : "Sans parti",
+  ];
+
+  // Add mandates
+  for (const mandate of politician.mandates) {
+    parts.push(`${mandate.title} (${mandate.institution})`);
+  }
+
+  // Add birth info
+  if (politician.birthDate) {
+    const age = Math.floor(
+      (Date.now() - politician.birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000)
+    );
+    parts.push(`Né(e) en ${politician.birthDate.getFullYear()}, ${age} ans`);
+  }
+
+  // Add affair summary (if any)
+  if (politician.affairs.length > 0) {
+    parts.push(
+      `${politician.affairs.length} affaire(s) judiciaire(s)`
+    );
+  }
+
+  const content = parts.join(". ");
+
+  await indexDocument({
+    entityType: "POLITICIAN",
+    entityId: politicianId,
+    content,
+    metadata: {
+      name: politician.fullName,
+      slug: politician.slug,
+      party: politician.currentParty?.name,
+      partyId: politician.currentPartyId,
+      hasAffairs: politician.affairs.length > 0,
+    },
+  });
+}
+
+/**
+ * Index a legislative dossier
+ */
+export async function indexDossier(dossierId: string): Promise<void> {
+  const dossier = await db.legislativeDossier.findUnique({
+    where: { id: dossierId },
+  });
+
+  if (!dossier) return;
+
+  const parts: string[] = [
+    dossier.shortTitle || dossier.title,
+  ];
+
+  if (dossier.number) {
+    parts.push(`Numéro: ${dossier.number}`);
+  }
+
+  if (dossier.category) {
+    parts.push(`Catégorie: ${dossier.category}`);
+  }
+
+  if (dossier.summary) {
+    parts.push(dossier.summary);
+  }
+
+  const content = parts.join(". ");
+
+  await indexDocument({
+    entityType: "DOSSIER",
+    entityId: dossierId,
+    content,
+    metadata: {
+      title: dossier.shortTitle || dossier.title,
+      number: dossier.number,
+      status: dossier.status,
+      category: dossier.category,
+      sourceUrl: dossier.sourceUrl,
+    },
+  });
+}
+
+/**
+ * Index a voting record (scrutin)
+ */
+export async function indexScrutin(scrutinId: string): Promise<void> {
+  const scrutin = await db.scrutin.findUnique({
+    where: { id: scrutinId },
+  });
+
+  if (!scrutin) return;
+
+  const parts: string[] = [
+    scrutin.title,
+    `Date: ${scrutin.votingDate.toISOString().split("T")[0]}`,
+    `Résultat: ${scrutin.result === "ADOPTED" ? "Adopté" : "Rejeté"}`,
+    `Pour: ${scrutin.votesFor}, Contre: ${scrutin.votesAgainst}, Abstention: ${scrutin.votesAbstain}`,
+  ];
+
+  if (scrutin.description) {
+    parts.push(scrutin.description);
+  }
+
+  const content = parts.join(". ");
+
+  await indexDocument({
+    entityType: "SCRUTIN",
+    entityId: scrutinId,
+    content,
+    metadata: {
+      title: scrutin.title,
+      votingDate: scrutin.votingDate.toISOString(),
+      result: scrutin.result,
+      sourceUrl: scrutin.sourceUrl,
+    },
+  });
+}
+
+/**
+ * Index an affair
+ */
+export async function indexAffair(affairId: string): Promise<void> {
+  const affair = await db.affair.findUnique({
+    where: { id: affairId },
+    include: {
+      politician: { select: { fullName: true, slug: true } },
+      partyAtTime: { select: { name: true } },
+      sources: { take: 3 },
+    },
+  });
+
+  if (!affair) return;
+
+  const parts: string[] = [
+    affair.title,
+    `Concernant: ${affair.politician.fullName}`,
+    affair.description.slice(0, 500), // Truncate long descriptions
+  ];
+
+  if (affair.partyAtTime) {
+    parts.push(`Parti à l'époque: ${affair.partyAtTime.name}`);
+  }
+
+  if (affair.verdictDate) {
+    parts.push(`Verdict: ${affair.verdictDate.toISOString().split("T")[0]}`);
+  }
+
+  const content = parts.join(". ");
+
+  await indexDocument({
+    entityType: "AFFAIR",
+    entityId: affairId,
+    content,
+    metadata: {
+      title: affair.title,
+      slug: affair.slug,
+      politicianName: affair.politician.fullName,
+      politicianSlug: affair.politician.slug,
+      status: affair.status,
+      category: affair.category,
+      sources: affair.sources.map((s) => ({ title: s.title, url: s.url })),
+    },
+  });
+}
+
+/**
+ * Index a political party
+ */
+export async function indexParty(partyId: string): Promise<void> {
+  const party = await db.party.findUnique({
+    where: { id: partyId },
+    include: {
+      _count: { select: { politicians: true } },
+    },
+  });
+
+  if (!party) return;
+
+  const parts: string[] = [
+    `${party.name} (${party.shortName})`,
+    `${party._count.politicians} membre(s)`,
+  ];
+
+  if (party.description) {
+    parts.push(party.description);
+  }
+
+  if (party.ideology) {
+    parts.push(`Idéologie: ${party.ideology}`);
+  }
+
+  if (party.politicalPosition) {
+    const positions: Record<string, string> = {
+      FAR_LEFT: "Extrême gauche",
+      LEFT: "Gauche",
+      CENTER_LEFT: "Centre-gauche",
+      CENTER: "Centre",
+      CENTER_RIGHT: "Centre-droit",
+      RIGHT: "Droite",
+      FAR_RIGHT: "Extrême droite",
+    };
+    parts.push(`Position: ${positions[party.politicalPosition] || party.politicalPosition}`);
+  }
+
+  const content = parts.join(". ");
+
+  await indexDocument({
+    entityType: "PARTY",
+    entityId: partyId,
+    content,
+    metadata: {
+      name: party.name,
+      shortName: party.shortName,
+      slug: party.slug,
+      color: party.color,
+      memberCount: party._count.politicians,
+    },
+  });
+}
+
+/**
+ * Batch index all entities of a type
+ */
+export async function indexAllOfType(
+  entityType: EmbeddingType,
+  options: {
+    limit?: number;
+    onProgress?: (current: number, total: number) => void;
+  } = {}
+): Promise<{ indexed: number; errors: number }> {
+  const { limit, onProgress } = options;
+  let indexed = 0;
+  let errors = 0;
+
+  switch (entityType) {
+    case "POLITICIAN": {
+      const politicians = await db.politician.findMany({
+        select: { id: true },
+        take: limit,
+      });
+      for (let i = 0; i < politicians.length; i++) {
+        try {
+          await indexPolitician(politicians[i].id);
+          indexed++;
+        } catch (e) {
+          console.error(`Error indexing politician ${politicians[i].id}:`, e);
+          errors++;
+        }
+        onProgress?.(i + 1, politicians.length);
+        // Rate limit
+        await new Promise((r) => setTimeout(r, 200));
+      }
+      break;
+    }
+    case "DOSSIER": {
+      const dossiers = await db.legislativeDossier.findMany({
+        select: { id: true },
+        take: limit,
+      });
+      for (let i = 0; i < dossiers.length; i++) {
+        try {
+          await indexDossier(dossiers[i].id);
+          indexed++;
+        } catch (e) {
+          console.error(`Error indexing dossier ${dossiers[i].id}:`, e);
+          errors++;
+        }
+        onProgress?.(i + 1, dossiers.length);
+        await new Promise((r) => setTimeout(r, 200));
+      }
+      break;
+    }
+    case "SCRUTIN": {
+      const scrutins = await db.scrutin.findMany({
+        select: { id: true },
+        take: limit,
+      });
+      for (let i = 0; i < scrutins.length; i++) {
+        try {
+          await indexScrutin(scrutins[i].id);
+          indexed++;
+        } catch (e) {
+          console.error(`Error indexing scrutin ${scrutins[i].id}:`, e);
+          errors++;
+        }
+        onProgress?.(i + 1, scrutins.length);
+        await new Promise((r) => setTimeout(r, 200));
+      }
+      break;
+    }
+    case "AFFAIR": {
+      const affairs = await db.affair.findMany({
+        select: { id: true },
+        take: limit,
+      });
+      for (let i = 0; i < affairs.length; i++) {
+        try {
+          await indexAffair(affairs[i].id);
+          indexed++;
+        } catch (e) {
+          console.error(`Error indexing affair ${affairs[i].id}:`, e);
+          errors++;
+        }
+        onProgress?.(i + 1, affairs.length);
+        await new Promise((r) => setTimeout(r, 200));
+      }
+      break;
+    }
+    case "PARTY": {
+      const parties = await db.party.findMany({
+        select: { id: true },
+        take: limit,
+      });
+      for (let i = 0; i < parties.length; i++) {
+        try {
+          await indexParty(parties[i].id);
+          indexed++;
+        } catch (e) {
+          console.error(`Error indexing party ${parties[i].id}:`, e);
+          errors++;
+        }
+        onProgress?.(i + 1, parties.length);
+        await new Promise((r) => setTimeout(r, 200));
+      }
+      break;
+    }
+  }
+
+  return { indexed, errors };
+}
+
+/**
+ * Get embedding stats
+ */
+export async function getEmbeddingStats(): Promise<
+  Record<EmbeddingType, number>
+> {
+  const results = await db.chatEmbedding.groupBy({
+    by: ["entityType"],
+    _count: true,
+  });
+
+  const stats: Record<string, number> = {
+    POLITICIAN: 0,
+    DOSSIER: 0,
+    SCRUTIN: 0,
+    AFFAIR: 0,
+    PARTY: 0,
+  };
+
+  for (const r of results) {
+    stats[r.entityType] = r._count;
+  }
+
+  return stats as Record<EmbeddingType, number>;
+}

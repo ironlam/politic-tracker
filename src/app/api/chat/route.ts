@@ -189,6 +189,129 @@ async function fetchDirectContext(query: string): Promise<string | null> {
   return null;
 }
 
+// Keyword-based database search (no embeddings required)
+async function searchDatabaseByKeywords(query: string): Promise<string | null> {
+  const lowerQuery = query.toLowerCase();
+  const results: string[] = [];
+
+  // Extract potential keywords
+  const words = lowerQuery
+    .replace(/[?!.,;:]/g, "")
+    .split(/\s+/)
+    .filter((w) => w.length > 2);
+
+  // Search for politicians by name
+  if (words.length > 0) {
+    const politicians = await db.politician.findMany({
+      where: {
+        OR: words.map((word) => ({
+          OR: [
+            { fullName: { contains: word, mode: "insensitive" as const } },
+            { lastName: { contains: word, mode: "insensitive" as const } },
+          ],
+        })),
+      },
+      include: {
+        currentParty: true,
+        mandates: { where: { isCurrent: true }, take: 2 },
+      },
+      take: 3,
+    });
+
+    for (const p of politicians) {
+      let info = `**${p.civility || ""} ${p.fullName}**`;
+      if (p.currentParty) info += ` (${p.currentParty.name})`;
+      if (p.mandates.length > 0) {
+        info += ` - ${p.mandates[0].title}`;
+      }
+      info += `\n→ /politiques/${p.slug}`;
+      results.push(info);
+    }
+  }
+
+  // Check for party-related questions
+  if (lowerQuery.includes("parti") || lowerQuery.includes("groupe")) {
+    const parties = await db.party.findMany({
+      where: {
+        OR: words.map((word) => ({
+          OR: [
+            { name: { contains: word, mode: "insensitive" as const } },
+            { shortName: { contains: word, mode: "insensitive" as const } },
+          ],
+        })),
+      },
+      include: {
+        _count: { select: { politicians: true } },
+      },
+      take: 3,
+    });
+
+    for (const party of parties) {
+      results.push(
+        `**${party.name}** (${party.shortName}) - ${party._count.politicians} membre(s)\n→ /partis/${party.slug}`
+      );
+    }
+  }
+
+  // Check for vote-related questions
+  if (lowerQuery.includes("vote") || lowerQuery.includes("scrutin") || lowerQuery.includes("loi")) {
+    const scrutins = await db.scrutin.findMany({
+      where: {
+        title: {
+          contains: words.find((w) => w.length > 4) || words[0] || "",
+          mode: "insensitive",
+        },
+      },
+      orderBy: { votingDate: "desc" },
+      take: 3,
+    });
+
+    for (const s of scrutins) {
+      const result = s.result === "ADOPTED" ? "Adopté" : "Rejeté";
+      results.push(
+        `**Vote: ${s.title.slice(0, 100)}${s.title.length > 100 ? "..." : ""}**\n` +
+        `Date: ${s.votingDate.toLocaleDateString("fr-FR")} - ${result}\n` +
+        `Pour: ${s.votesFor}, Contre: ${s.votesAgainst}, Abstention: ${s.votesAbstain}`
+      );
+    }
+  }
+
+  // Check for statistics questions
+  if (lowerQuery.includes("combien") || lowerQuery.includes("nombre") || lowerQuery.includes("statistique")) {
+    const [deputeCount, senateurCount, partyCount] = await Promise.all([
+      db.mandate.count({ where: { type: "DEPUTE", isCurrent: true } }),
+      db.mandate.count({ where: { type: "SENATEUR", isCurrent: true } }),
+      db.party.count(),
+    ]);
+
+    results.push(
+      `**Statistiques actuelles:**\n` +
+      `- ${deputeCount} députés en exercice\n` +
+      `- ${senateurCount} sénateurs en exercice\n` +
+      `- ${partyCount} partis politiques référencés\n` +
+      `→ Plus de détails sur /statistiques`
+    );
+  }
+
+  // Check for institution questions
+  if (
+    lowerQuery.includes("assemblée") ||
+    lowerQuery.includes("sénat") ||
+    lowerQuery.includes("gouvernement") ||
+    lowerQuery.includes("institution")
+  ) {
+    results.push(
+      `Pour comprendre le fonctionnement des institutions françaises, consultez:\n→ /institutions`
+    );
+  }
+
+  if (results.length === 0) {
+    return null;
+  }
+
+  return results.join("\n\n---\n\n");
+}
+
 export async function POST(request: Request) {
   try {
     // Rate limiting
@@ -239,29 +362,31 @@ export async function POST(request: Request) {
 
     const userQuery = lastUserMessage.content;
 
-    // First try direct context lookup
+    // First try direct context lookup from database
     let context = await fetchDirectContext(userQuery);
 
-    // If no direct context, use RAG search
+    // If no direct context, try keyword-based database search
     if (!context) {
-      // Check if OpenAI API key is configured for embeddings
-      if (!process.env.OPENAI_API_KEY) {
-        // Fallback: simple database search without embeddings
-        context = "Base de données de Transparence Politique.\n";
-        context += "Pour des informations détaillées, consultez les fiches sur le site.";
-      } else {
-        try {
-          const searchResults = await searchSimilar({
-            query: userQuery,
-            limit: 5,
-            threshold: 0.65,
-          });
-          context = buildContext(searchResults);
-        } catch (error) {
-          console.error("RAG search error:", error);
-          context = "Erreur lors de la recherche. Veuillez reformuler votre question.";
-        }
+      context = await searchDatabaseByKeywords(userQuery);
+    }
+
+    // Optional: Use RAG with embeddings if OpenAI is configured
+    if (!context && process.env.OPENAI_API_KEY) {
+      try {
+        const searchResults = await searchSimilar({
+          query: userQuery,
+          limit: 5,
+          threshold: 0.65,
+        });
+        context = buildContext(searchResults);
+      } catch (error) {
+        console.error("RAG search error:", error);
       }
+    }
+
+    // Fallback message
+    if (!context) {
+      context = "Je n'ai pas trouvé d'information précise dans ma base de données pour cette question. Essayez de reformuler ou consultez les fiches détaillées sur le site.";
     }
 
     // Check for Anthropic API key

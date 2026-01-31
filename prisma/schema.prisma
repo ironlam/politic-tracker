@@ -530,3 +530,73 @@ enum VotingResult {
   ADOPTED
   REJECTED
 }
+
+// ============================================
+// LEGISLATIVE DOSSIERS (Assemblée Nationale)
+// ============================================
+
+model LegislativeDossier {
+  id              String        @id @default(cuid())
+  externalId      String        @unique  // DLR5L17N12345
+  title           String        @db.Text
+  shortTitle      String?                // Titre court pour affichage
+  number          String?                // PJL 1234, PPL 5678
+  status          DossierStatus
+  category        String?                // Budget, Santé, Économie...
+
+  filingDate      DateTime?
+  examinationDate DateTime?
+  adoptionDate    DateTime?
+
+  summary         String?       @db.Text // Résumé IA (3-5 points)
+  summaryDate     DateTime?              // Date du dernier résumé
+
+  sourceUrl       String?
+
+  amendments      Amendment[]
+
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([status])
+  @@index([category])
+  @@index([filingDate])
+}
+
+enum DossierStatus {
+  EN_COURS        // En discussion
+  ADOPTE          // Adopté
+  REJETE          // Rejeté
+  RETIRE          // Retiré
+}
+
+model Amendment {
+  id              String          @id @default(cuid())
+  externalId      String          @unique
+  dossierId       String
+  number          Int
+
+  authorType      String?         // Groupe, Gouvernement, Individuel
+  authorName      String?
+
+  article         String?         // Article modifié
+  content         String?         @db.Text  // Texte de l'amendement
+  summary         String?         // Résumé IA (1-2 phrases)
+
+  status          AmendmentStatus
+
+  dossier         LegislativeDossier @relation(fields: [dossierId], references: [id], onDelete: Cascade)
+
+  createdAt       DateTime        @default(now())
+
+  @@index([dossierId])
+  @@index([status])
+}
+
+enum AmendmentStatus {
+  DEPOSE          // Déposé
+  ADOPTE          // Adopté
+  REJETE          // Rejeté
+  RETIRE          // Retiré
+  TOMBE           // Tombé (sans objet)
+}

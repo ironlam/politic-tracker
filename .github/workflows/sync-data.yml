@@ -55,8 +55,22 @@ jobs:
         run: npm run sync:votes-an
         continue-on-error: true
 
+      - name: Sync Legislation (Dossiers Législatifs)
+        run: npm run sync:legislation
+        continue-on-error: true
+
+      - name: Generate AI Summaries (Active Dossiers)
+        run: npm run generate:summaries -- --limit=20
+        continue-on-error: true
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
       - name: Show sync stats
         run: npm run sync:stats
+
+      - name: Show legislation stats
+        run: npm run sync:legislation:stats
+        continue-on-error: true
 
       - name: Notify on failure
         if: failure()

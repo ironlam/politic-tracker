@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PoliticianCard } from "@/components/politicians/PoliticianCard";
+import { DossierCard } from "@/components/legislation";
 import { formatDate } from "@/lib/utils";
 import { WebSiteJsonLd } from "@/components/seo/JsonLd";
 
@@ -52,10 +53,21 @@ async function getRecentAffairs() {
   });
 }
 
+async function getActiveDossiers() {
+  return db.legislativeDossier.findMany({
+    where: { status: "EN_COURS" },
+    orderBy: { filingDate: "desc" },
+    take: 3,
+  });
+}
+
 export default async function HomePage() {
-  const stats = await getStats();
-  const recentPoliticians = await getRecentPoliticians();
-  const recentAffairs = await getRecentAffairs();
+  const [stats, recentPoliticians, recentAffairs, activeDossiers] = await Promise.all([
+    getStats(),
+    getRecentPoliticians(),
+    getRecentAffairs(),
+    getActiveDossiers(),
+  ]);
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://transparence-politique.fr";
 
   return (
@@ -132,6 +144,44 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* En direct de l'Assemblée */}
+      {activeDossiers.length > 0 && (
+        <section className="py-16 bg-gradient-to-br from-blue-50/50 to-indigo-50/50 dark:from-blue-950/20 dark:to-indigo-950/20">
+          <div className="container mx-auto px-4">
+            <div className="flex justify-between items-end mb-8">
+              <div className="flex items-center gap-3">
+                <span className="text-3xl">🏛️</span>
+                <div>
+                  <h2 className="text-2xl md:text-3xl font-bold mb-1">En direct de l&apos;Assemblée</h2>
+                  <p className="text-muted-foreground">Les textes actuellement en discussion</p>
+                </div>
+              </div>
+              <Button variant="ghost" asChild className="text-primary">
+                <Link href="/assemblee">Voir tous &rarr;</Link>
+              </Button>
+            </div>
+
+            <div className="space-y-4">
+              {activeDossiers.map((dossier) => (
+                <DossierCard
+                  key={dossier.id}
+                  id={dossier.id}
+                  externalId={dossier.externalId}
+                  title={dossier.title}
+                  shortTitle={dossier.shortTitle}
+                  number={dossier.number}
+                  status={dossier.status}
+                  category={dossier.category}
+                  summary={dossier.summary}
+                  filingDate={dossier.filingDate}
+                  sourceUrl={dossier.sourceUrl}
+                />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Recent Affairs */}
       {recentAffairs.length > 0 && (

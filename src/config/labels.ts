@@ -320,3 +320,71 @@ export const VOTING_RESULT_COLORS: Record<VotingResult, string> = {
   ADOPTED: "bg-green-100 text-green-800",
   REJECTED: "bg-red-100 text-red-800",
 };
+
+// ============================================
+// LEGISLATIVE DOSSIERS
+// ============================================
+
+import type { DossierStatus, AmendmentStatus } from "@/generated/prisma";
+
+export const DOSSIER_STATUS_LABELS: Record<DossierStatus, string> = {
+  EN_COURS: "En discussion",
+  ADOPTE: "Adopté",
+  REJETE: "Rejeté",
+  RETIRE: "Retiré",
+};
+
+export const DOSSIER_STATUS_COLORS: Record<DossierStatus, string> = {
+  EN_COURS: "bg-blue-100 text-blue-800 border-blue-300",
+  ADOPTE: "bg-green-100 text-green-800 border-green-300",
+  REJETE: "bg-red-100 text-red-800 border-red-300",
+  RETIRE: "bg-gray-100 text-gray-700 border-gray-300",
+};
+
+export const DOSSIER_STATUS_ICONS: Record<DossierStatus, string> = {
+  EN_COURS: "🔴",
+  ADOPTE: "✅",
+  REJETE: "❌",
+  RETIRE: "⏸️",
+};
+
+export const AMENDMENT_STATUS_LABELS: Record<AmendmentStatus, string> = {
+  DEPOSE: "Déposé",
+  ADOPTE: "Adopté",
+  REJETE: "Rejeté",
+  RETIRE: "Retiré",
+  TOMBE: "Tombé",
+};
+
+export const AMENDMENT_STATUS_COLORS: Record<AmendmentStatus, string> = {
+  DEPOSE: "bg-blue-100 text-blue-800",
+  ADOPTE: "bg-green-100 text-green-800",
+  REJETE: "bg-red-100 text-red-800",
+  RETIRE: "bg-gray-100 text-gray-700",
+  TOMBE: "bg-gray-100 text-gray-600",
+};
+
+// Legislative categories with colors
+export const DOSSIER_CATEGORY_COLORS: Record<string, string> = {
+  Budget: "bg-emerald-100 text-emerald-800 border-emerald-300",
+  Santé: "bg-rose-100 text-rose-800 border-rose-300",
+  Économie: "bg-amber-100 text-amber-800 border-amber-300",
+  Législation: "bg-indigo-100 text-indigo-800 border-indigo-300",
+  Institutionnel: "bg-purple-100 text-purple-800 border-purple-300",
+  Constitution: "bg-violet-100 text-violet-800 border-violet-300",
+  International: "bg-cyan-100 text-cyan-800 border-cyan-300",
+  Contrôle: "bg-orange-100 text-orange-800 border-orange-300",
+  Information: "bg-sky-100 text-sky-800 border-sky-300",
+};
+
+export const DOSSIER_CATEGORY_ICONS: Record<string, string> = {
+  Budget: "💰",
+  Santé: "🏥",
+  Économie: "📊",
+  Législation: "📜",
+  Institutionnel: "🏛️",
+  Constitution: "⚖️",
+  International: "🌍",
+  Contrôle: "🔍",
+  Information: "📋",
+};

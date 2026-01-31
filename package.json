@@ -40,7 +40,14 @@
     "sync:wikidata-ids:stats": "tsx scripts/sync-wikidata-ids.ts --stats",
     "import:wikidata": "tsx scripts/import-wikidata.ts",
     "import:wikidata-parties": "tsx scripts/import-wikidata-parties.ts",
-    "import:wikidata-memberships": "tsx scripts/import-wikidata-memberships.ts"
+    "import:wikidata-memberships": "tsx scripts/import-wikidata-memberships.ts",
+    "sync:legislation": "tsx scripts/sync-legislation.ts",
+    "sync:legislation:stats": "tsx scripts/sync-legislation.ts --stats",
+    "generate:summaries": "tsx scripts/generate-summaries.ts",
+    "generate:summaries:stats": "tsx scripts/generate-summaries.ts --stats",
+    "db:backup": "tsx scripts/backup-database.ts",
+    "db:backup:list": "tsx scripts/backup-database.ts --list",
+    "db:backup:clean": "tsx scripts/backup-database.ts --clean=30"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.2.0",

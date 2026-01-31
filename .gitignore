@@ -44,3 +44,6 @@ yarn-error.log*
 next-env.d.ts
 
 /src/generated/prisma
+
+# Database backups (contain sensitive data)
+/backups

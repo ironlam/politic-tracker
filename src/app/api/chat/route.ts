@@ -370,8 +370,8 @@ export async function POST(request: Request) {
       context = await searchDatabaseByKeywords(userQuery);
     }
 
-    // Optional: Use RAG with embeddings if OpenAI is configured
-    if (!context && process.env.OPENAI_API_KEY) {
+    // Optional: Use RAG with embeddings if Voyage AI is configured
+    if (!context && process.env.VOYAGE_API_KEY) {
       try {
         const searchResults = await searchSimilar({
           query: userQuery,

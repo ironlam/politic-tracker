@@ -74,6 +74,7 @@
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-react": "^5.31.0",
     "tailwind-merge": "^3.4.0",
+    "voyageai": "^0.1.0",
     "zod": "^4.3.5"
   },
   "devDependencies": {

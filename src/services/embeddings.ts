@@ -1,40 +1,47 @@
 /**
  * Embedding Service for RAG (Retrieval-Augmented Generation)
  *
- * Uses OpenAI text-embedding-3-small for generating embeddings.
+ * Uses Voyage AI for generating embeddings (free tier: 200M tokens/month).
  * Stores embeddings in PostgreSQL as JSON arrays.
  * For MVP, similarity search is done in JavaScript.
  * Can be upgraded to pgvector for better performance.
  */
 
-import OpenAI from "openai";
+import { VoyageAIClient } from "voyageai";
 import { db } from "@/lib/db";
 import type { EmbeddingType, Prisma } from "@/generated/prisma";
 
-const EMBEDDING_MODEL = "text-embedding-3-small";
-const EMBEDDING_DIMENSIONS = 1536;
+// Voyage AI voyage-3-lite: optimized for latency, 512 dimensions
+// Other options: voyage-3 (1024 dims), voyage-3-large (best quality)
+const EMBEDDING_MODEL = "voyage-3-lite";
+const EMBEDDING_DIMENSIONS = 512;
 
-// Initialize OpenAI client
-function getOpenAIClient(): OpenAI {
-  const apiKey = process.env.OPENAI_API_KEY;
+// Initialize Voyage AI client
+function getVoyageClient(): VoyageAIClient {
+  const apiKey = process.env.VOYAGE_API_KEY;
   if (!apiKey) {
-    throw new Error("OPENAI_API_KEY environment variable is not set");
+    throw new Error("VOYAGE_API_KEY environment variable is not set");
   }
-  return new OpenAI({ apiKey });
+  return new VoyageAIClient({ apiKey });
 }
 
 /**
  * Generate embedding vector for a text
  */
 export async function generateEmbedding(text: string): Promise<number[]> {
-  const openai = getOpenAIClient();
+  const client = getVoyageClient();
 
-  const response = await openai.embeddings.create({
+  const response = await client.embed({
+    input: text.slice(0, 16000), // Voyage supports up to 32k tokens
     model: EMBEDDING_MODEL,
-    input: text.slice(0, 8000), // Truncate to avoid token limits
+    inputType: "document",
   });
 
-  return response.data[0].embedding;
+  if (!response.data || response.data.length === 0) {
+    throw new Error("No embedding returned from Voyage AI");
+  }
+
+  return response.data[0].embedding as number[];
 }
 
 /**

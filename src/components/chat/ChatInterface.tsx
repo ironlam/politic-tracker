@@ -37,24 +37,23 @@ export function ChatInterface() {
   const [error, setError] = useState<Error | null>(null);
   const [isRateLimited, setIsRateLimited] = useState(false);
   const [retryAfter, setRetryAfter] = useState(0);
-  const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
-
-  // Check if user is near bottom of scroll
-  const handleScroll = useCallback(() => {
+  // Scroll within chat container only (not page)
+  const scrollToBottom = useCallback(() => {
     const container = messagesContainerRef.current;
-    if (!container) return;
-
-    const { scrollTop, scrollHeight, clientHeight } = container;
-    const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
-    setShouldAutoScroll(isNearBottom);
+    if (container) {
+      container.scrollTop = container.scrollHeight;
+    }
   }, []);
 
-  // Auto-scroll only if user is at bottom
+  // Scroll to bottom only when user sends a new message
+  const scrollOnNewUserMessage = useRef(false);
+
   useEffect(() => {
-    if (shouldAutoScroll) {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (scrollOnNewUserMessage.current) {
+      scrollToBottom();
+      scrollOnNewUserMessage.current = false;
     }
-  }, [messages, shouldAutoScroll]);
+  }, [messages, scrollToBottom]);
 
   // Rate limit countdown
   useEffect(() => {
@@ -74,6 +73,7 @@ export function ChatInterface() {
 
     setError(null);
     setIsLoading(true);
+    scrollOnNewUserMessage.current = true;
 
     // Add user message
     const userMessage: Message = {
@@ -181,7 +181,6 @@ export function ChatInterface() {
       {/* Messages area */}
       <div
         ref={messagesContainerRef}
-        onScroll={handleScroll}
         className="flex-1 overflow-y-auto p-4 space-y-4"
       >
         {messages.length === 0 ? (

@@ -174,22 +174,29 @@ Objectif : Permettre aux citoyens de comprendre et d'interagir avec leurs repré
 
 **Architecture envisagée** :
 ```
-Question utilisateur
-        │
-        ▼
-┌───────────────────┐
-│ Recherche sémantique │  ← pgvector sur Supabase
-│ (politiciens, votes, │
-│  affaires)           │
-└───────────────────┘
-        │
-        ▼
-┌───────────────────┐
-│ LLM + contexte    │  → Claude Haiku (économique)
-└───────────────────┘
-        │
-        ▼
-   Réponse sourcée
+┌─────────────────────────────────────────────────────────────┐
+│                    FRONTEND (Next.js)                       │
+│  Chat UI avec streaming + citations cliquables              │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    API ROUTE (Edge)                         │
+│  Rate limiting + Input validation + Modération              │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    RAG PIPELINE                             │
+│  1. Query Understanding (classifier)                        │
+│  2. Retrieval (pgvector sur Supabase)                      │
+│     ├─ Politiciens (bio, mandats)                          │
+│     ├─ Votes (scrutins, positions)                         │
+│     ├─ Affaires (condamnations, sources)                   │
+│     └─ Dossiers législatifs (résumés IA)                   │
+│  3. LLM Generation (Claude Haiku / Sonnet)                 │
+│  4. Response + Citations                                    │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 **Exemples de questions** :
@@ -199,6 +206,115 @@ Question utilisateur
 - "Qu'est-ce que ce vote sur la loi X peut changer pour un étudiant ?"
 
 **Idée avancée** : RAG capable d'expliquer ce qu'une situation personnelle peut attendre de certains votes (ex: "En tant que locataire, que change cette loi ?")
+
+#### Plan d'implémentation MVP
+
+| Phase | Tâches | Effort |
+|-------|--------|--------|
+| **Phase 1 : Infrastructure** | Setup pgvector, embeddings politiciens/votes | 1 semaine |
+| **Phase 2 : API Chat** | Route `/api/chat` avec streaming, rate limiting | 1 semaine |
+| **Phase 3 : UI** | Interface chat (shadcn/ui), suggestions, citations | 1 semaine |
+| **Phase 4 : Itération** | Feedback utilisateur, amélioration prompts | Continu |
+
+#### Sécurité et fiabilité (CRITIQUE)
+
+| Risque | Solution |
+|--------|----------|
+| Hallucinations | RAG strict, refuse si pas de source |
+| Diffamation | Toujours citer sources, présomption d'innocence auto |
+| Abus/spam | Rate limiting (10 req/min IP, 50/jour user) |
+| Coûts | Plafond quotidien, Haiku par défaut |
+| Injection prompt | Sanitization + system prompt robuste |
+
+#### Stack technique
+
+- **Embeddings** : OpenAI `text-embedding-3-small`
+- **Vector DB** : pgvector (Supabase)
+- **LLM** : Claude Haiku (défaut) → Sonnet (questions complexes)
+- **Streaming** : Vercel AI SDK
+- **Rate limit** : Upstash Redis
+
+### 4.8 Admin : Gestion des dossiers législatifs (2026-01-31)
+
+**Objectif** : Permettre aux administrateurs de gérer les fiches des dossiers parlementaires avec génération IA assistée.
+
+#### Fonctionnalités
+
+| Fonctionnalité | Description | Priorité |
+|----------------|-------------|----------|
+| **Liste des dossiers** | Tableau avec filtres (statut, commission, date) | Haute |
+| **Édition manuelle** | Modifier titre, résumé, statut | Haute |
+| **Bouton "Generate with AI"** | Générer/régénérer le résumé via Claude | Haute |
+| **Prévisualisation** | Voir le résumé avant validation | Moyenne |
+| **Historique** | Voir les versions précédentes | Basse |
+
+#### Principe de fiabilité (FONDAMENTAL)
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  ⚠️  RÈGLE D'OR : TOUJOURS SE BASER SUR DE VRAIES SOURCES  │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  La génération IA doit UNIQUEMENT résumer les données       │
+│  officielles de l'Assemblée nationale :                     │
+│                                                             │
+│  ✅ Texte intégral du dossier (data.assemblee-nationale.fr) │
+│  ✅ Exposé des motifs                                       │
+│  ✅ Amendements adoptés                                     │
+│  ✅ Rapports de commission                                  │
+│                                                             │
+│  ❌ JAMAIS d'invention ou d'interprétation                  │
+│  ❌ JAMAIS de données externes non vérifiées                │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+#### Workflow de génération
+
+```
+1. Admin clique "Generate with AI"
+           │
+           ▼
+2. Fetch données officielles AN
+   (texte, exposé, amendements)
+           │
+           ▼
+3. Envoi à Claude avec prompt strict :
+   "Résume ce dossier en te basant
+    UNIQUEMENT sur le texte fourni"
+           │
+           ▼
+4. Affichage prévisualisation
+           │
+           ▼
+5. Admin valide ou modifie
+           │
+           ▼
+6. Sauvegarde avec flag "ai_generated"
+   + timestamp + source_urls
+```
+
+#### Interface admin envisagée
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  📋 Dossier : Projet de loi finances 2026                  │
+├─────────────────────────────────────────────────────────────┤
+│  Statut: En commission  │  Commission: Finances            │
+├─────────────────────────────────────────────────────────────┤
+│  Résumé actuel:                                             │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │ Ce projet de loi définit le budget de l'État...     │   │
+│  └─────────────────────────────────────────────────────┘   │
+│                                                             │
+│  [✏️ Modifier]  [🤖 Generate with AI]  [👁️ Prévisualiser] │
+│                                                             │
+├─────────────────────────────────────────────────────────────┤
+│  Sources officielles:                                       │
+│  • https://data.assemblee-nationale.fr/dossier/DLR123      │
+│  • Dernière sync: 2026-01-31 14:30                         │
+└─────────────────────────────────────────────────────────────┘
+```
 
 ---
 
@@ -359,6 +475,22 @@ npm run sync:parties        # Partis politiques
 - [ ] Statistiques de vote par parti
 - [ ] Enrichir les carrières politiques via Wikidata (mandats historiques)
 
+### 🤖 Priorité IA (février 2026)
+
+#### Admin : Gestion dossiers législatifs
+- [ ] Page `/admin/dossiers` - Liste des dossiers avec filtres
+- [ ] Édition manuelle des fiches (titre, résumé, statut)
+- [ ] Bouton "Generate with AI" - Génération résumé via Claude
+- [ ] Prévisualisation avant validation
+- [ ] Traçabilité : flag `ai_generated`, timestamp, source_urls
+
+#### Chatbot citoyen (MVP)
+- [ ] Setup pgvector + embeddings (politiciens, votes, dossiers)
+- [ ] API `/api/chat` avec streaming (Vercel AI SDK)
+- [ ] Rate limiting (Upstash Redis)
+- [ ] UI chat basique (shadcn/ui)
+- [ ] Citations automatiques des sources
+
 ### Refactoring - Scripts d'import/sync
 
 **Objectif** : Rendre les scripts d'import plus intelligents et robustes.
@@ -398,17 +530,20 @@ Le workflow GitHub Actions `.github/workflows/sync-data.yml` s'exécute :
 
 ### Court terme (1-2 semaines)
 
-| Évolution | Impact | Effort |
-|-----------|--------|--------|
-| Progression sync votes | UX dev | Faible |
-| Votes sur fiches politiciens | UX utilisateur | Moyen |
-| Stats votes par parti | Insight | Moyen |
-| Améliorer mobile menu | UX mobile | Faible |
+| Évolution | Impact | Effort | Statut |
+|-----------|--------|--------|--------|
+| Progression sync votes | UX dev | Faible | ✅ Fait |
+| Votes sur fiches politiciens | UX utilisateur | Moyen | ✅ Fait |
+| Stats votes par parti | Insight | Moyen | |
+| Améliorer mobile menu | UX mobile | Faible | |
+| **Admin dossiers législatifs** | Gestion contenu | Moyen | 🎯 Prioritaire |
+| **Bouton "Generate with AI"** | Productivité admin | Moyen | 🎯 Prioritaire |
 
 ### Moyen terme (1-2 mois)
 
 | Évolution | Impact | Effort | Statut |
 |-----------|--------|--------|--------|
+| **Chatbot IA citoyen (MVP)** | Engagement | Élevé | 🎯 Prioritaire |
 | Votes Sénat (NosSénateurs) | Complétude | Moyen | |
 | Carte interactive départements | Visualisation | Élevé | |
 | Comparateur politiciens | Feature | Moyen | |

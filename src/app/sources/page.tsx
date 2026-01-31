@@ -150,18 +150,22 @@ export default function SourcesPage() {
         <CardContent className="prose prose-sm max-w-none">
           <p className="text-base leading-relaxed">
             <strong>Transparence Politique</strong> est un projet citoyen indépendant
-            dont l&apos;objectif est de rendre accessible et compréhensible l&apos;information
-            sur nos représentants politiques.
+            qui rassemble les informations publiques sur les responsables politiques français :
+            parcours, mandats, votes, déclarations et affaires judiciaires.
           </p>
           <p className="text-base leading-relaxed mt-4">
-            Nous croyons que l&apos;accès à l&apos;information est un pilier de la démocratie.
-            Les citoyens ont le droit de connaître le parcours, les mandats et les
-            éventuelles affaires judiciaires de leurs élus.
+            La démocratie repose sur des citoyens informés. Nous facilitons l&apos;accès
+            à des données dispersées entre de nombreuses sources officielles pour permettre
+            à chacun d&apos;exercer son droit de regard sur ses représentants.
           </p>
           <p className="text-base leading-relaxed mt-4">
-            Ce projet ne poursuit aucun agenda politique. Nous appliquons les mêmes
-            critères à tous les élus, indépendamment de leur appartenance partisane.
-            Notre seul engagement est envers les faits documentés et vérifiables.
+            Nous appliquons les mêmes critères à tous les élus, indépendamment de leur
+            appartenance partisane. Les données proviennent de sources officielles
+            (Assemblée nationale, Sénat, HATVP) et sont documentées de façon transparente.
+          </p>
+          <p className="text-base leading-relaxed mt-4">
+            Ce projet est <strong>open source</strong> et contributif. Le code, les données
+            et la méthodologie sont accessibles à tous.
           </p>
         </CardContent>
       </Card>

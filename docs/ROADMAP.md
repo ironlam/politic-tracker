@@ -1,6 +1,6 @@
 # Roadmap - Transparence Politique
 
-> **Dernière mise à jour** : 2026-01-25
+> **Dernière mise à jour** : 2026-01-31
 
 Ce document recense les évolutions envisagées pour le projet, classées par priorité et complexité.
 
@@ -98,10 +98,10 @@ Transparence Politique vise à rendre accessible l'information sur les représen
 ### 3.3 Activité parlementaire (En cours)
 
 - [x] Votes publics depuis NosDéputés (16e législature)
+- [x] **Votes 17e législature** depuis data.assemblee-nationale.fr (5283 scrutins, ~880k votes)
 - [x] Page /votes avec liste des scrutins
 - [x] Votes par politicien sur leur fiche
 - [ ] Votes du Sénat (NosSénateurs)
-- [ ] Votes de la 17e législature (quand disponible)
 - [ ] Présence en commission
 - [ ] Questions au gouvernement
 
@@ -156,6 +156,49 @@ Transparence Politique vise à rendre accessible l'information sur les représen
 | **Badges de transparence** | "A déclaré son patrimoine", "Présent en commission" | Moyenne |
 | **Widget embeddable** | `<iframe>` pour intégration médias | Moyenne |
 | **Historique des changements** | Voir l'évolution des fiches (audit log public) | Basse |
+
+### 4.6 Engagement citoyen (2026-01-31)
+
+Objectif : Permettre aux citoyens de comprendre et d'interagir avec leurs représentants.
+
+| Idée | Description | Effort | Valeur |
+|------|-------------|--------|--------|
+| **Liens permanences élus** | Contact direct avec son député/sénateur | Faible | Haute |
+| **Stats présence/activité** | Équilibre avec données positives (pas que les affaires) | Moyen | Haute |
+| **Glossaire juridique** | Explication des statuts (mise en examen ≠ condamnation) | Faible | Moyenne |
+| **"Ce vote me concerne"** | Expliquer l'impact d'un vote sur la vie quotidienne | Moyen | Haute |
+
+### 4.7 Chatbot IA / RAG (2026-01-31)
+
+**Objectif** : Permettre aux citoyens de poser des questions en langage naturel.
+
+**Architecture envisagée** :
+```
+Question utilisateur
+        │
+        ▼
+┌───────────────────┐
+│ Recherche sémantique │  ← pgvector sur Supabase
+│ (politiciens, votes, │
+│  affaires)           │
+└───────────────────┘
+        │
+        ▼
+┌───────────────────┐
+│ LLM + contexte    │  → Claude Haiku (économique)
+└───────────────────┘
+        │
+        ▼
+   Réponse sourcée
+```
+
+**Exemples de questions** :
+- "Qui est mon député à Lyon ?"
+- "Comment Marine Le Pen a-t-elle voté sur les retraites ?"
+- "Quels ministres ont été condamnés ?"
+- "Qu'est-ce que ce vote sur la loi X peut changer pour un étudiant ?"
+
+**Idée avancée** : RAG capable d'expliquer ce qu'une situation personnelle peut attendre de certains votes (ex: "En tant que locataire, que change cette loi ?")
 
 ---
 

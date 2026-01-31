@@ -46,6 +46,12 @@ export default async function AdminLayout({
                 >
                   Partis
                 </Link>
+                <Link
+                  href="/admin/dossiers"
+                  className="hover:text-slate-300 transition-colors"
+                >
+                  Dossiers
+                </Link>
               </nav>
             </div>
             <div className="flex items-center gap-4">

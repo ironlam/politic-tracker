@@ -1,0 +1,66 @@
+name: Sync Content (Legislation + AI)
+
+on:
+  schedule:
+    # Run every Sunday at 5:00 AM UTC (after votes sync)
+    - cron: '0 5 * * 0'
+  workflow_dispatch:
+    inputs:
+      summaries_limit:
+        description: 'Max AI summaries to generate (default: 20)'
+        required: false
+        default: '20'
+        type: string
+
+env:
+  DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+jobs:
+  sync-content:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+
+      - name: Sync Legislation (Dossiers Législatifs)
+        run: npm run sync:legislation
+        continue-on-error: true
+
+      - name: Show legislation stats
+        run: npm run sync:legislation:stats
+        continue-on-error: true
+
+      - name: Generate AI Summaries (Active Dossiers)
+        run: npm run generate:summaries -- --limit=${{ github.event.inputs.summaries_limit || '20' }}
+        continue-on-error: true
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+      - name: Show summaries stats
+        run: npm run generate:summaries:stats
+        continue-on-error: true
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## Sync Content Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Summaries limit**: ${{ github.event.inputs.summaries_limit || '20' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Triggered by**: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY

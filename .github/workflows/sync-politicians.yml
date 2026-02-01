@@ -1,19 +1,18 @@
-name: Sync Data
+name: Sync Politicians
 
 on:
   schedule:
-    # Run every Sunday at 3:00 AM UTC (4:00 AM Paris time)
+    # Run every Sunday at 3:00 AM UTC
     - cron: '0 3 * * 0'
   workflow_dispatch:
-    # Allow manual trigger
 
 env:
   DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
 jobs:
-  sync:
+  sync-politicians:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 30
 
     steps:
       - name: Checkout repository
@@ -51,29 +50,13 @@ jobs:
         run: npm run sync:deceased
         continue-on-error: true
 
-      - name: Sync Votes (17th Legislature - Official AN)
-        run: npm run sync:votes-an
-        continue-on-error: true
-
-      - name: Sync Legislation (Dossiers Législatifs)
-        run: npm run sync:legislation
-        continue-on-error: true
-
-      - name: Generate AI Summaries (Active Dossiers)
-        run: npm run generate:summaries -- --limit=20
-        continue-on-error: true
-        env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-
       - name: Show sync stats
         run: npm run sync:stats
 
-      - name: Show legislation stats
-        run: npm run sync:legislation:stats
-        continue-on-error: true
-
-      - name: Notify on failure
-        if: failure()
+      - name: Summary
+        if: always()
         run: |
-          echo "Sync job failed. Check the logs above for details."
-          # Add Slack/email notification here if needed
+          echo "## Sync Politicians Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Triggered by**: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY

@@ -47,7 +47,12 @@
     "index:embeddings:stats": "tsx scripts/index-embeddings.ts --stats",
     "db:backup": "tsx scripts/backup-database.ts",
     "db:backup:list": "tsx scripts/backup-database.ts --list",
-    "db:backup:clean": "tsx scripts/backup-database.ts --clean=30"
+    "db:backup:clean": "tsx scripts/backup-database.ts --clean=30",
+    "test:chatbot": "tsx scripts/test-chatbot.ts",
+    "test:chatbot:verbose": "tsx scripts/test-chatbot.ts --verbose",
+    "test:data": "tsx scripts/test-data-quality.ts",
+    "test:data:verbose": "tsx scripts/test-data-quality.ts --verbose",
+    "test:all": "npm run test:data && npm run test:chatbot"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.33",

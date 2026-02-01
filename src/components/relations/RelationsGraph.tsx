@@ -22,6 +22,7 @@ interface RelationsGraphProps {
   links: GraphLink[];
   width?: number;
   height?: number;
+  isMobile?: boolean;
 }
 
 interface ForceGraphNode extends GraphNode {
@@ -45,6 +46,7 @@ export function RelationsGraph({
   links,
   width = 800,
   height = 500,
+  isMobile = false,
 }: RelationsGraphProps) {
   const router = useRouter();
   const graphRef = useRef<any>(null);
@@ -57,13 +59,31 @@ export function RelationsGraph({
     links: links as ForceGraphLink[],
   };
 
-  // Center the graph on mount
+  // Calculate optimal distance based on node count
+  const nodeCount = allNodes.length;
+  const baseDistance = isMobile ? 80 : 120;
+  const linkDistance = Math.max(baseDistance, baseDistance + nodeCount * 3);
+  const chargeStrength = isMobile ? -200 : -300 - nodeCount * 5;
+
+  // Center the graph on mount and configure forces
   useEffect(() => {
     if (graphRef.current) {
-      graphRef.current.centerAt(0, 0, 1000);
-      graphRef.current.zoom(1.5, 1000);
+      // Configure d3 forces for better spacing
+      graphRef.current.d3Force("charge")?.strength(chargeStrength);
+      graphRef.current.d3Force("link")?.distance(linkDistance);
+      graphRef.current.d3Force("center")?.strength(0.05);
+
+      // Add collision force to prevent overlap
+      const d3 = graphRef.current.d3Force;
+      if (d3) {
+        graphRef.current.d3Force("collide", null);
+      }
+
+      setTimeout(() => {
+        graphRef.current?.zoomToFit(400, 50);
+      }, 500);
     }
-  }, []);
+  }, [chargeStrength, linkDistance, nodeCount]);
 
   // Handle node click - navigate to politician page
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -76,15 +96,25 @@ export function RelationsGraph({
     [router]
   );
 
-  // Custom node rendering
+  // Custom node rendering - optimized for readability
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const nodeCanvasObject = useCallback(
     (node: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
       const isCenter = node.id === center.id;
-      const radius = isCenter ? 12 : 8;
-      const fontSize = Math.max(10 / globalScale, 3);
+      const baseRadius = isMobile ? 6 : 8;
+      const radius = isCenter ? baseRadius * 1.5 : baseRadius;
 
-      // Draw circle
+      // Only show labels when zoomed in enough
+      const showLabel = globalScale > 0.6;
+      const fontSize = isMobile ? 9 : 11;
+
+      // Draw circle with white background for contrast
+      ctx.beginPath();
+      ctx.arc(node.x || 0, node.y || 0, radius + 2, 0, 2 * Math.PI);
+      ctx.fillStyle = "#fff";
+      ctx.fill();
+
+      // Draw colored circle
       ctx.beginPath();
       ctx.arc(node.x || 0, node.y || 0, radius, 0, 2 * Math.PI);
       ctx.fillStyle = node.party?.color || "#6B7280";
@@ -93,21 +123,46 @@ export function RelationsGraph({
       // Draw border for center node
       if (isCenter) {
         ctx.strokeStyle = "#000";
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 3;
         ctx.stroke();
       }
 
-      // Draw label
-      ctx.font = `${isCenter ? "bold " : ""}${fontSize}px Sans-Serif`;
-      ctx.textAlign = "center";
-      ctx.textBaseline = "top";
-      ctx.fillStyle = "#333";
+      // Draw label only when zoomed in
+      if (showLabel) {
+        const scaledFontSize = Math.max(fontSize / globalScale, 8);
+        ctx.font = `${isCenter ? "bold " : ""}${scaledFontSize}px -apple-system, BlinkMacSystemFont, sans-serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "top";
 
-      // Truncate name if too long
-      const name = node.fullName?.length > 20 ? node.fullName.slice(0, 18) + "..." : node.fullName || "";
-      ctx.fillText(name, node.x || 0, (node.y || 0) + radius + 2);
+        // Get short name (first name + last initial or just last name)
+        const fullName = node.fullName || "";
+        const parts = fullName.split(" ");
+        let displayName = fullName;
+        if (parts.length > 2) {
+          // First name + Last name (skip middle names)
+          displayName = `${parts[0]} ${parts[parts.length - 1]}`;
+        }
+        if (displayName.length > 18) {
+          displayName = displayName.slice(0, 16) + "…";
+        }
+
+        // Draw text background for readability
+        const textWidth = ctx.measureText(displayName).width;
+        const padding = 2;
+        ctx.fillStyle = "rgba(255, 255, 255, 0.85)";
+        ctx.fillRect(
+          (node.x || 0) - textWidth / 2 - padding,
+          (node.y || 0) + radius + 2,
+          textWidth + padding * 2,
+          scaledFontSize + 2
+        );
+
+        // Draw text
+        ctx.fillStyle = isCenter ? "#000" : "#333";
+        ctx.fillText(displayName, node.x || 0, (node.y || 0) + radius + 3);
+      }
     },
-    [center.id]
+    [center.id, isMobile]
   );
 
   // Custom link rendering
@@ -122,7 +177,7 @@ export function RelationsGraph({
   }, []);
 
   return (
-    <div className="border rounded-lg overflow-hidden bg-muted/20">
+    <div className="border rounded-lg overflow-hidden bg-muted/20 relative">
       <ForceGraph2D
         ref={graphRef}
         graphData={graphData}
@@ -136,21 +191,47 @@ export function RelationsGraph({
         nodePointerAreaPaint={(node: any, color: string, ctx: CanvasRenderingContext2D) => {
           ctx.fillStyle = color;
           ctx.beginPath();
-          ctx.arc(node.x || 0, node.y || 0, 12, 0, 2 * Math.PI);
+          ctx.arc(node.x || 0, node.y || 0, 15, 0, 2 * Math.PI);
           ctx.fill();
         }}
         linkColor={linkColor}
         linkWidth={linkWidth}
         linkDirectionalParticles={0}
         onNodeClick={handleNodeClick}
-        cooldownTicks={100}
-        onEngineStop={() => graphRef.current?.zoomToFit(400, 80)}
+        cooldownTicks={150}
+        warmupTicks={50}
+        onEngineStop={() => graphRef.current?.zoomToFit(400, 60)}
         enableZoomInteraction={true}
         enablePanInteraction={true}
-        // Improved force settings for better spacing
-        d3AlphaDecay={0.02}
-        d3VelocityDecay={0.3}
+        // Improved force settings for much better spacing
+        d3AlphaDecay={0.01}
+        d3VelocityDecay={0.2}
       />
+
+      {/* Zoom controls */}
+      <div className="absolute bottom-3 right-3 flex flex-col gap-1">
+        <button
+          onClick={() => graphRef.current?.zoom(graphRef.current.zoom() * 1.3, 300)}
+          className="w-8 h-8 rounded bg-background/90 border shadow-sm flex items-center justify-center text-lg hover:bg-muted transition-colors"
+          title="Zoom avant"
+        >
+          +
+        </button>
+        <button
+          onClick={() => graphRef.current?.zoom(graphRef.current.zoom() / 1.3, 300)}
+          className="w-8 h-8 rounded bg-background/90 border shadow-sm flex items-center justify-center text-lg hover:bg-muted transition-colors"
+          title="Zoom arrière"
+        >
+          −
+        </button>
+        <button
+          onClick={() => graphRef.current?.zoomToFit(400, 60)}
+          className="w-8 h-8 rounded bg-background/90 border shadow-sm flex items-center justify-center text-xs hover:bg-muted transition-colors"
+          title="Ajuster à l'écran"
+        >
+          ⊡
+        </button>
+      </div>
     </div>
   );
 }

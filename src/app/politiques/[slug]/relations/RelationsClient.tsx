@@ -12,11 +12,41 @@ interface RelationsClientProps {
   politicianName: string;
 }
 
+const NODE_LIMITS = [
+  { value: 5, label: "5 nœuds" },
+  { value: 10, label: "10 nœuds" },
+  { value: 20, label: "20 nœuds" },
+  { value: 50, label: "50 nœuds" },
+];
+
 export function RelationsClient({ slug, politicianName }: RelationsClientProps) {
   const [selectedTypes, setSelectedTypes] = useState<RelationType[]>(DEFAULT_RELATION_TYPES);
+  const [nodeLimit, setNodeLimit] = useState(10);
   const [data, setData] = useState<RelationsResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
+  const [graphDimensions, setGraphDimensions] = useState({ width: 800, height: 500 });
+
+  // Detect mobile and set dimensions
+  useEffect(() => {
+    const checkMobile = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      setGraphDimensions({
+        width: Math.min(window.innerWidth - 32, 1200),
+        height: mobile ? 350 : 500,
+      });
+      // Reduce node limit on mobile for performance
+      if (mobile && nodeLimit > 10) {
+        setNodeLimit(10);
+      }
+    };
+
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, [nodeLimit]);
 
   const fetchRelations = useCallback(async () => {
     setIsLoading(true);
@@ -25,7 +55,7 @@ export function RelationsClient({ slug, politicianName }: RelationsClientProps) 
     try {
       const params = new URLSearchParams();
       params.set("types", selectedTypes.join(","));
-      params.set("limit", "8"); // Reduced for better visualization
+      params.set("limit", String(nodeLimit));
 
       const response = await fetch(`/api/politiques/${slug}/relations?${params}`);
 
@@ -40,7 +70,7 @@ export function RelationsClient({ slug, politicianName }: RelationsClientProps) 
     } finally {
       setIsLoading(false);
     }
-  }, [slug, selectedTypes]);
+  }, [slug, selectedTypes, nodeLimit]);
 
   useEffect(() => {
     fetchRelations();
@@ -49,8 +79,33 @@ export function RelationsClient({ slug, politicianName }: RelationsClientProps) 
   return (
     <div className="space-y-6">
       {/* Filters */}
-      <div className="bg-muted/30 rounded-lg p-4">
+      <div className="bg-muted/30 rounded-lg p-4 space-y-4">
         <RelationFilters selectedTypes={selectedTypes} onChange={setSelectedTypes} />
+
+        {/* Node limit selector */}
+        <div className="flex items-center justify-between pt-3 border-t">
+          <label htmlFor="node-limit" className="text-sm font-medium">
+            Nombre de connexions
+          </label>
+          <select
+            id="node-limit"
+            value={nodeLimit}
+            onChange={(e) => setNodeLimit(parseInt(e.target.value))}
+            className="px-3 py-1.5 rounded-lg border bg-background text-sm"
+          >
+            {NODE_LIMITS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {isMobile && nodeLimit > 10 && (
+          <p className="text-xs text-amber-600 bg-amber-50 rounded px-2 py-1">
+            Sur mobile, un nombre élevé de nœuds peut ralentir l&apos;affichage.
+          </p>
+        )}
       </div>
 
       {/* Loading state */}
@@ -98,8 +153,9 @@ export function RelationsClient({ slug, politicianName }: RelationsClientProps) 
                 center={data.center}
                 nodes={data.nodes}
                 links={data.links}
-                width={typeof window !== "undefined" ? Math.min(window.innerWidth - 64, 1200) : 800}
-                height={500}
+                width={graphDimensions.width}
+                height={graphDimensions.height}
+                isMobile={isMobile}
               />
 
               {/* Legend and stats */}

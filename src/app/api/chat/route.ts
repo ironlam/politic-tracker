@@ -98,14 +98,41 @@ async function getGlobalStats(): Promise<{
   totalPoliticians: number;
   totalDossiers: number;
   totalVotes: number;
+  totalDeputies: number;
+  totalSenators: number;
+  totalMEPs: number;
+  totalMinisters: number;
 }> {
-  const [totalAffairs, totalPoliticians, totalDossiers, totalVotes] = await Promise.all([
+  const [totalAffairs, totalPoliticians, totalDossiers, totalVotes, mandateCounts] = await Promise.all([
     db.affair.count(),
     db.politician.count(),
     db.legislativeDossier.count(),
     db.scrutin.count(),
+    db.mandate.groupBy({
+      by: ["type"],
+      where: { isCurrent: true },
+      _count: true,
+    }),
   ]);
-  return { totalAffairs, totalPoliticians, totalDossiers, totalVotes };
+
+  const countByType: Record<string, number> = {};
+  for (const m of mandateCounts) {
+    countByType[m.type] = m._count;
+  }
+
+  return {
+    totalAffairs,
+    totalPoliticians,
+    totalDossiers,
+    totalVotes,
+    totalDeputies: countByType["DEPUTE"] || 0,
+    totalSenators: countByType["SENATEUR"] || 0,
+    totalMEPs: countByType["DEPUTE_EUROPEEN"] || 0,
+    totalMinisters: (countByType["MINISTRE"] || 0) +
+                    (countByType["MINISTRE_DELEGUE"] || 0) +
+                    (countByType["SECRETAIRE_ETAT"] || 0) +
+                    (countByType["PREMIER_MINISTRE"] || 0),
+  };
 }
 
 // Build context from RAG search results
@@ -128,18 +155,47 @@ async function buildContext(results: SearchResult[], query: string): Promise<str
 
   if (isBroadQuery) {
     const stats = await getGlobalStats();
-    let statsInfo = "STATISTIQUES GLOBALES:\n";
+    let statsInfo = "STATISTIQUES OFFICIELLES:\n";
+
+    // Deputy stats - ALWAYS include when query mentions députés
+    if (lowerQuery.includes("député")) {
+      statsInfo += `- NOMBRE DE DÉPUTÉS: ${stats.totalDeputies} députés à l'Assemblée nationale (577 sièges)\n`;
+      statsInfo += `- Rubrique: /politiques?type=depute\n`;
+    }
+
+    // Senator stats
+    if (lowerQuery.includes("sénateur")) {
+      statsInfo += `- NOMBRE DE SÉNATEURS: ${stats.totalSenators} sénateurs au Sénat (348 sièges)\n`;
+      statsInfo += `- Rubrique: /politiques?type=senateur\n`;
+    }
+
+    // MEP stats
+    if (lowerQuery.includes("eurodéputé") || lowerQuery.includes("européen")) {
+      statsInfo += `- NOMBRE D'EURODÉPUTÉS FRANÇAIS: ${stats.totalMEPs} (81 sièges pour la France)\n`;
+    }
+
+    // Minister stats
+    if (lowerQuery.includes("ministre") || lowerQuery.includes("gouvernement")) {
+      statsInfo += `- MEMBRES DU GOUVERNEMENT: ${stats.totalMinisters} ministres et secrétaires d'État\n`;
+    }
+
+    // Affair stats
     if (lowerQuery.includes("affaire")) {
       statsInfo += `- Total affaires judiciaires référencées: ${stats.totalAffairs}\n`;
       statsInfo += `- Rubrique complète: /affaires\n`;
     }
+
+    // Dossier stats
     if (lowerQuery.includes("dossier") || lowerQuery.includes("loi") || lowerQuery.includes("législat")) {
       statsInfo += `- Total dossiers législatifs: ${stats.totalDossiers}\n`;
       statsInfo += `- Rubrique complète: /assemblee\n`;
     }
+
+    // Vote stats
     if (lowerQuery.includes("vote") || lowerQuery.includes("scrutin")) {
       statsInfo += `- Total votes enregistrés: ${stats.totalVotes}\n`;
     }
+
     sections.push(statsInfo);
   }
 

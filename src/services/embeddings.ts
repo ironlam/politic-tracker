@@ -486,17 +486,32 @@ export async function indexGlobalStats(): Promise<void> {
   const dossierCount = await db.legislativeDossier.count();
 
   const content = `
-Statistiques de l'Assemblée nationale et du Parlement français.
-Combien de députés ? Il y a ${deputyCount} députés à l'Assemblée nationale.
-Combien de sénateurs ? Il y a ${senatorCount} sénateurs au Sénat.
-Combien de membres du gouvernement ? Il y a ${ministerCount} membres du gouvernement (ministres et secrétaires d'État).
-Combien d'eurodéputés français ? Il y a ${mepCount} eurodéputés français au Parlement européen.
-Combien de partis politiques ? Il y a ${partyCount} partis politiques référencés.
-Combien d'affaires judiciaires ? Il y a ${affairCount} affaires judiciaires référencées, dont ${condemnedCount} condamnations définitives.
-Combien de dossiers législatifs ? Il y a ${dossierCount} dossiers législatifs référencés.
-L'Assemblée nationale compte 577 sièges de députés.
-Le Sénat compte 348 sièges de sénateurs.
-La France dispose de 81 sièges au Parlement européen.
+STATISTIQUES OFFICIELLES DU PARLEMENT FRANÇAIS - Données globales et totaux.
+
+DÉPUTÉS - ASSEMBLÉE NATIONALE:
+- Combien y a-t-il de députés ? Il y a ${deputyCount} députés.
+- Combien de députés en France ? ${deputyCount} députés à l'Assemblée nationale.
+- Nombre total de députés : ${deputyCount}
+- L'Assemblée nationale compte 577 sièges.
+
+SÉNATEURS - SÉNAT:
+- Combien y a-t-il de sénateurs ? Il y a ${senatorCount} sénateurs.
+- Combien de sénateurs en France ? ${senatorCount} sénateurs au Sénat.
+- Nombre total de sénateurs : ${senatorCount}
+- Le Sénat compte 348 sièges.
+
+GOUVERNEMENT:
+- Combien de membres du gouvernement ? ${ministerCount} membres (ministres et secrétaires d'État).
+- Combien de ministres ? ${ministerCount} au total.
+
+PARLEMENT EUROPÉEN:
+- Combien d'eurodéputés français ? ${mepCount} eurodéputés.
+- La France dispose de 81 sièges au Parlement européen.
+
+AUTRES STATISTIQUES:
+- Partis politiques référencés : ${partyCount}
+- Affaires judiciaires : ${affairCount} (dont ${condemnedCount} condamnations définitives)
+- Dossiers législatifs : ${dossierCount}
   `.trim();
 
   await indexDocument({

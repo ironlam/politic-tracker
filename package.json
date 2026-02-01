@@ -52,7 +52,9 @@
     "test:chatbot:verbose": "tsx scripts/test-chatbot.ts --verbose",
     "test:data": "tsx scripts/test-data-quality.ts",
     "test:data:verbose": "tsx scripts/test-data-quality.ts --verbose",
-    "test:all": "npm run test:data && npm run test:chatbot"
+    "test:all": "npm run test:data && npm run test:chatbot",
+    "validate:truth": "tsx scripts/validate-truth.ts",
+    "validate:truth:verbose": "tsx scripts/validate-truth.ts --verbose"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.33",

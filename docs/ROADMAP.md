@@ -1,6 +1,6 @@
 # Roadmap - Transparence Politique
 
-> **Dernière mise à jour** : 2026-01-31
+> **Dernière mise à jour** : 2026-02-01
 
 Ce document recense les évolutions envisagées pour le projet, classées par priorité et complexité.
 
@@ -43,6 +43,23 @@ Transparence Politique vise à rendre accessible l'information sur les représen
 - Données structurées (JSON-LD)
 - Amélioration du contraste (WCAG AA)
 - Navigation clavier complète
+
+### 1.5 URLs SEO-friendly (human-readable)
+
+**Objectif** : Rendre les URLs lisibles et partageables pour améliorer le SEO et l'UX.
+
+| Route actuelle | Route proposée | Exemple |
+|----------------|----------------|---------|
+| `/votes/[id]` (CUID) | `/votes/[slug]` | `/votes/2024-01-15-loi-immigration-asile` |
+| `/assemblee/[id]` (CUID) | `/assemblee/[slug]` | `/assemblee/ppl-3196-souverainete-agricole` |
+
+**Implémentation prévue** :
+1. Ajouter champ `slug` aux modèles `Scrutin` et `LegislativeDossier`
+2. Générer les slugs : `YYYY-MM-DD-titre-slugifie` (max 80 chars)
+3. Script de migration pour les données existantes
+4. Route dynamique : lookup par slug OU id (rétrocompatibilité)
+5. **Redirect 301** si accès par ancien ID → nouveau slug (SEO juice transfer)
+6. Mettre à jour les liens internes (chatbot, pages)
 
 ---
 
@@ -511,6 +528,7 @@ npm run sync:parties        # Partis politiques
 - Matcher par nom + date de naissance pour éviter les homonymes
 
 ### À faire court terme
+- [ ] **URLs SEO-friendly** (slugs + redirects 301 pour `/votes/` et `/assemblee/`)
 - [ ] Votes du Sénat (NosSénateurs)
 - [ ] Page comparative entre politiciens
 - [ ] Export CSV des données
@@ -538,6 +556,7 @@ Le workflow GitHub Actions `.github/workflows/sync-data.yml` s'exécute :
 | Améliorer mobile menu | UX mobile | Faible | |
 | **Admin dossiers législatifs** | Gestion contenu | Moyen | 🎯 Prioritaire |
 | **Bouton "Generate with AI"** | Productivité admin | Moyen | 🎯 Prioritaire |
+| **URLs SEO-friendly** | SEO + UX | Moyen | 🎯 À faire |
 
 ### Moyen terme (1-2 mois)
 

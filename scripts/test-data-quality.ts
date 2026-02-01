@@ -129,10 +129,13 @@ const CHECKS: QualityCheck[] = [
         select: { fullName: true, mandates: { where: { isCurrent: true }, select: { type: true } } },
       });
       // Filter out those who might legitimately have no party
-      const suspicious = politicians.filter(
-        (p) => p.mandates.some((m) =>
-          [MandateType.DEPUTE, MandateType.SENATEUR, MandateType.DEPUTE_EUROPEEN].includes(m.type)
-        )
+      const partyMandateTypes: MandateType[] = [
+        MandateType.DEPUTE,
+        MandateType.SENATEUR,
+        MandateType.DEPUTE_EUROPEEN,
+      ];
+      const suspicious = politicians.filter((p) =>
+        p.mandates.some((m) => partyMandateTypes.includes(m.type))
       );
       return {
         passed: suspicious.length < 20,

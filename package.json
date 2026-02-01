@@ -54,7 +54,10 @@
     "test:data:verbose": "tsx scripts/test-data-quality.ts --verbose",
     "test:all": "npm run test:data && npm run test:chatbot",
     "validate:truth": "tsx scripts/validate-truth.ts",
-    "validate:truth:verbose": "tsx scripts/validate-truth.ts --verbose"
+    "validate:truth:verbose": "tsx scripts/validate-truth.ts --verbose",
+    "test:visual": "playwright test",
+    "test:visual:update": "playwright test --update-snapshots",
+    "test:visual:report": "playwright show-report tests/visual/playwright-report"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.33",
@@ -83,6 +86,7 @@
     "zod": "^4.3.5"
   },
   "devDependencies": {
+    "@playwright/test": "^1.58.1",
     "@prisma/client": "^7.2.0",
     "@tailwindcss/postcss": "^4",
     "@testing-library/dom": "^10.4.1",
@@ -98,6 +102,7 @@
     "eslint": "^9",
     "eslint-config-next": "^16.1.4",
     "jsdom": "^27.4.0",
+    "playwright": "^1.58.1",
     "prisma": "^7.2.0",
     "tailwindcss": "^4",
     "tsx": "^4.21.0",

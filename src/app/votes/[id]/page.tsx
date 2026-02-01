@@ -15,7 +15,8 @@ interface PageProps {
 }
 
 async function getScrutin(id: string) {
-  return db.scrutin.findUnique({
+  // Try to find by internal ID first
+  let scrutin = await db.scrutin.findUnique({
     where: { id },
     include: {
       votes: {
@@ -32,6 +33,29 @@ async function getScrutin(id: string) {
       },
     },
   });
+
+  // If not found, try by externalId (NosDéputés ID like "4011")
+  if (!scrutin) {
+    scrutin = await db.scrutin.findUnique({
+      where: { externalId: id },
+      include: {
+        votes: {
+          include: {
+            politician: {
+              include: {
+                currentParty: true,
+              },
+            },
+          },
+        },
+        orderBy: {
+          politician: { lastName: "asc" },
+        },
+      },
+    });
+  }
+
+  return scrutin;
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {

@@ -15,7 +15,8 @@ interface PageProps {
 }
 
 async function getDossier(id: string) {
-  return db.legislativeDossier.findUnique({
+  // Try to find by internal ID first
+  let dossier = await db.legislativeDossier.findUnique({
     where: { id },
     include: {
       amendments: {
@@ -24,6 +25,34 @@ async function getDossier(id: string) {
       },
     },
   });
+
+  // If not found, try by externalId (e.g., DLR5L17N12345)
+  if (!dossier) {
+    dossier = await db.legislativeDossier.findUnique({
+      where: { externalId: id },
+      include: {
+        amendments: {
+          orderBy: { number: "asc" },
+          take: 50,
+        },
+      },
+    });
+  }
+
+  // If still not found, try by number (e.g., 3196)
+  if (!dossier) {
+    dossier = await db.legislativeDossier.findFirst({
+      where: { number: id },
+      include: {
+        amendments: {
+          orderBy: { number: "asc" },
+          take: 50,
+        },
+      },
+    });
+  }
+
+  return dossier;
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {

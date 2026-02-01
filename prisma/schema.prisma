@@ -481,12 +481,13 @@ model AuditLog {
 
 model Scrutin {
   id            String       @id @default(cuid())
-  externalId    String       @unique  // ID NosDéputés (ex: "1234")
+  externalId    String       @unique  // ID NosDéputés/NosSénateurs (ex: "VTANR5L17V1234" ou "2024-63")
   slug          String?      @unique  // SEO-friendly URL slug (e.g., "2025-01-15-projet-loi-finances")
   title         String       @db.Text
   description   String?      @db.Text
   votingDate    DateTime
   legislature   Int
+  chamber       Chamber      @default(AN)  // AN = Assemblée Nationale, SENAT = Sénat
 
   // Global results
   votesFor      Int
@@ -504,6 +505,7 @@ model Scrutin {
 
   @@index([votingDate])
   @@index([legislature])
+  @@index([chamber])
 }
 
 model Vote {
@@ -530,6 +532,11 @@ enum VotePosition {
 enum VotingResult {
   ADOPTED
   REJECTED
+}
+
+enum Chamber {
+  AN      // Assemblée Nationale
+  SENAT   // Sénat
 }
 
 // ============================================

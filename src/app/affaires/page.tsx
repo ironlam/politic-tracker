@@ -3,6 +3,7 @@ import Link from "next/link";
 import { db } from "@/lib/db";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { ExportButton } from "@/components/ui/ExportButton";
 import {
   AFFAIR_STATUS_LABELS,
   AFFAIR_STATUS_COLORS,
@@ -141,12 +142,22 @@ export default async function AffairesPage({ searchParams }: PageProps) {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Affaires judiciaires</h1>
-        <p className="text-muted-foreground">
-          {totalAffairs} affaire{totalAffairs !== 1 ? "s" : ""} documentée
-          {totalAffairs !== 1 ? "s" : ""} avec sources vérifiables
-        </p>
+      <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold mb-2">Affaires judiciaires</h1>
+          <p className="text-muted-foreground">
+            {totalAffairs} affaire{totalAffairs !== 1 ? "s" : ""} documentée
+            {totalAffairs !== 1 ? "s" : ""} avec sources vérifiables
+          </p>
+        </div>
+        <ExportButton
+          endpoint="/api/export/affaires"
+          label="Export CSV"
+          params={{
+            status: statusFilter || undefined,
+            category: categoryFilter || undefined,
+          }}
+        />
       </div>
 
       {/* Super-category cards */}

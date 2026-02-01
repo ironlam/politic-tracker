@@ -2,8 +2,9 @@ import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { VotingResultBadge } from "./VoteBadge";
 import { formatDate } from "@/lib/utils";
-import type { VotingResult } from "@/types";
-import { Calendar, Users, ExternalLink } from "lucide-react";
+import type { VotingResult, Chamber } from "@/types";
+import { CHAMBER_SHORT_LABELS } from "@/config/labels";
+import { Calendar, Users, ExternalLink, Building2 } from "lucide-react";
 
 interface VoteCardProps {
   id: string;
@@ -12,6 +13,7 @@ interface VoteCardProps {
   title: string;
   votingDate: Date | string;
   legislature: number;
+  chamber?: Chamber;
   votesFor: number;
   votesAgainst: number;
   votesAbstain: number;
@@ -27,6 +29,7 @@ export function VoteCard({
   title,
   votingDate,
   legislature,
+  chamber,
   votesFor,
   votesAgainst,
   votesAbstain,
@@ -50,6 +53,16 @@ export function VoteCard({
               <h3 className="font-medium text-sm line-clamp-2">{title}</h3>
             </Link>
             <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+              {chamber && (
+                <span className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium ${
+                  chamber === "AN"
+                    ? "bg-blue-100 text-blue-700"
+                    : "bg-rose-100 text-rose-700"
+                }`}>
+                  <Building2 className="h-3 w-3" />
+                  {CHAMBER_SHORT_LABELS[chamber]}
+                </span>
+              )}
               <span className="flex items-center gap-1">
                 <Calendar className="h-3 w-3" />
                 {formatDate(new Date(votingDate))}

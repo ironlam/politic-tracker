@@ -1,4 +1,4 @@
-import type { AffairStatus, AffairCategory, MandateType, DataSource, PoliticalPosition, AffairEventType, VotePosition, VotingResult } from "@/types";
+import type { AffairStatus, AffairCategory, MandateType, DataSource, PoliticalPosition, AffairEventType, VotePosition, VotingResult, Chamber } from "@/types";
 
 export const AFFAIR_STATUS_LABELS: Record<AffairStatus, string> = {
   ENQUETE_PRELIMINAIRE: "Enquête préliminaire",
@@ -319,6 +319,25 @@ export const VOTING_RESULT_LABELS: Record<VotingResult, string> = {
 export const VOTING_RESULT_COLORS: Record<VotingResult, string> = {
   ADOPTED: "bg-green-100 text-green-800",
   REJECTED: "bg-red-100 text-red-800",
+};
+
+// ============================================
+// CHAMBER (Assemblée / Sénat)
+// ============================================
+
+export const CHAMBER_LABELS: Record<Chamber, string> = {
+  AN: "Assemblée nationale",
+  SENAT: "Sénat",
+};
+
+export const CHAMBER_SHORT_LABELS: Record<Chamber, string> = {
+  AN: "AN",
+  SENAT: "Sénat",
+};
+
+export const CHAMBER_COLORS: Record<Chamber, string> = {
+  AN: "bg-blue-100 text-blue-800 border-blue-300",
+  SENAT: "bg-rose-100 text-rose-800 border-rose-300",
 };
 
 // ============================================

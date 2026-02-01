@@ -4,6 +4,7 @@ import { type SortOption, type MandateFilter, type StatusFilter } from "@/compon
 import { AffairStatus, MandateType } from "@/generated/prisma";
 import { SearchForm } from "@/components/politicians/SearchForm";
 import { PoliticiansGrid } from "@/components/politicians/PoliticiansGrid";
+import { ExportButton } from "@/components/ui/ExportButton";
 
 // Minimum members to show a party in filters (avoid cluttering with old/small parties)
 const MIN_PARTY_MEMBERS = 2;
@@ -260,13 +261,23 @@ export default async function PolitiquesPage({ searchParams }: PageProps) {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Représentants politiques</h1>
-        <p className="text-muted-foreground">
-          {total} représentants
-          {search && ` pour "${search}"`}
-          {activeFilterCount > 0 && ` (${activeFilterCount} filtre${activeFilterCount > 1 ? "s" : ""} actif${activeFilterCount > 1 ? "s" : ""})`}
-        </p>
+      <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold mb-2">Représentants politiques</h1>
+          <p className="text-muted-foreground">
+            {total} représentants
+            {search && ` pour "${search}"`}
+            {activeFilterCount > 0 && ` (${activeFilterCount} filtre${activeFilterCount > 1 ? "s" : ""} actif${activeFilterCount > 1 ? "s" : ""})`}
+          </p>
+        </div>
+        <ExportButton
+          endpoint="/api/export/politiques"
+          label="Export CSV"
+          params={{
+            partyId: partyFilter || undefined,
+            hasAffairs: convictionFilter ? "true" : undefined,
+          }}
+        />
       </div>
 
       {/* Search with autocomplete */}

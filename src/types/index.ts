@@ -17,6 +17,7 @@ import type {
   PoliticalPosition,
   VotePosition,
   VotingResult,
+  Chamber,
 } from "@/generated/prisma";
 
 // Re-export Prisma types
@@ -39,6 +40,7 @@ export type {
   PoliticalPosition,
   VotePosition,
   VotingResult,
+  Chamber,
 };
 
 // Extended types with relations
@@ -154,6 +156,7 @@ export type ScrutinFilters = {
   search?: string;
   result?: VotingResult;
   legislature?: number;
+  chamber?: Chamber;
   dateFrom?: Date;
   dateTo?: Date;
   page?: number;

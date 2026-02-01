@@ -3,12 +3,13 @@ import Link from "next/link";
 import { db } from "@/lib/db";
 import { VoteCard } from "@/components/votes";
 import { Badge } from "@/components/ui/badge";
-import { VOTING_RESULT_LABELS } from "@/config/labels";
-import type { VotingResult } from "@/types";
+import { ExportButton } from "@/components/ui/ExportButton";
+import { VOTING_RESULT_LABELS, CHAMBER_LABELS } from "@/config/labels";
+import type { VotingResult, Chamber } from "@/types";
 
 export const metadata: Metadata = {
   title: "Votes parlementaires",
-  description: "Suivez les votes des députés à l'Assemblée nationale. Consultez les scrutins et découvrez comment votent vos représentants.",
+  description: "Suivez les votes de l'Assemblée nationale et du Sénat. Consultez les scrutins et découvrez comment votent vos représentants.",
 };
 
 interface PageProps {
@@ -16,6 +17,7 @@ interface PageProps {
     page?: string;
     result?: string;
     legislature?: string;
+    chamber?: string;
     search?: string;
   }>;
 }
@@ -25,14 +27,16 @@ async function getScrutins(params: {
   limit: number;
   result?: VotingResult;
   legislature?: number;
+  chamber?: Chamber;
   search?: string;
 }) {
-  const { page, limit, result, legislature, search } = params;
+  const { page, limit, result, legislature, chamber, search } = params;
   const skip = (page - 1) * limit;
 
   const where = {
     ...(result && { result }),
     ...(legislature && { legislature }),
+    ...(chamber && { chamber }),
     ...(search && {
       title: { contains: search, mode: "insensitive" as const },
     }),
@@ -74,17 +78,26 @@ async function getLegislatures() {
   });
 }
 
+async function getChambers() {
+  return db.scrutin.groupBy({
+    by: ["chamber"],
+    _count: true,
+  });
+}
+
 export default async function VotesPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const page = Math.max(1, parseInt(params.page || "1", 10));
   const limit = 20;
   const result = params.result as VotingResult | undefined;
   const legislature = params.legislature ? parseInt(params.legislature, 10) : undefined;
+  const chamber = params.chamber as Chamber | undefined;
   const search = params.search;
 
-  const [{ scrutins, total, totalPages, stats }, legislatures] = await Promise.all([
-    getScrutins({ page, limit, result, legislature, search }),
+  const [{ scrutins, total, totalPages, stats }, legislatures, chambers] = await Promise.all([
+    getScrutins({ page, limit, result, legislature, chamber, search }),
     getLegislatures(),
+    getChambers(),
   ]);
 
   // Build filter URL helper
@@ -93,6 +106,7 @@ export default async function VotesPage({ searchParams }: PageProps) {
     if (params.search) current.set("search", params.search);
     if (params.result) current.set("result", params.result);
     if (params.legislature) current.set("legislature", params.legislature);
+    if (params.chamber) current.set("chamber", params.chamber);
 
     for (const [key, value] of Object.entries(newParams)) {
       if (value) {
@@ -111,14 +125,28 @@ export default async function VotesPage({ searchParams }: PageProps) {
     return `/votes${qs ? `?${qs}` : ""}`;
   };
 
+  // Check if we have multiple chambers
+  const hasMultipleChambers = chambers.length > 1;
+
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Votes parlementaires</h1>
-        <p className="text-muted-foreground">
-          Consultez les scrutins de l&apos;Assemblée nationale et découvrez comment votent les députés.
-        </p>
+      <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold mb-2">Votes parlementaires</h1>
+          <p className="text-muted-foreground">
+            Consultez les scrutins de l&apos;Assemblée nationale et du Sénat. Découvrez comment votent vos représentants.
+          </p>
+        </div>
+        <ExportButton
+          endpoint="/api/export/votes"
+          label="Export CSV"
+          params={{
+            chamber: chamber,
+            result: result,
+            legislature: legislature?.toString(),
+          }}
+        />
       </div>
 
       {/* Stats */}
@@ -183,6 +211,41 @@ export default async function VotesPage({ searchParams }: PageProps) {
           ))}
         </div>
 
+        {/* Chamber filter */}
+        {hasMultipleChambers && (
+          <div className="flex gap-2">
+            <Link
+              href={buildUrl({ chamber: undefined })}
+              className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${
+                !chamber
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted hover:bg-muted/80"
+              }`}
+            >
+              Toutes
+            </Link>
+            {chambers.map((c) => (
+              <Link
+                key={c.chamber}
+                href={buildUrl({
+                  chamber: chamber === c.chamber ? undefined : c.chamber,
+                })}
+                className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${
+                  chamber === c.chamber
+                    ? c.chamber === "AN"
+                      ? "bg-blue-600 text-white"
+                      : "bg-rose-600 text-white"
+                    : c.chamber === "AN"
+                      ? "bg-blue-50 text-blue-700 hover:bg-blue-100"
+                      : "bg-rose-50 text-rose-700 hover:bg-rose-100"
+                }`}
+              >
+                {CHAMBER_LABELS[c.chamber]} ({c._count})
+              </Link>
+            ))}
+          </div>
+        )}
+
         {/* Legislature filter */}
         {legislatures.length > 1 && (
           <div className="flex gap-2">
@@ -209,12 +272,20 @@ export default async function VotesPage({ searchParams }: PageProps) {
       </div>
 
       {/* Active filters */}
-      {(result || legislature || search) && (
+      {(result || legislature || chamber || search) && (
         <div className="flex flex-wrap gap-2 mb-6">
           {search && (
             <Badge variant="secondary" className="gap-1">
               Recherche: {search}
               <Link href={buildUrl({ search: undefined })} className="ml-1 hover:text-destructive">
+                ×
+              </Link>
+            </Badge>
+          )}
+          {chamber && (
+            <Badge variant="secondary" className="gap-1">
+              {CHAMBER_LABELS[chamber]}
+              <Link href={buildUrl({ chamber: undefined })} className="ml-1 hover:text-destructive">
                 ×
               </Link>
             </Badge>
@@ -253,6 +324,7 @@ export default async function VotesPage({ searchParams }: PageProps) {
               title={scrutin.title}
               votingDate={scrutin.votingDate}
               legislature={scrutin.legislature}
+              chamber={scrutin.chamber}
               votesFor={scrutin.votesFor}
               votesAgainst={scrutin.votesAgainst}
               votesAbstain={scrutin.votesAbstain}
@@ -308,6 +380,15 @@ export default async function VotesPage({ searchParams }: PageProps) {
             className="text-primary hover:underline"
           >
             data.assemblee-nationale.fr
+          </a>
+          {" "}et{" "}
+          <a
+            href="https://www.senat.fr/scrutin-public/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary hover:underline"
+          >
+            senat.fr
           </a>
           {" "}(Open Data officiel)
         </p>

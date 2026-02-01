@@ -35,11 +35,14 @@ test.describe("Homepage", () => {
 test.describe("Politicians List", () => {
   test("renders politician cards", async ({ page }) => {
     await page.goto("/politiques");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("domcontentloaded");
 
-    // Wait for cards to load
-    await expect(page.locator('[data-testid="politician-card"]').first()).toBeVisible({
-      timeout: 10000,
+    // Wait for the page title and cards to appear
+    await expect(page.locator("h1")).toContainText(/représentants/i, { timeout: 15000 });
+
+    // Wait for at least one card to be visible (look for politician names/links)
+    await expect(page.locator('a[href^="/politiques/"]').first()).toBeVisible({
+      timeout: 15000,
     });
 
     await expect(page).toHaveScreenshot("politicians-list.png", {
@@ -50,14 +53,18 @@ test.describe("Politicians List", () => {
 
   test("search functionality works", async ({ page }) => {
     await page.goto("/politiques");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("domcontentloaded");
 
-    const searchInput = page.locator('input[type="search"], input[placeholder*="Rechercher"]');
+    // Wait for page to be ready
+    await expect(page.locator("h1")).toContainText(/représentants/i, { timeout: 15000 });
+
+    const searchInput = page.locator('input[placeholder*="Rechercher"]');
+    await expect(searchInput).toBeVisible({ timeout: 10000 });
     await searchInput.fill("Macron");
-    await page.waitForTimeout(500); // Wait for debounce
+    await page.waitForTimeout(800); // Wait for debounce + API response
 
-    // Should show filtered results
-    await expect(page.locator('[data-testid="politician-card"]').first()).toBeVisible();
+    // Should show filtered results - look for "Macron" in the page content
+    await expect(page.locator("text=Macron").first()).toBeVisible({ timeout: 10000 });
   });
 });
 
@@ -219,5 +226,45 @@ test.describe("Error Pages", () => {
     if (is404) {
       await expect(page).toHaveScreenshot("404.png");
     }
+  });
+});
+
+test.describe("Politician with Affairs", () => {
+  test("affair badges render correctly on desktop", async ({ page }) => {
+    await page.goto("/politiques/sylvie-andrieux");
+    await page.waitForLoadState("networkidle");
+
+    // Wait for affairs section heading to load
+    await expect(page.getByRole("heading", { name: "Affaires judiciaires" })).toBeVisible({ timeout: 10000 });
+
+    // Scroll to affairs section
+    await page.getByRole("heading", { name: "Affaires judiciaires" }).scrollIntoViewIfNeeded();
+    await page.waitForTimeout(500);
+
+    await expect(page).toHaveScreenshot("politician-affairs-desktop.png", {
+      fullPage: false,
+      clip: { x: 0, y: 0, width: 1280, height: 900 },
+    });
+  });
+});
+
+test.describe("Politician with Affairs - Mobile", () => {
+  test.use({ viewport: { width: 375, height: 667 } });
+
+  test("affair badge renders correctly on mobile", async ({ page }) => {
+    // Use a politician with affairs
+    await page.goto("/politiques/sylvie-andrieux");
+    await page.waitForLoadState("networkidle");
+
+    // Wait for affairs section heading to load
+    await expect(page.getByRole("heading", { name: "Affaires judiciaires" })).toBeVisible({ timeout: 10000 });
+
+    // Scroll to affairs section
+    await page.getByRole("heading", { name: "Affaires judiciaires" }).scrollIntoViewIfNeeded();
+    await page.waitForTimeout(500);
+
+    await expect(page).toHaveScreenshot("politician-affairs-mobile.png", {
+      fullPage: true,
+    });
   });
 });

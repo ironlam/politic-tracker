@@ -368,37 +368,39 @@ export default async function PoliticianPage({ params }: PageProps) {
                       }`}
                     >
                       {/* Header */}
-                      <div className="flex items-start justify-between gap-4 mb-3">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            {(affair.verdictDate || affair.startDate || affair.factsDate) && (
-                              <Badge variant="secondary" className="font-mono text-base font-bold">
-                                {new Date(affair.verdictDate || affair.startDate || affair.factsDate!).getFullYear()}
-                              </Badge>
-                            )}
-                            <h3 className="font-semibold text-lg">{affair.title}</h3>
+                      <div className="mb-3">
+                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-4">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1 flex-wrap">
+                              {(affair.verdictDate || affair.startDate || affair.factsDate) && (
+                                <Badge variant="secondary" className="font-mono text-base font-bold">
+                                  {new Date(affair.verdictDate || affair.startDate || affair.factsDate!).getFullYear()}
+                                </Badge>
+                              )}
+                              <h3 className="font-semibold text-lg">{affair.title}</h3>
+                            </div>
                           </div>
-                          <div className="flex flex-wrap items-center gap-2 mt-1">
-                            <Badge variant="outline" className="text-xs">
-                              {AFFAIR_CATEGORY_LABELS[affair.category]}
-                            </Badge>
-                            {affair.partyAtTime && (
-                              <Badge
-                                variant="outline"
-                                className="text-xs"
-                                style={{
-                                  borderColor: affair.partyAtTime.color || undefined,
-                                  color: affair.partyAtTime.color || undefined,
-                                }}
-                              >
-                                {affair.partyAtTime.shortName} à l&apos;époque
-                              </Badge>
-                            )}
-                          </div>
+                          <Badge className={`self-start whitespace-nowrap ${AFFAIR_STATUS_COLORS[affair.status]}`}>
+                            {AFFAIR_STATUS_LABELS[affair.status]}
+                          </Badge>
                         </div>
-                        <Badge className={`shrink-0 ${AFFAIR_STATUS_COLORS[affair.status]}`}>
-                          {AFFAIR_STATUS_LABELS[affair.status]}
-                        </Badge>
+                        <div className="flex flex-wrap items-center gap-2 mt-2">
+                          <Badge variant="outline" className="text-xs">
+                            {AFFAIR_CATEGORY_LABELS[affair.category]}
+                          </Badge>
+                          {affair.partyAtTime && (
+                            <Badge
+                              variant="outline"
+                              className="text-xs"
+                              style={{
+                                borderColor: affair.partyAtTime.color || undefined,
+                                color: affair.partyAtTime.color || undefined,
+                              }}
+                            >
+                              {affair.partyAtTime.shortName} à l&apos;époque
+                            </Badge>
+                          )}
+                        </div>
                       </div>
 
                       {/* Description */}

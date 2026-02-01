@@ -57,7 +57,12 @@
     "validate:truth:verbose": "tsx scripts/validate-truth.ts --verbose",
     "test:visual": "playwright test",
     "test:visual:update": "playwright test --update-snapshots",
-    "test:visual:report": "playwright show-report tests/visual/playwright-report"
+    "test:visual:report": "playwright show-report tests/visual/playwright-report",
+    "test:visual:ui": "playwright test --ui",
+    "test:visual:debug": "playwright test --debug",
+    "test:visual:headed": "playwright test --headed",
+    "test:visual:grep": "playwright test --grep",
+    "visual": "tsx scripts/visual-test-runner.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.33",

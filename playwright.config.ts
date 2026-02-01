@@ -6,6 +6,8 @@ import { defineConfig, devices } from "@playwright/test";
  * Run visual tests:
  *   npm run test:visual           # Run all visual tests
  *   npm run test:visual:update    # Update baseline snapshots
+ *   npm run test:visual:report    # Open HTML report
+ *   npm run test:visual:ui        # Interactive UI mode
  *
  * @see https://playwright.dev/docs/test-configuration
  */
@@ -22,10 +24,18 @@ export default defineConfig({
   // Opt out of parallel tests on CI
   workers: process.env.CI ? 1 : undefined,
 
-  // Reporter to use
+  // Reporter to use - HTML report with screenshots
   reporter: [
-    ["html", { outputFolder: "./tests/visual/playwright-report", open: "never" }],
+    [
+      "html",
+      {
+        outputFolder: "./tests/visual/playwright-report",
+        open: process.env.CI ? "never" : "on-failure",
+      },
+    ],
     ["list"],
+    // JSON report for programmatic access
+    ["json", { outputFile: "./tests/visual/test-results/results.json" }],
   ],
 
   // Shared settings for all the projects below
@@ -33,11 +43,14 @@ export default defineConfig({
     // Base URL to use in actions like `await page.goto('/')`
     baseURL: process.env.BASE_URL || "http://localhost:3000",
 
-    // Collect trace when retrying the failed test
+    // Collect trace on first retry and for failed tests
     trace: "on-first-retry",
 
-    // Take screenshot on failure
-    screenshot: "only-on-failure",
+    // Take screenshot on every test for visual review
+    screenshot: "on",
+
+    // Record video on first retry (helpful for debugging)
+    video: "on-first-retry",
   },
 
   // Configure projects for major browsers

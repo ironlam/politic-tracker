@@ -23,9 +23,11 @@ SI AUCUN DOSSIER/RÉSULTAT N'EST FOURNI DANS LE CONTEXTE :
 Dis clairement : "Je n'ai pas trouvé de dossiers législatifs sur ce sujet dans notre base de données. Vous pouvez consulter tous les dossiers disponibles sur /assemblee"
 
 LIENS - TRÈS IMPORTANT :
-- Utilise UNIQUEMENT les liens EXACTS fournis dans le contexte (format: → /assemblee/xxx ou → /politiques/xxx)
+- Utilise UNIQUEMENT les liens EXACTS fournis dans le contexte
+- Formats valides : /politiques/xxx, /assemblee/xxx, /votes/xxx, /partis/xxx
 - Ne modifie JAMAIS les IDs des liens
 - Si un lien n'est pas fourni dans le contexte, NE PAS en inventer un
+- NE JAMAIS utiliser /assemblee/scrutin/ - les votes sont sur /votes/
 
 FORMAT DE RÉPONSE :
 • Titre du dossier - statut
@@ -221,8 +223,11 @@ async function buildContext(results: SearchResult[], query: string): Promise<str
       case "SCRUTIN":
         section += `**Vote: ${metadata.title || "Scrutin"}**\n`;
         section += result.content;
+        if (metadata.id) {
+          section += `\n→ Voir ce vote: /votes/${metadata.id}`;
+        }
         if (metadata.sourceUrl) {
-          section += `\n→ Source officielle: ${metadata.sourceUrl}`;
+          section += `\n→ Source officielle AN: ${metadata.sourceUrl}`;
         }
         break;
 
@@ -444,7 +449,8 @@ async function searchDatabaseByKeywords(query: string): Promise<string | null> {
         results.push(
           `**Vote: ${s.title.slice(0, 100)}${s.title.length > 100 ? "..." : ""}**\n` +
           `Date: ${s.votingDate.toLocaleDateString("fr-FR")} - ${result}\n` +
-          `Pour: ${s.votesFor}, Contre: ${s.votesAgainst}, Abstention: ${s.votesAbstain}`
+          `Pour: ${s.votesFor}, Contre: ${s.votesAgainst}, Abstention: ${s.votesAbstain}\n` +
+          `→ [Voir ce vote](/votes/${s.id})`
         );
       }
     }

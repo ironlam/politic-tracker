@@ -299,6 +299,7 @@ export async function indexScrutin(scrutinId: string): Promise<void> {
     entityId: scrutinId,
     content,
     metadata: {
+      id: scrutinId,
       title: scrutin.title,
       votingDate: scrutin.votingDate.toISOString(),
       result: scrutin.result,

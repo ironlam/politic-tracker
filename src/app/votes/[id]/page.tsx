@@ -15,43 +15,43 @@ interface PageProps {
 }
 
 async function getScrutin(id: string) {
-  // Try to find by internal ID first
-  let scrutin = await db.scrutin.findUnique({
-    where: { id },
-    include: {
-      votes: {
-        include: {
-          politician: {
-            include: {
-              currentParty: true,
-            },
+  const includeOptions = {
+    votes: {
+      include: {
+        politician: {
+          include: {
+            currentParty: true,
           },
         },
-        orderBy: {
-          politician: { lastName: "asc" },
-        },
+      },
+      orderBy: {
+        politician: { lastName: "asc" },
       },
     },
+  } as const;
+
+  // Try to find by internal ID first (CUID)
+  let scrutin = await db.scrutin.findUnique({
+    where: { id },
+    include: includeOptions,
   });
 
-  // If not found, try by externalId (NosDéputés ID like "4011")
+  // If not found, try by exact externalId (e.g., "VTANR5L17V5283")
   if (!scrutin) {
     scrutin = await db.scrutin.findUnique({
       where: { externalId: id },
-      include: {
-        votes: {
-          include: {
-            politician: {
-              include: {
-                currentParty: true,
-              },
-            },
-          },
-        },
-        orderBy: {
-          politician: { lastName: "asc" },
-        },
+      include: includeOptions,
+    });
+  }
+
+  // If still not found and id is numeric, try to match the end of externalId
+  // External IDs are like "VTANR5L17V5283" - we match the number part
+  if (!scrutin && /^\d+$/.test(id)) {
+    scrutin = await db.scrutin.findFirst({
+      where: {
+        externalId: { endsWith: `V${id}` },
       },
+      include: includeOptions,
     });
   }
 

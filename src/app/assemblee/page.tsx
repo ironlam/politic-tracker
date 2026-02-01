@@ -245,6 +245,7 @@ export default async function AssembleePage({ searchParams }: PageProps) {
                 key={dossier.id}
                 id={dossier.id}
                 externalId={dossier.externalId}
+                slug={dossier.slug}
                 title={dossier.title}
                 shortTitle={dossier.shortTitle}
                 number={dossier.number}

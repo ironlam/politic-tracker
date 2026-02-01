@@ -13,6 +13,7 @@
 
 import "dotenv/config";
 import { db } from "../src/lib/db";
+import { generateDateSlug } from "../src/lib/utils";
 import { VotePosition, VotingResult, DataSource } from "../src/generated/prisma";
 import * as fs from "fs";
 import * as path from "path";
@@ -193,6 +194,34 @@ function parseVotingResult(code: string): VotingResult {
 }
 
 /**
+ * Generate a unique slug for a scrutin
+ */
+async function generateUniqueScrutinSlug(date: Date, title: string): Promise<string> {
+  const baseSlug = generateDateSlug(date, title);
+
+  // Check if slug already exists
+  const existing = await db.scrutin.findUnique({ where: { slug: baseSlug } });
+  if (!existing) return baseSlug;
+
+  // Try with suffix
+  let counter = 2;
+  while (counter < 100) {
+    const suffix = `-${counter}`;
+    const maxBaseLength = 80 - suffix.length;
+    const truncatedBase = baseSlug.slice(0, maxBaseLength).replace(/-$/, "");
+    const slugWithSuffix = `${truncatedBase}${suffix}`;
+
+    const existsWithSuffix = await db.scrutin.findUnique({ where: { slug: slugWithSuffix } });
+    if (!existsWithSuffix) return slugWithSuffix;
+
+    counter++;
+  }
+
+  // Fallback: use timestamp
+  return `${baseSlug.slice(0, 60)}-${Date.now()}`;
+}
+
+/**
  * Main sync function
  */
 async function syncVotesAN(legislature: number = LEGISLATURE, dryRun: boolean = false) {
@@ -295,14 +324,21 @@ async function syncVotesAN(legislature: number = LEGISLATURE, dryRun: boolean = 
 
           let scrutin;
           if (existing) {
+            // Update existing scrutin, generate slug if missing
+            const updateData: typeof scrutinData & { slug?: string } = { ...scrutinData };
+            if (!existing.slug) {
+              updateData.slug = await generateUniqueScrutinSlug(votingDate, s.titre);
+            }
             scrutin = await db.scrutin.update({
               where: { id: existing.id },
-              data: scrutinData,
+              data: updateData,
             });
             stats.scrutinsUpdated++;
           } else {
+            // Create new scrutin with slug
+            const slug = await generateUniqueScrutinSlug(votingDate, s.titre);
             scrutin = await db.scrutin.create({
-              data: scrutinData,
+              data: { ...scrutinData, slug },
             });
             stats.scrutinsCreated++;
           }

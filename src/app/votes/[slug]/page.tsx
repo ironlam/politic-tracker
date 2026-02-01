@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import Link from "next/link";
 import { db } from "@/lib/db";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,10 +11,14 @@ import { ExternalLink, Calendar, Users } from "lucide-react";
 import type { VotePosition } from "@/types";
 
 interface PageProps {
-  params: Promise<{ id: string }>;
+  params: Promise<{ slug: string }>;
 }
 
-async function getScrutin(id: string) {
+/**
+ * Get scrutin with redirect support for legacy URLs
+ * Returns { scrutin, redirect } where redirect is the slug to redirect to
+ */
+async function getScrutinWithRedirect(slugOrId: string) {
   const includeOptions = {
     votes: {
       include: {
@@ -30,37 +34,53 @@ async function getScrutin(id: string) {
     },
   } as const;
 
-  // Try to find by internal ID first (CUID)
+  // 1. Try by slug first (canonical URL - most common case)
   let scrutin = await db.scrutin.findUnique({
-    where: { id },
+    where: { slug: slugOrId },
     include: includeOptions,
   });
-
-  // If not found, try by exact externalId (e.g., "VTANR5L17V5283")
-  if (!scrutin) {
-    scrutin = await db.scrutin.findUnique({
-      where: { externalId: id },
-      include: includeOptions,
-    });
+  if (scrutin) {
+    return { scrutin, redirect: null };
   }
 
-  // If still not found and id is numeric, try to match the end of externalId
+  // 2. Try by internal ID (CUID) - legacy URL
+  scrutin = await db.scrutin.findUnique({
+    where: { id: slugOrId },
+    include: includeOptions,
+  });
+  if (scrutin) {
+    return { scrutin, redirect: scrutin.slug };
+  }
+
+  // 3. Try by exact externalId (e.g., "VTANR5L17V5283") - legacy URL
+  scrutin = await db.scrutin.findUnique({
+    where: { externalId: slugOrId },
+    include: includeOptions,
+  });
+  if (scrutin) {
+    return { scrutin, redirect: scrutin.slug };
+  }
+
+  // 4. Try by numeric part of externalId (e.g., "5283") - legacy URL
   // External IDs are like "VTANR5L17V5283" - we match the number part
-  if (!scrutin && /^\d+$/.test(id)) {
+  if (/^\d+$/.test(slugOrId)) {
     scrutin = await db.scrutin.findFirst({
       where: {
-        externalId: { endsWith: `V${id}` },
+        externalId: { endsWith: `V${slugOrId}` },
       },
       include: includeOptions,
     });
+    if (scrutin) {
+      return { scrutin, redirect: scrutin.slug };
+    }
   }
 
-  return scrutin;
+  return { scrutin: null, redirect: null };
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const { id } = await params;
-  const scrutin = await getScrutin(id);
+  const { slug } = await params;
+  const { scrutin } = await getScrutinWithRedirect(slug);
 
   if (!scrutin) {
     return { title: "Scrutin non trouvé" };
@@ -73,8 +93,13 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export default async function ScrutinPage({ params }: PageProps) {
-  const { id } = await params;
-  const scrutin = await getScrutin(id);
+  const { slug } = await params;
+  const { scrutin, redirect } = await getScrutinWithRedirect(slug);
+
+  // Redirect legacy URLs to canonical slug URL
+  if (redirect && redirect !== slug) {
+    permanentRedirect(`/votes/${redirect}`);
+  }
 
   if (!scrutin) {
     notFound();

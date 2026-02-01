@@ -249,6 +249,7 @@ export default async function VotesPage({ searchParams }: PageProps) {
               key={scrutin.id}
               id={scrutin.id}
               externalId={scrutin.externalId}
+              slug={scrutin.slug}
               title={scrutin.title}
               votingDate={scrutin.votingDate}
               legislature={scrutin.legislature}

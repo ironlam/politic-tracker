@@ -332,16 +332,16 @@ export function ChatInterface() {
                 )}
                 <Card
                   className={cn(
-                    "max-w-[80%] py-3",
+                    "max-w-[80%] py-3 overflow-hidden",
                     message.role === "user"
                       ? "bg-primary text-primary-foreground"
                       : "bg-muted"
                   )}
                 >
-                  <CardContent className="p-0 px-4">
+                  <CardContent className="p-0 px-4 overflow-hidden">
                     <div
                       className={cn(
-                        "prose prose-sm max-w-none",
+                        "prose prose-sm max-w-none break-words overflow-wrap-anywhere",
                         message.role === "user" && "prose-invert"
                       )}
                     >
@@ -488,7 +488,7 @@ function ChatMessageContent({ content }: { content: string }) {
   const lines = content.split("\n");
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 break-words [overflow-wrap:anywhere]">
       {lines.map((line, index) => {
         // Handle bullet points
         if (line.startsWith("- ") || line.startsWith("• ")) {
@@ -540,7 +540,7 @@ function ChatMessageContent({ content }: { content: string }) {
             <div key={index} className="mt-2">
               <a
                 href={url}
-                className="inline-flex items-center gap-2 text-primary hover:underline font-medium bg-primary/5 px-3 py-1.5 rounded-md"
+                className="inline-flex items-center gap-2 text-primary hover:underline font-medium bg-primary/5 px-3 py-1.5 rounded-md break-all"
                 target={isExternal ? "_blank" : undefined}
                 rel={isExternal ? "noopener noreferrer" : undefined}
               >
@@ -600,7 +600,7 @@ function renderInlineFormatting(text: string): React.ReactNode {
         <a
           key={segIndex}
           href={fixedUrl}
-          className="text-primary hover:underline"
+          className="text-primary hover:underline break-all"
           target={isExternal ? "_blank" : undefined}
           rel={isExternal ? "noopener noreferrer" : undefined}
         >
@@ -622,7 +622,7 @@ function renderInlineFormatting(text: string): React.ReactNode {
       }
 
       // Handle raw links in the remaining text (including partial paths like /politiques/)
-      const linkParts = part.split(/(\/politiques(?:\/[^\s,.)]*)?|\/partis(?:\/[^\s,.)]*)?|\/affaires(?:\/[^\s,.)]*)?|\/assemblee(?:\/[^\s,.)]*)?|\/statistiques|\/institutions|https?:\/\/[^\s,.)]+)/g);
+      const linkParts = part.split(/(\/politiques(?:\/[^\s,.)]*)?|\/partis(?:\/[^\s,.)]*)?|\/affaires(?:\/[^\s,.)]*)?|\/assemblee(?:\/[^\s,.)]*)?|\/votes(?:\/[^\s,.)]*)?|\/statistiques|\/institutions|https?:\/\/[^\s,.)]+)/g);
 
       return linkParts.map((linkPart, linkIndex) => {
         const isInternalLink =
@@ -630,6 +630,7 @@ function renderInlineFormatting(text: string): React.ReactNode {
           linkPart.startsWith("/partis") ||
           linkPart.startsWith("/affaires") ||
           linkPart.startsWith("/assemblee") ||
+          linkPart.startsWith("/votes") ||
           linkPart.startsWith("/statistiques") ||
           linkPart.startsWith("/institutions");
         const isExternalLink = linkPart.startsWith("http");
@@ -640,10 +641,13 @@ function renderInlineFormatting(text: string): React.ReactNode {
           if (linkPart === "/politiques" || linkPart === "/politiques/") label = "Voir tous les élus";
           else if (linkPart === "/affaires" || linkPart === "/affaires/") label = "Voir toutes les affaires";
           else if (linkPart === "/assemblee" || linkPart === "/assemblee/") label = "Voir les dossiers législatifs";
+          else if (linkPart === "/votes" || linkPart === "/votes/") label = "Voir les votes";
           else if (linkPart === "/statistiques") label = "Voir les statistiques";
           else if (linkPart === "/institutions") label = "Voir les institutions";
           else if (linkPart.startsWith("/politiques/")) label = linkPart.split("/").pop() || linkPart;
           else if (linkPart.startsWith("/partis/")) label = linkPart.split("/").pop() || linkPart;
+          else if (linkPart.startsWith("/votes/")) label = "Voir ce vote";
+          else if (linkPart.startsWith("/assemblee/")) label = "Voir ce dossier";
           else if (isExternalLink) label = "Source officielle";
 
           // Clean trailing slash for href
@@ -653,7 +657,7 @@ function renderInlineFormatting(text: string): React.ReactNode {
             <a
               key={`${segIndex}-${index}-${linkIndex}`}
               href={href}
-              className="text-primary hover:underline font-medium"
+              className="text-primary hover:underline font-medium break-all"
               target={isExternalLink ? "_blank" : undefined}
               rel={isExternalLink ? "noopener noreferrer" : undefined}
             >

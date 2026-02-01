@@ -36,6 +36,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     select: { slug: true, updatedAt: true },
   });
 
+  // Get all scrutins with slugs
+  const scrutins = await db.scrutin.findMany({
+    where: { slug: { not: null } },
+    select: { slug: true, updatedAt: true },
+    orderBy: { votingDate: "desc" },
+  });
+
+  // Get all legislative dossiers with slugs
+  const dossiers = await db.legislativeDossier.findMany({
+    where: { slug: { not: null } },
+    select: { slug: true, updatedAt: true },
+    orderBy: { filingDate: "desc" },
+  });
+
   // Static pages
   const staticPages: MetadataRoute.Sitemap = [
     {
@@ -58,6 +72,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
     {
       url: `${baseUrl}/affaires`,
+      lastModified: new Date(),
+      changeFrequency: "daily",
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/votes`,
+      lastModified: new Date(),
+      changeFrequency: "daily",
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/assemblee`,
       lastModified: new Date(),
       changeFrequency: "daily",
       priority: 0.8,
@@ -120,5 +146,32 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.5,
   }));
 
-  return [...staticPages, ...politicianPages, ...partyPages, ...departmentPages];
+  // Scrutin (votes) pages - only those with slugs
+  const scrutinPages: MetadataRoute.Sitemap = scrutins
+    .filter((s) => s.slug)
+    .map((s) => ({
+      url: `${baseUrl}/votes/${s.slug}`,
+      lastModified: s.updatedAt,
+      changeFrequency: "monthly" as const,
+      priority: 0.5,
+    }));
+
+  // Legislative dossier pages - only those with slugs
+  const dossierPages: MetadataRoute.Sitemap = dossiers
+    .filter((d) => d.slug)
+    .map((d) => ({
+      url: `${baseUrl}/assemblee/${d.slug}`,
+      lastModified: d.updatedAt,
+      changeFrequency: "weekly" as const,
+      priority: 0.6,
+    }));
+
+  return [
+    ...staticPages,
+    ...politicianPages,
+    ...partyPages,
+    ...departmentPages,
+    ...scrutinPages,
+    ...dossierPages,
+  ];
 }

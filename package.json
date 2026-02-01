@@ -45,6 +45,8 @@
     "generate:summaries:stats": "tsx scripts/generate-summaries.ts --stats",
     "index:embeddings": "tsx scripts/index-embeddings.ts",
     "index:embeddings:stats": "tsx scripts/index-embeddings.ts --stats",
+    "migrate:slugs": "tsx scripts/migrate-slugs.ts",
+    "migrate:slugs:stats": "tsx scripts/migrate-slugs.ts --stats",
     "db:backup": "tsx scripts/backup-database.ts",
     "db:backup:list": "tsx scripts/backup-database.ts --list",
     "db:backup:clean": "tsx scripts/backup-database.ts --clean=30",

@@ -482,6 +482,7 @@ model AuditLog {
 model Scrutin {
   id            String       @id @default(cuid())
   externalId    String       @unique  // ID NosDéputés (ex: "1234")
+  slug          String?      @unique  // SEO-friendly URL slug (e.g., "2025-01-15-projet-loi-finances")
   title         String       @db.Text
   description   String?      @db.Text
   votingDate    DateTime
@@ -538,6 +539,7 @@ enum VotingResult {
 model LegislativeDossier {
   id              String        @id @default(cuid())
   externalId      String        @unique  // DLR5L17N12345
+  slug            String?       @unique  // SEO-friendly URL slug (e.g., "2024-12-03-reforme-retraites")
   title           String        @db.Text
   shortTitle      String?                // Titre court pour affichage
   number          String?                // PJL 1234, PPL 5678

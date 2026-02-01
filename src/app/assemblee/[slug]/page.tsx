@@ -1,6 +1,6 @@
 import { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,72 +8,79 @@ import { MarkdownText } from "@/components/ui/markdown";
 import { StatusBadge, CategoryBadge } from "@/components/legislation";
 import { AMENDMENT_STATUS_LABELS, AMENDMENT_STATUS_COLORS } from "@/config/labels";
 import { ExternalLink, ArrowLeft, Calendar, FileText } from "lucide-react";
-import type { AmendmentStatus } from "@/generated/prisma";
 
 interface PageProps {
-  params: Promise<{ id: string }>;
+  params: Promise<{ slug: string }>;
 }
 
-async function getDossier(id: string) {
-  // Try to find by internal ID first
+const includeOptions = {
+  amendments: {
+    orderBy: { number: "asc" },
+    take: 50,
+  },
+} as const;
+
+/**
+ * Get dossier with redirect support for legacy URLs
+ * Returns { dossier, redirect } where redirect is the slug to redirect to
+ */
+async function getDossierWithRedirect(slugOrId: string) {
+  // 1. Try by slug first (canonical URL - most common case)
   let dossier = await db.legislativeDossier.findUnique({
-    where: { id },
-    include: {
-      amendments: {
-        orderBy: { number: "asc" },
-        take: 50,
-      },
-    },
+    where: { slug: slugOrId },
+    include: includeOptions,
   });
-
-  // If not found, try by externalId (e.g., DLR5L17N12345)
-  if (!dossier) {
-    dossier = await db.legislativeDossier.findUnique({
-      where: { externalId: id },
-      include: {
-        amendments: {
-          orderBy: { number: "asc" },
-          take: 50,
-        },
-      },
-    });
+  if (dossier) {
+    return { dossier, redirect: null };
   }
 
-  // If still not found, try by exact number (e.g., "PPL 3196")
-  if (!dossier) {
-    dossier = await db.legislativeDossier.findFirst({
-      where: { number: id },
-      include: {
-        amendments: {
-          orderBy: { number: "asc" },
-          take: 50,
-        },
-      },
-    });
+  // 2. Try by internal ID (CUID) - legacy URL
+  dossier = await db.legislativeDossier.findUnique({
+    where: { id: slugOrId },
+    include: includeOptions,
+  });
+  if (dossier) {
+    return { dossier, redirect: dossier.slug };
   }
 
-  // If still not found, try by partial number match (e.g., "3196" matches "PPL 3196")
+  // 3. Try by externalId (e.g., DLR5L17N12345) - legacy URL
+  dossier = await db.legislativeDossier.findUnique({
+    where: { externalId: slugOrId },
+    include: includeOptions,
+  });
+  if (dossier) {
+    return { dossier, redirect: dossier.slug };
+  }
+
+  // 4. Try by exact number (e.g., "PPL 3196") - legacy URL
+  dossier = await db.legislativeDossier.findFirst({
+    where: { number: slugOrId },
+    include: includeOptions,
+  });
+  if (dossier) {
+    return { dossier, redirect: dossier.slug };
+  }
+
+  // 5. Try by partial number match (e.g., "3196" matches "PPL 3196") - legacy URL
   // This handles cases where the chatbot extracts just the numeric part
-  if (!dossier && /^\d+$/.test(id)) {
+  if (/^\d+$/.test(slugOrId)) {
     dossier = await db.legislativeDossier.findFirst({
       where: {
-        number: { endsWith: id },
+        number: { endsWith: slugOrId },
       },
-      include: {
-        amendments: {
-          orderBy: { number: "asc" },
-          take: 50,
-        },
-      },
+      include: includeOptions,
     });
+    if (dossier) {
+      return { dossier, redirect: dossier.slug };
+    }
   }
 
-  return dossier;
+  return { dossier: null, redirect: null };
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const { id } = await params;
-  const dossier = await getDossier(id);
+  const { slug } = await params;
+  const { dossier } = await getDossierWithRedirect(slug);
 
   if (!dossier) {
     return { title: "Dossier non trouvé" };
@@ -86,8 +93,13 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export default async function DossierDetailPage({ params }: PageProps) {
-  const { id } = await params;
-  const dossier = await getDossier(id);
+  const { slug } = await params;
+  const { dossier, redirect } = await getDossierWithRedirect(slug);
+
+  // Redirect legacy URLs to canonical slug URL
+  if (redirect && redirect !== slug) {
+    permanentRedirect(`/assemblee/${redirect}`);
+  }
 
   if (!dossier) {
     notFound();

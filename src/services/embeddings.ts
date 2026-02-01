@@ -262,6 +262,7 @@ export async function indexDossier(dossierId: string): Promise<void> {
     content,
     metadata: {
       id: dossierId,
+      slug: dossier.slug,
       title: dossier.shortTitle || dossier.title,
       number: dossier.number,
       status: dossier.status,
@@ -300,6 +301,7 @@ export async function indexScrutin(scrutinId: string): Promise<void> {
     content,
     metadata: {
       id: scrutinId,
+      slug: scrutin.slug,
       title: scrutin.title,
       votingDate: scrutin.votingDate.toISOString(),
       result: scrutin.result,

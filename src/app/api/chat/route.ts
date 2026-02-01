@@ -212,8 +212,10 @@ async function buildContext(results: SearchResult[], query: string): Promise<str
       case "DOSSIER":
         section += `**${metadata.title || "Dossier législatif"}**\n`;
         section += result.content;
-        if (metadata.id) {
-          section += `\n→ Voir ce dossier: /assemblee/${metadata.id}`;
+        // Use slug for URL if available, fallback to id
+        const dossierUrl = metadata.slug || metadata.id;
+        if (dossierUrl) {
+          section += `\n→ Voir ce dossier: /assemblee/${dossierUrl}`;
         }
         if (metadata.sourceUrl) {
           section += `\n→ Source officielle AN: ${metadata.sourceUrl}`;
@@ -223,8 +225,10 @@ async function buildContext(results: SearchResult[], query: string): Promise<str
       case "SCRUTIN":
         section += `**Vote: ${metadata.title || "Scrutin"}**\n`;
         section += result.content;
-        if (metadata.id) {
-          section += `\n→ Voir ce vote: /votes/${metadata.id}`;
+        // Use slug for URL if available, fallback to id
+        const scrutinUrl = metadata.slug || metadata.id;
+        if (scrutinUrl) {
+          section += `\n→ Voir ce vote: /votes/${scrutinUrl}`;
         }
         if (metadata.sourceUrl) {
           section += `\n→ Source officielle AN: ${metadata.sourceUrl}`;
@@ -424,12 +428,14 @@ async function searchDatabaseByKeywords(query: string): Promise<string | null> {
           REJETE: "Rejeté",
           RETIRE: "Retiré",
         };
+        // Use slug for URL if available, fallback to id
+        const dossierLink = d.slug || d.id;
         results.push(
           `**${d.shortTitle || d.title.slice(0, 80)}**\n` +
           `Statut: ${statusLabels[d.status] || d.status}` +
           (d.category ? ` | Catégorie: ${d.category}` : "") +
           (d.filingDate ? `\nDate: ${d.filingDate.toLocaleDateString("fr-FR")}` : "") +
-          `\n→ [Voir le dossier](/assemblee/${d.id})`
+          `\n→ [Voir le dossier](/assemblee/${dossierLink})`
         );
       }
 
@@ -446,11 +452,13 @@ async function searchDatabaseByKeywords(query: string): Promise<string | null> {
 
       for (const s of scrutins) {
         const result = s.result === "ADOPTED" ? "Adopté" : "Rejeté";
+        // Use slug for URL if available, fallback to id
+        const scrutinLink = s.slug || s.id;
         results.push(
           `**Vote: ${s.title.slice(0, 100)}${s.title.length > 100 ? "..." : ""}**\n` +
           `Date: ${s.votingDate.toLocaleDateString("fr-FR")} - ${result}\n` +
           `Pour: ${s.votesFor}, Contre: ${s.votesAgainst}, Abstention: ${s.votesAbstain}\n` +
-          `→ [Voir ce vote](/votes/${s.id})`
+          `→ [Voir ce vote](/votes/${scrutinLink})`
         );
       }
     }

@@ -8,6 +8,7 @@ import { Calendar, Users, ExternalLink } from "lucide-react";
 interface VoteCardProps {
   id: string;
   externalId: string;
+  slug?: string | null;
   title: string;
   votingDate: Date | string;
   legislature: number;
@@ -22,6 +23,7 @@ interface VoteCardProps {
 export function VoteCard({
   id,
   externalId,
+  slug,
   title,
   votingDate,
   legislature,
@@ -32,6 +34,8 @@ export function VoteCard({
   sourceUrl,
   totalVotes,
 }: VoteCardProps) {
+  // Use slug for URL if available, fallback to id
+  const href = `/votes/${slug || id}`;
   const total = votesFor + votesAgainst + votesAbstain;
   const forPercent = total > 0 ? (votesFor / total) * 100 : 0;
   const againstPercent = total > 0 ? (votesAgainst / total) * 100 : 0;
@@ -42,7 +46,7 @@ export function VoteCard({
       <CardContent className="p-4">
         <div className="flex items-start justify-between gap-4 mb-3">
           <div className="flex-1 min-w-0">
-            <Link href={`/votes/${id}`} className="hover:underline">
+            <Link href={href} className="hover:underline">
               <h3 className="font-medium text-sm line-clamp-2">{title}</h3>
             </Link>
             <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">

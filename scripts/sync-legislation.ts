@@ -15,6 +15,7 @@
 
 import "dotenv/config";
 import { db } from "../src/lib/db";
+import { generateDateSlug } from "../src/lib/utils";
 import { DossierStatus } from "../src/generated/prisma";
 import * as fs from "fs";
 import * as path from "path";
@@ -274,6 +275,34 @@ function getCategory(procedure: string): string | null {
 }
 
 /**
+ * Generate a unique slug for a dossier
+ */
+async function generateUniqueDossierSlug(date: Date | null, title: string): Promise<string> {
+  const baseSlug = generateDateSlug(date, title);
+
+  // Check if slug already exists
+  const existing = await db.legislativeDossier.findUnique({ where: { slug: baseSlug } });
+  if (!existing) return baseSlug;
+
+  // Try with suffix
+  let counter = 2;
+  while (counter < 100) {
+    const suffix = `-${counter}`;
+    const maxBaseLength = 80 - suffix.length;
+    const truncatedBase = baseSlug.slice(0, maxBaseLength).replace(/-$/, "");
+    const slugWithSuffix = `${truncatedBase}${suffix}`;
+
+    const existsWithSuffix = await db.legislativeDossier.findUnique({ where: { slug: slugWithSuffix } });
+    if (!existsWithSuffix) return slugWithSuffix;
+
+    counter++;
+  }
+
+  // Fallback: use timestamp
+  return `${baseSlug.slice(0, 60)}-${Date.now()}`;
+}
+
+/**
  * Main sync function
  */
 async function syncLegislation(
@@ -436,14 +465,21 @@ async function syncLegislation(
           };
 
           if (existing) {
+            // Update existing dossier, generate slug if missing
+            const updateData: typeof dossierData & { slug?: string } = { ...dossierData };
+            if (!existing.slug) {
+              updateData.slug = await generateUniqueDossierSlug(filingDate, shortTitle || title);
+            }
             await db.legislativeDossier.update({
               where: { id: existing.id },
-              data: dossierData,
+              data: updateData,
             });
             stats.dossiersUpdated++;
           } else {
+            // Create new dossier with slug
+            const slug = await generateUniqueDossierSlug(filingDate, shortTitle || title);
             await db.legislativeDossier.create({
-              data: dossierData,
+              data: { ...dossierData, slug },
             });
             stats.dossiersCreated++;
           }

@@ -10,6 +10,7 @@ import { ExternalLink, FileText } from "lucide-react";
 interface DossierCardProps {
   id: string;
   externalId: string;
+  slug?: string | null;
   title: string;
   shortTitle?: string | null;
   number?: string | null;
@@ -25,6 +26,7 @@ interface DossierCardProps {
 
 export function DossierCard({
   id,
+  slug,
   title,
   shortTitle,
   number,
@@ -37,6 +39,8 @@ export function DossierCard({
   amendmentCount = 0,
   compact = false,
 }: DossierCardProps) {
+  // Use slug for URL if available, fallback to id
+  const href = `/assemblee/${slug || id}`;
   const displayTitle = shortTitle || title;
   const displayDate = adoptionDate || filingDate;
 
@@ -53,7 +57,7 @@ export function DossierCard({
             <CategoryBadge category={category} showIcon={false} />
           </div>
           <Link
-            href={`/assemblee/${id}`}
+            href={href}
             className="text-sm font-medium hover:text-blue-600 line-clamp-1"
           >
             {displayTitle}
@@ -92,7 +96,7 @@ export function DossierCard({
           {/* Title */}
           <div>
             <h3 className="text-lg font-semibold mb-1">
-              <Link href={`/assemblee/${id}`} className="hover:text-blue-600">
+              <Link href={href} className="hover:text-blue-600">
                 {displayTitle}
               </Link>
             </h3>
@@ -131,7 +135,7 @@ export function DossierCard({
 
             <div className="flex items-center gap-2">
               <Link
-                href={`/assemblee/${id}`}
+                href={href}
                 className="text-sm text-blue-600 hover:underline"
               >
                 Détails

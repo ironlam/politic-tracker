@@ -29,8 +29,6 @@
     "sync:careers": "tsx scripts/sync-careers.ts",
     "sync:careers:stats": "tsx scripts/sync-careers.ts --stats",
     "sync:history:stats": "tsx scripts/sync-mandate-history.ts --stats",
-    "sync:votes": "tsx scripts/sync-votes.ts",
-    "sync:votes:stats": "tsx scripts/sync-votes.ts --stats",
     "sync:votes-an": "tsx scripts/sync-votes-an.ts",
     "sync:votes-an:stats": "tsx scripts/sync-votes-an.ts --stats",
     "sync:stats": "tsx scripts/sync-assemblee.ts --stats",

@@ -39,10 +39,26 @@ async function getDossier(id: string) {
     });
   }
 
-  // If still not found, try by number (e.g., 3196)
+  // If still not found, try by exact number (e.g., "PPL 3196")
   if (!dossier) {
     dossier = await db.legislativeDossier.findFirst({
       where: { number: id },
+      include: {
+        amendments: {
+          orderBy: { number: "asc" },
+          take: 50,
+        },
+      },
+    });
+  }
+
+  // If still not found, try by partial number match (e.g., "3196" matches "PPL 3196")
+  // This handles cases where the chatbot extracts just the numeric part
+  if (!dossier && /^\d+$/.test(id)) {
+    dossier = await db.legislativeDossier.findFirst({
+      where: {
+        number: { endsWith: id },
+      },
       include: {
         amendments: {
           orderBy: { number: "asc" },

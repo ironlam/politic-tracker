@@ -58,39 +58,38 @@ export function InteractiveTimeline({
     return () => window.removeEventListener("resize", updateWidth);
   }, []);
 
-  // Calculate time range
+  // Calculate time range based on CAREER only (not birth date)
   const { minYear, maxYear, timeScale } = useMemo(() => {
     const now = new Date();
     const currentYear = now.getFullYear();
 
-    // Collect all dates
-    const dates: Date[] = [];
-
-    if (birthDate) dates.push(new Date(birthDate));
-    if (deathDate) dates.push(new Date(deathDate));
+    // Collect career dates only (mandates + affairs)
+    const careerDates: Date[] = [];
 
     mandates.forEach((m) => {
-      dates.push(new Date(m.startDate));
-      if (m.endDate) dates.push(new Date(m.endDate));
+      careerDates.push(new Date(m.startDate));
+      if (m.endDate) careerDates.push(new Date(m.endDate));
     });
 
     affairs.forEach((a) => {
-      if (a.verdictDate) dates.push(new Date(a.verdictDate));
-      else if (a.startDate) dates.push(new Date(a.startDate));
-      else if (a.factsDate) dates.push(new Date(a.factsDate));
+      if (a.verdictDate) careerDates.push(new Date(a.verdictDate));
+      else if (a.startDate) careerDates.push(new Date(a.startDate));
+      else if (a.factsDate) careerDates.push(new Date(a.factsDate));
     });
 
-    if (dates.length === 0) {
+    if (careerDates.length === 0) {
       return { minYear: currentYear - 10, maxYear: currentYear, timeScale: () => 0 };
     }
 
-    const years = dates.map((d) => d.getFullYear());
+    const years = careerDates.map((d) => d.getFullYear());
     const min = Math.min(...years);
-    const max = deathDate ? new Date(deathDate).getFullYear() : Math.max(...years, currentYear);
+    const max = deathDate
+      ? Math.max(new Date(deathDate).getFullYear(), ...years)
+      : Math.max(...years, currentYear);
 
-    // Add padding
-    const minYear = Math.floor(min / 5) * 5;
-    const maxYear = Math.ceil((max + 1) / 5) * 5;
+    // Add small padding (2 years before/after)
+    const minYear = min - 2;
+    const maxYear = max + 2;
 
     const usableWidth = containerWidth - TIMELINE_CONFIG.margin.left - TIMELINE_CONFIG.margin.right;
 
@@ -100,7 +99,7 @@ export function InteractiveTimeline({
     };
 
     return { minYear, maxYear, timeScale };
-  }, [mandates, affairs, birthDate, deathDate, containerWidth]);
+  }, [mandates, affairs, deathDate, containerWidth]);
 
   // Group mandates by row
   const mandatesByRow = useMemo(() => {
@@ -317,27 +316,6 @@ export function InteractiveTimeline({
                   </g>
                 );
               })}
-
-              {/* Birth marker */}
-              {birthDate && (
-                <g>
-                  <circle
-                    cx={timeScale(new Date(birthDate))}
-                    cy={header - 5}
-                    r={4}
-                    fill="#22c55e"
-                  />
-                  <text
-                    x={timeScale(new Date(birthDate))}
-                    y={header + 10}
-                    textAnchor="middle"
-                    fill="#22c55e"
-                    fontSize={9}
-                  >
-                    Naissance
-                  </text>
-                </g>
-              )}
 
               {/* Death marker */}
               {deathDate && (

@@ -70,7 +70,9 @@
     "visual": "tsx scripts/visual-test-runner.ts",
     "audit:affairs": "tsx scripts/audit-affairs.ts",
     "audit:affairs:urls": "tsx scripts/audit-affairs.ts --check-urls",
-    "audit:affairs:export": "tsx scripts/audit-affairs.ts --export"
+    "audit:affairs:export": "tsx scripts/audit-affairs.ts --export",
+    "audit:careers": "tsx scripts/audit-careers.ts",
+    "audit:careers:export": "tsx scripts/audit-careers.ts --export"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.33",

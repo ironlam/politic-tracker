@@ -62,11 +62,14 @@ export function CarteClient({ initialDepartments, initialStats }: CarteClientPro
 
   // Fetch data when filter changes
   useEffect(() => {
-    async function fetchData() {
-      if (filter === "all" && departments === initialDepartments) {
-        return; // Use initial data
-      }
+    // Skip fetch for initial "all" filter - use SSR data
+    if (filter === "all") {
+      setDepartments(initialDepartments);
+      setStats(initialStats);
+      return;
+    }
 
+    async function fetchData() {
       setLoading(true);
       try {
         const res = await fetch(`/api/stats/departments?filter=${filter}`);
@@ -81,7 +84,7 @@ export function CarteClient({ initialDepartments, initialStats }: CarteClientPro
     }
 
     fetchData();
-  }, [filter, departments, initialDepartments]);
+  }, [filter, initialDepartments, initialStats]);
 
   const handleDepartmentHover = useCallback(
     (dept: DepartmentStats | null, event?: React.MouseEvent) => {

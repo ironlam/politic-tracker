@@ -512,53 +512,203 @@ npm run sync:parties        # Partis politiques
 
 **Objectif** : Garantir l'exactitude de toutes les informations pour éviter les risques juridiques (diffamation, fausses informations).
 
-> ⚠️ **RISQUE JURIDIQUE** : Les erreurs sur les affaires judiciaires peuvent exposer le projet à des poursuites. Cette recette est OBLIGATOIRE avant toute mise en production visible.
+> ⚠️ **RISQUE JURIDIQUE** : Les erreurs sur les affaires judiciaires peuvent exposer le projet à des poursuites.
 
-#### Phase 1 : Audit manuel des données sensibles
+#### Approche : Recette initiale + Contrôle incrémental
+
+| Phase | Quand | Quoi | Effort |
+|-------|-------|------|--------|
+| **Recette initiale** | Une fois, avant lancement public | Vérification complète de toutes les affaires | ~2-3 jours |
+| **Contrôle incrémental** | À chaque sync/import | Vérifier uniquement les nouvelles données ou modifications | ~15 min/semaine |
+| **Audit périodique** | Trimestriel | Échantillonnage + cas signalés par utilisateurs | ~2h/trimestre |
+| **Sur alerte** | Quand signalement | Vérification ciblée | Variable |
+
+#### Phase 1 : Recette initiale (OBLIGATOIRE avant lancement)
 
 | Tâche | Description | Priorité |
 |-------|-------------|----------|
-| **Vérifier toutes les affaires judiciaires** | Croiser chaque affaire avec 2+ sources fiables (presse, tribunal, BALO) | CRITIQUE |
-| **Vérifier les statuts des affaires** | Confirmer : condamnation définitive vs appel en cours vs mise en examen | CRITIQUE |
-| **Vérifier les catégories d'affaires** | S'assurer que AGRESSION_SEXUELLE n'est pas confondu avec VIOLENCE | CRITIQUE |
-| **Vérifier les dates** | Dates de condamnation, de faits, de naissance, de décès | Haute |
-| **Compléter les photos manquantes** | Sources officielles (Wikipedia Commons, sites institutionnels) | Moyenne |
+| **Vérifier toutes les affaires judiciaires** | Croiser chaque affaire avec 2+ sources fiables | CRITIQUE |
+| **Vérifier les statuts** | Condamnation définitive vs appel vs mise en examen | CRITIQUE |
+| **Vérifier les catégories sensibles** | AGRESSION_SEXUELLE, HARCELEMENT_SEXUEL, VIOL | CRITIQUE |
+| **Compléter les photos manquantes** | Sources officielles (Wikipedia Commons, institutionnels) | Moyenne |
 
-#### Phase 2 : Automatisation et contrôle qualité
+#### Phase 2 : Outillage pour contrôle incrémental
 
 | Tâche | Description | Priorité |
 |-------|-------------|----------|
-| **Script d'audit automatique** | Détecter les incohérences (dates impossibles, doublons, données suspectes) | Haute |
-| **Tests de régression données** | Vérifier après chaque sync que les données critiques n'ont pas changé | Haute |
-| **Alertes sur modifications sensibles** | Email si une affaire est modifiée automatiquement | Moyenne |
-| **Interface admin de validation** | Page `/admin/validation` pour vérifier les données importées avant publication | Moyenne |
+| **Champ `verifiedAt` sur Affair** | Flag de vérification manuelle | Haute |
+| **Page `/admin/review`** | Liste des éléments non vérifiés ou récemment modifiés | Haute |
+| **Logging des modifications** | Historique des changements détectés par les syncs | Haute |
+| **Script d'audit automatique** | Détecter incohérences (dates impossibles, doublons) | Moyenne |
+| **Alertes email** | Notification si affaire modifiée automatiquement | Moyenne |
 
-#### Phase 3 : Documentation et traçabilité
+#### Phase 3 : Traçabilité et conformité
 
 | Tâche | Description | Priorité |
 |-------|-------------|----------|
 | **Journal des vérifications** | Qui a vérifié quoi, quand, avec quelles sources | Haute |
-| **Protocole de correction** | Procédure claire pour corriger une erreur détectée | Haute |
-| **Contact presse/juridique** | Email pour signaler une erreur (obligation légale) | Haute |
+| **Formulaire de signalement** | Page publique pour signaler une erreur | Haute |
+| **Procédure droit de réponse** | Conforme à la loi sur la presse | Haute |
 
-#### Sources de vérification recommandées
+#### Sources de vérification
 
-| Type de donnée | Sources primaires | Sources secondaires |
-|----------------|-------------------|---------------------|
+| Type | Sources primaires | Sources secondaires |
+|------|-------------------|---------------------|
 | **Condamnations** | Légifrance, Gazette du Palais, BALO | AFP, Le Monde, Mediapart |
-| **Mises en examen** | AFP uniquement | Le Monde, Mediapart (avec prudence) |
+| **Mises en examen** | AFP uniquement | Le Monde, Mediapart (prudence) |
 | **Mandats** | Sites officiels (AN, Sénat, PE) | JO, Who's Who |
-| **Décès** | JO, sites officiels | Wikipedia (avec vérification) |
 | **Photos** | Sites institutionnels, Wikipedia Commons | HATVP |
 
-#### Checklist avant mise en production
+#### Checklist lancement
 
 - [ ] 100% des affaires CONDAMNATION_DEFINITIVE vérifiées
-- [ ] 100% des affaires AGRESSION_SEXUELLE / HARCELEMENT_SEXUEL vérifiées
-- [ ] 0 affaire avec source manquante
-- [ ] Présomption d'innocence affichée pour toutes les mises en examen
-- [ ] Contact de signalement d'erreur visible sur le site
-- [ ] Mentions légales à jour avec procédure de droit de réponse
+- [ ] 100% des catégories sensibles (sexuelles) vérifiées
+- [ ] 0 affaire sans source
+- [ ] Présomption d'innocence affichée pour mises en examen
+- [ ] Page de signalement d'erreur fonctionnelle
+- [ ] Mentions légales avec droit de réponse
+
+---
+
+### 📰 Intégration Presse (Press Links)
+
+**Objectif** : Enrichir les fiches avec des liens vers des articles de presse pertinents, améliorer la crédibilité et potentiellement créer des partenariats.
+
+#### Sources d'articles
+
+| Source | Type | Accès | Usage |
+|--------|------|-------|-------|
+| **Europresse** | Agrégateur presse | Payant (API) | Archives complètes |
+| **Google News API** | Agrégateur | Gratuit limité | Actualités récentes |
+| **RSS médias** | Direct | Gratuit | Le Monde, Mediapart, etc. |
+| **IPTC NewsML** | Standard presse | Variable | Interopérabilité |
+
+#### Fonctionnalités envisagées
+
+| Fonctionnalité | Description | Effort |
+|----------------|-------------|--------|
+| **Bloc "Dans la presse"** | Section sur les fiches politiciens avec articles récents | Moyen |
+| **Liens automatiques** | Recherche automatique d'articles mentionnant le politicien | Moyen |
+| **Curation manuelle** | Admin peut ajouter/valider des articles pertinents | Faible |
+| **Widget actualités** | Flux d'actualités politiques sur la homepage | Moyen |
+
+#### Modèle de données
+
+```prisma
+model PressArticle {
+  id            String     @id @default(cuid())
+  politicianId  String?
+  affairId      String?    // Lien optionnel vers une affaire
+
+  title         String
+  excerpt       String?    @db.Text
+  url           String
+  publisher     String     // Le Monde, AFP, etc.
+  publishedAt   DateTime
+  imageUrl      String?
+
+  // Curation
+  featured      Boolean    @default(false)
+  verifiedAt    DateTime?
+
+  createdAt     DateTime   @default(now())
+}
+```
+
+#### Respect du droit d'auteur
+
+- **Titres + liens** : OK (droit de citation)
+- **Extraits courts** : OK (< 200 caractères)
+- **Contenu complet** : NON (violation copyright)
+- **Images** : Uniquement avec licence ou accord
+
+---
+
+### 💰 Stratégie de Monétisation (projet citoyen rentable)
+
+**Principe** : Rester un service public gratuit tout en générant des revenus pour assurer la pérennité.
+
+#### Modèles compatibles avec la mission citoyenne
+
+| Modèle | Description | Revenus potentiels | Complexité |
+|--------|-------------|-------------------|------------|
+| **Dons / Mécénat** | Tipee, HelloAsso, Patreon | 100-500€/mois | Faible |
+| **API payante (pro)** | Accès API pour médias, chercheurs, startups | 50-200€/mois/client | Moyenne |
+| **Partenariats presse** | Licence de données pour rédactions | 500-2000€/mois | Moyenne |
+| **Subventions** | Fondations (Open Society, Knight, etc.) | 5k-50k€/an | Élevée |
+| **Formation/Conseil** | Ateliers data journalisme, civic tech | 500-1500€/session | Moyenne |
+| **Publicité éthique** | Bannières non-intrusives (Carbon Ads, EthicalAds) | 50-300€/mois | Faible |
+
+#### Modèle recommandé : Freemium + Dons
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    GRATUIT (citoyens)                       │
+├─────────────────────────────────────────────────────────────┤
+│ ✅ Toutes les fiches politiciens                            │
+│ ✅ Recherche et filtres                                     │
+│ ✅ Votes parlementaires                                     │
+│ ✅ Carte interactive                                        │
+│ ✅ Chatbot (limité à 10 questions/jour)                     │
+│ ✅ Export CSV (usage personnel)                             │
+└─────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────┐
+│                    PAYANT (professionnels)                  │
+├─────────────────────────────────────────────────────────────┤
+│ 💎 API illimitée (49€/mois)                                 │
+│    - Accès JSON complet                                     │
+│    - Webhooks sur nouvelles données                         │
+│    - Support prioritaire                                    │
+│                                                             │
+│ 💎 Licence presse (199€/mois)                               │
+│    - Intégration dans rédaction                             │
+│    - Widgets embeddables                                    │
+│    - Données en temps réel                                  │
+│                                                             │
+│ 💎 Recherche/ONG (sur devis)                                │
+│    - Exports massifs                                        │
+│    - Données historiques                                    │
+│    - Analyses sur mesure                                    │
+└─────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────┐
+│                    DONS (soutien citoyen)                   │
+├─────────────────────────────────────────────────────────────┤
+│ ☕ Café (3€) - Merci !                                       │
+│ 🥐 Croissant (10€) - Badge "Soutien" sur le profil          │
+│ 🍽️ Repas (25€) - Accès beta features                        │
+│ 🎁 Mécène (100€/an) - Nom dans les remerciements            │
+└─────────────────────────────────────────────────────────────┘
+```
+
+#### Actions concrètes
+
+| Action | Priorité | Effort |
+|--------|----------|--------|
+| **Bouton "Soutenir" (Tipeee/Ko-fi)** | Haute | 1h |
+| **Page /soutenir** | Haute | 2h |
+| **API avec clés et quotas** | Moyenne | 1 semaine |
+| **Partenariats presse** (démarcher Le Monde, Mediapart) | Moyenne | Variable |
+| **Candidature subventions** (Google News Initiative, etc.) | Basse | 2-3 semaines |
+
+#### Subventions et fondations à cibler
+
+| Organisme | Focus | Montant type |
+|-----------|-------|--------------|
+| **Google News Initiative** | Journalisme innovant | 10k-50k€ |
+| **Open Society Foundations** | Transparence démocratie | 20k-100k€ |
+| **Knight Foundation** | Civic tech | 25k-500k$ |
+| **Fondation de France** | Intérêt général | 5k-30k€ |
+| **Région Île-de-France** | Innovation numérique | 10k-50k€ |
+| **Medialab Sciences Po** | Partenariat recherche | Collab |
+
+#### Transparence financière
+
+Si le projet génère des revenus :
+- **Page /finances** publique avec comptes annuels
+- **Rapport d'utilisation** des dons
+- **Statut juridique** : Association loi 1901 recommandée (crédibilité + déductibilité fiscale)
 
 ### Refactoring - Scripts d'import/sync
 
@@ -580,7 +730,10 @@ npm run sync:parties        # Partis politiques
 - Matcher par nom + date de naissance pour éviter les homonymes
 
 ### À faire court terme
-- [ ] 🔴 **Recette éditoriale** (vérification manuelle des données sensibles - OBLIGATOIRE)
+- [ ] 🔴 **Recette éditoriale initiale** (vérification des affaires - avant lancement public)
+- [ ] 💰 **Bouton "Soutenir"** (Tipeee/Ko-fi) + page `/soutenir`
+- [ ] 📰 **Bloc "Dans la presse"** sur les fiches politiciens
+- [ ] Champ `verifiedAt` sur les affaires + page `/admin/review`
 - [x] Carte interactive des départements (`/carte`)
 - [x] **URLs SEO-friendly** (slugs + redirects 301 pour `/votes/` et `/assemblee/`)
 - [x] Votes du Sénat (NosSénateurs)

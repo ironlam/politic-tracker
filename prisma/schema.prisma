@@ -152,6 +152,7 @@ model Mandate {
   title        String      // Ex: "Député de la 3ème circonscription du Rhône"
   institution  String      // Ex: "Assemblée nationale"
   constituency String?     // Ex: "Rhône (3ème)"
+  departmentCode String?   // Code département (01-95, 2A, 2B, 971-976, 977, 978, 987, 988)
 
   startDate    DateTime
   endDate      DateTime?
@@ -177,6 +178,7 @@ model Mandate {
   @@index([type])
   @@index([isCurrent])
   @@index([europeanGroupId])
+  @@index([departmentCode])
 }
 
 // European Parliament political groups

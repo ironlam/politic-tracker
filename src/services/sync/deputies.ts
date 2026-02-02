@@ -161,6 +161,7 @@ async function syncDeputy(
       title: `Député${dep.civ === "Mme" ? "e" : ""} de la ${dep.circo}${getOrdinalSuffix(dep.circo)} circonscription`,
       institution: "Assemblée nationale",
       constituency: `${dep.departementNom} (${dep.circo})`,
+      departmentCode: dep.departementCode || null,
       startDate: mandateStart,
       isCurrent: true,
       sourceUrl: `https://www.assemblee-nationale.fr/dyn/deputes/${dep.id}`,

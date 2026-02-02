@@ -19,6 +19,7 @@ export const NAV_GROUPS: NavGroup[] = [
     label: "Élus",
     items: [
       { href: "/politiques", label: "Tous les représentants", description: "Députés, sénateurs, ministres..." },
+      { href: "/carte", label: "Carte de France", icon: "🗺️", description: "Visualisez les élus par département" },
       { href: "/departements", label: "Par département", description: "Trouvez les élus de votre territoire" },
       { href: "/partis", label: "Partis politiques", description: "55+ partis avec leurs membres" },
     ],
@@ -61,6 +62,7 @@ export const FOOTER_SECTIONS = [
     title: "Explorer",
     links: [
       { href: "/politiques", label: "Représentants" },
+      { href: "/carte", label: "Carte" },
       { href: "/assemblee", label: "En direct" },
       { href: "/votes", label: "Votes" },
       { href: "/affaires", label: "Affaires" },

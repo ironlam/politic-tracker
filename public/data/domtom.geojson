@@ -1,0 +1,45 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "code": "971", "nom": "Guadeloupe" },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-61.551, 16.265]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "code": "972", "nom": "Martinique" },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-61.024, 14.641]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "code": "973", "nom": "Guyane" },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-53.126, 3.934]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "code": "974", "nom": "La Réunion" },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [55.536, -21.115]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "code": "976", "nom": "Mayotte" },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [45.166, -12.827]
+      }
+    }
+  ]
+}

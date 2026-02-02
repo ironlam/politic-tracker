@@ -1,6 +1,6 @@
 # Roadmap - Transparence Politique
 
-> **Dernière mise à jour** : 2026-02-01
+> **Dernière mise à jour** : 2026-02-02
 
 Ce document recense les évolutions envisagées pour le projet, classées par priorité et complexité.
 
@@ -508,6 +508,58 @@ npm run sync:parties        # Partis politiques
 - [ ] UI chat basique (shadcn/ui)
 - [ ] Citations automatiques des sources
 
+### 🔴 PRIORITÉ CRITIQUE : Recette Éditoriale (Qualité des données)
+
+**Objectif** : Garantir l'exactitude de toutes les informations pour éviter les risques juridiques (diffamation, fausses informations).
+
+> ⚠️ **RISQUE JURIDIQUE** : Les erreurs sur les affaires judiciaires peuvent exposer le projet à des poursuites. Cette recette est OBLIGATOIRE avant toute mise en production visible.
+
+#### Phase 1 : Audit manuel des données sensibles
+
+| Tâche | Description | Priorité |
+|-------|-------------|----------|
+| **Vérifier toutes les affaires judiciaires** | Croiser chaque affaire avec 2+ sources fiables (presse, tribunal, BALO) | CRITIQUE |
+| **Vérifier les statuts des affaires** | Confirmer : condamnation définitive vs appel en cours vs mise en examen | CRITIQUE |
+| **Vérifier les catégories d'affaires** | S'assurer que AGRESSION_SEXUELLE n'est pas confondu avec VIOLENCE | CRITIQUE |
+| **Vérifier les dates** | Dates de condamnation, de faits, de naissance, de décès | Haute |
+| **Compléter les photos manquantes** | Sources officielles (Wikipedia Commons, sites institutionnels) | Moyenne |
+
+#### Phase 2 : Automatisation et contrôle qualité
+
+| Tâche | Description | Priorité |
+|-------|-------------|----------|
+| **Script d'audit automatique** | Détecter les incohérences (dates impossibles, doublons, données suspectes) | Haute |
+| **Tests de régression données** | Vérifier après chaque sync que les données critiques n'ont pas changé | Haute |
+| **Alertes sur modifications sensibles** | Email si une affaire est modifiée automatiquement | Moyenne |
+| **Interface admin de validation** | Page `/admin/validation` pour vérifier les données importées avant publication | Moyenne |
+
+#### Phase 3 : Documentation et traçabilité
+
+| Tâche | Description | Priorité |
+|-------|-------------|----------|
+| **Journal des vérifications** | Qui a vérifié quoi, quand, avec quelles sources | Haute |
+| **Protocole de correction** | Procédure claire pour corriger une erreur détectée | Haute |
+| **Contact presse/juridique** | Email pour signaler une erreur (obligation légale) | Haute |
+
+#### Sources de vérification recommandées
+
+| Type de donnée | Sources primaires | Sources secondaires |
+|----------------|-------------------|---------------------|
+| **Condamnations** | Légifrance, Gazette du Palais, BALO | AFP, Le Monde, Mediapart |
+| **Mises en examen** | AFP uniquement | Le Monde, Mediapart (avec prudence) |
+| **Mandats** | Sites officiels (AN, Sénat, PE) | JO, Who's Who |
+| **Décès** | JO, sites officiels | Wikipedia (avec vérification) |
+| **Photos** | Sites institutionnels, Wikipedia Commons | HATVP |
+
+#### Checklist avant mise en production
+
+- [ ] 100% des affaires CONDAMNATION_DEFINITIVE vérifiées
+- [ ] 100% des affaires AGRESSION_SEXUELLE / HARCELEMENT_SEXUEL vérifiées
+- [ ] 0 affaire avec source manquante
+- [ ] Présomption d'innocence affichée pour toutes les mises en examen
+- [ ] Contact de signalement d'erreur visible sur le site
+- [ ] Mentions légales à jour avec procédure de droit de réponse
+
 ### Refactoring - Scripts d'import/sync
 
 **Objectif** : Rendre les scripts d'import plus intelligents et robustes.
@@ -528,11 +580,12 @@ npm run sync:parties        # Partis politiques
 - Matcher par nom + date de naissance pour éviter les homonymes
 
 ### À faire court terme
-- [ ] **URLs SEO-friendly** (slugs + redirects 301 pour `/votes/` et `/assemblee/`)
-- [ ] Votes du Sénat (NosSénateurs)
-- [ ] Page comparative entre politiciens
-- [ ] Export CSV des données
-- [ ] Carte interactive des départements
+- [ ] 🔴 **Recette éditoriale** (vérification manuelle des données sensibles - OBLIGATOIRE)
+- [x] Carte interactive des départements (`/carte`)
+- [x] **URLs SEO-friendly** (slugs + redirects 301 pour `/votes/` et `/assemblee/`)
+- [x] Votes du Sénat (NosSénateurs)
+- [x] Page comparative entre politiciens (`/comparer`)
+- [x] Export CSV des données (`/api/export/*`)
 
 ### Configuration du Cron Job
 

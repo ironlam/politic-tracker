@@ -67,7 +67,10 @@
     "test:visual:debug": "playwright test --debug",
     "test:visual:headed": "playwright test --headed",
     "test:visual:grep": "playwright test --grep",
-    "visual": "tsx scripts/visual-test-runner.ts"
+    "visual": "tsx scripts/visual-test-runner.ts",
+    "audit:affairs": "tsx scripts/audit-affairs.ts",
+    "audit:affairs:urls": "tsx scripts/audit-affairs.ts --check-urls",
+    "audit:affairs:export": "tsx scripts/audit-affairs.ts --export"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.33",

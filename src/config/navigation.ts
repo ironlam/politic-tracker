@@ -76,6 +76,7 @@ export const FOOTER_SECTIONS = [
       { href: "/institutions", label: "Institutions" },
       { href: "/sources", label: "Sources" },
       { href: "/chat", label: "Assistant IA" },
+      { href: "/soutenir", label: "Nous soutenir" },
     ],
   },
   {

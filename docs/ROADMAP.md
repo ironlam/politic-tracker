@@ -714,15 +714,34 @@ Si le projet génère des revenus :
 
 **Objectif** : Rendre les scripts d'import plus intelligents et robustes.
 
-| Amélioration | Description | Priorité |
-|--------------|-------------|----------|
-| **Pattern unifié** | Créer une classe/interface commune pour tous les scripts de sync | Haute |
-| **Gestion des erreurs** | Retry automatique, logging structuré, rapport de fin | Haute |
-| **Rate limiting centralisé** | Module partagé pour respecter les limites des APIs | Moyenne |
-| **Mode incrémental** | Ne récupérer que les changements depuis la dernière sync | Moyenne |
-| **Validation des données** | Schéma Zod pour valider les données avant insertion | Moyenne |
-| **Tests automatisés** | Tests unitaires pour les fonctions de parsing/matching | Basse |
-| **Dry-run partout** | Option `--dry-run` sur tous les scripts | Faible |
+> 📋 **Spec technique détaillée** : [docs/REFACTORING-SYNC-SCRIPTS.md](./REFACTORING-SYNC-SCRIPTS.md)
+
+#### Résumé des gains attendus
+
+| Métrique | Avant | Après | Amélioration |
+|----------|-------|-------|--------------|
+| Lignes de code | ~4530 | ~2700 | **-40%** |
+| Temps sync Wikidata | 200s/1000 | 25-40s | **5-8x** |
+| Retry coverage | 0% | 100% | ✅ |
+| Tests parsing | 0% | 30%+ | ✅ |
+
+#### Modules à créer
+
+| Module | Description | Impact |
+|--------|-------------|--------|
+| `cli-runner.ts` | Framework CLI unifié | -1000 lignes |
+| `http-client.ts` | Client HTTP avec retry/rate limit | Résilience |
+| `wikidata.ts` | Service Wikidata unifié | -400 lignes |
+| `progress-tracker.ts` | Barre de progression | UX dev |
+| `date-utils.ts` | Parsing dates consolidé | -100 lignes |
+| `prisma-helpers.ts` | Patterns DB réutilisables | -200 lignes |
+
+#### Plan de migration (4 semaines)
+
+1. **Phase 1** : CLI runner, result formatter, date utils (Quick wins)
+2. **Phase 2** : HTTP client, Wikidata service, progress tracker
+3. **Phase 3** : Batching, caching, checkpoint/resume
+4. **Phase 4** : Migration scripts restants, tests, documentation
 
 **Leçons apprises Wikidata** :
 - SPARQL timeout sur gros volumes → utiliser l'API REST (`wbsearchentities`)

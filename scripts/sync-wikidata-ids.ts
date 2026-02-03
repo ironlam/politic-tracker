@@ -25,6 +25,8 @@ interface WikidataEntity {
   label: string;
   description?: string;
   birthDate?: string;
+  isPolitician: boolean; // Has political positions (P39)
+  positions: string[]; // List of position IDs held
 }
 
 /**
@@ -62,8 +64,27 @@ async function searchWikidataByName(fullName: string): Promise<WikidataEntity[]>
   return fetchEntityDetails(ids);
 }
 
+// Political position IDs in Wikidata (P39 values that indicate French politicians)
+const POLITICAL_POSITIONS = new Set([
+  "Q3044918",   // député français (member of the National Assembly of France)
+  "Q3044923",   // sénateur français (member of the Senate of France)
+  "Q21032547",  // ministre français (French minister)
+  "Q19546",     // député européen (member of the European Parliament)
+  "Q21603893",  // maire (mayor in France)
+  "Q26125059",  // conseiller régional français
+  "Q27169",     // conseiller général
+  "Q311065",    // deputy mayor
+  "Q83307",     // ministre (minister - general)
+  "Q4164871",   // position held (general political office)
+  "Q30461",     // président de la République française
+  "Q2105858",   // Premier ministre français
+  "Q1127811",   // député (general)
+  "Q15686806",  // membre de l'Assemblée nationale
+  "Q18941264",  // membre du Sénat
+]);
+
 /**
- * Fetch entity details (birth date, nationality) to verify it's a French politician
+ * Fetch entity details (birth date, nationality, positions) to verify it's a French politician
  */
 async function fetchEntityDetails(ids: string[]): Promise<WikidataEntity[]> {
   const url = new URL(WIKIDATA_API);
@@ -119,6 +140,38 @@ async function fetchEntityDetails(ids: string[]): Promise<WikidataEntity[]> {
       }
     }
 
+    // Get positions held (P39) to check if they're a politician
+    const positionClaims = entity.claims?.P39 || [];
+    const positions: string[] = [];
+    let isPolitician = false;
+
+    for (const claim of positionClaims) {
+      const positionId = claim?.mainsnak?.datavalue?.value?.id;
+      if (positionId) {
+        positions.push(positionId);
+        if (POLITICAL_POSITIONS.has(positionId)) {
+          isPolitician = true;
+        }
+      }
+    }
+
+    // Also check occupation (P106) for politician-related occupations
+    const occupationClaims = entity.claims?.P106 || [];
+    const politicianOccupations = new Set([
+      "Q82955",    // politician
+      "Q1930187",  // journalist (often politicians)
+      "Q16533",    // judge
+      "Q40348",    // lawyer
+      "Q212238",   // civil servant
+    ]);
+
+    for (const claim of occupationClaims) {
+      const occupationId = claim?.mainsnak?.datavalue?.value?.id;
+      if (occupationId === "Q82955") { // politician occupation
+        isPolitician = true;
+      }
+    }
+
     // Get label
     const label = entity.labels?.fr?.value || entity.labels?.en?.value || id;
 
@@ -126,6 +179,8 @@ async function fetchEntityDetails(ids: string[]): Promise<WikidataEntity[]> {
       id,
       label,
       birthDate,
+      isPolitician,
+      positions,
     });
   }
 
@@ -246,13 +301,15 @@ async function syncWikidataIds(options: {
         continue;
       }
 
-      // Find best match
+      // Find best match using multiple criteria
       let bestMatch: WikidataEntity | null = null;
 
       if (candidates.length === 1) {
         bestMatch = candidates[0];
       } else {
-        // Multiple candidates - match by birth date
+        // Multiple candidates - use disambiguation strategies
+
+        // Strategy 1: Match by birth date (most reliable)
         for (const candidate of candidates) {
           if (candidate.birthDate && politician.birthDate) {
             const wdDate = parseDate(candidate.birthDate);
@@ -263,6 +320,48 @@ async function syncWikidataIds(options: {
           }
         }
 
+        // Strategy 2: If no birth date match, filter to only politicians
+        if (!bestMatch) {
+          const politicianCandidates = candidates.filter(c => c.isPolitician);
+
+          // If only one is a politician, that's our match
+          if (politicianCandidates.length === 1) {
+            bestMatch = politicianCandidates[0];
+          }
+          // If multiple politicians but we have a birth date in our DB, try to match
+          else if (politicianCandidates.length > 1 && politician.birthDate) {
+            for (const candidate of politicianCandidates) {
+              if (candidate.birthDate) {
+                const wdDate = parseDate(candidate.birthDate);
+                if (datesMatch(politician.birthDate, wdDate)) {
+                  bestMatch = candidate;
+                  break;
+                }
+              }
+            }
+          }
+          // If we don't have a birth date but only one politician candidate has positions
+          else if (politicianCandidates.length > 1 && !politician.birthDate) {
+            const withPositions = politicianCandidates.filter(c => c.positions.length > 0);
+            if (withPositions.length === 1) {
+              bestMatch = withPositions[0];
+            }
+          }
+        }
+
+        // Strategy 3: If no politician found, take the one with the most positions
+        if (!bestMatch && candidates.length > 0) {
+          const sortedByPositions = [...candidates].sort(
+            (a, b) => b.positions.length - a.positions.length
+          );
+          // Only use if top candidate has significantly more positions
+          if (sortedByPositions[0].positions.length > 0 &&
+              (sortedByPositions.length === 1 ||
+               sortedByPositions[0].positions.length > sortedByPositions[1].positions.length * 2)) {
+            bestMatch = sortedByPositions[0];
+          }
+        }
+
         if (!bestMatch) {
           result.multipleMatches++;
           continue;
@@ -270,9 +369,12 @@ async function syncWikidataIds(options: {
       }
 
       const wikidataId = bestMatch.id;
+      const matchReason = bestMatch.isPolitician
+        ? `(politician, ${bestMatch.positions.length} positions)`
+        : `(${bestMatch.positions.length} positions)`;
 
       if (dryRun) {
-        console.log(`[DRY-RUN] ${politician.fullName} -> ${wikidataId}`);
+        console.log(`[DRY-RUN] ${politician.fullName} -> ${wikidataId} ${matchReason}`);
         result.idsCreated++;
       } else {
         // Check if this Wikidata ID is already used
@@ -299,7 +401,7 @@ async function syncWikidataIds(options: {
           },
         });
         result.idsCreated++;
-        console.log(`✓ ${politician.fullName} -> ${wikidataId}`);
+        console.log(`✓ ${politician.fullName} -> ${wikidataId} ${matchReason}`);
       }
     } catch (error) {
       result.errors.push(`${politician.fullName}: ${error}`);

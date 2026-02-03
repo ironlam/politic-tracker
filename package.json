@@ -20,6 +20,8 @@
     "sync:hatvp": "tsx scripts/sync-hatvp.ts",
     "sync:photos": "tsx scripts/sync-photos.ts",
     "sync:deceased": "tsx scripts/sync-deceased.ts",
+    "sync:birthdates": "tsx scripts/sync-birthdates.ts",
+    "sync:birthdates:stats": "tsx scripts/sync-birthdates.ts --stats",
     "sync:europarl": "tsx scripts/sync-europarl.ts",
     "sync:europarl:stats": "tsx scripts/sync-europarl.ts --stats",
     "sync:parties": "tsx scripts/sync-parties.ts",

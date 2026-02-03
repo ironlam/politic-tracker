@@ -336,10 +336,16 @@ export default async function AffairesPage({ searchParams }: PageProps) {
                             {affair.sentence}
                           </p>
                         )}
-                        <p>
+                        <p className="mb-2">
                           {affair.sources.length} source
                           {affair.sources.length !== 1 ? "s" : ""}
                         </p>
+                        <Link
+                          href={`/affaires/${affair.slug}`}
+                          className="text-blue-600 hover:underline text-xs"
+                        >
+                          Voir détails →
+                        </Link>
                       </div>
                     </div>
                   </CardContent>

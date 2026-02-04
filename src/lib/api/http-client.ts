@@ -16,18 +16,31 @@ export interface HTTPClientOptions {
   rateLimitMs?: number;
   userAgent?: string;
   headers?: Record<string, string>;
+  /** Enable response caching (default: false) */
+  enableCache?: boolean;
+  /** Cache TTL in milliseconds (default: 5 minutes) */
+  cacheTtlMs?: number;
 }
 
 export interface RequestOptions {
   timeout?: number;
   retries?: number;
   headers?: Record<string, string>;
+  /** Skip cache for this request */
+  skipCache?: boolean;
 }
 
 export interface HTTPResponse<T> {
   data: T;
   status: number;
   ok: boolean;
+  cached?: boolean;
+}
+
+interface CacheEntry<T> {
+  data: T;
+  status: number;
+  expiresAt: number;
 }
 
 export class HTTPError extends Error {
@@ -49,6 +62,8 @@ const DEFAULT_OPTIONS: Required<HTTPClientOptions> = {
   rateLimitMs: 0,
   userAgent: "TransparencePolitique/1.0 (https://politic-tracker.vercel.app)",
   headers: {},
+  enableCache: false,
+  cacheTtlMs: 5 * 60 * 1000, // 5 minutes
 };
 
 /**
@@ -64,9 +79,78 @@ function sleep(ms: number): Promise<void> {
 export class HTTPClient {
   private options: Required<HTTPClientOptions>;
   private lastRequestTime = 0;
+  private cache = new Map<string, CacheEntry<unknown>>();
 
   constructor(options: HTTPClientOptions = {}) {
     this.options = { ...DEFAULT_OPTIONS, ...options };
+  }
+
+  /**
+   * Get from cache if valid
+   */
+  private getFromCache<T>(url: string): HTTPResponse<T> | null {
+    if (!this.options.enableCache) return null;
+
+    const entry = this.cache.get(url) as CacheEntry<T> | undefined;
+    if (!entry) return null;
+
+    if (Date.now() > entry.expiresAt) {
+      this.cache.delete(url);
+      return null;
+    }
+
+    return { data: entry.data, status: entry.status, ok: true, cached: true };
+  }
+
+  /**
+   * Store in cache
+   */
+  private setCache<T>(url: string, data: T, status: number): void {
+    if (!this.options.enableCache) return;
+
+    this.cache.set(url, {
+      data,
+      status,
+      expiresAt: Date.now() + this.options.cacheTtlMs,
+    });
+
+    // Cleanup old entries periodically (keep cache size reasonable)
+    if (this.cache.size > 1000) {
+      this.cleanupCache();
+    }
+  }
+
+  /**
+   * Remove expired cache entries
+   */
+  private cleanupCache(): void {
+    const now = Date.now();
+    const toDelete: string[] = [];
+
+    this.cache.forEach((entry, key) => {
+      if (now > entry.expiresAt) {
+        toDelete.push(key);
+      }
+    });
+
+    toDelete.forEach((key) => this.cache.delete(key));
+  }
+
+  /**
+   * Clear all cache entries
+   */
+  clearCache(): void {
+    this.cache.clear();
+  }
+
+  /**
+   * Get cache statistics
+   */
+  getCacheStats(): { size: number; enabled: boolean } {
+    return {
+      size: this.cache.size,
+      enabled: this.options.enableCache,
+    };
   }
 
   /**
@@ -142,7 +226,7 @@ export class HTTPClient {
         }
 
         const data = (await response.json()) as T;
-        return { data, status: response.status, ok: true };
+        return { data, status: response.status, ok: true, cached: false };
       } catch (error) {
         lastError = error as Error;
 
@@ -168,7 +252,21 @@ export class HTTPClient {
    */
   async get<T>(url: string, options: RequestOptions = {}): Promise<HTTPResponse<T>> {
     const fullUrl = this.options.baseUrl ? `${this.options.baseUrl}${url}` : url;
-    return this.fetchWithRetry<T>(fullUrl, { method: "GET" }, options);
+
+    // Check cache first (unless skipCache is set)
+    if (!options.skipCache) {
+      const cached = this.getFromCache<T>(fullUrl);
+      if (cached) return cached;
+    }
+
+    const response = await this.fetchWithRetry<T>(fullUrl, { method: "GET" }, options);
+
+    // Store in cache on success
+    if (response.ok && !options.skipCache) {
+      this.setCache(fullUrl, response.data, response.status);
+    }
+
+    return response;
   }
 
   /**

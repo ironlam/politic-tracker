@@ -13,6 +13,7 @@ export {
   formatDuration,
 } from "./result-formatter";
 export { ProgressTracker, createProgress } from "./progress-tracker";
+export { CheckpointManager, createCheckpoint } from "./checkpoint";
 
 export type {
   SyncHandler,
@@ -21,3 +22,4 @@ export type {
   CLIOptionDefinition,
 } from "./types";
 export type { ProgressOptions, ProgressStats } from "./progress-tracker";
+export type { Checkpoint, CheckpointManagerOptions } from "./checkpoint";

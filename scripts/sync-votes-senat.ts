@@ -2,16 +2,16 @@
  * CLI script to sync parliamentary votes from senat.fr
  *
  * Usage:
- *   npx tsx scripts/sync-votes-senat.ts              # Full sync (all sessions)
- *   npx tsx scripts/sync-votes-senat.ts --session=2024  # Sync specific session
- *   npx tsx scripts/sync-votes-senat.ts --stats      # Show current stats
- *   npx tsx scripts/sync-votes-senat.ts --dry-run    # Preview without writing
- *   npx tsx scripts/sync-votes-senat.ts --help       # Show help
+ *   npm run sync:votes-senat              # Sync current session
+ *   npm run sync:votes-senat -- --all     # Sync all sessions
+ *   npm run sync:votes-senat -- --session=2024  # Specific session
+ *   npm run sync:votes-senat -- --stats   # Show current stats
  *
  * Data source: senat.fr (official Senate website)
  */
 
 import "dotenv/config";
+import { createCLI, type SyncHandler, type SyncResult } from "../src/lib/sync";
 import { db } from "../src/lib/db";
 import { generateDateSlug } from "../src/lib/utils";
 import { VotePosition, VotingResult, DataSource, Chamber } from "../src/generated/prisma";
@@ -366,15 +366,6 @@ function sessionToLegislature(session: number): number {
  * Main sync function
  */
 async function syncVotesSenat(session: number | null = null, dryRun: boolean = false) {
-  console.log("=".repeat(50));
-  console.log("Transparence Politique - Votes Sync (Sénat)");
-  console.log("=".repeat(50));
-  console.log(`Session: ${session || "all"}`);
-  console.log(`Mode: ${dryRun ? "DRY RUN (no writes)" : "LIVE"}`);
-  console.log(`Started at: ${new Date().toISOString()}`);
-  console.log("");
-
-  const startTime = Date.now();
   const stats = {
     scrutinsProcessed: 0,
     scrutinsCreated: 0,
@@ -540,90 +531,29 @@ async function syncVotesSenat(session: number | null = null, dryRun: boolean = f
     stats.errors.push(`Fatal error: ${err instanceof Error ? err.message : String(err)}`);
   }
 
-  // Results
-  const duration = ((Date.now() - startTime) / 1000).toFixed(2);
-
-  console.log("\n\n" + "=".repeat(50));
-  console.log("Sync Results:");
-  console.log("=".repeat(50));
-  console.log(`Status: ${stats.errors.length === 0 ? "✅ SUCCESS" : "⚠️ COMPLETED WITH ERRORS"}`);
-  console.log(`Duration: ${duration}s`);
-  console.log(`Mode: ${dryRun ? "DRY RUN" : "LIVE"}`);
-  console.log(`\nScrutins:`);
-  console.log(`  Processed: ${stats.scrutinsProcessed}`);
-  console.log(`  Created: ${stats.scrutinsCreated}`);
-  console.log(`  Updated: ${stats.scrutinsUpdated}`);
-  console.log(`  Skipped: ${stats.scrutinsSkipped}`);
-  console.log(`\nVotes created: ${stats.votesCreated}`);
-
-  if (stats.senatorsNotFound.size > 0) {
-    console.log(`\nSenators not found (${stats.senatorsNotFound.size}):`);
-    const notFoundArray = Array.from(stats.senatorsNotFound);
-    notFoundArray.slice(0, 10).forEach((p) => console.log(`  - ${p}`));
-    if (notFoundArray.length > 10) {
-      console.log(`  ... and ${notFoundArray.length - 10} more`);
-    }
-  }
-
-  if (stats.errors.length > 0) {
-    console.log(`\n⚠️ Errors (${stats.errors.length}):`);
-    stats.errors.slice(0, 5).forEach((e) => console.log(`  - ${e}`));
-    if (stats.errors.length > 5) {
-      console.log(`  ... and ${stats.errors.length - 5} more`);
-    }
-  }
-
-  console.log("\n" + "=".repeat(50));
-
   return stats;
 }
 
-/**
- * Get current Senate votes stats
- */
-async function showStats() {
-  console.log("Fetching current Senate votes stats...\n");
+const handler: SyncHandler = {
+  name: "Politic Tracker - Senate Votes Sync",
+  description: "Import scrutins and votes from Sénat",
 
-  const scrutinsCount = await db.scrutin.count({
-    where: { chamber: Chamber.SENAT },
-  });
-  const votesCount = await db.vote.count({
-    where: { scrutin: { chamber: Chamber.SENAT } },
-  });
-  const sessions = await db.scrutin.groupBy({
-    by: ["legislature"],
-    where: { chamber: Chamber.SENAT },
-    _count: true,
-    orderBy: { legislature: "desc" },
-  });
+  options: [
+    {
+      name: "--session",
+      type: "string",
+      description: `Session year (default: ${DEFAULT_SESSION}). Available: ${AVAILABLE_SESSIONS.join(", ")}`,
+    },
+    {
+      name: "--all",
+      type: "boolean",
+      description: "Sync all sessions (2006-present)",
+    },
+  ],
 
-  console.log("Current database stats (Senate):");
-  console.log(`  Scrutins: ${scrutinsCount}`);
-  console.log(`  Total votes: ${votesCount}`);
-
-  if (sessions.length > 0) {
-    console.log("\n  By session:");
-    for (const s of sessions) {
-      console.log(`    - ${s.legislature}: ${s._count} scrutins`);
-    }
-  }
-}
-
-// Main
-async function main() {
-  const args = process.argv.slice(2);
-
-  if (args.includes("--help") || args.includes("-h")) {
+  showHelp() {
     console.log(`
-Transparence Politique - Votes Sync CLI (Sénat)
-
-Usage:
-  npx tsx scripts/sync-votes-senat.ts              Full sync (current session)
-  npx tsx scripts/sync-votes-senat.ts --all        Sync all sessions (2006-present)
-  npx tsx scripts/sync-votes-senat.ts --session=2024  Sync specific session
-  npx tsx scripts/sync-votes-senat.ts --stats      Show current database stats
-  npx tsx scripts/sync-votes-senat.ts --dry-run    Preview without writing to DB
-  npx tsx scripts/sync-votes-senat.ts --help       Show this help message
+Politic Tracker - Votes Sync (Sénat)
 
 Data source: senat.fr (official Senate website)
 
@@ -632,40 +562,82 @@ Features:
   - Downloads JSON vote data for each scrutin
   - Parses metadata from HTML (title, date, results)
   - Matches senators by their matricule (ExternalId)
-  - Creates/updates Scrutin and Vote records
-  - Shows progress bar and detailed results
     `);
-    process.exit(0);
-  }
+  },
 
-  if (args.includes("--stats")) {
-    await showStats();
-    process.exit(0);
-  }
+  async showStats() {
+    const scrutinsCount = await db.scrutin.count({
+      where: { chamber: Chamber.SENAT },
+    });
+    const votesCount = await db.vote.count({
+      where: { scrutin: { chamber: Chamber.SENAT } },
+    });
+    const sessions = await db.scrutin.groupBy({
+      by: ["legislature"],
+      where: { chamber: Chamber.SENAT },
+      _count: true,
+      orderBy: { legislature: "desc" },
+    });
 
-  // Parse options
-  let session: number | null = DEFAULT_SESSION;
-  const sessionArg = args.find((a) => a.startsWith("--session="));
-  if (sessionArg) {
-    session = parseInt(sessionArg.split("=")[1], 10);
-    if (isNaN(session) || !AVAILABLE_SESSIONS.includes(session)) {
-      console.error(`Invalid session. Available: ${AVAILABLE_SESSIONS.join(", ")}`);
-      process.exit(1);
+    console.log("\n" + "=".repeat(50));
+    console.log("Senate Votes Stats");
+    console.log("=".repeat(50));
+    console.log(`Scrutins (Sénat): ${scrutinsCount}`);
+    console.log(`Total votes: ${votesCount}`);
+
+    if (sessions.length > 0) {
+      console.log("\nBy session:");
+      for (const s of sessions) {
+        console.log(`  ${s.legislature}: ${s._count} scrutins`);
+      }
     }
-  }
+  },
 
-  // --all overrides session
-  if (args.includes("--all")) {
-    session = null;
-  }
+  async sync(options): Promise<SyncResult> {
+    const { dryRun = false, session: sessionStr, all = false } = options as {
+      dryRun?: boolean;
+      session?: string;
+      all?: boolean;
+    };
 
-  const dryRun = args.includes("--dry-run");
+    let session: number | null = DEFAULT_SESSION;
 
-  await syncVotesSenat(session, dryRun);
-  process.exit(0);
-}
+    if (sessionStr) {
+      session = parseInt(sessionStr, 10);
+      if (isNaN(session) || !AVAILABLE_SESSIONS.includes(session)) {
+        return {
+          success: false,
+          duration: 0,
+          stats: {},
+          errors: [`Invalid session. Available: ${AVAILABLE_SESSIONS.join(", ")}`],
+        };
+      }
+    }
 
-main().catch((err) => {
-  console.error("Fatal error:", err);
-  process.exit(1);
-});
+    // --all overrides session
+    if (all) {
+      session = null;
+      console.log("Syncing all sessions (2006-present)");
+    } else {
+      console.log(`Session: ${session}`);
+    }
+
+    const result = await syncVotesSenat(session, dryRun);
+
+    return {
+      success: result.errors.length === 0,
+      duration: 0,
+      stats: {
+        processed: result.scrutinsProcessed,
+        created: result.scrutinsCreated,
+        updated: result.scrutinsUpdated,
+        skipped: result.scrutinsSkipped,
+        votesCreated: result.votesCreated,
+        senatorsNotFound: result.senatorsNotFound.size,
+      },
+      errors: result.errors,
+    };
+  },
+};
+
+createCLI(handler);

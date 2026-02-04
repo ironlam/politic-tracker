@@ -2,16 +2,15 @@
  * CLI script to sync parliamentary votes from data.assemblee-nationale.fr
  *
  * Usage:
- *   npx tsx scripts/sync-votes-an.ts              # Full sync (17th legislature)
- *   npx tsx scripts/sync-votes-an.ts --leg=17     # Sync specific legislature
- *   npx tsx scripts/sync-votes-an.ts --stats      # Show current stats
- *   npx tsx scripts/sync-votes-an.ts --dry-run    # Preview without writing
- *   npx tsx scripts/sync-votes-an.ts --help       # Show help
+ *   npm run sync:votes-an              # Full sync (17th legislature)
+ *   npm run sync:votes-an -- --leg=17  # Sync specific legislature
+ *   npm run sync:votes-an -- --stats   # Show current stats
  *
  * Data source: data.assemblee-nationale.fr (official Open Data)
  */
 
 import "dotenv/config";
+import { createCLI, type SyncHandler, type SyncResult } from "../src/lib/sync";
 import { db } from "../src/lib/db";
 import { generateDateSlug } from "../src/lib/utils";
 import { VotePosition, VotingResult, DataSource } from "../src/generated/prisma";
@@ -225,15 +224,6 @@ async function generateUniqueScrutinSlug(date: Date, title: string): Promise<str
  * Main sync function
  */
 async function syncVotesAN(legislature: number = LEGISLATURE, dryRun: boolean = false) {
-  console.log("=".repeat(50));
-  console.log("Transparence Politique - Votes Sync (AN Official)");
-  console.log("=".repeat(50));
-  console.log(`Legislature: ${legislature}e`);
-  console.log(`Mode: ${dryRun ? "DRY RUN (no writes)" : "LIVE"}`);
-  console.log(`Started at: ${new Date().toISOString()}`);
-  console.log("");
-
-  const startTime = Date.now();
   const stats = {
     scrutinsProcessed: 0,
     scrutinsCreated: 0,
@@ -401,118 +391,95 @@ async function syncVotesAN(legislature: number = LEGISLATURE, dryRun: boolean = 
     stats.errors.push(`Fatal error: ${err instanceof Error ? err.message : String(err)}`);
   }
 
-  // Results
-  const duration = ((Date.now() - startTime) / 1000).toFixed(2);
-
-  console.log("\n\n" + "=".repeat(50));
-  console.log("Sync Results:");
-  console.log("=".repeat(50));
-  console.log(`Status: ${stats.errors.length === 0 ? "✅ SUCCESS" : "⚠️ COMPLETED WITH ERRORS"}`);
-  console.log(`Duration: ${duration}s`);
-  console.log(`Mode: ${dryRun ? "DRY RUN" : "LIVE"}`);
-  console.log(`\nScrutins:`);
-  console.log(`  Processed: ${stats.scrutinsProcessed}`);
-  console.log(`  Created: ${stats.scrutinsCreated}`);
-  console.log(`  Updated: ${stats.scrutinsUpdated}`);
-  console.log(`\nVotes created: ${stats.votesCreated}`);
-
-  if (stats.politiciansNotFound.size > 0) {
-    console.log(`\nPoliticians not found (${stats.politiciansNotFound.size}):`);
-    const notFoundArray = Array.from(stats.politiciansNotFound);
-    notFoundArray.slice(0, 10).forEach(p => console.log(`  - ${p}`));
-    if (notFoundArray.length > 10) {
-      console.log(`  ... and ${notFoundArray.length - 10} more`);
-    }
-  }
-
-  if (stats.errors.length > 0) {
-    console.log(`\n⚠️ Errors (${stats.errors.length}):`);
-    stats.errors.slice(0, 5).forEach(e => console.log(`  - ${e}`));
-    if (stats.errors.length > 5) {
-      console.log(`  ... and ${stats.errors.length - 5} more`);
-    }
-  }
-
-  console.log("\n" + "=".repeat(50));
-
   return stats;
 }
 
-/**
- * Get current votes stats
- */
-async function showStats() {
-  console.log("Fetching current votes stats...\n");
+const handler: SyncHandler = {
+  name: "Politic Tracker - AN Votes Sync",
+  description: "Import scrutins and votes from Assemblée nationale",
 
-  const scrutinsCount = await db.scrutin.count();
-  const votesCount = await db.vote.count();
-  const legislatures = await db.scrutin.groupBy({
-    by: ["legislature"],
-    _count: true,
-    orderBy: { legislature: "desc" },
-  });
+  options: [
+    {
+      name: "--leg",
+      type: "string",
+      description: `Legislature number (default: ${LEGISLATURE})`,
+    },
+  ],
 
-  console.log("Current database stats:");
-  console.log(`  Scrutins: ${scrutinsCount}`);
-  console.log(`  Total votes: ${votesCount}`);
-
-  if (legislatures.length > 0) {
-    console.log("\n  By legislature:");
-    for (const leg of legislatures) {
-      console.log(`    - ${leg.legislature}e: ${leg._count} scrutins`);
-    }
-  }
-}
-
-// Main
-async function main() {
-  const args = process.argv.slice(2);
-
-  if (args.includes("--help") || args.includes("-h")) {
+  showHelp() {
     console.log(`
-Transparence Politique - Votes Sync CLI (Assemblée Nationale Official)
+Politic Tracker - Votes Sync (Assemblée Nationale)
 
-Usage:
-  npx tsx scripts/sync-votes-an.ts              Full sync (17th legislature)
-  npx tsx scripts/sync-votes-an.ts --leg=17     Sync specific legislature
-  npx tsx scripts/sync-votes-an.ts --stats      Show current database stats
-  npx tsx scripts/sync-votes-an.ts --dry-run    Preview without writing to DB
-  npx tsx scripts/sync-votes-an.ts --help       Show this help message
-
-Data source: data.assemblee-nationale.fr (official Open Data portal)
+Data source: data.assemblee-nationale.fr (official Open Data)
 
 Features:
   - Downloads official ZIP file with all scrutins
   - Matches deputies by their AN acteur ID (ExternalId)
   - Creates/updates Scrutin and Vote records
-  - Shows progress bar and detailed results
     `);
-    process.exit(0);
-  }
+  },
 
-  if (args.includes("--stats")) {
-    await showStats();
-    process.exit(0);
-  }
+  async showStats() {
+    const scrutinsCount = await db.scrutin.count({
+      where: { externalId: { startsWith: "VTANR" } },
+    });
+    const votesCount = await db.vote.count({
+      where: { scrutin: { externalId: { startsWith: "VTANR" } } },
+    });
+    const legislatures = await db.scrutin.groupBy({
+      by: ["legislature"],
+      _count: true,
+      orderBy: { legislature: "desc" },
+      where: { externalId: { startsWith: "VTANR" } },
+    });
 
-  // Parse options
-  let legislature = LEGISLATURE;
-  const legArg = args.find(a => a.startsWith("--leg="));
-  if (legArg) {
-    legislature = parseInt(legArg.split("=")[1], 10);
-    if (isNaN(legislature) || legislature < 1) {
-      console.error("Invalid legislature number");
-      process.exit(1);
+    console.log("\n" + "=".repeat(50));
+    console.log("AN Votes Stats");
+    console.log("=".repeat(50));
+    console.log(`Scrutins (AN): ${scrutinsCount}`);
+    console.log(`Total votes: ${votesCount}`);
+
+    if (legislatures.length > 0) {
+      console.log("\nBy legislature:");
+      for (const leg of legislatures) {
+        console.log(`  ${leg.legislature}e: ${leg._count} scrutins`);
+      }
     }
-  }
+  },
 
-  const dryRun = args.includes("--dry-run");
+  async sync(options): Promise<SyncResult> {
+    const { dryRun = false, leg } = options as {
+      dryRun?: boolean;
+      leg?: string;
+    };
 
-  await syncVotesAN(legislature, dryRun);
-  process.exit(0);
-}
+    const legislature = leg ? parseInt(leg, 10) : LEGISLATURE;
+    if (isNaN(legislature) || legislature < 1) {
+      return {
+        success: false,
+        duration: 0,
+        stats: {},
+        errors: ["Invalid legislature number"],
+      };
+    }
 
-main().catch(err => {
-  console.error("Fatal error:", err);
-  process.exit(1);
-});
+    console.log(`Legislature: ${legislature}e`);
+
+    const result = await syncVotesAN(legislature, dryRun);
+
+    return {
+      success: result.errors.length === 0,
+      duration: 0,
+      stats: {
+        processed: result.scrutinsProcessed,
+        created: result.scrutinsCreated,
+        updated: result.scrutinsUpdated,
+        votesCreated: result.votesCreated,
+        politiciansNotFound: result.politiciansNotFound.size,
+      },
+      errors: result.errors,
+    };
+  },
+};
+
+createCLI(handler);

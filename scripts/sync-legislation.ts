@@ -2,18 +2,16 @@
  * CLI script to sync legislative dossiers from data.assemblee-nationale.fr
  *
  * Usage:
- *   npx tsx scripts/sync-legislation.ts              # Full sync (17th legislature)
- *   npx tsx scripts/sync-legislation.ts --leg=17     # Sync specific legislature
- *   npx tsx scripts/sync-legislation.ts --stats      # Show current stats
- *   npx tsx scripts/sync-legislation.ts --dry-run    # Preview without writing
- *   npx tsx scripts/sync-legislation.ts --limit=100  # Limit to N dossiers
- *   npx tsx scripts/sync-legislation.ts --active     # Only sync active dossiers
- *   npx tsx scripts/sync-legislation.ts --help       # Show help
+ *   npm run sync:legislation              # Full sync (17th legislature)
+ *   npm run sync:legislation -- --leg=17  # Sync specific legislature
+ *   npm run sync:legislation -- --stats   # Show current stats
+ *   npm run sync:legislation -- --active  # Only sync active dossiers
  *
  * Data source: data.assemblee-nationale.fr (official Open Data)
  */
 
 import "dotenv/config";
+import { createCLI, type SyncHandler, type SyncResult } from "../src/lib/sync";
 import { db } from "../src/lib/db";
 import { generateDateSlug } from "../src/lib/utils";
 import { DossierStatus } from "../src/generated/prisma";
@@ -314,18 +312,6 @@ async function syncLegislation(
   } = {}
 ) {
   const { dryRun = false, limit, activeOnly = false } = options;
-
-  console.log("=".repeat(50));
-  console.log("Transparence Politique - Dossiers Législatifs Sync");
-  console.log("=".repeat(50));
-  console.log(`Legislature: ${legislature}e`);
-  console.log(`Mode: ${dryRun ? "DRY RUN (no writes)" : "LIVE"}`);
-  if (limit) console.log(`Limit: ${limit} dossiers`);
-  if (activeOnly) console.log(`Filter: Active dossiers only`);
-  console.log(`Started at: ${new Date().toISOString()}`);
-  console.log("");
-
-  const startTime = Date.now();
   const stats = {
     dossiersProcessed: 0,
     dossiersCreated: 0,
@@ -500,165 +486,129 @@ async function syncLegislation(
     stats.errors.push(`Fatal error: ${err instanceof Error ? err.message : String(err)}`);
   }
 
-  // Results
-  const duration = ((Date.now() - startTime) / 1000).toFixed(2);
-
-  console.log("\n\n" + "=".repeat(50));
-  console.log("Sync Results:");
-  console.log("=".repeat(50));
-  console.log(`Status: ${stats.errors.length === 0 ? "✅ SUCCESS" : "⚠️ COMPLETED WITH ERRORS"}`);
-  console.log(`Duration: ${duration}s`);
-  console.log(`Mode: ${dryRun ? "DRY RUN" : "LIVE"}`);
-
-  console.log(`\nDossiers:`);
-  console.log(`  Processed: ${stats.dossiersProcessed}`);
-  console.log(`  Created: ${stats.dossiersCreated}`);
-  console.log(`  Updated: ${stats.dossiersUpdated}`);
-  console.log(`  Skipped: ${stats.dossiersSkipped}`);
-
-  console.log(`\nBy status:`);
-  for (const [status, count] of Object.entries(stats.byStatus)) {
-    if (count > 0) {
-      console.log(`  ${status}: ${count}`);
-    }
-  }
-
-  if (Object.keys(stats.byCategory).length > 0) {
-    console.log(`\nBy category:`);
-    for (const [category, count] of Object.entries(stats.byCategory).sort((a, b) => b[1] - a[1])) {
-      console.log(`  ${category}: ${count}`);
-    }
-  }
-
-  if (stats.errors.length > 0) {
-    console.log(`\n⚠️ Errors (${stats.errors.length}):`);
-    stats.errors.slice(0, 5).forEach((e) => console.log(`  - ${e}`));
-    if (stats.errors.length > 5) {
-      console.log(`  ... and ${stats.errors.length - 5} more`);
-    }
-  }
-
-  console.log("\n" + "=".repeat(50));
-
   return stats;
 }
 
-/**
- * Get current legislation stats
- */
-async function showStats() {
-  console.log("Fetching current legislation stats...\n");
+const handler: SyncHandler = {
+  name: "Politic Tracker - Legislative Dossiers Sync",
+  description: "Import dossiers législatifs from Assemblée nationale",
 
-  const dossiersCount = await db.legislativeDossier.count();
+  options: [
+    {
+      name: "--leg",
+      type: "string",
+      description: `Legislature number (default: ${DEFAULT_LEGISLATURE})`,
+    },
+    {
+      name: "--active",
+      type: "boolean",
+      description: "Only sync active (EN_COURS) dossiers",
+    },
+  ],
 
-  const byStatus = await db.legislativeDossier.groupBy({
-    by: ["status"],
-    _count: true,
-    orderBy: { _count: { status: "desc" } },
-  });
-
-  const byCategory = await db.legislativeDossier.groupBy({
-    by: ["category"],
-    _count: true,
-    orderBy: { _count: { category: "desc" } },
-  });
-
-  const recentDossiers = await db.legislativeDossier.findMany({
-    where: { status: "EN_COURS" },
-    orderBy: { filingDate: "desc" },
-    take: 5,
-    select: { title: true, number: true, category: true, filingDate: true },
-  });
-
-  console.log("Current database stats:");
-  console.log(`  Total dossiers: ${dossiersCount}`);
-
-  if (byStatus.length > 0) {
-    console.log("\n  By status:");
-    for (const s of byStatus) {
-      console.log(`    ${s.status}: ${s._count}`);
-    }
-  }
-
-  if (byCategory.length > 0) {
-    console.log("\n  By category:");
-    for (const c of byCategory) {
-      console.log(`    ${c.category || "(none)"}: ${c._count}`);
-    }
-  }
-
-  if (recentDossiers.length > 0) {
-    console.log("\n  Recent active dossiers:");
-    for (const d of recentDossiers) {
-      const date = d.filingDate ? d.filingDate.toISOString().split("T")[0] : "N/A";
-      console.log(`    - ${d.number || "?"}: ${d.title.substring(0, 60)}... (${date})`);
-    }
-  }
-}
-
-// Main
-async function main() {
-  const args = process.argv.slice(2);
-
-  if (args.includes("--help") || args.includes("-h")) {
+  showHelp() {
     console.log(`
-Transparence Politique - Dossiers Législatifs Sync CLI
+Politic Tracker - Dossiers Législatifs Sync
 
-Usage:
-  npx tsx scripts/sync-legislation.ts              Full sync (17th legislature)
-  npx tsx scripts/sync-legislation.ts --leg=17     Sync specific legislature
-  npx tsx scripts/sync-legislation.ts --stats      Show current database stats
-  npx tsx scripts/sync-legislation.ts --dry-run    Preview without writing to DB
-  npx tsx scripts/sync-legislation.ts --limit=100  Limit to first N dossiers
-  npx tsx scripts/sync-legislation.ts --active     Only sync active (EN_COURS) dossiers
-  npx tsx scripts/sync-legislation.ts --help       Show this help message
-
-Data source: data.assemblee-nationale.fr (official Open Data portal)
+Data source: data.assemblee-nationale.fr (official Open Data)
 
 Features:
   - Downloads official ZIP file with all legislative dossiers
   - Parses dossier status from parliamentary acts (PROM = adopted)
   - Categorizes dossiers by procedure type
   - Creates/updates LegislativeDossier records
-  - Shows progress bar and detailed results
     `);
-    process.exit(0);
-  }
+  },
 
-  if (args.includes("--stats")) {
-    await showStats();
-    process.exit(0);
-  }
+  async showStats() {
+    const dossiersCount = await db.legislativeDossier.count();
 
-  // Parse options
-  let legislature = DEFAULT_LEGISLATURE;
-  const legArg = args.find((a) => a.startsWith("--leg="));
-  if (legArg) {
-    legislature = parseInt(legArg.split("=")[1], 10);
+    const byStatus = await db.legislativeDossier.groupBy({
+      by: ["status"],
+      _count: true,
+      orderBy: { _count: { status: "desc" } },
+    });
+
+    const byCategory = await db.legislativeDossier.groupBy({
+      by: ["category"],
+      _count: true,
+      orderBy: { _count: { category: "desc" } },
+    });
+
+    const recentDossiers = await db.legislativeDossier.findMany({
+      where: { status: "EN_COURS" },
+      orderBy: { filingDate: "desc" },
+      take: 5,
+      select: { title: true, number: true, category: true, filingDate: true },
+    });
+
+    console.log("\n" + "=".repeat(50));
+    console.log("Legislative Dossiers Stats");
+    console.log("=".repeat(50));
+    console.log(`Total dossiers: ${dossiersCount}`);
+
+    if (byStatus.length > 0) {
+      console.log("\nBy status:");
+      for (const s of byStatus) {
+        console.log(`  ${s.status}: ${s._count}`);
+      }
+    }
+
+    if (byCategory.length > 0) {
+      console.log("\nBy category:");
+      for (const c of byCategory) {
+        console.log(`  ${c.category || "(none)"}: ${c._count}`);
+      }
+    }
+
+    if (recentDossiers.length > 0) {
+      console.log("\nRecent active dossiers:");
+      for (const d of recentDossiers) {
+        const date = d.filingDate ? d.filingDate.toISOString().split("T")[0] : "N/A";
+        console.log(`  - ${d.number || "?"}: ${d.title.substring(0, 50)}... (${date})`);
+      }
+    }
+  },
+
+  async sync(options): Promise<SyncResult> {
+    const { dryRun = false, limit, leg, active = false } = options as {
+      dryRun?: boolean;
+      limit?: number;
+      leg?: string;
+      active?: boolean;
+    };
+
+    const legislature = leg ? parseInt(leg, 10) : DEFAULT_LEGISLATURE;
     if (isNaN(legislature) || legislature < 1) {
-      console.error("Invalid legislature number");
-      process.exit(1);
+      return {
+        success: false,
+        duration: 0,
+        stats: {},
+        errors: ["Invalid legislature number"],
+      };
     }
-  }
 
-  let limit: number | undefined;
-  const limitArg = args.find((a) => a.startsWith("--limit="));
-  if (limitArg) {
-    limit = parseInt(limitArg.split("=")[1], 10);
-    if (isNaN(limit) || limit < 1) {
-      console.error("Invalid limit number");
-      process.exit(1);
-    }
-  }
+    console.log(`Legislature: ${legislature}e`);
+    if (active) console.log("Filter: Active dossiers only");
 
-  const dryRun = args.includes("--dry-run");
-  const activeOnly = args.includes("--active");
+    const result = await syncLegislation(legislature, {
+      dryRun,
+      limit,
+      activeOnly: active,
+    });
 
-  await syncLegislation(legislature, { dryRun, limit, activeOnly });
-  process.exit(0);
-}
+    return {
+      success: result.errors.length === 0,
+      duration: 0,
+      stats: {
+        processed: result.dossiersProcessed,
+        created: result.dossiersCreated,
+        updated: result.dossiersUpdated,
+        skipped: result.dossiersSkipped,
+      },
+      errors: result.errors,
+    };
+  },
+};
 
-main().catch((err) => {
-  console.error("Fatal error:", err);
-  process.exit(1);
-});
+createCLI(handler);

@@ -1,9 +1,6 @@
 /**
  * CLI script to enrich politicians with birth dates from Wikidata
  *
- * Fetches birth dates (P569) and death dates (P570) for politicians
- * who have a Wikidata ID but no birth date.
- *
  * Usage:
  *   npm run sync:birthdates              # Sync birth dates
  *   npm run sync:birthdates -- --stats   # Show current stats
@@ -12,83 +9,11 @@
  */
 
 import "dotenv/config";
-import { createCLI, type SyncHandler, type SyncResult } from "../src/lib/sync";
-import { parseWikidataDate } from "../src/lib/parsing";
+import { createCLI, ProgressTracker, type SyncHandler, type SyncResult } from "../src/lib/sync";
+import { WikidataService } from "../src/lib/api";
 import { db } from "../src/lib/db";
 import { DataSource } from "../src/generated/prisma";
 
-const WIKIDATA_API = "https://www.wikidata.org/w/api.php";
-const DELAY_BETWEEN_REQUESTS_MS = 100;
-const BATCH_SIZE = 50; // Wikidata API supports up to 50 entities per request
-
-interface WikidataBirthDate {
-  wikidataId: string;
-  birthDate: Date | null;
-  deathDate: Date | null;
-}
-
-/**
- * Sleep helper
- */
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-/**
- * Fetch birth dates for multiple Wikidata entities in a single request
- */
-async function fetchBirthDates(wikidataIds: string[]): Promise<WikidataBirthDate[]> {
-  const url = new URL(WIKIDATA_API);
-  url.searchParams.set("action", "wbgetentities");
-  url.searchParams.set("ids", wikidataIds.join("|"));
-  url.searchParams.set("props", "claims");
-  url.searchParams.set("format", "json");
-
-  const response = await fetch(url.toString(), {
-    headers: {
-      "User-Agent": "TransparencePolitique/1.0 (https://politic-tracker.vercel.app)",
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`Wikidata API failed: ${response.status}`);
-  }
-
-  const data = await response.json();
-  const results: WikidataBirthDate[] = [];
-
-  for (const wikidataId of wikidataIds) {
-    const entity = data.entities?.[wikidataId];
-    if (!entity) {
-      results.push({ wikidataId, birthDate: null, deathDate: null });
-      continue;
-    }
-
-    // Get birth date (P569)
-    let birthDate: Date | null = null;
-    const birthClaims = entity.claims?.P569 || [];
-    if (birthClaims.length > 0) {
-      const timeValue = birthClaims[0]?.mainsnak?.datavalue?.value?.time;
-      birthDate = parseWikidataDate(timeValue);
-    }
-
-    // Get death date (P570)
-    let deathDate: Date | null = null;
-    const deathClaims = entity.claims?.P570 || [];
-    if (deathClaims.length > 0) {
-      const timeValue = deathClaims[0]?.mainsnak?.datavalue?.value?.time;
-      deathDate = parseWikidataDate(timeValue);
-    }
-
-    results.push({ wikidataId, birthDate, deathDate });
-  }
-
-  return results;
-}
-
-/**
- * Sync handler implementation
- */
 const handler: SyncHandler = {
   name: "Politic Tracker - Birth Date Sync",
   description: "Enrichit les dates de naissance depuis Wikidata",
@@ -130,9 +55,10 @@ for politicians who have a Wikidata ID but no birth date in our database.
 
   async sync(options): Promise<SyncResult> {
     const { dryRun = false, limit } = options;
+    const wikidata = new WikidataService({ rateLimitMs: 100 });
 
     const stats = {
-      politiciansProcessed: 0,
+      processed: 0,
       birthDatesAdded: 0,
       deathDatesAdded: 0,
       noDateInWikidata: 0,
@@ -152,7 +78,6 @@ for politicians who have a Wikidata ID but no birth date in our database.
       select: {
         id: true,
         fullName: true,
-        birthDate: true,
         deathDate: true,
         externalIds: {
           where: { source: DataSource.WIKIDATA },
@@ -163,98 +88,92 @@ for politicians who have a Wikidata ID but no birth date in our database.
       orderBy: { lastName: "asc" },
     });
 
-    console.log(`Found ${politicians.length} politicians with Wikidata ID but no birth date\n`);
+    console.log(`Found ${politicians.length} politicians to process\n`);
 
     if (politicians.length === 0) {
       return { success: true, duration: 0, stats, errors };
     }
 
-    // Process in batches
-    const batches: (typeof politicians)[] = [];
-    for (let i = 0; i < politicians.length; i += BATCH_SIZE) {
-      batches.push(politicians.slice(i, i + BATCH_SIZE));
+    // Build map of Wikidata ID -> politician
+    const wikidataIdMap = new Map<string, (typeof politicians)[0]>();
+    const wikidataIds: string[] = [];
+
+    for (const politician of politicians) {
+      const wikidataId = politician.externalIds[0]?.externalId;
+      if (wikidataId) {
+        wikidataIdMap.set(wikidataId, politician);
+        wikidataIds.push(wikidataId);
+      }
     }
 
-    console.log(`Processing in ${batches.length} batches of up to ${BATCH_SIZE}...\n`);
+    // Fetch life dates using the unified service (handles batching internally)
+    const progress = new ProgressTracker({
+      total: wikidataIds.length,
+      label: "Fetching dates",
+      showBar: true,
+      showETA: true,
+    });
 
-    for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
-      const batch = batches[batchIndex];
+    const lifeDates = await wikidata.getLifeDates(wikidataIds);
+    progress.finish();
 
-      try {
-        // Build map of Wikidata ID -> politician
-        const wikidataIdMap = new Map<string, (typeof politicians)[0]>();
-        for (const politician of batch) {
-          const wikidataId = politician.externalIds[0]?.externalId;
-          if (wikidataId) {
-            wikidataIdMap.set(wikidataId, politician);
-          }
-        }
+    console.log("\nUpdating database...\n");
 
-        const wikidataIds = Array.from(wikidataIdMap.keys());
+    // Update politicians
+    for (const [wikidataId, dates] of Array.from(lifeDates.entries())) {
+      const politician = wikidataIdMap.get(wikidataId);
+      if (!politician) continue;
 
-        // Fetch birth dates from Wikidata
-        const birthDates = await fetchBirthDates(wikidataIds);
+      stats.processed++;
 
-        // Update politicians
-        for (const { wikidataId, birthDate, deathDate } of birthDates) {
-          const politician = wikidataIdMap.get(wikidataId);
-          if (!politician) continue;
-
-          stats.politiciansProcessed++;
-
-          if (!birthDate) {
-            stats.noDateInWikidata++;
-            continue;
-          }
-
-          if (dryRun) {
-            console.log(
-              `[DRY-RUN] ${politician.fullName} -> ${birthDate.toISOString().split("T")[0]}`
-            );
-            stats.birthDatesAdded++;
-            if (deathDate && !politician.deathDate) {
-              stats.deathDatesAdded++;
-            }
-          } else {
-            // Update politician with birth date (and death date if available)
-            const updateData: { birthDate: Date; deathDate?: Date } = { birthDate };
-            if (deathDate && !politician.deathDate) {
-              updateData.deathDate = deathDate;
-            }
-
-            await db.politician.update({
-              where: { id: politician.id },
-              data: updateData,
-            });
-
-            console.log(
-              `✓ ${politician.fullName} -> ${birthDate.toISOString().split("T")[0]}${deathDate && !politician.deathDate ? ` (†${deathDate.toISOString().split("T")[0]})` : ""}`
-            );
-            stats.birthDatesAdded++;
-            if (deathDate && !politician.deathDate) {
-              stats.deathDatesAdded++;
-            }
-          }
-        }
-      } catch (error) {
-        errors.push(`Batch ${batchIndex + 1}: ${error}`);
+      if (!dates.birthDate) {
+        stats.noDateInWikidata++;
+        continue;
       }
 
-      // Progress
-      const progress = (((batchIndex + 1) / batches.length) * 100).toFixed(0);
-      if ((batchIndex + 1) % 5 === 0 || batchIndex === batches.length - 1) {
-        console.log(
-          `\n--- Progress: ${progress}% (${(batchIndex + 1) * BATCH_SIZE}/${politicians.length}) | Added: ${stats.birthDatesAdded} ---\n`
-        );
-      }
+      if (dryRun) {
+        const birthStr = dates.birthDate.toISOString().split("T")[0];
+        const deathStr = dates.deathDate && !politician.deathDate
+          ? ` (†${dates.deathDate.toISOString().split("T")[0]})`
+          : "";
+        console.log(`[DRY-RUN] ${politician.fullName} -> ${birthStr}${deathStr}`);
+        stats.birthDatesAdded++;
+        if (dates.deathDate && !politician.deathDate) {
+          stats.deathDatesAdded++;
+        }
+      } else {
+        try {
+          const updateData: { birthDate: Date; deathDate?: Date } = {
+            birthDate: dates.birthDate,
+          };
+          if (dates.deathDate && !politician.deathDate) {
+            updateData.deathDate = dates.deathDate;
+          }
 
-      // Rate limiting between batches
-      await sleep(DELAY_BETWEEN_REQUESTS_MS);
+          await db.politician.update({
+            where: { id: politician.id },
+            data: updateData,
+          });
+
+          const birthStr = dates.birthDate.toISOString().split("T")[0];
+          const deathStr = dates.deathDate && !politician.deathDate
+            ? ` (†${dates.deathDate.toISOString().split("T")[0]})`
+            : "";
+          console.log(`✓ ${politician.fullName} -> ${birthStr}${deathStr}`);
+
+          stats.birthDatesAdded++;
+          if (dates.deathDate && !politician.deathDate) {
+            stats.deathDatesAdded++;
+          }
+        } catch (error) {
+          errors.push(`${politician.fullName}: ${error}`);
+        }
+      }
     }
 
     return {
       success: errors.length === 0,
-      duration: 0, // Calculated by CLI runner
+      duration: 0,
       stats,
       errors,
     };

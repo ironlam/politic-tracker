@@ -9,16 +9,21 @@
  *   npm run sync:careers -- --stats   # Show current stats
  *   npm run sync:careers -- --dry-run # Preview without saving
  *   npm run sync:careers -- --limit=50 # Process only 50 politicians
+ *   npm run sync:careers -- --resume  # Resume from last checkpoint
  */
 
 import "dotenv/config";
-import { createCLI, type SyncHandler, type SyncResult } from "../src/lib/sync";
+import {
+  createCLI,
+  ProgressTracker,
+  CheckpointManager,
+  type SyncHandler,
+  type SyncResult,
+} from "../src/lib/sync";
+import { WikidataService } from "../src/lib/api";
 import { parseDate } from "../src/lib/parsing";
 import { db } from "../src/lib/db";
 import { MandateType, DataSource } from "../src/generated/prisma";
-
-const WIKIDATA_API = "https://www.wikidata.org/w/api.php";
-const DELAY_BETWEEN_REQUESTS_MS = 300;
 
 // Mapping from Wikidata position IDs to our MandateType
 const POSITION_MAPPING: Record<string, { type: MandateType; institution: string }> = {
@@ -53,119 +58,17 @@ const POSITION_MAPPING: Record<string, { type: MandateType; institution: string 
   Q17519573: { type: MandateType.CONSEILLER_MUNICIPAL, institution: "Conseil municipal" },
 };
 
-interface PositionClaim {
-  positionId: string;
-  positionLabel?: string;
-  startDate?: string;
-  endDate?: string;
-  ofId?: string;
-}
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-/**
- * Fetch P39 (position held) claims for a Wikidata entity
- */
-async function fetchPositions(wikidataId: string): Promise<PositionClaim[]> {
-  const url = new URL(WIKIDATA_API);
-  url.searchParams.set("action", "wbgetentities");
-  url.searchParams.set("ids", wikidataId);
-  url.searchParams.set("props", "claims");
-  url.searchParams.set("format", "json");
-
-  const response = await fetch(url.toString(), {
-    headers: {
-      "User-Agent": "TransparencePolitique/1.0 (https://politic-tracker.vercel.app)",
-    },
-    signal: AbortSignal.timeout(10000),
-  });
-
-  if (!response.ok) {
-    throw new Error(`Wikidata API failed: ${response.status}`);
-  }
-
-  const data = await response.json();
-  const entity = data.entities?.[wikidataId];
-
-  if (!entity?.claims?.P39) {
-    return [];
-  }
-
-  const positions: PositionClaim[] = [];
-
-  for (const claim of entity.claims.P39) {
-    const positionId = claim.mainsnak?.datavalue?.value?.id;
-    if (!positionId) continue;
-
-    const position: PositionClaim = { positionId };
-    const qualifiers = claim.qualifiers || {};
-
-    // P580 = start date
-    if (qualifiers.P580?.[0]?.datavalue?.value?.time) {
-      position.startDate = qualifiers.P580[0].datavalue.value.time
-        .replace(/^\+/, "")
-        .split("T")[0];
-    }
-
-    // P582 = end date
-    if (qualifiers.P582?.[0]?.datavalue?.value?.time) {
-      position.endDate = qualifiers.P582[0].datavalue.value.time.replace(/^\+/, "").split("T")[0];
-    }
-
-    // P642 = "of" (e.g., Mayor OF Paris)
-    if (qualifiers.P642?.[0]?.datavalue?.value?.id) {
-      position.ofId = qualifiers.P642[0].datavalue.value.id;
-    }
-
-    positions.push(position);
-  }
-
-  return positions;
-}
-
-/**
- * Fetch labels for position IDs
- */
-async function fetchLabels(ids: string[]): Promise<Map<string, string>> {
-  if (ids.length === 0) return new Map();
-
-  const url = new URL(WIKIDATA_API);
-  url.searchParams.set("action", "wbgetentities");
-  url.searchParams.set("ids", ids.join("|"));
-  url.searchParams.set("props", "labels");
-  url.searchParams.set("languages", "fr|en");
-  url.searchParams.set("format", "json");
-
-  const response = await fetch(url.toString(), {
-    headers: {
-      "User-Agent": "TransparencePolitique/1.0 (https://politic-tracker.vercel.app)",
-    },
-    signal: AbortSignal.timeout(10000),
-  });
-
-  if (!response.ok) {
-    return new Map();
-  }
-
-  const data = await response.json();
-  const labels = new Map<string, string>();
-
-  for (const id of ids) {
-    const entity = data.entities?.[id];
-    const label = entity?.labels?.fr?.value || entity?.labels?.en?.value;
-    if (label) {
-      labels.set(id, label);
-    }
-  }
-
-  return labels;
-}
-
 const handler: SyncHandler = {
   name: "Politic Tracker - Career Sync from Wikidata",
   description: "Enriches politician careers from Wikidata P39",
+
+  options: [
+    {
+      name: "--resume",
+      type: "boolean",
+      description: "Resume from last checkpoint",
+    },
+  ],
 
   showHelp() {
     console.log(`
@@ -173,6 +76,10 @@ Politic Tracker - Career Sync from Wikidata
 
 Requires: Run sync-wikidata-ids first to associate Wikidata IDs to politicians.
 Data source: Wikidata property P39 (position held)
+
+Features:
+  - Checkpoint support: use --resume to continue after interruption
+  - Uses WikidataService with retry and rate limiting
     `);
   },
 
@@ -208,14 +115,34 @@ Data source: Wikidata property P39 (position held)
   },
 
   async sync(options): Promise<SyncResult> {
-    const { dryRun = false, limit } = options;
+    const { dryRun = false, limit, resume = false } = options as {
+      dryRun?: boolean;
+      limit?: number;
+      resume?: boolean;
+    };
+
+    const wikidata = new WikidataService({ rateLimitMs: 300 });
+    const checkpoint = new CheckpointManager("sync-careers", { autoSaveInterval: 50 });
 
     const stats = {
-      politiciansProcessed: 0,
+      processed: 0,
       mandatesCreated: 0,
       mandatesSkipped: 0,
     };
     const errors: string[] = [];
+
+    // Check for resume
+    let startIndex = 0;
+    if (resume && checkpoint.canResume()) {
+      const resumeData = checkpoint.resume();
+      if (resumeData) {
+        startIndex = (resumeData.fromIndex ?? 0) + 1;
+        stats.processed = resumeData.processedCount;
+        console.log(`Resuming from index ${startIndex}\n`);
+      }
+    } else {
+      checkpoint.start();
+    }
 
     console.log("Fetching politicians with Wikidata IDs...");
 
@@ -231,106 +158,128 @@ Data source: Wikidata property P39 (position held)
           },
         },
       },
-      take: limit as number | undefined,
+      take: limit,
     });
 
     console.log(`Found ${externalIds.length} politicians with Wikidata IDs\n`);
 
-    for (let i = 0; i < externalIds.length; i++) {
+    if (externalIds.length === 0) {
+      checkpoint.complete();
+      return { success: true, duration: 0, stats, errors };
+    }
+
+    const progress = new ProgressTracker({
+      total: externalIds.length,
+      label: "Syncing careers",
+      showBar: true,
+      showETA: true,
+      logInterval: 25,
+    });
+
+    // Collect all Wikidata IDs for batch fetching
+    const wikidataIds = externalIds
+      .slice(startIndex)
+      .map((e) => e.externalId)
+      .filter(Boolean);
+
+    // Fetch all positions in batch
+    console.log("Fetching positions from Wikidata...");
+    const positionsMap = await wikidata.getPositions(wikidataIds);
+    console.log(`Fetched positions for ${positionsMap.size} entities\n`);
+
+    // Collect all position/location IDs for label fetching
+    const labelIds = new Set<string>();
+    positionsMap.forEach((positions) => {
+      for (const pos of positions) {
+        labelIds.add(pos.positionId);
+      }
+    });
+
+    // Fetch labels
+    console.log(`Fetching labels for ${labelIds.size} entities...`);
+    const labelsEntities = await wikidata.getEntities(Array.from(labelIds), ["labels"]);
+    const labels = new Map<string, string>();
+    labelsEntities.forEach((entity, id) => {
+      const label = entity.labels.fr || entity.labels.en;
+      if (label) labels.set(id, label);
+    });
+    console.log(`Fetched ${labels.size} labels\n`);
+
+    // Process each politician
+    for (let i = startIndex; i < externalIds.length; i++) {
       const extId = externalIds[i];
       const politician = extId.politician;
-      if (!politician) continue;
+      if (!politician) {
+        progress.tick();
+        continue;
+      }
 
-      stats.politiciansProcessed++;
+      stats.processed++;
 
-      try {
-        const positions = await fetchPositions(extId.externalId);
+      const positions = positionsMap.get(extId.externalId) || [];
 
-        if (positions.length === 0) {
+      for (const pos of positions) {
+        const mandateInfo = POSITION_MAPPING[pos.positionId];
+        if (!mandateInfo) continue;
+
+        const startDate = pos.startDate;
+        const endDate = pos.endDate;
+
+        if (!startDate) continue;
+
+        // Generate title
+        const positionLabel = labels.get(pos.positionId) || pos.positionId;
+        const title = positionLabel;
+
+        // Check if mandate already exists (within 30 days of start date)
+        const existingMandate = politician.mandates.find((m) => {
+          if (m.type !== mandateInfo.type) return false;
+          if (!m.startDate) return false;
+          const existingStart = new Date(m.startDate);
+          const diff = Math.abs(existingStart.getTime() - startDate.getTime());
+          return diff / (1000 * 60 * 60 * 24) < 30;
+        });
+
+        if (existingMandate) {
+          stats.mandatesSkipped++;
           continue;
         }
 
-        // Collect IDs for label fetching
-        const idsToFetch = new Set<string>();
-        for (const pos of positions) {
-          idsToFetch.add(pos.positionId);
-          if (pos.ofId) idsToFetch.add(pos.ofId);
-        }
+        const externalMandateId = `wikidata-${extId.externalId}-${pos.positionId}-${startDate.toISOString().split("T")[0]}`;
 
-        const labels = await fetchLabels([...idsToFetch]);
-
-        for (const pos of positions) {
-          const mandateInfo = POSITION_MAPPING[pos.positionId];
-          if (!mandateInfo) continue;
-
-          const startDate = parseDate(pos.startDate);
-          const endDate = parseDate(pos.endDate);
-
-          if (!startDate) continue;
-
-          // Generate title
-          const positionLabel = labels.get(pos.positionId) || pos.positionId;
-          const ofLabel = pos.ofId ? labels.get(pos.ofId) : undefined;
-          let title = positionLabel;
-          if (ofLabel && ofLabel !== positionLabel) {
-            title = `${positionLabel} de ${ofLabel}`;
-          }
-
-          // Check if mandate already exists
-          const existingMandate = politician.mandates.find((m) => {
-            if (m.type !== mandateInfo.type) return false;
-            const existingStart = new Date(m.startDate);
-            const diff = Math.abs(existingStart.getTime() - startDate.getTime());
-            return diff / (1000 * 60 * 60 * 24) < 30;
-          });
-
-          if (existingMandate) {
-            stats.mandatesSkipped++;
-            continue;
-          }
-
-          const externalMandateId = `wikidata-${extId.externalId}-${pos.positionId}-${startDate.toISOString().split("T")[0]}`;
-
-          if (dryRun) {
-            console.log(
-              `[DRY-RUN] ${politician.fullName} - ${title} (${startDate.getFullYear()})`
-            );
+        if (dryRun) {
+          console.log(
+            `[DRY-RUN] ${politician.fullName} - ${title} (${startDate.getFullYear()})`
+          );
+          stats.mandatesCreated++;
+        } else {
+          try {
+            await db.mandate.create({
+              data: {
+                politicianId: politician.id,
+                type: mandateInfo.type,
+                title,
+                institution: mandateInfo.institution,
+                startDate,
+                endDate,
+                isCurrent: !endDate,
+                sourceUrl: `https://www.wikidata.org/wiki/${extId.externalId}`,
+                externalId: externalMandateId,
+              },
+            });
             stats.mandatesCreated++;
-          } else {
-            try {
-              await db.mandate.create({
-                data: {
-                  politicianId: politician.id,
-                  type: mandateInfo.type,
-                  title,
-                  institution: mandateInfo.institution,
-                  startDate,
-                  endDate,
-                  isCurrent: !endDate,
-                  sourceUrl: `https://www.wikidata.org/wiki/${extId.externalId}`,
-                  externalId: externalMandateId,
-                },
-              });
-              stats.mandatesCreated++;
-              console.log(`✓ ${politician.fullName} - ${title} (${startDate.getFullYear()})`);
-            } catch (error) {
-              errors.push(`${politician.fullName}: ${error}`);
-            }
+          } catch (error) {
+            errors.push(`${politician.fullName}: ${error}`);
           }
         }
-      } catch (error) {
-        errors.push(`${politician.fullName}: ${error}`);
       }
 
-      if ((i + 1) % 50 === 0) {
-        const progress = (((i + 1) / externalIds.length) * 100).toFixed(0);
-        console.log(
-          `\n--- Progress: ${progress}% (${i + 1}/${externalIds.length}) | Created: ${stats.mandatesCreated} ---\n`
-        );
-      }
-
-      await sleep(DELAY_BETWEEN_REQUESTS_MS);
+      progress.tick();
+      checkpoint.tick(extId.externalId, i);
     }
+
+    progress.finish();
+    checkpoint.complete();
 
     return {
       success: errors.length === 0,

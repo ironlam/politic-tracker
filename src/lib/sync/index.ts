@@ -12,6 +12,7 @@ export {
   formatBytes,
   formatDuration,
 } from "./result-formatter";
+export { ProgressTracker, createProgress } from "./progress-tracker";
 
 export type {
   SyncHandler,
@@ -19,3 +20,4 @@ export type {
   SyncResult,
   CLIOptionDefinition,
 } from "./types";
+export type { ProgressOptions, ProgressStats } from "./progress-tracker";

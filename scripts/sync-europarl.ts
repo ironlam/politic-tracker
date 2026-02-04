@@ -2,79 +2,62 @@
  * CLI script to sync MEPs from European Parliament
  *
  * Usage:
- *   npx tsx scripts/sync-europarl.ts          # Full sync
- *   npx tsx scripts/sync-europarl.ts --stats  # Show current stats
- *   npx tsx scripts/sync-europarl.ts --help   # Show help
+ *   npm run sync:europarl              # Full sync
+ *   npm run sync:europarl -- --stats   # Show current stats
  */
 
 import "dotenv/config";
+import { createCLI, type SyncHandler, type SyncResult } from "../src/lib/sync";
 import { syncEuroparl, getEuroparlStats } from "../src/services/sync";
 
-async function main() {
-  const args = process.argv.slice(2);
+const handler: SyncHandler = {
+  name: "Politic Tracker - European Parliament Sync",
+  description: "Import French MEPs from European Parliament",
 
-  if (args.includes("--help") || args.includes("-h")) {
+  showHelp() {
     console.log(`
-Politic Tracker - European Parliament MEPs Sync CLI
-
-Usage:
-  npx tsx scripts/sync-europarl.ts          Full sync (import/update all French MEPs)
-  npx tsx scripts/sync-europarl.ts --stats  Show current database stats
-  npx tsx scripts/sync-europarl.ts --help   Show this help message
+Politic Tracker - European Parliament MEPs Sync
 
 Data source: European Parliament Open Data API (data.europarl.europa.eu)
     `);
-    process.exit(0);
-  }
+  },
 
-  if (args.includes("--stats")) {
-    console.log("Fetching current stats...\n");
+  async showStats() {
     const stats = await getEuroparlStats();
-    console.log("European Parliament stats:");
-    console.log(`  Total MEPs: ${stats.totalMEPs}`);
-    console.log(`  Total Groups: ${stats.totalGroups}`);
-    console.log("\n  By political group:");
+
+    console.log("\n" + "=".repeat(50));
+    console.log("European Parliament Stats");
+    console.log("=".repeat(50));
+    console.log(`Total MEPs: ${stats.totalMEPs}`);
+    console.log(`Total Groups: ${stats.totalGroups}`);
+    console.log("\nBy political group:");
     for (const group of stats.byGroup) {
-      console.log(`    ${group.code} (${group.name}): ${group.count}`);
+      console.log(`  ${group.code} (${group.name}): ${group.count}`);
     }
-    process.exit(0);
-  }
+  },
 
-  // Default: full sync
-  console.log("=".repeat(50));
-  console.log("Politic Tracker - European Parliament Sync");
-  console.log("=".repeat(50));
-  console.log(`Started at: ${new Date().toISOString()}\n`);
+  async sync(options): Promise<SyncResult> {
+    const { dryRun = false } = options;
 
-  const startTime = Date.now();
-  const result = await syncEuroparl();
-  const duration = ((Date.now() - startTime) / 1000).toFixed(2);
-
-  console.log("\n" + "=".repeat(50));
-  console.log("Sync Results:");
-  console.log("=".repeat(50));
-  console.log(`Status: ${result.success ? "SUCCESS" : "PARTIAL"}`);
-  console.log(`Duration: ${duration}s`);
-  console.log(`\nMEPs:`);
-  console.log(`  Created: ${result.mepsCreated}`);
-  console.log(`  Updated: ${result.mepsUpdated}`);
-  console.log(`\nMandates:`);
-  console.log(`  Created: ${result.mandatesCreated}`);
-  console.log(`  Updated: ${result.mandatesUpdated}`);
-
-  if (result.errors.length > 0) {
-    console.log(`\nErrors (${result.errors.length}):`);
-    result.errors.slice(0, 10).forEach((e) => console.log(`  - ${e}`));
-    if (result.errors.length > 10) {
-      console.log(`  ... and ${result.errors.length - 10} more`);
+    if (dryRun) {
+      console.log("[DRY-RUN] Would sync MEPs from European Parliament");
+      return { success: true, duration: 0, stats: {}, errors: [] };
     }
-  }
 
-  console.log("\n" + "=".repeat(50));
-  process.exit(result.success ? 0 : 1);
-}
+    const result = await syncEuroparl();
 
-main().catch((error) => {
-  console.error("Fatal error:", error);
-  process.exit(1);
-});
+    return {
+      success: result.success,
+      duration: 0,
+      stats: {
+        mepsCreated: result.mepsCreated,
+        mepsUpdated: result.mepsUpdated,
+        mandatesCreated: result.mandatesCreated,
+        mandatesUpdated: result.mandatesUpdated,
+      },
+      errors: result.errors,
+    };
+  },
+};
+
+createCLI(handler);

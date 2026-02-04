@@ -76,7 +76,7 @@ export const POLITICIAN_FULL_INCLUDE = {
 // ============================================================================
 
 import { db } from "./db";
-import { DataSource } from "../generated/prisma";
+import { DataSource, Prisma } from "../generated/prisma";
 
 /**
  * Build a map of external IDs to politician IDs for fast lookup
@@ -221,7 +221,7 @@ export async function getPoliticiansMissingSource(
 ): Promise<Array<{ id: string; fullName: string; wikidataId?: string }>> {
   const { limit, onlyWithWikidata = false } = options;
 
-  const where: Parameters<typeof db.politician.findMany>[0]["where"] = {
+  const where: Prisma.PoliticianWhereInput = {
     externalIds: {
       none: { source },
     },

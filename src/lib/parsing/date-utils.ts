@@ -81,7 +81,7 @@ export function parseFrenchDate(input: string | null | undefined): Date | null {
   const monthName = match[2];
   const year = parseInt(match[3], 10);
 
-  const month = FRENCH_MONTHS[monthName];
+  const month = (FRENCH_MONTHS as Record<string, number>)[monthName];
   if (month === undefined) return null;
 
   if (!isReasonableYear(year)) return null;

@@ -234,8 +234,8 @@ async function enrichFromWikidata(): Promise<{
       let party = await db.party.findFirst({
         where: {
           OR: [
-            { name: { equals: name, mode: "insensitive" } },
-            ...(shortName ? [{ shortName: { equals: shortName, mode: "insensitive" } }] : []),
+            { name: { equals: name, mode: "insensitive" as const } },
+            ...(shortName ? [{ shortName: { equals: shortName, mode: "insensitive" as const } }] : []),
           ],
         },
       });

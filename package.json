@@ -74,7 +74,9 @@
     "audit:affairs:urls": "tsx scripts/audit-affairs.ts --check-urls",
     "audit:affairs:export": "tsx scripts/audit-affairs.ts --export",
     "audit:careers": "tsx scripts/audit-careers.ts",
-    "audit:careers:export": "tsx scripts/audit-careers.ts --export"
+    "audit:careers:export": "tsx scripts/audit-careers.ts --export",
+    "sync:press": "tsx scripts/sync-press.ts",
+    "sync:press:stats": "tsx scripts/sync-press.ts --stats"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.33",
@@ -89,6 +91,7 @@
     "clsx": "^2.1.1",
     "csv-parse": "^6.1.0",
     "d3-scale": "^4.0.2",
+    "fast-xml-parser": "^5.3.4",
     "lucide-react": "^0.563.0",
     "next": "^16.1.4",
     "next-themes": "^0.4.6",

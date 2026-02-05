@@ -36,6 +36,7 @@ model Politician {
   partyHistory  PartyMembership[]
   externalIds   ExternalId[]      // IDs from all external sources
   votes         Vote[]            // Parliamentary votes
+  pressMentions PressArticleMention[] // Mentions in press articles
 
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -682,4 +683,50 @@ model ChatMessage {
 enum ChatRole {
   USER
   ASSISTANT
+}
+
+// ============================================
+// PRESS ARTICLES (RSS)
+// ============================================
+
+model PressArticle {
+  id            String    @id @default(cuid())
+
+  // Source
+  feedSource    String    // "lemonde", "mediapart", "politico"
+  externalId    String    // GUID from RSS feed
+
+  // Content (RSS public data only)
+  title         String    @db.Text
+  description   String?   @db.Text
+  url           String    @unique
+  imageUrl      String?
+
+  // Publication
+  publishedAt   DateTime
+
+  // Relations
+  mentions      PressArticleMention[]
+
+  createdAt     DateTime  @default(now())
+
+  @@unique([feedSource, externalId])
+  @@index([feedSource])
+  @@index([publishedAt])
+}
+
+model PressArticleMention {
+  id            String   @id @default(cuid())
+
+  articleId     String
+  article       PressArticle @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  politicianId  String
+  politician    Politician @relation(fields: [politicianId], references: [id], onDelete: Cascade)
+
+  matchedName   String?   // The name found in the article
+
+  @@unique([articleId, politicianId])
+  @@index([politicianId])
+  @@index([articleId])
 }

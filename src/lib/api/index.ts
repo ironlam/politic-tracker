@@ -20,3 +20,6 @@ export type {
   WikidataClaim,
   WikidataPosition,
 } from "./wikidata";
+
+export { RSSClient, rssClient, RSS_FEEDS } from "./rss";
+export type { RSSFeedConfig, RSSItem, RSSFeed, RSSClientOptions } from "./rss";

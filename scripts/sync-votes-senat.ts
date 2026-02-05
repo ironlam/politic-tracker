@@ -12,6 +12,7 @@
 
 import "dotenv/config";
 import { createCLI, type SyncHandler, type SyncResult } from "../src/lib/sync";
+import { decodeHtmlEntities } from "../src/lib/parsing";
 import { db } from "../src/lib/db";
 import { generateDateSlug } from "../src/lib/utils";
 import { VotePosition, VotingResult, DataSource, Chamber } from "../src/generated/prisma";
@@ -52,44 +53,6 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-/**
- * Decode HTML entities
- */
-function decodeHtmlEntities(html: string): string {
-  return html
-    // Named entities
-    .replace(/&eacute;/g, "é")
-    .replace(/&egrave;/g, "è")
-    .replace(/&agrave;/g, "à")
-    .replace(/&acirc;/g, "â")
-    .replace(/&ecirc;/g, "ê")
-    .replace(/&icirc;/g, "î")
-    .replace(/&ocirc;/g, "ô")
-    .replace(/&ucirc;/g, "û")
-    .replace(/&ccedil;/g, "ç")
-    .replace(/&ugrave;/g, "ù")
-    .replace(/&iuml;/g, "ï")
-    .replace(/&euml;/g, "ë")
-    .replace(/&ouml;/g, "ö")
-    .replace(/&uuml;/g, "ü")
-    .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&apos;/g, "'")
-    .replace(/&deg;/g, "°")
-    .replace(/&rsquo;/g, "'")
-    .replace(/&lsquo;/g, "'")
-    .replace(/&rdquo;/g, '"')
-    .replace(/&ldquo;/g, '"')
-    .replace(/&ndash;/g, "–")
-    .replace(/&mdash;/g, "—")
-    .replace(/&hellip;/g, "…")
-    // Numeric entities
-    .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(parseInt(code)))
-    .replace(/&#x([0-9a-fA-F]+);/g, (_, code) => String.fromCharCode(parseInt(code, 16)));
-}
 
 /**
  * Fetch content from URL

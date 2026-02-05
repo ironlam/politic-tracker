@@ -15,3 +15,12 @@ export {
   isValidDate,
   isReasonableYear,
 } from "./date-utils";
+
+export {
+  decodeHtmlEntities,
+  stripHtml,
+  normalizeWhitespace,
+  extractText,
+  extractAttribute,
+  containsHtml,
+} from "./html-utils";

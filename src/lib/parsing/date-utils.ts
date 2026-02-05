@@ -74,7 +74,8 @@ export function parseFrenchDate(input: string | null | undefined): Date | null {
   const normalized = input.toLowerCase().trim();
 
   // Pattern: "15 janvier 2024" or "1er mars 2020"
-  const match = normalized.match(/(\d{1,2})(?:er)?\s+(\w+)\s+(\d{4})/);
+  // Use Unicode property escape to match accented letters (é, è, ê, û, etc.)
+  const match = normalized.match(/(\d{1,2})(?:er)?\s+([a-zàâäéèêëïîôùûüçœæ]+)\s+(\d{4})/);
   if (!match) return null;
 
   const day = parseInt(match[1], 10);

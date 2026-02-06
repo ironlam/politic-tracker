@@ -3,7 +3,7 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import type { Mandate, Affair, MandateType, AffairStatus } from "@/types";
+import type { SerializedMandate, SerializedAffairWithSources, MandateType, AffairStatus } from "@/types";
 import { MANDATE_TYPE_LABELS, AFFAIR_STATUS_LABELS, AFFAIR_CATEGORY_LABELS } from "@/config/labels";
 import {
   MANDATE_TYPE_COLORS,
@@ -15,8 +15,8 @@ import {
 import { formatDate } from "@/lib/utils";
 
 interface InteractiveTimelineProps {
-  mandates: Mandate[];
-  affairs: Affair[];
+  mandates: SerializedMandate[];
+  affairs: SerializedAffairWithSources[];
   birthDate?: Date | null;
   deathDate?: Date | null;
 }
@@ -103,7 +103,7 @@ export function InteractiveTimeline({
 
   // Group mandates by row
   const mandatesByRow = useMemo(() => {
-    const rows: Map<number, Mandate[]> = new Map();
+    const rows: Map<number, SerializedMandate[]> = new Map();
 
     mandates.forEach((m) => {
       const row = getMandateRow(m.type);
@@ -112,7 +112,7 @@ export function InteractiveTimeline({
     });
 
     // Filter empty rows and create ordered array
-    const orderedRows: { row: number; label: string; mandates: Mandate[] }[] = [];
+    const orderedRows: { row: number; label: string; mandates: SerializedMandate[] }[] = [];
     for (let i = 0; i < MANDATE_ROW_LABELS.length; i++) {
       if (rows.has(i)) {
         orderedRows.push({
@@ -156,7 +156,7 @@ export function InteractiveTimeline({
     return markers;
   }, [minYear, maxYear]);
 
-  const handleMandateHover = (mandate: Mandate, event: React.MouseEvent) => {
+  const handleMandateHover = (mandate: SerializedMandate, event: React.MouseEvent) => {
     const rect = event.currentTarget.getBoundingClientRect();
     const containerRect = containerRef.current?.getBoundingClientRect();
     if (!containerRect) return;

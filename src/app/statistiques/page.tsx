@@ -1,13 +1,17 @@
 import { Metadata } from "next";
-import Link from "next/link";
+import { Suspense } from "react";
 import { db } from "@/lib/db";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import {
-  AFFAIR_STATUS_LABELS,
-  AFFAIR_STATUS_COLORS,
+  StatsTabs,
+  AffairsTab,
+  VotesTab,
+  PressTab,
+  GeoTab,
+  type StatsTabType,
+} from "@/components/stats";
+import {
   AFFAIR_SUPER_CATEGORY_LABELS,
-  AFFAIR_SUPER_CATEGORY_COLORS,
   CATEGORY_TO_SUPER,
   type AffairSuperCategory,
 } from "@/config/labels";
@@ -15,10 +19,12 @@ import type { AffairStatus, AffairCategory } from "@/types";
 
 export const metadata: Metadata = {
   title: "Statistiques",
-  description: "Statistiques sur les affaires judiciaires des représentants politiques français",
+  description:
+    "Statistiques sur les représentants politiques français : affaires judiciaires, votes parlementaires, revue de presse, géographie",
 };
 
-async function getGlobalStats() {
+// Affairs data fetchers
+async function getAffairsGlobalStats() {
   const [
     totalPoliticians,
     totalAffairs,
@@ -32,7 +38,9 @@ async function getGlobalStats() {
     db.politician.count({ where: { affairs: { some: {} } } }),
     db.affair.count({
       where: {
-        status: { in: ["CONDAMNATION_PREMIERE_INSTANCE", "CONDAMNATION_DEFINITIVE"] },
+        status: {
+          in: ["CONDAMNATION_PREMIERE_INSTANCE", "CONDAMNATION_DEFINITIVE"],
+        },
       },
     }),
   ]);
@@ -43,9 +51,10 @@ async function getGlobalStats() {
     totalParties,
     politiciansWithAffairs,
     condamnations,
-    percentWithAffairs: totalPoliticians > 0
-      ? ((politiciansWithAffairs / totalPoliticians) * 100).toFixed(1)
-      : "0",
+    percentWithAffairs:
+      totalPoliticians > 0
+        ? ((politiciansWithAffairs / totalPoliticians) * 100).toFixed(1)
+        : "0",
   };
 }
 
@@ -69,7 +78,6 @@ async function getAffairsByCategory() {
     orderBy: { _count: { category: "desc" } },
   });
 
-  // Group by super-category
   const superCategories: Record<AffairSuperCategory, number> = {
     PROBITE: 0,
     FINANCES: 0,
@@ -131,27 +139,31 @@ async function getAffairsByParty() {
       color: p.color,
       slug: p.slug,
       politiciansWithAffairs: p._count.politicians,
-      totalAffairs: p.politicians.reduce((sum, pol) => sum + pol._count.affairs, 0),
+      totalAffairs: p.politicians.reduce(
+        (sum, pol) => sum + pol._count.affairs,
+        0
+      ),
     }))
     .sort((a, b) => b.totalAffairs - a.totalAffairs)
     .slice(0, 10);
 }
 
-async function getTopPoliticians() {
+async function getTopPoliticiansWithAffairs() {
   const politicians = await db.politician.findMany({
     where: { affairs: { some: {} } },
     select: {
       id: true,
       slug: true,
       fullName: true,
-      photoUrl: true,
       currentParty: {
         select: { shortName: true, color: true },
       },
       _count: { select: { affairs: true } },
       affairs: {
         where: {
-          status: { in: ["CONDAMNATION_PREMIERE_INSTANCE", "CONDAMNATION_DEFINITIVE"] },
+          status: {
+            in: ["CONDAMNATION_PREMIERE_INSTANCE", "CONDAMNATION_DEFINITIVE"],
+          },
         },
         select: { id: true },
       },
@@ -166,284 +178,434 @@ async function getTopPoliticians() {
   }));
 }
 
-// Hex colors for progress bars (Tailwind dynamic classes don't work)
-const SUPER_CATEGORY_BAR_COLORS: Record<AffairSuperCategory, string> = {
-  PROBITE: "#9333ea",    // purple-600
-  FINANCES: "#2563eb",   // blue-600
-  PERSONNES: "#dc2626",  // red-600
-  EXPRESSION: "#d97706", // amber-600
-  AUTRE: "#6b7280",      // gray-500
-};
+// Votes data fetchers
+async function getVotesStats(chamber: "all" | "AN" | "SENAT") {
+  const whereClause = chamber === "all" ? {} : { chamber };
 
-function ProgressBar({
-  value,
-  max,
-  color,
-  hexColor,
-}: {
-  value: number;
-  max: number;
-  color?: string;
-  hexColor?: string;
-}) {
-  const percentage = max > 0 ? (value / max) * 100 : 0;
-  return (
-    <div className="w-full bg-gray-100 rounded-full h-4 overflow-hidden">
-      <div
-        className={`h-full rounded-full transition-all ${color || ""}`}
-        style={{
-          width: `${percentage}%`,
-          backgroundColor: hexColor,
-        }}
-      />
-    </div>
+  const [totalVotes, anVotes, senatVotes, adoptes, rejetes] = await Promise.all(
+    [
+      db.scrutin.count({ where: whereClause }),
+      db.scrutin.count({ where: { chamber: "AN" } }),
+      db.scrutin.count({ where: { chamber: "SENAT" } }),
+      db.scrutin.count({ where: { ...whereClause, result: "ADOPTED" } }),
+      db.scrutin.count({ where: { ...whereClause, result: "REJECTED" } }),
+    ]
   );
+
+  return { totalVotes, anVotes, senatVotes, adoptes, rejetes };
 }
 
-export default async function StatistiquesPage() {
-  const [globalStats, byStatus, byCategory, byParty, topPoliticians] =
+async function getVotesByParty(chamber: "all" | "AN" | "SENAT") {
+  // Get parties with votes
+  const parties = await db.party.findMany({
+    where: {
+      politicians: {
+        some: {
+          votes: { some: {} },
+        },
+      },
+    },
+    select: {
+      id: true,
+      slug: true,
+      name: true,
+      shortName: true,
+      color: true,
+    },
+  });
+
+  // For each party, count vote positions
+  const partyStats = await Promise.all(
+    parties.map(async (party) => {
+      const scrutinWhere =
+        chamber === "all" ? {} : { scrutin: { chamber } };
+
+      const [pour, contre, abstention] = await Promise.all([
+        db.vote.count({
+          where: {
+            politician: { currentPartyId: party.id },
+            position: "POUR",
+            ...scrutinWhere,
+          },
+        }),
+        db.vote.count({
+          where: {
+            politician: { currentPartyId: party.id },
+            position: "CONTRE",
+            ...scrutinWhere,
+          },
+        }),
+        db.vote.count({
+          where: {
+            politician: { currentPartyId: party.id },
+            position: "ABSTENTION",
+            ...scrutinWhere,
+          },
+        }),
+      ]);
+
+      return {
+        ...party,
+        totalVotes: pour + contre + abstention,
+        pour,
+        contre,
+        abstention,
+      };
+    })
+  );
+
+  return partyStats
+    .filter((p) => p.totalVotes > 0)
+    .sort((a, b) => b.totalVotes - a.totalVotes)
+    .slice(0, 10);
+}
+
+async function getTopContestedScrutins(chamber: "all" | "AN" | "SENAT") {
+  const whereClause = chamber === "all" ? {} : { chamber };
+
+  // Get scrutins where the margin is smallest
+  const scrutins = await db.scrutin.findMany({
+    where: whereClause,
+    select: {
+      id: true,
+      slug: true,
+      title: true,
+      votingDate: true,
+      chamber: true,
+      result: true,
+      votesFor: true,
+      votesAgainst: true,
+      votesAbstain: true,
+    },
+    orderBy: { votingDate: "desc" },
+    take: 100,
+  });
+
+  // Calculate margin, sort by smallest, and map to expected format
+  return scrutins
+    .map((s) => ({
+      id: s.id,
+      slug: s.slug,
+      title: s.title,
+      date: s.votingDate,
+      chamber: s.chamber,
+      result: s.result === "ADOPTED" ? "ADOPTE" : "REJETE",
+      totalPour: s.votesFor,
+      totalContre: s.votesAgainst,
+      totalAbstention: s.votesAbstain,
+      margin: Math.abs(s.votesFor - s.votesAgainst),
+    }))
+    .sort((a, b) => a.margin - b.margin)
+    .slice(0, 10);
+}
+
+// Press data fetchers
+async function getPressStats() {
+  const now = new Date();
+  const lastWeek = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const lastMonth = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+  const [totalArticles, bySource, lastWeekCount, lastMonthCount] =
     await Promise.all([
-      getGlobalStats(),
-      getAffairsByStatus(),
-      getAffairsByCategory(),
-      getAffairsByParty(),
-      getTopPoliticians(),
+      db.pressArticle.count(),
+      db.pressArticle.groupBy({
+        by: ["feedSource"],
+        _count: { feedSource: true },
+        orderBy: { _count: { feedSource: "desc" } },
+      }),
+      db.pressArticle.count({ where: { publishedAt: { gte: lastWeek } } }),
+      db.pressArticle.count({ where: { publishedAt: { gte: lastMonth } } }),
     ]);
 
-  const maxByStatus = Math.max(...byStatus.map((s) => s.count), 1);
-  const maxByCategory = Math.max(...byCategory.map((c) => c.count), 1);
-  const maxByParty = Math.max(...byParty.map((p) => p.totalAffairs), 1);
-  const maxByPolitician = Math.max(...topPoliticians.map((p) => p._count.affairs), 1);
+  return {
+    totalArticles,
+    bySource: bySource.map((s) => ({
+      source: s.feedSource.toUpperCase(),
+      count: s._count.feedSource
+    })),
+    lastWeek: lastWeekCount,
+    lastMonth: lastMonthCount,
+  };
+}
+
+async function getTopPoliticiansMentioned() {
+  const mentions = await db.pressArticleMention.groupBy({
+    by: ["politicianId"],
+    _count: { politicianId: true },
+    orderBy: { _count: { politicianId: "desc" } },
+    take: 10,
+  });
+
+  if (mentions.length === 0) return [];
+
+  const politicians = await db.politician.findMany({
+    where: { id: { in: mentions.map((m) => m.politicianId).filter(Boolean) as string[] } },
+    select: {
+      id: true,
+      slug: true,
+      fullName: true,
+      currentParty: { select: { shortName: true, color: true } },
+    },
+  });
+
+  return mentions
+    .map((m) => {
+      const politician = politicians.find((p) => p.id === m.politicianId);
+      if (!politician) return null;
+      return {
+        id: politician.id,
+        slug: politician.slug,
+        fullName: politician.fullName,
+        party: politician.currentParty,
+        mentionCount: m._count.politicianId,
+      };
+    })
+    .filter(Boolean) as {
+      id: string;
+      slug: string;
+      fullName: string;
+      party: { shortName: string | null; color: string | null } | null;
+      mentionCount: number;
+    }[];
+}
+
+async function getTopPartiesMentioned() {
+  const mentions = await db.pressArticlePartyMention.groupBy({
+    by: ["partyId"],
+    _count: { partyId: true },
+    orderBy: { _count: { partyId: "desc" } },
+    take: 5,
+  });
+
+  if (mentions.length === 0) return [];
+
+  const parties = await db.party.findMany({
+    where: { id: { in: mentions.map((m) => m.partyId) } },
+    select: {
+      id: true,
+      slug: true,
+      name: true,
+      shortName: true,
+      color: true,
+    },
+  });
+
+  return mentions
+    .map((m) => {
+      const party = parties.find((p) => p.id === m.partyId);
+      if (!party) return null;
+      return {
+        ...party,
+        mentionCount: m._count.partyId,
+      };
+    })
+    .filter(Boolean) as {
+      id: string;
+      slug: string;
+      name: string;
+      shortName: string | null;
+      color: string | null;
+      mentionCount: number;
+    }[];
+}
+
+// Geo data fetchers
+async function getGeoStats() {
+  const [deputes, senateurs, meps, gouvernement] = await Promise.all([
+    db.mandate.count({ where: { type: "DEPUTE", isCurrent: true } }),
+    db.mandate.count({ where: { type: "SENATEUR", isCurrent: true } }),
+    db.mandate.count({ where: { type: "DEPUTE_EUROPEEN", isCurrent: true } }),
+    db.mandate.count({
+      where: {
+        type: {
+          in: [
+            "MINISTRE",
+            "PREMIER_MINISTRE",
+            "MINISTRE_DELEGUE",
+            "SECRETAIRE_ETAT",
+          ],
+        },
+        isCurrent: true,
+      },
+    }),
+  ]);
+
+  // Get top departments
+  const departments = await db.mandate.groupBy({
+    by: ["departmentCode"],
+    where: {
+      isCurrent: true,
+      type: { in: ["DEPUTE", "SENATEUR"] },
+      departmentCode: { not: null },
+    },
+    _count: { departmentCode: true },
+    orderBy: { _count: { departmentCode: "desc" } },
+    take: 15,
+  });
+
+  // Get counts by type for each department
+  const topDepartments = await Promise.all(
+    departments.map(async (d) => {
+      const [deputeCount, senateurCount] = await Promise.all([
+        db.mandate.count({
+          where: {
+            departmentCode: d.departmentCode,
+            type: "DEPUTE",
+            isCurrent: true,
+          },
+        }),
+        db.mandate.count({
+          where: {
+            departmentCode: d.departmentCode,
+            type: "SENATEUR",
+            isCurrent: true,
+          },
+        }),
+      ]);
+
+      return {
+        code: d.departmentCode || "",
+        name: d.departmentCode || "",
+        deputes: deputeCount,
+        senateurs: senateurCount,
+        total: deputeCount + senateurCount,
+      };
+    })
+  );
+
+  // Simple region mapping (simplified)
+  const regionMapping: Record<string, string> = {
+    "75": "Île-de-France",
+    "77": "Île-de-France",
+    "78": "Île-de-France",
+    "91": "Île-de-France",
+    "92": "Île-de-France",
+    "93": "Île-de-France",
+    "94": "Île-de-France",
+    "95": "Île-de-France",
+    "13": "Provence-Alpes-Côte d'Azur",
+    "69": "Auvergne-Rhône-Alpes",
+    "31": "Occitanie",
+    "33": "Nouvelle-Aquitaine",
+    "59": "Hauts-de-France",
+    "44": "Pays de la Loire",
+    "67": "Grand Est",
+    "35": "Bretagne",
+    "06": "Provence-Alpes-Côte d'Azur",
+  };
+
+  // Aggregate by region (simplified)
+  const byRegion: Record<string, { total: number; deputes: number; senateurs: number }> = {};
+  topDepartments.forEach((d) => {
+    const region = regionMapping[d.code] || "Autre";
+    if (!byRegion[region]) {
+      byRegion[region] = { total: 0, deputes: 0, senateurs: 0 };
+    }
+    byRegion[region].total += d.total;
+    byRegion[region].deputes += d.deputes;
+    byRegion[region].senateurs += d.senateurs;
+  });
+
+  return {
+    totalByType: { deputes, senateurs, meps, gouvernement },
+    topDepartments,
+    byRegion: Object.entries(byRegion)
+      .map(([name, data]) => ({ name, ...data }))
+      .sort((a, b) => b.total - a.total),
+  };
+}
+
+interface PageProps {
+  searchParams: Promise<{ tab?: string; chamber?: string }>;
+}
+
+export default async function StatistiquesPage({ searchParams }: PageProps) {
+  const params = await searchParams;
+  const tab = (params.tab as StatsTabType) || "affaires";
+  const chamber = (params.chamber as "all" | "AN" | "SENAT") || "all";
+
+  // Fetch data based on active tab
+  let content;
+
+  if (tab === "affaires") {
+    const [globalStats, byStatus, byCategory, byParty, topPoliticians] =
+      await Promise.all([
+        getAffairsGlobalStats(),
+        getAffairsByStatus(),
+        getAffairsByCategory(),
+        getAffairsByParty(),
+        getTopPoliticiansWithAffairs(),
+      ]);
+
+    content = (
+      <AffairsTab
+        globalStats={globalStats}
+        byStatus={byStatus}
+        byCategory={byCategory}
+        byParty={byParty}
+        topPoliticians={topPoliticians}
+      />
+    );
+  } else if (tab === "votes") {
+    const [stats, byParty, topScrutins] = await Promise.all([
+      getVotesStats(chamber),
+      getVotesByParty(chamber),
+      getTopContestedScrutins(chamber),
+    ]);
+
+    content = (
+      <VotesTab
+        stats={stats}
+        byParty={byParty}
+        topScrutins={topScrutins}
+        chamberFilter={chamber}
+      />
+    );
+  } else if (tab === "presse") {
+    const [stats, topPoliticians, topParties] = await Promise.all([
+      getPressStats(),
+      getTopPoliticiansMentioned(),
+      getTopPartiesMentioned(),
+    ]);
+
+    content = (
+      <PressTab
+        stats={stats}
+        topPoliticians={topPoliticians}
+        topParties={topParties}
+      />
+    );
+  } else if (tab === "geo") {
+    const stats = await getGeoStats();
+    content = <GeoTab stats={stats} />;
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Statistiques</h1>
         <p className="text-muted-foreground">
-          Vue d&apos;ensemble des affaires judiciaires documentées
+          Vue d&apos;ensemble des données sur les représentants politiques
         </p>
       </div>
 
-      {/* Global stats */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Représentants
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold">{globalStats.totalPoliticians}</p>
-          </CardContent>
-        </Card>
+      <Suspense fallback={<div className="h-12 bg-muted/50 rounded-lg animate-pulse w-96" />}>
+        <StatsTabs activeTab={tab} />
+      </Suspense>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Affaires documentées
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold">{globalStats.totalAffairs}</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Condamnations
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold text-red-600">{globalStats.condamnations}</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Avec affaire(s)
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold">{globalStats.politiciansWithAffairs}</p>
-            <p className="text-sm text-muted-foreground">
-              {globalStats.percentWithAffairs}% du total
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Partis concernés
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold">{byParty.length}</p>
-            <p className="text-sm text-muted-foreground">
-              sur {globalStats.totalParties} partis
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid lg:grid-cols-2 gap-8 mb-8">
-        {/* By status */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Répartition par statut</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {byStatus.map(({ status, count }) => (
-              <div key={status}>
-                <div className="flex justify-between text-sm mb-1">
-                  <span className="truncate mr-2">
-                    <Badge className={AFFAIR_STATUS_COLORS[status]} variant="outline">
-                      {AFFAIR_STATUS_LABELS[status]}
-                    </Badge>
-                  </span>
-                  <span className="font-medium">{count}</span>
-                </div>
-                <ProgressBar
-                  value={count}
-                  max={maxByStatus}
-                  color={
-                    status.includes("CONDAMNATION")
-                      ? "bg-red-500"
-                      : status === "RELAXE" || status === "ACQUITTEMENT"
-                        ? "bg-green-500"
-                        : "bg-yellow-500"
-                  }
-                />
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-
-        {/* By super-category */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Répartition par type</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {byCategory.map(({ category, count }) => (
-              <div key={category}>
-                <div className="flex justify-between text-sm mb-1">
-                  <Badge className={AFFAIR_SUPER_CATEGORY_COLORS[category]} variant="outline">
-                    {AFFAIR_SUPER_CATEGORY_LABELS[category]}
-                  </Badge>
-                  <span className="font-medium">{count}</span>
-                </div>
-                <ProgressBar
-                  value={count}
-                  max={maxByCategory}
-                  hexColor={SUPER_CATEGORY_BAR_COLORS[category]}
-                />
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid lg:grid-cols-2 gap-8">
-        {/* By party */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Affaires par parti</CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Top 10 des partis par nombre d&apos;affaires
-            </p>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {byParty.map((party) => (
-              <div key={party.id}>
-                <div className="flex justify-between text-sm mb-1">
-                  <Link
-                    href={`/partis/${party.slug}`}
-                    className="hover:underline flex items-center gap-2"
-                  >
-                    {party.color && (
-                      <span
-                        className="w-3 h-3 rounded-full inline-block"
-                        style={{ backgroundColor: party.color }}
-                      />
-                    )}
-                    <span>{party.shortName}</span>
-                    <span className="text-muted-foreground">
-                      ({party.politiciansWithAffairs} pers.)
-                    </span>
-                  </Link>
-                  <span className="font-medium">{party.totalAffairs}</span>
-                </div>
-                <ProgressBar
-                  value={party.totalAffairs}
-                  max={maxByParty}
-                  color="bg-primary"
-                />
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-
-        {/* Top politicians */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Politiques les plus concernés</CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Top 10 par nombre d&apos;affaires
-            </p>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {topPoliticians.map((politician) => (
-              <div key={politician.id}>
-                <div className="flex justify-between text-sm mb-1">
-                  <Link
-                    href={`/politiques/${politician.slug}`}
-                    className="hover:underline flex items-center gap-2 truncate"
-                  >
-                    <span className="truncate">{politician.fullName}</span>
-                    {politician.currentParty && (
-                      <Badge
-                        variant="outline"
-                        className="text-xs shrink-0"
-                        style={{
-                          borderColor: politician.currentParty.color || undefined,
-                          color: politician.currentParty.color || undefined,
-                        }}
-                      >
-                        {politician.currentParty.shortName}
-                      </Badge>
-                    )}
-                  </Link>
-                  <span className="font-medium shrink-0 ml-2">
-                    {politician._count.affairs}
-                    {politician.condamnations > 0 && (
-                      <span className="text-red-600 ml-1">
-                        ({politician.condamnations} cond.)
-                      </span>
-                    )}
-                  </span>
-                </div>
-                <ProgressBar
-                  value={politician._count.affairs}
-                  max={maxByPolitician}
-                  color={politician.condamnations > 0 ? "bg-red-500" : "bg-orange-500"}
-                />
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      </div>
+      {content}
 
       {/* Disclaimer */}
-      <Card className="mt-8 bg-blue-50 border-blue-200">
+      <Card className="mt-8 bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800">
         <CardContent className="pt-6">
-          <h2 className="font-semibold text-blue-900 mb-2">Note méthodologique</h2>
-          <p className="text-sm text-blue-800">
-            Ces statistiques reflètent uniquement les affaires documentées dans notre base.
-            Une affaire en cours ne préjuge pas de la culpabilité (présomption d&apos;innocence).
-            Les données sont issues de sources publiques et journalistiques vérifiables.
+          <h2 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">
+            Note méthodologique
+          </h2>
+          <p className="text-sm text-blue-800 dark:text-blue-200">
+            Ces statistiques reflètent uniquement les données documentées dans
+            notre base. Une affaire en cours ne préjuge pas de la culpabilité
+            (présomption d&apos;innocence). Les données sont issues de sources
+            publiques et journalistiques vérifiables.
           </p>
         </CardContent>
       </Card>

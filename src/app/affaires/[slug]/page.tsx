@@ -286,7 +286,12 @@ export default async function AffairDetailPage({ params }: PageProps) {
                     {source.publishedAt && (
                       <>
                         {source.publisher && <span>•</span>}
-                        <span>{formatDate(source.publishedAt)}</span>
+                        <span>
+                          {source.publisher?.toLowerCase() === "wikidata"
+                            ? `mis à jour le ${formatDate(source.publishedAt)}`
+                            : formatDate(source.publishedAt)
+                          }
+                        </span>
                       </>
                     )}
                   </div>

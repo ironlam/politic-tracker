@@ -1,5 +1,5 @@
 // Navigation configuration
-// Organized with dropdown menus for better UX
+// Simplified structure with 3 dropdowns + 2 CTAs + 1 icon
 
 export interface NavItem {
   href: string;
@@ -13,61 +13,120 @@ export interface NavGroup {
   items: NavItem[];
 }
 
-// Main navigation groups (dropdowns)
+// Main navigation groups (3 dropdowns)
 export const NAV_GROUPS: NavGroup[] = [
   {
     label: "Élus",
     items: [
-      { href: "/politiques", label: "Tous les représentants", description: "Députés, sénateurs, ministres..." },
-      { href: "/carte", label: "Carte de France", icon: "🗺️", description: "Visualisez les élus par département" },
-      { href: "/departements", label: "Par département", description: "Trouvez les élus de votre territoire" },
-      { href: "/partis", label: "Partis politiques", description: "55+ partis avec leurs membres" },
+      {
+        href: "/politiques",
+        label: "Tous les représentants",
+        description: "Députés, sénateurs, ministres, eurodéputés",
+      },
+      {
+        href: "/carte",
+        label: "Carte de France",
+        icon: "map",
+        description: "Visualisez les élus par département",
+      },
+      {
+        href: "/departements",
+        label: "Par département",
+        description: "Trouvez les élus de votre territoire",
+      },
+      {
+        href: "/partis",
+        label: "Partis politiques",
+        description: "55+ partis avec leurs membres",
+      },
     ],
   },
   {
-    label: "Travaux",
+    label: "Activité",
     items: [
-      { href: "/assemblee", label: "En direct", icon: "🔴", description: "Textes en discussion à l'Assemblée" },
-      { href: "/votes", label: "Votes parlementaires", description: "Scrutins et positions des députés" },
-      { href: "/affaires", label: "Affaires judiciaires", description: "Dossiers documentés avec sources" },
+      {
+        href: "/assemblee",
+        label: "En direct de l'Assemblée",
+        icon: "live",
+        description: "Textes en discussion",
+      },
+      {
+        href: "/votes",
+        label: "Votes parlementaires",
+        description: "Scrutins et positions des élus",
+      },
+      {
+        href: "/affaires",
+        label: "Affaires judiciaires",
+        description: "Dossiers documentés avec sources",
+      },
+      {
+        href: "/presse",
+        label: "Revue de presse",
+        icon: "newspaper",
+        description: "Articles Le Monde, Politico, Mediapart",
+      },
     ],
   },
   {
-    label: "Données",
+    label: "Ressources",
     items: [
-      { href: "/presse", label: "Revue de presse", icon: "📰", description: "Articles Le Monde, Politico, Mediapart" },
-      { href: "/statistiques", label: "Statistiques", description: "Tableaux de bord et analyses" },
-      { href: "/institutions", label: "Institutions", description: "Comprendre le système politique" },
-      { href: "/sources", label: "Sources", description: "Méthodologie et transparence" },
-      { href: "/docs/api", label: "API", description: "Accès programmatique aux données" },
-    ],
-  },
-  {
-    label: "Assistant IA",
-    items: [
-      { href: "/chat", label: "Poser une question", icon: "💬", description: "Chatbot alimenté par nos données" },
+      {
+        href: "/statistiques",
+        label: "Statistiques",
+        description: "Tableaux de bord et analyses",
+      },
+      {
+        href: "/institutions",
+        label: "Institutions",
+        description: "Comprendre le système politique",
+      },
+      {
+        href: "/sources",
+        label: "Sources et méthodologie",
+        description: "Transparence et crédibilité",
+      },
+      {
+        href: "/docs/api",
+        label: "Documentation API",
+        description: "Accès programmatique aux données",
+      },
     ],
   },
 ] as const;
 
-// CTA button (separate from dropdowns)
-export const CTA_LINK: NavItem = {
+// CTA buttons (separate from dropdowns)
+export const CTA_COMPARER: NavItem = {
+  href: "/comparer",
+  label: "Comparer",
+  description: "Comparez deux représentants",
+};
+
+export const CTA_MON_DEPUTE: NavItem = {
   href: "/mon-depute",
   label: "Mon député",
   description: "Trouvez votre député par code postal",
 };
 
-// Footer navigation (reorganized)
+// Chat link (icon in header)
+export const CHAT_LINK: NavItem = {
+  href: "/chat",
+  label: "Assistant IA",
+  description: "Chatbot alimenté par nos données",
+};
+
+// Legacy export for backwards compatibility
+export const CTA_LINK = CTA_MON_DEPUTE;
+
+// Footer navigation (3 columns simplified)
 export const FOOTER_SECTIONS = [
   {
     title: "Explorer",
     links: [
       { href: "/politiques", label: "Représentants" },
       { href: "/carte", label: "Carte" },
-      { href: "/assemblee", label: "En direct" },
       { href: "/votes", label: "Votes" },
       { href: "/affaires", label: "Affaires" },
-      { href: "/partis", label: "Partis" },
       { href: "/presse", label: "Presse" },
     ],
   },
@@ -77,16 +136,17 @@ export const FOOTER_SECTIONS = [
       { href: "/statistiques", label: "Statistiques" },
       { href: "/institutions", label: "Institutions" },
       { href: "/sources", label: "Sources" },
-      { href: "/chat", label: "Assistant IA" },
-      { href: "/soutenir", label: "Nous soutenir" },
+      { href: "/docs/api", label: "API" },
+      { href: "/mentions-legales", label: "Mentions légales" },
     ],
   },
   {
-    title: "Technique",
+    title: "Outils",
     links: [
-      { href: "/docs/api", label: "Documentation API" },
-      { href: "https://github.com/ironlam/politic-tracker", label: "GitHub", external: true },
-      { href: "/mentions-legales", label: "Mentions légales" },
+      { href: "/comparer", label: "Comparer" },
+      { href: "/mon-depute", label: "Mon député" },
+      { href: "/chat", label: "Assistant IA" },
+      { href: "/soutenir", label: "Nous soutenir" },
     ],
   },
 ] as const;

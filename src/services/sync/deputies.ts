@@ -3,6 +3,7 @@ import { generateSlug } from "@/lib/utils";
 import { MandateType, DataSource } from "@/generated/prisma";
 import { DeputeCSV, PARTY_MAPPINGS, SyncResult } from "./types";
 import { parse } from "csv-parse/sync";
+import { politicianService } from "@/services/politician";
 
 const DATA_GOUV_URL =
   "https://static.data.gouv.fr/resources/deputes-actifs-de-lassemblee-nationale-informations-et-statistiques/20260118-063755/deputes-active.csv";
@@ -153,7 +154,6 @@ async function syncDeputy(
       photoUrl,
       photoSource: "nosdeputes",
       officialId: dep.id,
-      currentPartyId: partyId,
     };
 
     const mandateData = {
@@ -174,6 +174,9 @@ async function syncDeputy(
         where: { id: existing.id },
         data: politicianData,
       });
+
+      // Update party affiliation via service (ensures PartyMembership consistency)
+      await politicianService.setCurrentParty(existing.id, partyId);
 
       // Upsert external IDs
       await upsertExternalIds(existing.id, dep.id, slug);
@@ -211,6 +214,9 @@ async function syncDeputy(
           },
         },
       });
+
+      // Set party affiliation via service (creates PartyMembership)
+      await politicianService.setCurrentParty(newPolitician.id, partyId);
 
       // Create external IDs
       await upsertExternalIds(newPolitician.id, dep.id, slug);

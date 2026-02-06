@@ -8,6 +8,7 @@ import {
   SenatSyncResult,
   PartyMapping,
 } from "./types";
+import { politicianService } from "@/services/politician";
 
 const SENAT_API_URL = "https://www.senat.fr/api-senat/senateurs.json";
 const NOSSENATEURS_API_URL = "https://archive.nossenateurs.fr/senateurs/json";
@@ -197,7 +198,7 @@ async function syncSenator(
   try {
     const slug = generateSlug(`${sen.prenom}-${sen.nom}`);
     const fullName = `${sen.prenom} ${sen.nom}`;
-    const partyId = sen.groupe?.code ? partyMap.get(sen.groupe.code) : null;
+    const partyId = sen.groupe?.code ? (partyMap.get(sen.groupe.code) ?? null) : null;
 
     // Try to get additional data from NosSenateurs
     const extraData = nosSenateursData.get(sen.matricule) || nosSenateursData.get(slug);
@@ -266,7 +267,6 @@ async function syncSenator(
       birthPlace: birthPlace || undefined,
       photoUrl,
       photoSource: "senat",
-      currentPartyId: partyId,
     };
 
     const mandateData = {
@@ -297,6 +297,9 @@ async function syncSenator(
         },
       });
 
+      // Update party affiliation via service (ensures PartyMembership consistency)
+      await politicianService.setCurrentParty(existing.id, partyId);
+
       // Upsert external ID
       await upsertExternalIds(existing.id, sen.matricule, slug);
 
@@ -325,6 +328,9 @@ async function syncSenator(
           mandates: { create: mandateData },
         },
       });
+
+      // Set party affiliation via service (creates PartyMembership)
+      await politicianService.setCurrentParty(newPolitician.id, partyId);
 
       await upsertExternalIds(newPolitician.id, sen.matricule, slug);
       return "created";

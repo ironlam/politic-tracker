@@ -3,6 +3,7 @@ import { generateSlug } from "@/lib/utils";
 import { MandateType, DataSource } from "@/generated/prisma";
 import { parse } from "csv-parse/sync";
 import { GouvernementCSV, GouvernementSyncResult, GOUV_FUNCTION_MAPPING } from "./types";
+import { politicianService } from "@/services/politician";
 import * as fs from "fs";
 import * as path from "path";
 
@@ -421,9 +422,14 @@ async function applyLocalCorrections(): Promise<{ applied: number; errors: strin
               fullName: newMember.fullName,
               civility: newMember.civility,
               birthDate: newMember.birthDate ? new Date(newMember.birthDate) : null,
-              currentPartyId: partyId,
             },
           });
+
+          // Set party affiliation via service (creates PartyMembership)
+          if (partyId) {
+            await politicianService.setCurrentParty(politician.id, partyId);
+          }
+
           console.log(`   ✓ Created politician: ${newMember.fullName}`);
         }
 

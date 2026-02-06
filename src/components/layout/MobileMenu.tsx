@@ -4,8 +4,13 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
-import { NAV_GROUPS, CTA_LINK } from "@/config/navigation";
-import { MapPin } from "lucide-react";
+import {
+  NAV_GROUPS,
+  CTA_COMPARER,
+  CTA_MON_DEPUTE,
+  CHAT_LINK,
+} from "@/config/navigation";
+import { MapPin, GitCompare, MessageSquare } from "lucide-react";
 
 // Get all focusable elements within a container
 function getFocusableElements(container: HTMLElement): HTMLElement[] {
@@ -78,7 +83,7 @@ export function MobileMenu() {
   }, [pathname]);
 
   return (
-    <div className="md:hidden">
+    <div className="lg:hidden">
       {/* Hamburger button */}
       <div className="flex items-center gap-2">
         <ThemeToggle />
@@ -141,15 +146,35 @@ export function MobileMenu() {
             className="container mx-auto px-4 py-4"
             aria-label="Navigation mobile"
           >
-            {/* CTA Button - Mon député */}
-            <Link
-              href={CTA_LINK.href}
-              onClick={() => setIsOpen(false)}
-              className="flex items-center justify-center gap-2 w-full px-4 py-3 mb-4 bg-primary text-primary-foreground font-medium rounded-lg"
-            >
-              <MapPin className="h-5 w-5" />
-              {CTA_LINK.label}
-            </Link>
+            {/* CTA Buttons */}
+            <div className="flex gap-2 mb-4">
+              <Link
+                href={CTA_MON_DEPUTE.href}
+                onClick={() => setIsOpen(false)}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-primary text-primary-foreground font-medium rounded-lg"
+              >
+                <MapPin className="h-5 w-5" />
+                {CTA_MON_DEPUTE.label}
+              </Link>
+              <Link
+                href={CTA_COMPARER.href}
+                onClick={() => setIsOpen(false)}
+                className="flex items-center justify-center gap-2 px-4 py-3 border border-border font-medium rounded-lg hover:bg-muted/50"
+              >
+                <GitCompare className="h-5 w-5" />
+                <span className="sr-only sm:not-sr-only">
+                  {CTA_COMPARER.label}
+                </span>
+              </Link>
+              <Link
+                href={CHAT_LINK.href}
+                onClick={() => setIsOpen(false)}
+                className="flex items-center justify-center gap-2 px-4 py-3 border border-border font-medium rounded-lg hover:bg-muted/50"
+              >
+                <MessageSquare className="h-5 w-5" />
+                <span className="sr-only">{CHAT_LINK.label}</span>
+              </Link>
+            </div>
 
             {/* Navigation groups */}
             {NAV_GROUPS.map((group) => (
@@ -174,7 +199,6 @@ export function MobileMenu() {
                           }`}
                           aria-current={isActive ? "page" : undefined}
                         >
-                          {item.icon && <span>{item.icon}</span>}
                           <div>
                             <span>{item.label}</span>
                             {item.description && (

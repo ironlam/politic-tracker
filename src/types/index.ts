@@ -43,6 +43,21 @@ export type {
   Chamber,
 };
 
+// Serialized types (with Decimal converted to number for client components)
+export type SerializedMandate = Omit<Mandate, 'baseSalary' | 'totalAllowances'> & {
+  baseSalary: number | null;
+  totalAllowances: number | null;
+};
+
+export type SerializedAffair = Omit<Affair, 'fineAmount'> & {
+  fineAmount: number | null;
+};
+
+export type SerializedAffairWithSources = SerializedAffair & {
+  sources: Source[];
+  events?: AffairEvent[];
+};
+
 // Extended types with relations
 export type PoliticianWithParty = Politician & {
   currentParty: Party | null;

@@ -155,7 +155,8 @@ function parseScrutinMetadata(html: string, session: number, number: string): Sc
     }
 
     // Extract date - format: "séance du 11 juillet 2025"
-    const dateMatch = textContent.match(/séance\s+du\s+(\d{1,2})\s+(\w+)\s+(\d{4})/i);
+    // Use [\wÀ-ÿ]+ to match French month names with accents (décembre, février, etc.)
+    const dateMatch = textContent.match(/séance\s+du\s+(\d{1,2})\s+([\wÀ-ÿ]+)\s+(\d{4})/i);
     let date = new Date();
 
     if (dateMatch) {

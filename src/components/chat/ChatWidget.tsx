@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { MessageSquare, X, Minimize2, Maximize2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -10,13 +11,10 @@ export function ChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false);
+  const pathname = usePathname();
 
   // Don't show on /chat page
-  const [isOnChatPage, setIsOnChatPage] = useState(false);
-
-  useEffect(() => {
-    setIsOnChatPage(window.location.pathname === "/chat");
-  }, []);
+  const isOnChatPage = pathname === "/chat";
 
   // Show subtle animation after 5 seconds if user hasn't interacted
   useEffect(() => {

@@ -17,9 +17,12 @@ export function Footer() {
             </p>
           </div>
 
-          {/* Navigation sections */}
+          {/* Navigation sections (3 columns) */}
           {FOOTER_SECTIONS.map((section) => (
-            <nav key={section.title} aria-labelledby={`footer-nav-${section.title}`}>
+            <nav
+              key={section.title}
+              aria-labelledby={`footer-nav-${section.title}`}
+            >
               <h3
                 id={`footer-nav-${section.title}`}
                 className="font-semibold text-sm mb-3"
@@ -29,25 +32,12 @@ export function Footer() {
               <ul className="space-y-2 text-sm">
                 {section.links.map((link) => (
                   <li key={link.href}>
-                    {"external" in link && link.external ? (
-                      <a
-                        href={link.href}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1"
-                      >
-                        {link.label}
-                        <ExternalLink className="h-3 w-3" />
-                        <span className="sr-only">(ouvre un nouvel onglet)</span>
-                      </a>
-                    ) : (
-                      <Link
-                        href={link.href}
-                        className="text-muted-foreground hover:text-foreground transition-colors"
-                      >
-                        {link.label}
-                      </Link>
-                    )}
+                    <Link
+                      href={link.href}
+                      className="text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      {link.label}
+                    </Link>
                   </li>
                 ))}
               </ul>
@@ -79,13 +69,6 @@ export function Footer() {
         {/* Bottom bar */}
         <div className="pt-6 border-t flex flex-col sm:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
-            <Link
-              href="/mentions-legales"
-              className="hover:text-foreground transition-colors"
-            >
-              Mentions légales
-            </Link>
-            <span className="hidden sm:inline">•</span>
             <a
               href="https://github.com/ironlam/politic-tracker"
               target="_blank"

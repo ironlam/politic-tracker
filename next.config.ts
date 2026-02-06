@@ -2,11 +2,15 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
+    // Allow all remote images - photos come from many sources
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "www.nosdeputes.fr",
-        pathname: "/depute/photo/**",
+        hostname: "**",
+      },
+      {
+        protocol: "http",
+        hostname: "**",
       },
     ],
   },

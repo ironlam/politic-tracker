@@ -26,7 +26,7 @@ interface PageProps {
 }
 
 async function getPolitician(slug: string) {
-  return db.politician.findUnique({
+  const politician = await db.politician.findUnique({
     where: { slug },
     include: {
       currentParty: true,
@@ -48,6 +48,22 @@ async function getPolitician(slug: string) {
       },
     },
   });
+
+  if (!politician) return null;
+
+  // Serialize Decimal fields to numbers for client components
+  return {
+    ...politician,
+    affairs: politician.affairs.map((affair) => ({
+      ...affair,
+      fineAmount: affair.fineAmount ? Number(affair.fineAmount) : null,
+    })),
+    mandates: politician.mandates.map((mandate) => ({
+      ...mandate,
+      baseSalary: mandate.baseSalary ? Number(mandate.baseSalary) : null,
+      totalAllowances: mandate.totalAllowances ? Number(mandate.totalAllowances) : null,
+    })),
+  };
 }
 
 async function getVoteStats(politicianId: string) {
@@ -486,7 +502,11 @@ export default async function PoliticianPage({ params }: PageProps) {
                                   {source.title}
                                 </a>
                                 <span className="text-muted-foreground">
-                                  {" "}— {source.publisher}, {formatDate(source.publishedAt)}
+                                  {" "}— {source.publisher}
+                                  {source.publisher.toLowerCase() === "wikidata"
+                                    ? `, mis à jour le ${formatDate(source.publishedAt)}`
+                                    : `, ${formatDate(source.publishedAt)}`
+                                  }
                                 </span>
                               </li>
                             ))}

@@ -48,13 +48,23 @@ export function PoliticianSelector({
     const fetchResults = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch(`/api/politiques/search?q=${encodeURIComponent(query)}&limit=8`, {
+        const response = await fetch(`/api/search/politicians?q=${encodeURIComponent(query)}`, {
           signal: controller.signal,
         });
         if (!response.ok) throw new Error("Search failed");
         const data = await response.json();
-        // Filter out the other selected politician
-        setResults(data.results.filter((p: Politician) => p.id !== otherPoliticianId));
+        // Map API response to expected format and filter out the other selected politician
+        const mapped = data
+          .filter((p: { id: string }) => p.id !== otherPoliticianId)
+          .map((p: { id: string; slug: string; fullName: string; photoUrl: string | null; party: string | null; partyColor: string | null; mandate: string | null }) => ({
+            id: p.id,
+            slug: p.slug,
+            fullName: p.fullName,
+            photoUrl: p.photoUrl,
+            currentParty: p.party ? { shortName: p.party, color: p.partyColor } : null,
+            currentMandate: p.mandate,
+          }));
+        setResults(mapped);
       } catch (error) {
         if ((error as Error).name !== "AbortError") {
           console.error("Search error:", error);

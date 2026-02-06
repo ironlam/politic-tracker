@@ -2,10 +2,10 @@
 
 import { Badge } from "@/components/ui/badge";
 import { MANDATE_TYPE_LABELS } from "@/config/labels";
-import type { Mandate, MandateType } from "@/types";
+import type { SerializedMandate, MandateType } from "@/types";
 
 interface MandateTimelineProps {
-  mandates: Mandate[];
+  mandates: SerializedMandate[];
   civility?: string | null;
 }
 
@@ -72,7 +72,7 @@ export function MandateTimeline({ mandates, civility }: MandateTimelineProps) {
     if (!acc[cat]) acc[cat] = [];
     acc[cat].push(m);
     return acc;
-  }, {} as Record<string, Mandate[]>);
+  }, {} as Record<string, SerializedMandate[]>);
 
   return (
     <div className="space-y-6">

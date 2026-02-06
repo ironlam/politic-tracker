@@ -18,6 +18,7 @@ interface PoliticianData {
     pour: number;
     contre: number;
     abstention: number;
+    nonVotant?: number;
     absent: number;
   };
 }
@@ -150,8 +151,8 @@ export function ComparisonTable({ left, right }: ComparisonTableProps) {
               />
               <Row
                 label="Taux de participation"
-                left={`${left.voteStats.total > 0 ? Math.round(((left.voteStats.total - left.voteStats.absent) / left.voteStats.total) * 100) : 0}%`}
-                right={`${right.voteStats.total > 0 ? Math.round(((right.voteStats.total - right.voteStats.absent) / right.voteStats.total) * 100) : 0}%`}
+                left={`${(left.voteStats.total - (left.voteStats.nonVotant || 0)) > 0 ? Math.round(((left.voteStats.total - left.voteStats.absent - (left.voteStats.nonVotant || 0)) / (left.voteStats.total - (left.voteStats.nonVotant || 0))) * 100) : 0}%`}
+                right={`${(right.voteStats.total - (right.voteStats.nonVotant || 0)) > 0 ? Math.round(((right.voteStats.total - right.voteStats.absent - (right.voteStats.nonVotant || 0)) / (right.voteStats.total - (right.voteStats.nonVotant || 0))) * 100) : 0}%`}
               />
             </tbody>
           </table>

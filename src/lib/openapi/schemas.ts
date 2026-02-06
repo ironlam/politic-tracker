@@ -284,7 +284,7 @@
  *           format: uuid
  *         position:
  *           type: string
- *           enum: [POUR, CONTRE, ABSTENTION, ABSENT]
+ *           enum: [POUR, CONTRE, ABSTENTION, NON_VOTANT, ABSENT]
  *         scrutin:
  *           $ref: '#/components/schemas/Scrutin'
  *
@@ -298,6 +298,8 @@
  *         contre:
  *           type: integer
  *         abstention:
+ *           type: integer
+ *         nonVotant:
  *           type: integer
  *         absent:
  *           type: integer

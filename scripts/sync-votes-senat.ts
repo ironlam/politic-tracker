@@ -247,6 +247,7 @@ function mapVotePosition(code: string): VotePosition {
     case "a":
       return "ABSTENTION";
     case "n":
+      return "NON_VOTANT";
     default:
       return "ABSENT";
   }

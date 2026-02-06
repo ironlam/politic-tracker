@@ -95,6 +95,7 @@ async function getVoteStats(politicianId: string) {
     pour: 0,
     contre: 0,
     abstention: 0,
+    nonVotant: 0,
     absent: 0,
     participationRate: 0,
   };
@@ -111,15 +112,20 @@ async function getVoteStats(politicianId: string) {
       case "ABSTENTION":
         votingStats.abstention = s._count;
         break;
+      case "NON_VOTANT":
+        votingStats.nonVotant = s._count;
+        break;
       case "ABSENT":
         votingStats.absent = s._count;
         break;
     }
   }
 
+  // Participation: non-votants are excluded from denominator (they are present but don't vote by role)
   const expressed = votingStats.pour + votingStats.contre + votingStats.abstention;
-  votingStats.participationRate = votingStats.total > 0
-    ? Math.round((expressed / votingStats.total) * 100)
+  const countedForParticipation = votingStats.total - votingStats.nonVotant;
+  votingStats.participationRate = countedForParticipation > 0
+    ? Math.round((expressed / countedForParticipation) * 100)
     : 0;
 
   return { stats: votingStats, recentVotes };
@@ -306,7 +312,7 @@ export default async function PoliticianPage({ params }: PageProps) {
               </CardHeader>
               <CardContent className="space-y-4">
                 {/* Stats summary */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 text-center">
                   <div className="p-2 bg-green-50 rounded-lg">
                     <p className="text-lg font-bold text-green-600">{voteData.stats.pour}</p>
                     <p className="text-xs text-muted-foreground">Pour</p>
@@ -318,6 +324,10 @@ export default async function PoliticianPage({ params }: PageProps) {
                   <div className="p-2 bg-yellow-50 rounded-lg">
                     <p className="text-lg font-bold text-yellow-600">{voteData.stats.abstention}</p>
                     <p className="text-xs text-muted-foreground">Abstention</p>
+                  </div>
+                  <div className="p-2 bg-slate-50 rounded-lg">
+                    <p className="text-lg font-bold text-slate-600">{voteData.stats.nonVotant}</p>
+                    <p className="text-xs text-muted-foreground">Non-votant</p>
                   </div>
                   <div className="p-2 bg-gray-50 rounded-lg">
                     <p className="text-lg font-bold text-gray-600">{voteData.stats.absent}</p>

@@ -530,6 +530,7 @@ enum VotePosition {
   POUR
   CONTRE
   ABSTENTION
+  NON_VOTANT
   ABSENT
 }
 

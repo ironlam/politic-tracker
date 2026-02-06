@@ -51,6 +51,7 @@ async function getPoliticianBySlug(slug: string) {
     pour: politician.votes.filter((v) => v.position === "POUR").length,
     contre: politician.votes.filter((v) => v.position === "CONTRE").length,
     abstention: politician.votes.filter((v) => v.position === "ABSTENTION").length,
+    nonVotant: politician.votes.filter((v) => v.position === "NON_VOTANT").length,
     absent: politician.votes.filter((v) => v.position === "ABSENT").length,
   };
 

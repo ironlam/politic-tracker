@@ -9,13 +9,14 @@ interface VoteStatsProps {
     pour: number;
     contre: number;
     abstention: number;
+    nonVotant?: number;
     absent: number;
     participationRate: number;
   };
 }
 
 export function VoteStats({ stats }: VoteStatsProps) {
-  const { total, pour, contre, abstention, absent, participationRate } = stats;
+  const { total, pour, contre, abstention, nonVotant = 0, absent, participationRate } = stats;
 
   if (total === 0) {
     return null;
@@ -87,6 +88,13 @@ export function VoteStats({ stats }: VoteStatsProps) {
             <span className="text-muted-foreground">Abstention</span>
             <span className="ml-auto font-medium">{abstention}</span>
           </div>
+          {nonVotant > 0 && (
+            <div className="flex items-center gap-2">
+              <span className={`w-2 h-2 rounded-full ${VOTE_POSITION_DOT_COLORS.NON_VOTANT}`} />
+              <span className="text-muted-foreground">Non-votant</span>
+              <span className="ml-auto font-medium">{nonVotant}</span>
+            </div>
+          )}
           <div className="flex items-center gap-2">
             <span className={`w-2 h-2 rounded-full ${VOTE_POSITION_DOT_COLORS.ABSENT}`} />
             <span className="text-muted-foreground">Absent</span>

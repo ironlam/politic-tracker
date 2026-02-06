@@ -163,6 +163,7 @@ export type PoliticianVoteStats = {
   pour: number;
   contre: number;
   abstention: number;
+  nonVotant: number;
   absent: number;
   participationRate: number;
 };

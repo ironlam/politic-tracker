@@ -13,6 +13,7 @@ interface PartyVoteStats {
   pour: number;
   contre: number;
   abstention: number;
+  nonVotant: number;
   absent: number;
   // Cohesion: how often party members vote the same way
   cohesionRate: number;
@@ -82,6 +83,7 @@ export async function GET(request: NextRequest) {
           pour: 0,
           contre: 0,
           abstention: 0,
+          nonVotant: 0,
           absent: 0,
           cohesionRate: 0,
           participationRate: 0,
@@ -102,17 +104,21 @@ export async function GET(request: NextRequest) {
         case "ABSTENTION":
           stats.abstention = count;
           break;
+        case "NON_VOTANT":
+          stats.nonVotant = count;
+          break;
         case "ABSENT":
           stats.absent = count;
           break;
       }
     }
 
-    // Calculate cohesion and participation rates
+    // Calculate cohesion and participation rates (non-votants excluded from denominator)
     for (const stats of partyMap.values()) {
       const participating = stats.pour + stats.contre + stats.abstention;
+      const countedForParticipation = stats.totalVotes - stats.nonVotant;
       stats.participationRate =
-        stats.totalVotes > 0 ? Math.round((participating / stats.totalVotes) * 100) : 0;
+        countedForParticipation > 0 ? Math.round((participating / countedForParticipation) * 100) : 0;
 
       // Cohesion: % of votes that match the majority position
       const maxPosition = Math.max(stats.pour, stats.contre, stats.abstention);

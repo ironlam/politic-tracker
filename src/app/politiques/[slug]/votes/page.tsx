@@ -56,6 +56,7 @@ async function getVotes(politicianId: string, page: number, limit: number) {
     pour: 0,
     contre: 0,
     abstention: 0,
+    nonVotant: 0,
     absent: 0,
     participationRate: 0,
   };
@@ -72,6 +73,9 @@ async function getVotes(politicianId: string, page: number, limit: number) {
       case "ABSTENTION":
         votingStats.abstention = s._count;
         break;
+      case "NON_VOTANT":
+        votingStats.nonVotant = s._count;
+        break;
       case "ABSENT":
         votingStats.absent = s._count;
         break;
@@ -79,8 +83,9 @@ async function getVotes(politicianId: string, page: number, limit: number) {
   }
 
   const expressed = votingStats.pour + votingStats.contre + votingStats.abstention;
-  votingStats.participationRate = votingStats.total > 0
-    ? Math.round((expressed / votingStats.total) * 100)
+  const countedForParticipation = votingStats.total - votingStats.nonVotant;
+  votingStats.participationRate = countedForParticipation > 0
+    ? Math.round((expressed / countedForParticipation) * 100)
     : 0;
 
   return {

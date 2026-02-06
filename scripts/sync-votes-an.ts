@@ -157,7 +157,7 @@ function extractVotes(scrutin: ANScrutin): Array<{ acteurRef: string; position: 
     extractVotants(decompte.pours, "POUR");
     extractVotants(decompte.contres, "CONTRE");
     extractVotants(decompte.abstentions, "ABSTENTION");
-    extractVotants(decompte.nonVotants, "ABSENT");
+    extractVotants(decompte.nonVotants, "NON_VOTANT");
   }
 
   return votes;

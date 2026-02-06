@@ -294,6 +294,7 @@ export const VOTE_POSITION_LABELS: Record<VotePosition, string> = {
   POUR: "Pour",
   CONTRE: "Contre",
   ABSTENTION: "Abstention",
+  NON_VOTANT: "Non-votant",
   ABSENT: "Absent",
 };
 
@@ -301,13 +302,15 @@ export const VOTE_POSITION_COLORS: Record<VotePosition, string> = {
   POUR: "bg-green-100 text-green-800 border-green-300",
   CONTRE: "bg-red-100 text-red-800 border-red-300",
   ABSTENTION: "bg-yellow-100 text-yellow-800 border-yellow-300",
-  ABSENT: "bg-gray-100 text-gray-700 border-gray-300", // Changed from gray-500 for better contrast
+  NON_VOTANT: "bg-slate-100 text-slate-700 border-slate-300",
+  ABSENT: "bg-gray-100 text-gray-700 border-gray-300",
 };
 
 export const VOTE_POSITION_DOT_COLORS: Record<VotePosition, string> = {
   POUR: "bg-green-500",
   CONTRE: "bg-red-500",
   ABSTENTION: "bg-yellow-500",
+  NON_VOTANT: "bg-gray-500",
   ABSENT: "bg-gray-400",
 };
 

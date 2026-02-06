@@ -217,8 +217,8 @@ export default async function ScrutinPage({ params }: PageProps) {
       </Card>
 
       {/* Votes by position */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {(["POUR", "CONTRE", "ABSTENTION", "ABSENT"] as VotePosition[]).map((position) => {
+      <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-6">
+        {(["POUR", "CONTRE", "ABSTENTION", "NON_VOTANT", "ABSENT"] as VotePosition[]).map((position) => {
           const votes = votesByPosition[position] || [];
           return (
             <Card key={position}>

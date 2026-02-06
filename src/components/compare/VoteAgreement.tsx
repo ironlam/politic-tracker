@@ -26,6 +26,7 @@ interface ComparedVote {
 function getAgreement(left: VotePosition, right: VotePosition): AgreementType {
   if (left === right) return "agree";
   if (left === "ABSENT" || right === "ABSENT") return "partial";
+  if (left === "NON_VOTANT" || right === "NON_VOTANT") return "partial";
   if (left === "ABSTENTION" || right === "ABSTENTION") return "partial";
   return "disagree";
 }

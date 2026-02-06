@@ -130,6 +130,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
       pour: 0,
       contre: 0,
       abstention: 0,
+      nonVotant: 0,
       absent: 0,
       participationRate: 0,
     };
@@ -146,16 +147,20 @@ export async function GET(request: NextRequest, context: RouteContext) {
         case "ABSTENTION":
           votingStats.abstention = s._count;
           break;
+        case "NON_VOTANT":
+          votingStats.nonVotant = s._count;
+          break;
         case "ABSENT":
           votingStats.absent = s._count;
           break;
       }
     }
 
-    // Participation = votes expressed / total (excluding absents)
+    // Participation = votes expressed / total (excluding absents and non-votants)
     const expressed = votingStats.pour + votingStats.contre + votingStats.abstention;
-    votingStats.participationRate = votingStats.total > 0
-      ? Math.round((expressed / votingStats.total) * 100)
+    const countedForParticipation = votingStats.total - votingStats.nonVotant;
+    votingStats.participationRate = countedForParticipation > 0
+      ? Math.round((expressed / countedForParticipation) * 100)
       : 0;
 
     return NextResponse.json({

@@ -26,6 +26,7 @@ interface PartyVoteStats {
   pour: number;
   contre: number;
   abstention: number;
+  nonVotant: number;
   absent: number;
   cohesionRate: number;
   participationRate: number;
@@ -75,6 +76,7 @@ async function getVoteStats(chamber?: Chamber) {
         pour: 0,
         contre: 0,
         abstention: 0,
+        nonVotant: 0,
         absent: 0,
         cohesionRate: 0,
         participationRate: 0,
@@ -95,17 +97,21 @@ async function getVoteStats(chamber?: Chamber) {
       case "ABSTENTION":
         stats.abstention = count;
         break;
+      case "NON_VOTANT":
+        stats.nonVotant = count;
+        break;
       case "ABSENT":
         stats.absent = count;
         break;
     }
   }
 
-  // Calculate rates
+  // Calculate rates (non-votants excluded from participation denominator)
   for (const stats of partyMap.values()) {
     const participating = stats.pour + stats.contre + stats.abstention;
+    const countedForParticipation = stats.totalVotes - stats.nonVotant;
     stats.participationRate =
-      stats.totalVotes > 0 ? Math.round((participating / stats.totalVotes) * 100) : 0;
+      countedForParticipation > 0 ? Math.round((participating / countedForParticipation) * 100) : 0;
 
     const maxPosition = Math.max(stats.pour, stats.contre, stats.abstention);
     stats.cohesionRate = participating > 0 ? Math.round((maxPosition / participating) * 100) : 0;

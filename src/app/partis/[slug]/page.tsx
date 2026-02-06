@@ -49,6 +49,22 @@ async function getParty(slug: string) {
       successors: true,
       // External IDs
       externalIds: true,
+      // Press mentions
+      pressMentions: {
+        orderBy: { article: { publishedAt: "desc" } },
+        take: 5,
+        include: {
+          article: {
+            select: {
+              id: true,
+              title: true,
+              url: true,
+              feedSource: true,
+              publishedAt: true,
+            },
+          },
+        },
+      },
     },
   });
 }
@@ -324,6 +340,57 @@ export default async function PartyPage({ params }: PageProps) {
                     </Link>
                   ))}
                 </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Press mentions */}
+          {party.pressMentions.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Dans la presse</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {party.pressMentions.map((mention) => (
+                    <a
+                      key={mention.id}
+                      href={mention.article.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block p-3 rounded-lg border hover:bg-muted transition-colors"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium text-sm line-clamp-2">
+                            {mention.article.title}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {mention.article.feedSource === "lemonde"
+                              ? "Le Monde"
+                              : mention.article.feedSource === "politico"
+                              ? "Politico"
+                              : mention.article.feedSource === "mediapart"
+                              ? "Mediapart"
+                              : mention.article.feedSource}
+                          </p>
+                        </div>
+                        <span className="text-xs text-muted-foreground whitespace-nowrap">
+                          {formatDate(mention.article.publishedAt)}
+                        </span>
+                      </div>
+                    </a>
+                  ))}
+                </div>
+                <Link
+                  href={`/presse?party=${party.id}`}
+                  className="inline-flex items-center gap-1 text-sm text-primary hover:underline mt-4"
+                >
+                  Voir tous les articles
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </Link>
               </CardContent>
             </Card>
           )}

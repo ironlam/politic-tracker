@@ -35,6 +35,7 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     label: "Données",
     items: [
+      { href: "/presse", label: "Revue de presse", icon: "📰", description: "Articles Le Monde, Politico, Mediapart" },
       { href: "/statistiques", label: "Statistiques", description: "Tableaux de bord et analyses" },
       { href: "/institutions", label: "Institutions", description: "Comprendre le système politique" },
       { href: "/sources", label: "Sources", description: "Méthodologie et transparence" },
@@ -67,6 +68,7 @@ export const FOOTER_SECTIONS = [
       { href: "/votes", label: "Votes" },
       { href: "/affaires", label: "Affaires" },
       { href: "/partis", label: "Partis" },
+      { href: "/presse", label: "Presse" },
     ],
   },
   {

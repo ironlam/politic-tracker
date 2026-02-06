@@ -109,6 +109,7 @@ model Party {
   partyMemberships  PartyMembership[]
   affairsAtTime     Affair[]          // Affairs where this was the party at time of conviction
   externalIds       ExternalId[]      // IDs from all external sources (Wikidata, etc.)
+  pressMentions     PressArticlePartyMention[]  // Mentions in press articles
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -707,6 +708,7 @@ model PressArticle {
 
   // Relations
   mentions      PressArticleMention[]
+  partyMentions PressArticlePartyMention[]
 
   createdAt     DateTime  @default(now())
 
@@ -728,5 +730,21 @@ model PressArticleMention {
 
   @@unique([articleId, politicianId])
   @@index([politicianId])
+  @@index([articleId])
+}
+
+model PressArticlePartyMention {
+  id          String   @id @default(cuid())
+
+  articleId   String
+  article     PressArticle @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  partyId     String
+  party       Party @relation(fields: [partyId], references: [id], onDelete: Cascade)
+
+  matchedName String?   // The name found in the article ("RN", "Rassemblement national", etc.)
+
+  @@unique([articleId, partyId])
+  @@index([partyId])
   @@index([articleId])
 }

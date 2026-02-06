@@ -34,6 +34,14 @@ interface PoliticianName {
   normalizedLastName: string;
 }
 
+interface PartyName {
+  id: string;
+  name: string;
+  shortName: string;
+  normalizedName: string;
+  normalizedShortName: string;
+}
+
 /**
  * Normalize a string for matching (lowercase, remove accents)
  */
@@ -71,6 +79,27 @@ async function buildPoliticianIndex(): Promise<PoliticianName[]> {
 }
 
 /**
+ * Build a searchable index of party names
+ */
+async function buildPartyIndex(): Promise<PartyName[]> {
+  const parties = await db.party.findMany({
+    select: {
+      id: true,
+      name: true,
+      shortName: true,
+    },
+  });
+
+  return parties.map((p) => ({
+    id: p.id,
+    name: p.name,
+    shortName: p.shortName,
+    normalizedName: normalizeText(p.name),
+    normalizedShortName: normalizeText(p.shortName),
+  }));
+}
+
+/**
  * Common French words to exclude from matching (avoid false positives)
  */
 const EXCLUDED_NAMES = new Set([
@@ -78,6 +107,17 @@ const EXCLUDED_NAMES = new Set([
   "fait", "gauche", "droite", "maire", "parti", "france", "etat",
   "nord", "sud", "est", "ouest", "grand", "petit", "blanc", "noir",
   "rouge", "vert", "bleu", "rose", "brun", "long", "court", "haut", "bas",
+]);
+
+/**
+ * Party short names to exclude (too common or ambiguous)
+ */
+const EXCLUDED_PARTY_SHORTNAMES = new Set([
+  "lr", // Too common in text (e.g., "la République")
+  "ps", // Post-scriptum
+  "udi", // Too short
+  "dvd", // Digital Versatile Disc
+  "dvg", // Too short
 ]);
 
 /**
@@ -143,6 +183,61 @@ function escapeRegex(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+/**
+ * Find parties mentioned in text
+ * Returns matches with the name that was found
+ */
+function findPartyMentions(
+  text: string,
+  parties: PartyName[]
+): Array<{ partyId: string; matchedName: string }> {
+  const normalizedText = normalizeText(text);
+  const matches: Array<{ partyId: string; matchedName: string }> = [];
+  const seenIds = new Set<string>();
+
+  // Sort parties by full name length (longer names first for more specific matches)
+  const sortedParties = [...parties].sort(
+    (a, b) => b.normalizedName.length - a.normalizedName.length
+  );
+
+  for (const party of sortedParties) {
+    if (seenIds.has(party.id)) continue;
+
+    // Try full name first (more specific)
+    const fullNameRegex = new RegExp(
+      `\\b${escapeRegex(party.normalizedName)}\\b`
+    );
+    if (fullNameRegex.test(normalizedText)) {
+      matches.push({
+        partyId: party.id,
+        matchedName: party.name,
+      });
+      seenIds.add(party.id);
+      continue;
+    }
+
+    // Try short name (only if >= 3 characters to avoid false positives)
+    // AND not in excluded list
+    if (
+      party.normalizedShortName.length >= 3 &&
+      !EXCLUDED_PARTY_SHORTNAMES.has(party.normalizedShortName)
+    ) {
+      const shortNameRegex = new RegExp(
+        `\\b${escapeRegex(party.normalizedShortName)}\\b`
+      );
+      if (shortNameRegex.test(normalizedText)) {
+        matches.push({
+          partyId: party.id,
+          matchedName: party.shortName,
+        });
+        seenIds.add(party.id);
+      }
+    }
+  }
+
+  return matches;
+}
+
 // ============================================
 // SYNC HANDLER
 // ============================================
@@ -156,6 +251,11 @@ const handler: SyncHandler = {
       name: "--feed",
       type: "string",
       description: "Sync specific feed only (lemonde, politico, mediapart)",
+    },
+    {
+      name: "--reindex-parties",
+      type: "boolean",
+      description: "Reindex party mentions on existing articles",
     },
   ],
 
@@ -174,10 +274,11 @@ Matching strategy:
   3. Match last names with word boundaries (4+ chars)
 
 Options:
-  --stats       Show current statistics
-  --dry-run     Preview changes without saving
-  --limit=N     Limit articles per feed
-  --feed=ID     Sync specific feed only
+  --stats            Show current statistics
+  --dry-run          Preview changes without saving
+  --limit=N          Limit articles per feed
+  --feed=ID          Sync specific feed only
+  --reindex-parties  Reindex party mentions on existing articles
     `);
   },
 
@@ -186,7 +287,9 @@ Options:
       totalArticles,
       articlesBySource,
       totalMentions,
+      totalPartyMentions,
       topMentioned,
+      topMentionedParties,
       recentArticles,
     ] = await Promise.all([
       db.pressArticle.count(),
@@ -196,11 +299,20 @@ Options:
         orderBy: { _count: { feedSource: "desc" } },
       }),
       db.pressArticleMention.count(),
+      db.pressArticlePartyMention.count(),
       db.$queryRaw<Array<{ fullName: string; count: bigint }>>`
         SELECT p."fullName", COUNT(*) as count
         FROM "PressArticleMention" m
         JOIN "Politician" p ON m."politicianId" = p.id
         GROUP BY p.id, p."fullName"
+        ORDER BY count DESC
+        LIMIT 10
+      `,
+      db.$queryRaw<Array<{ name: string; shortName: string; count: bigint }>>`
+        SELECT p.name, p."shortName", COUNT(*) as count
+        FROM "PressArticlePartyMention" m
+        JOIN "Party" p ON m."partyId" = p.id
+        GROUP BY p.id, p.name, p."shortName"
         ORDER BY count DESC
         LIMIT 10
       `,
@@ -211,7 +323,7 @@ Options:
           title: true,
           feedSource: true,
           publishedAt: true,
-          _count: { select: { mentions: true } },
+          _count: { select: { mentions: true, partyMentions: true } },
         },
       }),
     ]);
@@ -220,7 +332,8 @@ Options:
     console.log("Press Sync Stats");
     console.log("=".repeat(60));
     console.log(`\nTotal articles: ${totalArticles}`);
-    console.log(`Total mentions: ${totalMentions}`);
+    console.log(`Total politician mentions: ${totalMentions}`);
+    console.log(`Total party mentions: ${totalPartyMentions}`);
 
     console.log("\nArticles by source:");
     for (const { feedSource, _count } of articlesBySource) {
@@ -233,19 +346,25 @@ Options:
       console.log(`  ${fullName}: ${count}`);
     }
 
+    console.log("\nTop 10 mentioned parties:");
+    for (const { name, shortName, count } of topMentionedParties) {
+      console.log(`  ${shortName} (${name}): ${count}`);
+    }
+
     console.log("\nRecent articles:");
     for (const article of recentArticles) {
       const date = article.publishedAt.toISOString().split("T")[0];
       console.log(`  [${date}] ${article.title.slice(0, 60)}...`);
-      console.log(`    Source: ${article.feedSource}, Mentions: ${article._count.mentions}`);
+      console.log(`    Source: ${article.feedSource}, Politicians: ${article._count.mentions}, Parties: ${article._count.partyMentions}`);
     }
   },
 
   async sync(options): Promise<SyncResult> {
-    const { dryRun = false, limit, feed } = options as {
+    const { dryRun = false, limit, feed, reindexParties = false } = options as {
       dryRun?: boolean;
       limit?: number;
       feed?: string;
+      reindexParties?: boolean;
     };
 
     const stats = {
@@ -253,9 +372,85 @@ Options:
       articlesTotal: 0,
       articlesNew: 0,
       articlesSkipped: 0,
+      articlesReindexed: 0,
       mentionsCreated: 0,
+      partyMentionsCreated: 0,
     };
     const errors: string[] = [];
+
+    // Build party index (always needed)
+    console.log("Building party name index...");
+    const parties = await buildPartyIndex();
+    console.log(`Indexed ${parties.length} parties`);
+
+    // Handle reindex-parties mode
+    if (reindexParties) {
+      console.log("\n=".repeat(50));
+      console.log("Reindexing party mentions on existing articles");
+      console.log("=".repeat(50) + "\n");
+
+      // Get all articles
+      const articles = await db.pressArticle.findMany({
+        select: {
+          id: true,
+          title: true,
+          description: true,
+        },
+      });
+
+      console.log(`Found ${articles.length} articles to reindex\n`);
+
+      const progress = new ProgressTracker({
+        total: articles.length,
+        label: "Reindexing parties",
+        showBar: true,
+        showETA: true,
+        logInterval: 20,
+      });
+
+      for (const article of articles) {
+        try {
+          const searchText = `${article.title} ${article.description || ""}`;
+          const partyMentions = findPartyMentions(searchText, parties);
+
+          if (partyMentions.length > 0) {
+            if (dryRun) {
+              console.log(`\n[DRY-RUN] ${article.title.slice(0, 50)}...`);
+              console.log(`  Parties: ${partyMentions.map((m) => m.matchedName).join(", ")}`);
+            } else {
+              // Delete existing party mentions for this article
+              await db.pressArticlePartyMention.deleteMany({
+                where: { articleId: article.id },
+              });
+
+              // Create new party mentions
+              await db.pressArticlePartyMention.createMany({
+                data: partyMentions.map((m) => ({
+                  articleId: article.id,
+                  partyId: m.partyId,
+                  matchedName: m.matchedName,
+                })),
+                skipDuplicates: true,
+              });
+            }
+            stats.articlesReindexed++;
+            stats.partyMentionsCreated += partyMentions.length;
+          }
+        } catch (error) {
+          errors.push(`Error reindexing article ${article.id}: ${error}`);
+        }
+        progress.tick();
+      }
+
+      progress.finish();
+
+      return {
+        success: errors.length === 0,
+        duration: 0,
+        stats,
+        errors,
+      };
+    }
 
     // Build politician index
     console.log("Building politician name index...");
@@ -303,21 +498,28 @@ Options:
             continue;
           }
 
-          // Find politician mentions
+          // Find politician and party mentions
           const searchText = `${item.title} ${item.description || ""}`;
           const mentions = findMentions(searchText, politicians);
+          const partyMentions = findPartyMentions(searchText, parties);
 
           if (dryRun) {
             console.log(`\n[DRY-RUN] ${item.title.slice(0, 60)}...`);
             console.log(`  URL: ${item.link}`);
             console.log(`  Published: ${item.pubDate.toISOString()}`);
-            console.log(`  Mentions: ${mentions.length}`);
+            console.log(`  Politicians: ${mentions.length}`);
             if (mentions.length > 0) {
               const names = mentions.map((m) => m.matchedName).join(", ");
-              console.log(`  Politicians: ${names}`);
+              console.log(`    -> ${names}`);
+            }
+            console.log(`  Parties: ${partyMentions.length}`);
+            if (partyMentions.length > 0) {
+              const names = partyMentions.map((m) => m.matchedName).join(", ");
+              console.log(`    -> ${names}`);
             }
             stats.articlesNew++;
             stats.mentionsCreated += mentions.length;
+            stats.partyMentionsCreated += partyMentions.length;
           } else {
             // Create article with mentions
             await db.pressArticle.create({
@@ -335,11 +537,18 @@ Options:
                     matchedName: m.matchedName,
                   })),
                 },
+                partyMentions: {
+                  create: partyMentions.map((m) => ({
+                    partyId: m.partyId,
+                    matchedName: m.matchedName,
+                  })),
+                },
               },
             });
 
             stats.articlesNew++;
             stats.mentionsCreated += mentions.length;
+            stats.partyMentionsCreated += partyMentions.length;
           }
         } catch (error) {
           const errorMsg = `Error processing article "${item.title}": ${error}`;

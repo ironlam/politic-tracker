@@ -34,10 +34,13 @@ async function getParties() {
 export default async function PartiesPage() {
   const parties = await getParties();
 
-  // Separate active parties (with current members) from historical ones
-  const activeParties = parties.filter((p) => p._count.politicians > 0);
+  // Active = not dissolved AND has at least one member or membership
+  const activeParties = parties.filter(
+    (p) => !p.dissolvedDate && (p._count.politicians > 0 || p._count.partyMemberships > 0)
+  );
+  // Historical = dissolved AND has some history (members, memberships, or affairs)
   const historicalParties = parties.filter(
-    (p) => p._count.politicians === 0 && (p._count.partyMemberships > 0 || p._count.affairsAtTime > 0)
+    (p) => p.dissolvedDate && (p._count.politicians > 0 || p._count.partyMemberships > 0 || p._count.affairsAtTime > 0)
   );
 
   return (

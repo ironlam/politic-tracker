@@ -41,6 +41,8 @@ export const FRENCH_ASSEMBLY_PARTIES: Record<string, PartyConfig> = {
   GDR: { shortName: "GDR", fullName: "Gauche Démocrate et Républicaine", color: "#DD0000", wikidataId: "Q121596" },
   UDR: { shortName: "UDR", fullName: "Union des Droites pour la République", color: "#8040C0" },
   NI: { shortName: "NI", fullName: "Non-inscrits", color: "#AAAAAA" },
+  // Parti hors groupe parlementaire (eurodéputés)
+  IDL: { shortName: "IDL", fullName: "Identité-Libertés", color: "#1C2951", wikidataId: "Q130517388" },
 };
 
 // ============================================

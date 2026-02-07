@@ -194,6 +194,10 @@ export function ChatInterface() {
     const newMessages = [...messages, userMessage];
     setMessages(newMessages);
     setInput("");
+    // Reset textarea height after sending
+    if (inputRef.current) {
+      inputRef.current.style.height = "auto";
+    }
 
     // Prepare assistant message placeholder
     const assistantId = `assistant-${Date.now()}`;
@@ -455,7 +459,13 @@ export function ChatInterface() {
             <textarea
               ref={inputRef}
               value={input}
-              onChange={(e) => setInput(e.target.value)}
+              onChange={(e) => {
+                setInput(e.target.value);
+                // Auto-resize textarea to fit content
+                const el = e.target;
+                el.style.height = "auto";
+                el.style.height = `${Math.min(el.scrollHeight, 120)}px`;
+              }}
               onKeyDown={handleKeyDown}
               placeholder="Posez votre question..."
               disabled={isLoading || isRateLimited}
@@ -464,12 +474,8 @@ export function ChatInterface() {
                 "w-full resize-none rounded-lg border bg-transparent px-4 py-3",
                 "focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent",
                 "disabled:opacity-50 disabled:cursor-not-allowed",
-                "min-h-[48px] max-h-[120px]"
+                "min-h-[48px] max-h-[120px] overflow-y-auto"
               )}
-              style={{
-                height: "auto",
-                minHeight: "48px",
-              }}
             />
             {/* Tab hint */}
             {ghostText && (

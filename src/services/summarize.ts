@@ -7,7 +7,7 @@
 
 const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
 const MODEL = "claude-3-haiku-20240307";
-const MAX_TOKENS = 500;
+const MAX_TOKENS = 800;
 
 export interface SummaryRequest {
   title: string;
@@ -29,6 +29,8 @@ export async function summarizeDossier(request: SummaryRequest): Promise<Summary
   if (!apiKey) {
     throw new Error("ANTHROPIC_API_KEY environment variable is not set");
   }
+
+  const hasRichContent = request.content !== request.title && request.content.length > 200;
 
   const prompt = `Tu es un expert en politique française. Résume ce dossier législatif de manière claire et accessible pour les citoyens.
 
@@ -52,7 +54,7 @@ Consignes:
 - Sois objectif et factuel, pas de jugement politique
 - Les points clés doivent être concrets et précis
 - Maximum 5 points clés
-- Si le contenu est insuffisant, génère un résumé basé uniquement sur le titre`;
+${hasRichContent ? "- Un exposé des motifs complet est fourni : extrais les mesures concrètes proposées et le contexte politique" : "- Si le contenu est insuffisant, génère un résumé basé uniquement sur le titre"}`;
 
   const response = await fetch(ANTHROPIC_API_URL, {
     method: "POST",

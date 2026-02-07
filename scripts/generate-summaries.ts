@@ -95,6 +95,7 @@ async function generateSummaries(options: {
       number: true,
       category: true,
       status: true,
+      exposeDesMotifs: true,
     },
   });
 
@@ -124,12 +125,10 @@ async function generateSummaries(options: {
         continue;
       }
 
-      // Generate summary
-      // For now, we use the title as content since we don't have full text
-      // In the future, this could fetch the full text from the AN API
+      // Generate summary using exposé des motifs if available, else title
       const summary: SummaryResponse = await summarizeDossier({
         title: dossier.title,
-        content: dossier.title, // TODO: Fetch full expose des motifs
+        content: dossier.exposeDesMotifs || dossier.title,
         procedure: dossier.category || undefined,
       });
 

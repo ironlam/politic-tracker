@@ -68,18 +68,19 @@ Créer un **observatoire citoyen de la transparence politique française** perme
 
 - [x] Votes à l'Assemblée avec positions (NosDéputés - 16e législature)
 - [x] Eurodéputés (81 représentants français)
-- [ ] Votes du Sénat (NosSénateurs)
+- [x] Votes du Sénat (367 scrutins, 122k votes)
+- [x] API publique documentée (OpenAPI/Swagger)
+- [x] Export des données (CSV)
+- [x] Exposé des motifs : extraction .docx pour résumés IA enrichis
 - [ ] Taux de présence aux séances
 - [ ] Historique des législatures
-- [ ] API publique documentée
-- [ ] Export des données (Open Data)
 
 ### 2.3 Phase 3 - Communautaire (Futur)
 
 - [ ] Contributions externes modérées
 - [ ] Système de signalement d'erreurs
 - [ ] Notifications sur nouvelles affaires
-- [ ] Comparateur entre représentants
+- [x] Comparateur entre représentants
 
 ---
 
@@ -172,3 +173,4 @@ Chaque représentant politique peut avoir des données provenant de **plusieurs 
 | 2026-01-22 | 0.8.0 | Affaires Wikidata, statistiques, filtres |
 | 2026-01-24 | 1.0.0 | Dark mode, recherche avancée, documentation |
 | 2026-01-24 | 1.1.0 | Eurodéputés, votes parlementaires, institutions |
+| 2026-02-07 | 1.2.0 | Exposé des motifs : extraction .docx AN pour résumés IA enrichis |

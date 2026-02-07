@@ -79,7 +79,7 @@ jobs:
       - name: Index SCRUTIN
         if: ${{ github.event.inputs.entity_type == 'all' || github.event.inputs.entity_type == '' }}
         run: npm run index:embeddings -- --type=SCRUTIN
-        timeout-minutes: 60
+        timeout-minutes: 180
 
       - name: Show updated embedding stats
         run: npm run index:embeddings:stats

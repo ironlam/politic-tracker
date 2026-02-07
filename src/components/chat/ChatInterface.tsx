@@ -15,14 +15,22 @@ import {
 } from "lucide-react";
 
 const SUGGESTED_QUESTIONS = [
-  "Quelles affaires judiciaires concernent des élus ?",
-  "Quels dossiers sont discutés à l'Assemblée ?",
-  "Qui est le Premier ministre ?",
-  "Combien y a-t-il de députés ?",
+  "Qui est mon député et comment a-t-il voté ?",
+  "Quelles affaires judiciaires touchent des élus ?",
+  "Comment fonctionne le vote d'une loi en France ?",
+  "Quels dossiers sont en discussion à l'Assemblée ?",
 ];
 
 // Ghost text autocomplete - single suggestion that completes what user is typing
 const AUTOCOMPLETE_COMPLETIONS: Record<string, string> = {
+  // Questions citoyennes
+  "comment": "Comment fonctionne l'Assemblée nationale ?",
+  "comment fonctionne": "Comment fonctionne le vote d'une loi en France ?",
+  "c'est quoi": "C'est quoi la présomption d'innocence ?",
+  "c'est quoi l": "C'est quoi l'Assemblée nationale ?",
+  "pourquoi": "Pourquoi mon député a voté contre ?",
+  "mon député": "Mon député : qui me représente ?",
+  "mon dépu": "Mon député : qui me représente ?",
   // Questions sur les personnes
   "qui est": "Qui est le Premier ministre ?",
   "qui est le p": "Qui est le Premier ministre ?",
@@ -32,15 +40,25 @@ const AUTOCOMPLETE_COMPLETIONS: Record<string, string> = {
   "parle-moi": "Parle-moi du gouvernement actuel",
   "parle-moi de": "Parle-moi de Marine Le Pen",
   // Questions sur les affaires
-  "quelle": "Quelles affaires judiciaires concernent des élus ?",
-  "quelles aff": "Quelles affaires judiciaires concernent des élus ?",
-  "quelles affaires": "Quelles affaires judiciaires concernent des élus ?",
+  "quelle": "Quelles affaires judiciaires touchent des élus ?",
+  "quelles aff": "Quelles affaires judiciaires touchent des élus ?",
+  "quelles affaires": "Quelles affaires judiciaires touchent des élus ?",
   "affaire": "Affaires judiciaires en cours",
   "condamn": "Quels élus ont été condamnés ?",
+  // Patrimoine
+  "patrimoine": "Patrimoine déclaré des élus",
+  "patrimoine de": "Patrimoine déclaré des élus",
+  "déclaration": "Déclarations HATVP des élus",
+  // Signalement
+  "signaler": "Signaler une information manquante",
+  "corriger": "Corriger une information sur un élu",
+  // Comparaison
+  "comparer": "Comparer deux élus",
+  "compar": "Comparer deux élus",
   // Questions sur les votes/lois
   "vote": "Votes récents à l'Assemblée",
   "derniers v": "Derniers votes à l'Assemblée",
-  "loi": "Lois en discussion à l'Assemblée",
+  "loi": "Comment fonctionne le vote d'une loi ?",
   "lois": "Lois en discussion à l'Assemblée",
   "dossier": "Dossiers législatifs en cours",
   "quels dossiers": "Quels dossiers sont discutés à l'Assemblée ?",
@@ -51,23 +69,27 @@ const AUTOCOMPLETE_COMPLETIONS: Record<string, string> = {
   "retraite": "Réforme des retraites",
   "immigration": "Lois sur l'immigration",
   // Questions sur les institutions
-  "assemblée": "Dossiers en cours à l'Assemblée",
-  "sénat": "Qui sont les sénateurs ?",
+  "assemblée": "C'est quoi l'Assemblée nationale ?",
+  "sénat": "C'est quoi le Sénat ?",
   "gouvernement": "Composition du gouvernement actuel",
   "député": "Qui sont les députés ?",
   "sénateur": "Qui sont les sénateurs ?",
+  "institution": "Comment fonctionnent les institutions françaises ?",
   // Questions sur les partis
   "parti": "Quels sont les partis politiques ?",
-  "rn": "Députés du Rassemblement National",
-  "lfi": "Députés de La France Insoumise",
-  "républicain": "Députés des Républicains",
+  "rn": "Membres du Rassemblement National",
+  "lfi": "Membres de La France Insoumise",
+  "républicain": "Membres des Républicains",
   "macron": "Parle-moi d'Emmanuel Macron",
   "le pen": "Parle-moi de Marine Le Pen",
   "mélenchon": "Parle-moi de Jean-Luc Mélenchon",
+  // Questions sur la presse
+  "presse": "Derniers articles de presse politique",
+  "actualité": "Actualités politiques récentes",
   // Questions générales
   "combien": "Combien de députés et sénateurs ?",
   "combien de": "Combien de députés et sénateurs ?",
-  "statistique": "Statistiques des affaires judiciaires",
+  "statistique": "Statistiques de Transparence Politique",
 };
 
 interface Message {
@@ -262,11 +284,10 @@ export function ChatInterface() {
     }
   };
 
-  // Handle suggested question click
+  // Handle suggested question click — sends immediately
   const handleSuggestedQuestion = (question: string) => {
-    setInput(question);
     setGhostText(null);
-    inputRef.current?.focus();
+    sendMessage(question);
   };
 
   // Retry last message
@@ -298,8 +319,8 @@ export function ChatInterface() {
                 Assistant Transparence Politique
               </h2>
               <p className="text-muted-foreground max-w-md">
-                Posez vos questions sur les représentants politiques français,
-                leurs mandats, les votes parlementaires ou les dossiers législatifs.
+                Posez vos questions sur la politique française : élus, votes,
+                affaires judiciaires, patrimoine, institutions ou dossiers législatifs.
               </p>
             </div>
             <div className="flex flex-col gap-2 w-full max-w-md">

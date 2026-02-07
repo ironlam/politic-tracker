@@ -71,7 +71,7 @@ const FRENCH_LEGISLATIVE: Institution[] = [
     election: "Suffrage universel direct (circonscriptions)",
     color: "#0066CC",
     icon: <Landmark className="h-5 w-5" />,
-    link: "/politiques?mandateType=DEPUTE",
+    link: "/institutions/assemblee-nationale",
   },
   {
     name: "Sénat",

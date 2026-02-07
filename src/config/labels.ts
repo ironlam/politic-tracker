@@ -159,6 +159,14 @@ export const MANDATE_TYPE_LABELS: Record<MandateType, string> = {
   OTHER: "Autre mandat",
 };
 
+// Feminize institutional roles based on civility
+export function feminizeRole(role: string, civility?: string | null): string {
+  if (civility !== "Mme") return role;
+  return role
+    .replace(/^Président /, "Présidente ")
+    .replace(/^Vice-président /, "Vice-présidente ");
+}
+
 // Salary information (public data, monthly gross in EUR)
 export const MANDATE_SALARIES: Partial<Record<MandateType, number>> = {
   DEPUTE: 7493, // Indemnité parlementaire brute

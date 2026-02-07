@@ -1,7 +1,7 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
-import { MANDATE_TYPE_LABELS } from "@/config/labels";
+import { MANDATE_TYPE_LABELS, feminizeRole } from "@/config/labels";
 import type { SerializedMandate, MandateType } from "@/types";
 
 interface MandateTimelineProps {
@@ -93,45 +93,53 @@ export function MandateTimeline({ mandates, civility }: MandateTimelineProps) {
             Mandat{currentMandates.length > 1 ? "s" : ""} actuel{currentMandates.length > 1 ? "s" : ""}
           </h3>
           <div className="space-y-3">
-            {currentMandates.map((mandate) => (
-              <div
-                key={mandate.id}
-                className="relative pl-6 pb-3 border-l-2 border-primary"
-              >
-                <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-primary border-2 border-background" />
-                <div className="bg-primary/5 rounded-lg p-4">
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <p className="font-semibold text-lg">
-                        {MANDATE_TYPE_LABELS[mandate.type] || mandate.type}
-                      </p>
-                      {mandate.constituency && (
-                        <p className="text-muted-foreground">{mandate.constituency}</p>
-                      )}
-                      {mandate.title && mandate.title !== MANDATE_TYPE_LABELS[mandate.type] && (
-                        <p className="text-sm text-muted-foreground mt-1">{mandate.title}</p>
-                      )}
+            {currentMandates.map((mandate) => {
+              const displayRole = mandate.role ? feminizeRole(mandate.role, civility) : null;
+              return (
+                <div
+                  key={mandate.id}
+                  className="relative pl-6 pb-3 border-l-2 border-primary"
+                >
+                  <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-primary border-2 border-background" />
+                  <div className="bg-primary/5 rounded-lg p-4">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <p className="font-semibold text-lg">
+                          {displayRole || MANDATE_TYPE_LABELS[mandate.type] || mandate.type}
+                        </p>
+                        {displayRole && (
+                          <Badge variant="outline" className="mt-1">
+                            {MANDATE_TYPE_LABELS[mandate.type] || mandate.type}
+                          </Badge>
+                        )}
+                        {mandate.constituency && (
+                          <p className="text-muted-foreground">{mandate.constituency}</p>
+                        )}
+                        {mandate.title && mandate.title !== MANDATE_TYPE_LABELS[mandate.type] && !displayRole && (
+                          <p className="text-sm text-muted-foreground mt-1">{mandate.title}</p>
+                        )}
+                      </div>
+                      <Badge variant="secondary" className="shrink-0">
+                        Depuis {formatYear(mandate.startDate)}
+                      </Badge>
                     </div>
-                    <Badge variant="secondary" className="shrink-0">
-                      Depuis {formatYear(mandate.startDate)}
-                    </Badge>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      {formatDuration(mandate.startDate)} en poste
+                    </p>
+                    {mandate.sourceUrl && (
+                      <a
+                        href={mandate.sourceUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-blue-600 hover:underline mt-2 inline-block"
+                      >
+                        Voir sur le site officiel →
+                      </a>
+                    )}
                   </div>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    {formatDuration(mandate.startDate)} en poste
-                  </p>
-                  {mandate.sourceUrl && (
-                    <a
-                      href={mandate.sourceUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs text-blue-600 hover:underline mt-2 inline-block"
-                    >
-                      Voir sur le site officiel →
-                    </a>
-                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
@@ -154,35 +162,43 @@ export function MandateTimeline({ mandates, civility }: MandateTimelineProps) {
                     {category.label}
                   </p>
                   <div className="space-y-2">
-                    {categoryMandates.map((mandate) => (
-                      <div
-                        key={mandate.id}
-                        className="relative pl-6 border-l border-muted-foreground/20"
-                      >
-                        <div className="absolute -left-[5px] top-2 w-2 h-2 rounded-full bg-muted-foreground/40" />
-                        <div className="py-2">
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="min-w-0 flex-1">
-                              <p className="font-medium">
-                                {MANDATE_TYPE_LABELS[mandate.type] || mandate.type}
-                              </p>
-                              {mandate.constituency && (
-                                <p className="text-sm text-muted-foreground truncate">
-                                  {mandate.constituency}
+                    {categoryMandates.map((mandate) => {
+                      const displayRole = mandate.role ? feminizeRole(mandate.role, civility) : null;
+                      return (
+                        <div
+                          key={mandate.id}
+                          className="relative pl-6 border-l border-muted-foreground/20"
+                        >
+                          <div className="absolute -left-[5px] top-2 w-2 h-2 rounded-full bg-muted-foreground/40" />
+                          <div className="py-2">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="min-w-0 flex-1">
+                                <p className="font-medium">
+                                  {displayRole || MANDATE_TYPE_LABELS[mandate.type] || mandate.type}
                                 </p>
-                              )}
+                                {displayRole && (
+                                  <span className="text-xs text-muted-foreground">
+                                    {MANDATE_TYPE_LABELS[mandate.type] || mandate.type}
+                                  </span>
+                                )}
+                                {mandate.constituency && (
+                                  <p className="text-sm text-muted-foreground truncate">
+                                    {mandate.constituency}
+                                  </p>
+                                )}
+                              </div>
+                              <p className="text-xs text-muted-foreground shrink-0">
+                                {formatYear(mandate.startDate)}
+                                {mandate.endDate && ` - ${formatYear(mandate.endDate)}`}
+                              </p>
                             </div>
-                            <p className="text-xs text-muted-foreground shrink-0">
-                              {formatYear(mandate.startDate)}
-                              {mandate.endDate && ` - ${formatYear(mandate.endDate)}`}
+                            <p className="text-xs text-muted-foreground">
+                              {formatDuration(mandate.startDate, mandate.endDate)}
                             </p>
                           </div>
-                          <p className="text-xs text-muted-foreground">
-                            {formatDuration(mandate.startDate, mandate.endDate)}
-                          </p>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               );

@@ -6,7 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PoliticianAvatar } from "@/components/politicians/PoliticianAvatar";
 import { VoteStats, VotePositionBadge, VotingResultBadge } from "@/components/votes";
 import { formatDate } from "@/lib/utils";
-import { ArrowLeft, ExternalLink } from "lucide-react";
+import { ArrowLeft, ExternalLink, Info } from "lucide-react";
+import { feminizeRole } from "@/config/labels";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -23,7 +24,12 @@ async function getPolitician(slug: string) {
       firstName: true,
       lastName: true,
       photoUrl: true,
+      civility: true,
       currentParty: true,
+      mandates: {
+        where: { isCurrent: true, role: { not: null } },
+        select: { role: true, type: true },
+      },
     },
   });
 }
@@ -160,6 +166,27 @@ export default async function PoliticianVotesPage({ params, searchParams }: Page
           </p>
         </div>
       </div>
+
+      {/* NON_VOTANT context note for president of chamber */}
+      {(() => {
+        const presidentMandate = politician.mandates.find(
+          (m) => m.role && /^(Président|Vice-président) /.test(m.role)
+        );
+        if (presidentMandate && stats.nonVotant > 0) {
+          const roleLabel = feminizeRole(presidentMandate.role!, politician.civility);
+          return (
+            <div className="flex items-start gap-3 p-4 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900 rounded-lg mb-8">
+              <Info className="h-5 w-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+              <p className="text-sm text-blue-800 dark:text-blue-200">
+                En tant que <strong>{roleLabel}</strong>, {politician.fullName} ne participe
+                traditionnellement pas aux votes. Les votes &quot;Non-votant&quot;
+                ({stats.nonVotant}) reflètent cette convention institutionnelle.
+              </p>
+            </div>
+          );
+        }
+        return null;
+      })()}
 
       <div className="grid lg:grid-cols-3 gap-8">
         {/* Main content */}

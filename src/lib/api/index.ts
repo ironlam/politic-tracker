@@ -19,6 +19,7 @@ export type {
   WikidataClaims,
   WikidataClaim,
   WikidataPosition,
+  WikidataPartyAffiliation,
 } from "./wikidata";
 
 export { RSSClient, rssClient, RSS_FEEDS } from "./rss";

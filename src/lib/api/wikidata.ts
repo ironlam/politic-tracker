@@ -129,6 +129,12 @@ export interface WikidataPosition {
   partyId?: string;
 }
 
+export interface WikidataPartyAffiliation {
+  partyWikidataId: string;
+  startDate?: Date;
+  endDate?: Date;
+}
+
 // ============================================================================
 // Service
 // ============================================================================
@@ -316,6 +322,20 @@ export class WikidataService {
   }
 
   /**
+   * Get political party affiliations (P102) for multiple entities
+   */
+  async getPoliticalParties(entityIds: string[]): Promise<Map<string, WikidataPartyAffiliation[]>> {
+    const entities = await this.getEntities(entityIds);
+    const results = new Map<string, WikidataPartyAffiliation[]>();
+
+    entities.forEach((entity, id) => {
+      results.set(id, this.extractPartyAffiliations(entity.claims[WIKIDATA_PROPS.POLITICAL_PARTY]));
+    });
+
+    return results;
+  }
+
+  /**
    * Check if entities are French politicians
    */
   async checkFrenchPoliticians(
@@ -412,6 +432,45 @@ export class WikidataService {
     }
 
     return positions;
+  }
+
+  /**
+   * Extract party affiliations from P102 claims
+   */
+  private extractPartyAffiliations(claims: WikidataClaim[] | undefined): WikidataPartyAffiliation[] {
+    if (!claims) return [];
+
+    const affiliations: WikidataPartyAffiliation[] = [];
+
+    for (const claim of claims) {
+      const partyValue = claim.mainsnak?.datavalue?.value;
+      if (!partyValue || typeof partyValue !== "object" || !("id" in partyValue)) {
+        continue;
+      }
+
+      const affiliation: WikidataPartyAffiliation = {
+        partyWikidataId: partyValue.id,
+      };
+
+      // Extract qualifiers
+      if (claim.qualifiers) {
+        // Start date (P580)
+        const startClaims = claim.qualifiers[WIKIDATA_PROPS.START_TIME];
+        if (startClaims?.[0]?.datavalue?.value) {
+          affiliation.startDate = this.extractDateFromValue(startClaims[0].datavalue.value);
+        }
+
+        // End date (P582)
+        const endClaims = claim.qualifiers[WIKIDATA_PROPS.END_TIME];
+        if (endClaims?.[0]?.datavalue?.value) {
+          affiliation.endDate = this.extractDateFromValue(endClaims[0].datavalue.value);
+        }
+      }
+
+      affiliations.push(affiliation);
+    }
+
+    return affiliations;
   }
 
   private extractDateFromValue(value: WikidataValue): Date | undefined {

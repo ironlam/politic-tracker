@@ -24,6 +24,8 @@
     "sync:birthdates:stats": "tsx scripts/sync-birthdates.ts --stats",
     "sync:europarl": "tsx scripts/sync-europarl.ts",
     "sync:europarl:stats": "tsx scripts/sync-europarl.ts --stats",
+    "sync:mep-parties": "tsx scripts/sync-mep-parties.ts",
+    "sync:mep-parties:stats": "tsx scripts/sync-mep-parties.ts --stats",
     "sync:parties": "tsx scripts/sync-parties.ts",
     "sync:parties:config": "tsx scripts/sync-parties.ts --config",
     "sync:parties:stats": "tsx scripts/sync-parties.ts --stats",

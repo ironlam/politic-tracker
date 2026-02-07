@@ -236,8 +236,11 @@ async function getDepartmentStats(): Promise<{
     // Sort parties by count (descending)
     dept.parties.sort((a, b) => b.count - a.count);
 
-    // Set dominant party (party with most representatives)
-    if (dept.parties.length > 0) {
+    // Set dominant party only if the top party has strictly more representatives than the second
+    if (
+      dept.parties.length === 1 ||
+      (dept.parties.length > 1 && dept.parties[0].count > dept.parties[1].count)
+    ) {
       dept.dominantParty = dept.parties[0];
     }
   }

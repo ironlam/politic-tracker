@@ -42,6 +42,7 @@ export function MapLegend({ mode, departments, isDarkMode }: MapLegendProps) {
 
   // Party mode - show dominant parties
   const partyColors = new Map<string, { shortName: string; color: string; count: number }>();
+  let noDominantCount = 0;
 
   for (const dept of departments) {
     if (dept.dominantParty) {
@@ -56,6 +57,8 @@ export function MapLegend({ mode, departments, isDarkMode }: MapLegendProps) {
           count: 1,
         });
       }
+    } else if (dept.parties.length > 0) {
+      noDominantCount++;
     }
   }
 
@@ -77,7 +80,18 @@ export function MapLegend({ mode, departments, isDarkMode }: MapLegendProps) {
             </span>
           </div>
         ))}
-        {sortedParties.length === 0 && (
+        {noDominantCount > 0 && (
+          <div className="flex items-center gap-1">
+            <div
+              className="w-3 h-3 rounded-full"
+              style={{ backgroundColor: isDarkMode ? "#374151" : "#e5e7eb" }}
+            />
+            <span className="text-xs">
+              Sans majorité ({noDominantCount})
+            </span>
+          </div>
+        )}
+        {sortedParties.length === 0 && noDominantCount === 0 && (
           <span className="text-xs text-muted-foreground">Aucune donnée</span>
         )}
       </div>

@@ -37,12 +37,14 @@ EXEMPLE DE BONNE RÉPONSE (si des dossiers sont fournis) :
 "Voici les dossiers trouvés :
 
 • Exercice de la démocratie agricole - en cours d'examen
-→ /assemblee/cml2i0abc123
+→ /assemblee/exercice-de-la-democratie-agricole
 
 → /assemblee (voir tous les dossiers)"
 
-POUR LES AFFAIRES :
-- Rappelle la présomption d'innocence
+POUR LES AFFAIRES JUDICIAIRES :
+- La présomption d'innocence s'applique aux personnes mises en cause, PAS à l'utilisateur
+- Formule correcte : "[Nom du politicien] bénéficie de la présomption d'innocence"
+- Ne JAMAIS dire "vous êtes présumé(e) innocent(e)" ou s'adresser à l'utilisateur comme s'il était mis en cause
 - Utilise le lien exact fourni dans le contexte`;
 
 // Rate limiting configuration
@@ -238,7 +240,8 @@ async function buildContext(results: SearchResult[], query: string): Promise<str
       case "AFFAIR":
         section += `**Affaire: ${metadata.title || "Affaire judiciaire"}**\n`;
         section += result.content;
-        section += "\n⚠️ Rappel: Toute personne est présumée innocente jusqu'à preuve du contraire.";
+        const politicianName = metadata.politicianName || "La personne concernée";
+        section += `\n⚠️ Rappel: ${politicianName} bénéficie de la présomption d'innocence jusqu'à condamnation définitive.`;
         if (metadata.politicianSlug) {
           section += `\n→ Fiche: /politiques/${metadata.politicianSlug}`;
         }
@@ -302,7 +305,7 @@ async function fetchDirectContext(query: string): Promise<string | null> {
       }
       if (politician.affairs.length > 0) {
         context += `\n⚠️ ${politician.affairs.length} affaire(s) judiciaire(s) référencée(s).\n`;
-        context += "Rappel: Toute personne est présumée innocente jusqu'à preuve du contraire.\n";
+        context += `Rappel: ${politician.fullName} bénéficie de la présomption d'innocence jusqu'à condamnation définitive.\n`;
       }
       context += `\n→ Fiche complète: /politiques/${politician.slug}`;
       return context;

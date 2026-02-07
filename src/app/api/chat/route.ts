@@ -3,7 +3,7 @@ import { streamText } from "ai";
 import { headers } from "next/headers";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
-import { searchSimilar, type SearchResult } from "@/services/embeddings";
+import { searchSimilar, rerankResults, type SearchResult } from "@/services/embeddings";
 import { db } from "@/lib/db";
 
 // Runtime configuration for streaming
@@ -556,16 +556,23 @@ export async function POST(request: Request) {
     // First try direct context lookup from database
     let context = await fetchDirectContext(userQuery);
 
-    // PRIORITY 1: Use semantic RAG search with Voyage AI embeddings
+    // PRIORITY 1: Use semantic RAG search with Voyage AI embeddings + reranking
     if (!context && process.env.VOYAGE_API_KEY) {
       try {
         const searchResults = await searchSimilar({
           query: userQuery,
-          limit: 8,
-          threshold: 0.45, // Lower threshold to get more semantic matches
+          limit: 12, // Fetch more candidates for reranking
+          threshold: 0.4,
         });
         if (searchResults.length > 0) {
-          context = await buildContext(searchResults, userQuery);
+          // Rerank results for better relevance, keep top 8
+          let rankedResults = searchResults;
+          try {
+            rankedResults = await rerankResults(userQuery, searchResults, 8);
+          } catch (rerankError) {
+            console.error("Reranking error, using vector search order:", rerankError);
+          }
+          context = await buildContext(rankedResults, userQuery);
         }
       } catch (error) {
         console.error("RAG search error:", error);

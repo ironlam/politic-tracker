@@ -141,7 +141,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = await params;
 
-    // Check if party has any politicians or memberships
+    // Check if party has any references
     const party = await db.party.findUnique({
       where: { id },
       include: {
@@ -150,6 +150,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
             politicians: true,
             partyMemberships: true,
             affairsAtTime: true,
+            pressMentions: true,
           },
         },
       },
@@ -173,6 +174,22 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       );
     }
 
+    if (party._count.affairsAtTime > 0) {
+      return NextResponse.json(
+        { error: `Ce parti est référencé dans ${party._count.affairsAtTime} affaires judiciaires. Supprimez d'abord les références.` },
+        { status: 400 }
+      );
+    }
+
+    if (party._count.pressMentions > 0) {
+      return NextResponse.json(
+        { error: `Ce parti est mentionné dans ${party._count.pressMentions} articles de presse. Supprimez d'abord les mentions.` },
+        { status: 400 }
+      );
+    }
+
+    // Delete associated external IDs first, then the party
+    await db.externalId.deleteMany({ where: { partyId: id } });
     await db.party.delete({ where: { id } });
 
     return NextResponse.json({ success: true });

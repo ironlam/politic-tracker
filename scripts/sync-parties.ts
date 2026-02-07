@@ -277,6 +277,15 @@ async function enrichFromWikidata(): Promise<{
         continue;
       }
 
+      // Skip dissolved parties (>30 years) — avoid creating new orphans
+      if (dissolvedDate) {
+        const yearsAgo = (Date.now() - dissolvedDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000);
+        if (yearsAgo > 30) {
+          skipped++;
+          continue;
+        }
+      }
+
       const existingShort = await db.party.findUnique({ where: { shortName } });
       if (existingShort) {
         skipped++;

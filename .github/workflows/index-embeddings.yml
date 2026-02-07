@@ -26,8 +26,7 @@ env:
 jobs:
   index-embeddings:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
-    # Only run on workflow_run if the triggering workflow succeeded
+    timeout-minutes: 120
     if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
 
     steps:
@@ -50,9 +49,37 @@ jobs:
         run: npm run index:embeddings:stats
         continue-on-error: true
 
-      - name: Index embeddings
-        run: npm run index:embeddings
-        timeout-minutes: 45
+      # When a specific type is chosen, index only that type
+      - name: Index embeddings (specific type)
+        if: ${{ github.event.inputs.entity_type != '' && github.event.inputs.entity_type != 'all' }}
+        run: npm run index:embeddings -- --type=${{ github.event.inputs.entity_type }}
+        timeout-minutes: 30
+
+      # When "all" is chosen or auto-triggered, index each type sequentially
+      - name: Index POLITICIAN
+        if: ${{ github.event.inputs.entity_type == 'all' || github.event.inputs.entity_type == '' }}
+        run: npm run index:embeddings -- --type=POLITICIAN
+        timeout-minutes: 30
+
+      - name: Index PARTY
+        if: ${{ github.event.inputs.entity_type == 'all' || github.event.inputs.entity_type == '' }}
+        run: npm run index:embeddings -- --type=PARTY
+        timeout-minutes: 10
+
+      - name: Index AFFAIR
+        if: ${{ github.event.inputs.entity_type == 'all' || github.event.inputs.entity_type == '' }}
+        run: npm run index:embeddings -- --type=AFFAIR
+        timeout-minutes: 10
+
+      - name: Index DOSSIER
+        if: ${{ github.event.inputs.entity_type == 'all' || github.event.inputs.entity_type == '' }}
+        run: npm run index:embeddings -- --type=DOSSIER
+        timeout-minutes: 20
+
+      - name: Index SCRUTIN
+        if: ${{ github.event.inputs.entity_type == 'all' || github.event.inputs.entity_type == '' }}
+        run: npm run index:embeddings -- --type=SCRUTIN
+        timeout-minutes: 30
 
       - name: Show updated embedding stats
         run: npm run index:embeddings:stats

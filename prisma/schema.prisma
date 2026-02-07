@@ -568,6 +568,10 @@ model LegislativeDossier {
 
   sourceUrl       String?
 
+  exposeDesMotifs     String?    @db.Text
+  exposeSource        String?              // "docparl" | "legifrance" | "manual"
+  documentExternalId  String?              // ex: PRJLANR5L17B1906
+
   amendments      Amendment[]
 
   createdAt       DateTime      @default(now())

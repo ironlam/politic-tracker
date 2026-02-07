@@ -168,6 +168,27 @@ function findAllCodes(actes: ANActe | ANActe[] | undefined | null): string[] {
 }
 
 /**
+ * Recursively find the first texteAssocie reference in a dossier's actes
+ */
+function findFirstDocumentRef(actes: ANActe | ANActe[] | undefined | null): string | null {
+  if (!actes) return null;
+
+  const acteArray = Array.isArray(actes) ? actes : [actes];
+
+  for (const acte of acteArray) {
+    if (acte.texteAssocie) {
+      return acte.texteAssocie;
+    }
+    if (acte.actesLegislatifs?.acteLegislatif) {
+      const found = findFirstDocumentRef(acte.actesLegislatifs.acteLegislatif);
+      if (found) return found;
+    }
+  }
+
+  return null;
+}
+
+/**
  * Recursively find all dates in a dossier
  */
 function findAllDates(actes: ANActe | ANActe[] | undefined | null): Date[] {
@@ -405,6 +426,9 @@ async function syncLegislation(
         const procedure = dp.procedureParlementaire?.libelle || "";
         const category = getCategory(procedure);
 
+        // Find document reference for expose des motifs
+        const documentExternalId = findFirstDocumentRef(dp.actesLegislatifs?.acteLegislatif);
+
         // Find all codes to determine status
         const allCodes = findAllCodes(dp.actesLegislatifs?.acteLegislatif);
         const status = determineStatus(allCodes);
@@ -448,6 +472,7 @@ async function syncLegislation(
             filingDate,
             adoptionDate,
             sourceUrl,
+            documentExternalId,
           };
 
           if (existing) {

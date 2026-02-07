@@ -11,10 +11,11 @@ import { VoyageAIClient } from "voyageai";
 import { db } from "@/lib/db";
 import type { EmbeddingType, Prisma } from "@/generated/prisma";
 
-// Voyage AI voyage-3-lite: optimized for latency, 512 dimensions
-// Other options: voyage-3 (1024 dims), voyage-3-large (best quality)
-const EMBEDDING_MODEL = "voyage-3-lite";
+// Voyage AI voyage-4-lite: shared embedding space, Matryoshka dimensions
+// Other options: voyage-4 (1024 dims), voyage-4-large (best quality)
+const EMBEDDING_MODEL = "voyage-4-lite";
 const EMBEDDING_DIMENSIONS = 512;
+const RERANK_MODEL = "rerank-2.5-lite";
 
 // Initialize Voyage AI client
 function getVoyageClient(): VoyageAIClient {
@@ -28,13 +29,17 @@ function getVoyageClient(): VoyageAIClient {
 /**
  * Generate embedding vector for a text
  */
-export async function generateEmbedding(text: string): Promise<number[]> {
+export async function generateEmbedding(
+  text: string,
+  inputType: "document" | "query" = "document"
+): Promise<number[]> {
   const client = getVoyageClient();
 
   const response = await client.embed({
     input: text.slice(0, 16000), // Voyage supports up to 32k tokens
     model: EMBEDDING_MODEL,
-    inputType: "document",
+    inputType,
+    outputDimension: EMBEDDING_DIMENSIONS,
   });
 
   if (!response.data || response.data.length === 0) {
@@ -124,8 +129,8 @@ export async function searchSimilar(params: {
 }): Promise<SearchResult[]> {
   const { query, limit = 5, threshold = 0.7, entityTypes } = params;
 
-  // Generate query embedding
-  const queryEmbedding = await generateEmbedding(query);
+  // Generate query embedding (use "query" input type for better retrieval)
+  const queryEmbedding = await generateEmbedding(query, "query");
 
   // Build where clause
   const where: Prisma.ChatEmbeddingWhereInput = {};
@@ -163,6 +168,38 @@ export async function searchSimilar(params: {
     .slice(0, limit);
 
   return results;
+}
+
+/**
+ * Rerank search results using Voyage AI reranker for better relevance
+ */
+export async function rerankResults(
+  query: string,
+  results: SearchResult[],
+  topK?: number
+): Promise<SearchResult[]> {
+  if (results.length <= 1) return results;
+
+  const client = getVoyageClient();
+  const documents = results.map((r) => r.content);
+
+  const response = await client.rerank({
+    query,
+    documents,
+    model: RERANK_MODEL,
+    topK: topK ?? results.length,
+  });
+
+  if (!response.data || response.data.length === 0) {
+    return results; // Fallback to original order
+  }
+
+  return response.data
+    .filter((item) => item.index !== undefined)
+    .map((item) => ({
+      ...results[item.index!],
+      similarity: item.relevanceScore ?? results[item.index!].similarity,
+    }));
 }
 
 /**

@@ -1,0 +1,68 @@
+name: Index Embeddings (RAG)
+
+on:
+  workflow_dispatch:
+    inputs:
+      entity_type:
+        description: 'Entity type to index (all, POLITICIAN, DOSSIER, SCRUTIN, AFFAIR, PARTY)'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - POLITICIAN
+          - DOSSIER
+          - SCRUTIN
+          - AFFAIR
+          - PARTY
+  workflow_run:
+    workflows: ["Sync Content (Legislation + AI)"]
+    types: [completed]
+
+env:
+  DATABASE_URL: ${{ secrets.DATABASE_URL }}
+  VOYAGE_API_KEY: ${{ secrets.VOYAGE_API_KEY }}
+
+jobs:
+  index-embeddings:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    # Only run on workflow_run if the triggering workflow succeeded
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+
+      - name: Show current embedding stats
+        run: npm run index:embeddings:stats
+        continue-on-error: true
+
+      - name: Index embeddings
+        run: npm run index:embeddings
+        timeout-minutes: 45
+
+      - name: Show updated embedding stats
+        run: npm run index:embeddings:stats
+        continue-on-error: true
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## Index Embeddings Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Entity type**: ${{ github.event.inputs.entity_type || 'all' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Triggered by**: ${{ github.event_name == 'workflow_run' && 'Sync Content workflow' || github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY

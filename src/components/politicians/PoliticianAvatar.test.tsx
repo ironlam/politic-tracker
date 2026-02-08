@@ -4,23 +4,12 @@ import { PoliticianAvatar } from "./PoliticianAvatar";
 
 describe("PoliticianAvatar", () => {
   it("should render initials when no photo URL", () => {
-    render(
-      <PoliticianAvatar
-        photoUrl={null}
-        firstName="Jean"
-        lastName="Dupont"
-      />
-    );
+    render(<PoliticianAvatar photoUrl={null} firstName="Jean" lastName="Dupont" />);
     expect(screen.getByText("JD")).toBeInTheDocument();
   });
 
   it("should render initials from fullName", () => {
-    render(
-      <PoliticianAvatar
-        photoUrl={null}
-        fullName="Marine Le Pen"
-      />
-    );
+    render(<PoliticianAvatar photoUrl={null} fullName="Marine Le Pen" />);
     expect(screen.getByText("ML")).toBeInTheDocument();
   });
 
@@ -54,45 +43,23 @@ describe("PoliticianAvatar", () => {
 
   it("should apply correct size classes", () => {
     const { container, rerender } = render(
-      <PoliticianAvatar
-        photoUrl={null}
-        firstName="A"
-        lastName="B"
-        size="sm"
-      />
+      <PoliticianAvatar photoUrl={null} firstName="A" lastName="B" size="sm" />
     );
     expect(container.firstChild).toHaveClass("w-10", "h-10");
 
-    rerender(
-      <PoliticianAvatar
-        photoUrl={null}
-        firstName="A"
-        lastName="B"
-        size="lg"
-      />
-    );
+    rerender(<PoliticianAvatar photoUrl={null} firstName="A" lastName="B" size="lg" />);
     expect(container.firstChild).toHaveClass("w-24", "h-24");
   });
 
   it("should handle missing first name gracefully", () => {
-    render(
-      <PoliticianAvatar
-        photoUrl={null}
-        lastName="Dupont"
-      />
-    );
+    render(<PoliticianAvatar photoUrl={null} lastName="Dupont" />);
     // Should show "?D" for missing first initial
     expect(screen.getByText("?D")).toBeInTheDocument();
   });
 
   it("should apply custom className", () => {
     const { container } = render(
-      <PoliticianAvatar
-        photoUrl={null}
-        firstName="A"
-        lastName="B"
-        className="custom-class"
-      />
+      <PoliticianAvatar photoUrl={null} firstName="A" lastName="B" className="custom-class" />
     );
     expect(container.firstChild).toHaveClass("custom-class");
   });

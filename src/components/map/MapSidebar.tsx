@@ -28,12 +28,7 @@ export function MapSidebar({ department, onClose }: MapSidebarProps) {
           <CardTitle className="text-lg">{department.name}</CardTitle>
           <p className="text-sm text-muted-foreground">{department.region}</p>
         </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onClose}
-          aria-label="Fermer"
-        >
+        <Button variant="ghost" size="icon" onClick={onClose} aria-label="Fermer">
           <X className="h-4 w-4" />
         </Button>
       </CardHeader>
@@ -65,7 +60,8 @@ export function MapSidebar({ department, onClose }: MapSidebarProps) {
               />
               <span className="font-medium">{department.dominantParty.shortName}</span>
               <span className="text-muted-foreground text-sm">
-                ({department.dominantParty.count} élu{department.dominantParty.count > 1 ? "s" : ""})
+                ({department.dominantParty.count} élu{department.dominantParty.count > 1 ? "s" : ""}
+                )
               </span>
             </div>
           </div>

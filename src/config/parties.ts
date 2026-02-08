@@ -18,7 +18,14 @@ export interface EuropeanGroupConfig {
   name: string;
   shortName?: string;
   color: string;
-  politicalPosition?: "FAR_LEFT" | "LEFT" | "CENTER_LEFT" | "CENTER" | "CENTER_RIGHT" | "RIGHT" | "FAR_RIGHT";
+  politicalPosition?:
+    | "FAR_LEFT"
+    | "LEFT"
+    | "CENTER_LEFT"
+    | "CENTER"
+    | "CENTER_RIGHT"
+    | "RIGHT"
+    | "FAR_RIGHT";
   wikidataId?: string;
   website?: string;
 }
@@ -29,20 +36,64 @@ export interface EuropeanGroupConfig {
 
 export const FRENCH_ASSEMBLY_PARTIES: Record<string, PartyConfig> = {
   // 17th legislature (2024-2027)
-  RN: { shortName: "RN", fullName: "Rassemblement National", color: "#0D378A", wikidataId: "Q485840" },
-  "LFI-NFP": { shortName: "LFI", fullName: "La France Insoumise - Nouveau Front Populaire", color: "#CC2443", wikidataId: "Q20905918" },
-  SOC: { shortName: "SOC", fullName: "Socialistes et apparentés", color: "#FF8080", wikidataId: "Q151614" },
-  EPR: { shortName: "EPR", fullName: "Ensemble pour la République", color: "#FFEB00", wikidataId: "Q110797741" },
+  RN: {
+    shortName: "RN",
+    fullName: "Rassemblement National",
+    color: "#0D378A",
+    wikidataId: "Q485840",
+  },
+  "LFI-NFP": {
+    shortName: "LFI",
+    fullName: "La France Insoumise - Nouveau Front Populaire",
+    color: "#CC2443",
+    wikidataId: "Q20905918",
+  },
+  SOC: {
+    shortName: "SOC",
+    fullName: "Socialistes et apparentés",
+    color: "#FF8080",
+    wikidataId: "Q151614",
+  },
+  EPR: {
+    shortName: "EPR",
+    fullName: "Ensemble pour la République",
+    color: "#FFEB00",
+    wikidataId: "Q110797741",
+  },
   DR: { shortName: "DR", fullName: "Droite Républicaine", color: "#0066CC", wikidataId: "Q829126" },
   DEM: { shortName: "DEM", fullName: "Les Démocrates", color: "#FF9900", wikidataId: "Q3277601" },
-  HOR: { shortName: "HOR", fullName: "Horizons & Indépendants", color: "#0001AA", wikidataId: "Q108055027" },
-  LIOT: { shortName: "LIOT", fullName: "Libertés, Indépendants, Outre-mer et Territoires", color: "#AADDFF" },
-  ECOS: { shortName: "ECOS", fullName: "Écologiste et Social", color: "#00C000", wikidataId: "Q211595" },
-  GDR: { shortName: "GDR", fullName: "Gauche Démocrate et Républicaine", color: "#DD0000", wikidataId: "Q121596" },
+  HOR: {
+    shortName: "HOR",
+    fullName: "Horizons & Indépendants",
+    color: "#0001AA",
+    wikidataId: "Q108055027",
+  },
+  LIOT: {
+    shortName: "LIOT",
+    fullName: "Libertés, Indépendants, Outre-mer et Territoires",
+    color: "#AADDFF",
+  },
+  ECOS: {
+    shortName: "ECOS",
+    fullName: "Écologiste et Social",
+    color: "#00C000",
+    wikidataId: "Q211595",
+  },
+  GDR: {
+    shortName: "GDR",
+    fullName: "Gauche Démocrate et Républicaine",
+    color: "#DD0000",
+    wikidataId: "Q121596",
+  },
   UDR: { shortName: "UDR", fullName: "Union des Droites pour la République", color: "#8040C0" },
   NI: { shortName: "NI", fullName: "Non-inscrits", color: "#AAAAAA" },
   // Parti hors groupe parlementaire (eurodéputés)
-  IDL: { shortName: "IDL", fullName: "Identité-Libertés", color: "#1C2951", wikidataId: "Q130517388" },
+  IDL: {
+    shortName: "IDL",
+    fullName: "Identité-Libertés",
+    color: "#1C2951",
+    wikidataId: "Q130517388",
+  },
 };
 
 // ============================================
@@ -50,19 +101,53 @@ export const FRENCH_ASSEMBLY_PARTIES: Record<string, PartyConfig> = {
 // ============================================
 
 export const FRENCH_SENATE_PARTIES: Record<string, PartyConfig> = {
-  RDPI: { shortName: "RDPI", fullName: "Rassemblement des démocrates progressistes et indépendants", color: "#FFEB00" },
+  RDPI: {
+    shortName: "RDPI",
+    fullName: "Rassemblement des démocrates progressistes et indépendants",
+    color: "#FFEB00",
+  },
   LR: { shortName: "LR", fullName: "Les Républicains", color: "#0066CC", wikidataId: "Q829126" },
   SER: { shortName: "SER", fullName: "Socialiste, Écologiste et Républicain", color: "#FF8080" },
   UC: { shortName: "UC", fullName: "Union Centriste", color: "#FF9900" },
-  "CRCE-K": { shortName: "CRCE", fullName: "Communiste, Républicain, Citoyen et Écologiste - Kanaky", color: "#DD0000" },
-  CRCE: { shortName: "CRCE", fullName: "Communiste, Républicain, Citoyen et Écologiste", color: "#DD0000" },
+  "CRCE-K": {
+    shortName: "CRCE",
+    fullName: "Communiste, Républicain, Citoyen et Écologiste - Kanaky",
+    color: "#DD0000",
+  },
+  CRCE: {
+    shortName: "CRCE",
+    fullName: "Communiste, Républicain, Citoyen et Écologiste",
+    color: "#DD0000",
+  },
   GEST: { shortName: "GEST", fullName: "Écologiste - Solidarité et Territoires", color: "#00C000" },
-  RDSE: { shortName: "RDSE", fullName: "Rassemblement Démocratique et Social Européen", color: "#F0A000" },
-  INDEP: { shortName: "INDEP", fullName: "Les Indépendants - République et Territoires", color: "#00AAAA" },
-  RASNAG: { shortName: "RN", fullName: "Rassemblement National", color: "#0D378A", wikidataId: "Q485840" },
-  RN: { shortName: "RN", fullName: "Rassemblement National", color: "#0D378A", wikidataId: "Q485840" },
+  RDSE: {
+    shortName: "RDSE",
+    fullName: "Rassemblement Démocratique et Social Européen",
+    color: "#F0A000",
+  },
+  INDEP: {
+    shortName: "INDEP",
+    fullName: "Les Indépendants - République et Territoires",
+    color: "#00AAAA",
+  },
+  RASNAG: {
+    shortName: "RN",
+    fullName: "Rassemblement National",
+    color: "#0D378A",
+    wikidataId: "Q485840",
+  },
+  RN: {
+    shortName: "RN",
+    fullName: "Rassemblement National",
+    color: "#0D378A",
+    wikidataId: "Q485840",
+  },
   NI: { shortName: "NI", fullName: "Non-inscrits", color: "#AAAAAA" },
-  SENRI: { shortName: "NI", fullName: "Sénateurs ne figurant sur la liste d'aucun groupe", color: "#AAAAAA" },
+  SENRI: {
+    shortName: "NI",
+    fullName: "Sénateurs ne figurant sur la liste d'aucun groupe",
+    color: "#AAAAAA",
+  },
 };
 
 // ============================================

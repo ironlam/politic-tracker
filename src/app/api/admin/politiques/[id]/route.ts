@@ -77,10 +77,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
 
     // Validation
     if (!data.firstName?.trim() || !data.lastName?.trim()) {
-      return NextResponse.json(
-        { error: "Prénom et nom sont requis" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Prénom et nom sont requis" }, { status: 400 });
     }
 
     // Generate fullName and slug if needed
@@ -196,9 +193,6 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     return NextResponse.json(politician);
   } catch (error) {
     console.error("Error updating politician:", error);
-    return NextResponse.json(
-      { error: "Erreur lors de la mise à jour" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Erreur lors de la mise à jour" }, { status: 500 });
   }
 }

@@ -14,8 +14,5 @@ export function proxy(request: NextRequest) {
 
 export const config = {
   // Match all admin routes EXCEPT /admin/login
-  matcher: [
-    "/admin",
-    "/admin/((?!login).*)",
-  ],
+  matcher: ["/admin", "/admin/((?!login).*)"],
 };

@@ -91,17 +91,12 @@ export default function AssembleeNationalePage() {
       {/* Header */}
       <div className="mb-10">
         <div className="flex items-center gap-3 mb-4">
-          <div
-            className="p-3 rounded-lg"
-            style={{ backgroundColor: "#0066CC15" }}
-          >
+          <div className="p-3 rounded-lg" style={{ backgroundColor: "#0066CC15" }}>
             <Landmark className="h-8 w-8" style={{ color: "#0066CC" }} />
           </div>
           <div>
             <h1 className="text-3xl font-bold">L&apos;Assemblée nationale</h1>
-            <p className="text-lg text-muted-foreground">
-              577 députés, comment ça fonctionne ?
-            </p>
+            <p className="text-lg text-muted-foreground">577 députés, comment ça fonctionne ?</p>
           </div>
         </div>
       </div>
@@ -127,9 +122,8 @@ export default function AssembleeNationalePage() {
           Les types de vote
         </h2>
         <p className="text-muted-foreground mb-6">
-          Tous les votes ne se ressemblent pas. La plupart ne laissent aucune trace
-          individuelle, ce qui explique pourquoi seule une minorité de scrutins
-          apparaît dans nos données.
+          Tous les votes ne se ressemblent pas. La plupart ne laissent aucune trace individuelle, ce
+          qui explique pourquoi seule une minorité de scrutins apparaît dans nos données.
         </p>
 
         <div className="grid gap-4 md:grid-cols-2">
@@ -138,10 +132,7 @@ export default function AssembleeNationalePage() {
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <div
-                      className="p-2 rounded-lg"
-                      style={{ backgroundColor: `${vote.color}15` }}
-                    >
+                    <div className="p-2 rounded-lg" style={{ backgroundColor: `${vote.color}15` }}>
                       <span style={{ color: vote.color }}>{vote.icon}</span>
                     </div>
                     <CardTitle className="text-lg">{vote.name}</CardTitle>
@@ -179,21 +170,18 @@ export default function AssembleeNationalePage() {
                 style={{ color: "#0066CC" }}
               />
               <div>
-                <h3 className="font-semibold mb-2">
-                  Pourquoi seulement 70 votants sur 577 ?
-                </h3>
+                <h3 className="font-semibold mb-2">Pourquoi seulement 70 votants sur 577 ?</h3>
                 <p className="text-sm text-muted-foreground">
-                  Lors d&apos;un <strong>scrutin public ordinaire</strong>, seuls les
-                  députés physiquement présents dans l&apos;hémicycle (ou ayant donné
-                  une délégation de vote) sont comptabilisés. La plupart des scrutins
-                  ont lieu en semaine, souvent en soirée, sur des textes techniques
-                  examinés en commission au préalable. Les députés non présents ne sont
-                  ni &quot;pour&quot;, ni &quot;contre&quot;, ni &quot;abstention&quot; :
-                  ils sont simplement <strong>non-votants</strong>.
+                  Lors d&apos;un <strong>scrutin public ordinaire</strong>, seuls les députés
+                  physiquement présents dans l&apos;hémicycle (ou ayant donné une délégation de
+                  vote) sont comptabilisés. La plupart des scrutins ont lieu en semaine, souvent en
+                  soirée, sur des textes techniques examinés en commission au préalable. Les députés
+                  non présents ne sont ni &quot;pour&quot;, ni &quot;contre&quot;, ni
+                  &quot;abstention&quot; : ils sont simplement <strong>non-votants</strong>.
                 </p>
                 <p className="text-sm text-muted-foreground mt-2">
-                  Ce n&apos;est que lors des <strong>scrutins solennels</strong> (budget,
-                  motion de censure) que la quasi-totalité des 577 députés vote.
+                  Ce n&apos;est que lors des <strong>scrutins solennels</strong> (budget, motion de
+                  censure) que la quasi-totalité des 577 députés vote.
                 </p>
               </div>
             </div>
@@ -208,8 +196,8 @@ export default function AssembleeNationalePage() {
           Le rôle du président de séance
         </h2>
         <p className="text-muted-foreground mb-6">
-          Le président de l&apos;Assemblée nationale (ou un vice-président qui le
-          supplée) préside les débats et dirige les votes.
+          Le président de l&apos;Assemblée nationale (ou un vice-président qui le supplée) préside
+          les débats et dirige les votes.
         </p>
 
         <Card>
@@ -217,20 +205,19 @@ export default function AssembleeNationalePage() {
             <div>
               <h3 className="font-semibold mb-1">La convention de non-vote</h3>
               <p className="text-sm text-muted-foreground">
-                Par tradition républicaine, le président de l&apos;Assemblée nationale
-                ne participe pas aux votes. Cette convention garantit son impartialité
-                dans la conduite des débats. Il ne vote qu&apos;en cas d&apos;égalité
-                parfaite des voix, où sa voix est alors <strong>prépondérante</strong>.
+                Par tradition républicaine, le président de l&apos;Assemblée nationale ne participe
+                pas aux votes. Cette convention garantit son impartialité dans la conduite des
+                débats. Il ne vote qu&apos;en cas d&apos;égalité parfaite des voix, où sa voix est
+                alors <strong>prépondérante</strong>.
               </p>
             </div>
             <div>
               <h3 className="font-semibold mb-1">Sur Transparence Politique</h3>
               <p className="text-sm text-muted-foreground">
-                Lorsqu&apos;un scrutin affiche le président de l&apos;Assemblée
-                comme &quot;non-votant&quot;, ce n&apos;est pas de l&apos;absentéisme :
-                c&apos;est l&apos;application de cette convention. Nous contextualisons
-                cette information avec le label &quot;Non-votant (président de
-                séance)&quot;.
+                Lorsqu&apos;un scrutin affiche le président de l&apos;Assemblée comme
+                &quot;non-votant&quot;, ce n&apos;est pas de l&apos;absentéisme : c&apos;est
+                l&apos;application de cette convention. Nous contextualisons cette information avec
+                le label &quot;Non-votant (président de séance)&quot;.
               </p>
             </div>
           </CardContent>
@@ -244,8 +231,8 @@ export default function AssembleeNationalePage() {
           La délégation de vote
         </h2>
         <p className="text-muted-foreground mb-6">
-          Un député empêché peut confier son vote à un collègue, dans des conditions
-          encadrées par la Constitution (article 27).
+          Un député empêché peut confier son vote à un collègue, dans des conditions encadrées par
+          la Constitution (article 27).
         </p>
 
         <Card>
@@ -255,12 +242,12 @@ export default function AssembleeNationalePage() {
               <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
                 <li>Un député ne peut recevoir qu&apos;une seule délégation</li>
                 <li>
-                  La délégation est personnelle et nominative (le délégataire vote au
-                  nom du délégant)
+                  La délégation est personnelle et nominative (le délégataire vote au nom du
+                  délégant)
                 </li>
                 <li>
-                  Elle est valable pour un scrutin précis ou pour une durée limitée (8
-                  jours maximum, sauf cas particuliers)
+                  Elle est valable pour un scrutin précis ou pour une durée limitée (8 jours
+                  maximum, sauf cas particuliers)
                 </li>
               </ul>
             </div>
@@ -270,15 +257,17 @@ export default function AssembleeNationalePage() {
                 <li>Maladie ou accident</li>
                 <li>Mission confiée par le Gouvernement</li>
                 <li>Service national ou force majeure</li>
-                <li>Session extraordinaire d&apos;une autre assemblée (pour les cumulants avant 2017)</li>
+                <li>
+                  Session extraordinaire d&apos;une autre assemblée (pour les cumulants avant 2017)
+                </li>
               </ul>
             </div>
             <div>
               <h3 className="font-semibold mb-1">Conséquence sur les chiffres</h3>
               <p className="text-sm text-muted-foreground">
-                Un député ayant reçu une délégation compte pour
-                deux voix dans le décompte. C&apos;est pourquoi le total des voix
-                exprimées peut dépasser le nombre de députés physiquement présents.
+                Un député ayant reçu une délégation compte pour deux voix dans le décompte.
+                C&apos;est pourquoi le total des voix exprimées peut dépasser le nombre de députés
+                physiquement présents.
               </p>
             </div>
           </CardContent>
@@ -292,8 +281,8 @@ export default function AssembleeNationalePage() {
           L&apos;absentéisme, mythe et réalité
         </h2>
         <p className="text-muted-foreground mb-6">
-          L&apos;image du député absent de l&apos;hémicycle est trompeuse.
-          Le travail parlementaire ne se résume pas aux séances publiques.
+          L&apos;image du député absent de l&apos;hémicycle est trompeuse. Le travail parlementaire
+          ne se résume pas aux séances publiques.
         </p>
 
         <div className="grid gap-4 md:grid-cols-2">
@@ -303,10 +292,10 @@ export default function AssembleeNationalePage() {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
-                Les 8 commissions permanentes sont le cœur du travail législatif.
-                C&apos;est là que les textes sont examinés article par article,
-                amendés et débattus en détail. Un député peut siéger en commission
-                pendant qu&apos;un vote a lieu dans l&apos;hémicycle.
+                Les 8 commissions permanentes sont le cœur du travail législatif. C&apos;est là que
+                les textes sont examinés article par article, amendés et débattus en détail. Un
+                député peut siéger en commission pendant qu&apos;un vote a lieu dans
+                l&apos;hémicycle.
               </p>
             </CardContent>
           </Card>
@@ -316,10 +305,9 @@ export default function AssembleeNationalePage() {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
-                Les députés passent environ la moitié de leur temps en
-                circonscription : permanences, rencontres avec les élus locaux,
-                entreprises, associations. Ce travail de terrain est essentiel
-                mais invisible dans les statistiques de présence.
+                Les députés passent environ la moitié de leur temps en circonscription :
+                permanences, rencontres avec les élus locaux, entreprises, associations. Ce travail
+                de terrain est essentiel mais invisible dans les statistiques de présence.
               </p>
             </CardContent>
           </Card>
@@ -329,9 +317,9 @@ export default function AssembleeNationalePage() {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
-                Commissions d&apos;enquête, missions d&apos;information, groupes
-                d&apos;études, auditions d&apos;experts... Ces activités ne sont pas
-                comptabilisées dans la présence en séance publique.
+                Commissions d&apos;enquête, missions d&apos;information, groupes d&apos;études,
+                auditions d&apos;experts... Ces activités ne sont pas comptabilisées dans la
+                présence en séance publique.
               </p>
             </CardContent>
           </Card>
@@ -341,10 +329,9 @@ export default function AssembleeNationalePage() {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
-                Pour évaluer la participation d&apos;un député, il est plus pertinent
-                de regarder sa présence aux <strong>scrutins solennels</strong> (où
-                tous sont appelés à voter) que sa présence aux scrutins ordinaires
-                de routine.
+                Pour évaluer la participation d&apos;un député, il est plus pertinent de regarder sa
+                présence aux <strong>scrutins solennels</strong> (où tous sont appelés à voter) que
+                sa présence aux scrutins ordinaires de routine.
               </p>
             </CardContent>
           </Card>
@@ -353,17 +340,14 @@ export default function AssembleeNationalePage() {
         <Card className="mt-6 border-amber-200 dark:border-amber-900 bg-amber-50/50 dark:bg-amber-950/30">
           <CardContent className="pt-6">
             <div className="flex items-start gap-3">
-              <Scale
-                className="h-6 w-6 shrink-0 mt-0.5"
-                style={{ color: "#D97706" }}
-              />
+              <Scale className="h-6 w-6 shrink-0 mt-0.5" style={{ color: "#D97706" }} />
               <div>
                 <h3 className="font-semibold mb-2">Nuance importante</h3>
                 <p className="text-sm text-muted-foreground">
-                  Cela ne signifie pas que l&apos;absentéisme n&apos;existe pas. Certains
-                  députés ont une participation nettement plus faible que leurs collègues,
-                  y compris aux scrutins solennels. Mais juger un député uniquement sur sa
-                  présence en hémicycle, c&apos;est ignorer une grande partie de son travail.
+                  Cela ne signifie pas que l&apos;absentéisme n&apos;existe pas. Certains députés
+                  ont une participation nettement plus faible que leurs collègues, y compris aux
+                  scrutins solennels. Mais juger un député uniquement sur sa présence en hémicycle,
+                  c&apos;est ignorer une grande partie de son travail.
                 </p>
               </div>
             </div>
@@ -377,8 +361,8 @@ export default function AssembleeNationalePage() {
           <CardContent className="pt-6 text-center">
             <h2 className="text-xl font-bold mb-2">Explorez nos données</h2>
             <p className="text-sm text-muted-foreground mb-4">
-              Consultez les profils des députés, leurs votes et l&apos;activité de
-              l&apos;Assemblée nationale.
+              Consultez les profils des députés, leurs votes et l&apos;activité de l&apos;Assemblée
+              nationale.
             </p>
             <div className="flex flex-wrap justify-center gap-2">
               <Link

@@ -111,14 +111,10 @@ async function migrateScrutins(): Promise<{ updated: number; skipped: number }> 
 
     try {
       const baseSlug = generateDateSlug(scrutin.votingDate, scrutin.title);
-      const uniqueSlug = await getUniqueSlug(
-        baseSlug,
-        existingSlugs,
-        async (slug) => {
-          const exists = await db.scrutin.findUnique({ where: { slug } });
-          return exists !== null;
-        }
-      );
+      const uniqueSlug = await getUniqueSlug(baseSlug, existingSlugs, async (slug) => {
+        const exists = await db.scrutin.findUnique({ where: { slug } });
+        return exists !== null;
+      });
 
       if (dryRun) {
         console.log(`\n  [DRY RUN] ${scrutin.externalId} → ${uniqueSlug}`);
@@ -185,14 +181,10 @@ async function migrateDossiers(): Promise<{ updated: number; skipped: number }> 
       // Prefer shortTitle for slug, fallback to title
       const titleForSlug = dossier.shortTitle || dossier.title;
       const baseSlug = generateDateSlug(dossier.filingDate, titleForSlug);
-      const uniqueSlug = await getUniqueSlug(
-        baseSlug,
-        existingSlugs,
-        async (slug) => {
-          const exists = await db.legislativeDossier.findUnique({ where: { slug } });
-          return exists !== null;
-        }
-      );
+      const uniqueSlug = await getUniqueSlug(baseSlug, existingSlugs, async (slug) => {
+        const exists = await db.legislativeDossier.findUnique({ where: { slug } });
+        return exists !== null;
+      });
 
       if (dryRun) {
         console.log(`\n  [DRY RUN] ${dossier.externalId} → ${uniqueSlug}`);
@@ -219,12 +211,7 @@ async function migrateDossiers(): Promise<{ updated: number; skipped: number }> 
 async function showStatistics(): Promise<void> {
   console.log("\n📊 Slug Migration Statistics\n");
 
-  const [
-    totalScrutins,
-    scrutinsWithSlug,
-    totalDossiers,
-    dossiersWithSlug,
-  ] = await Promise.all([
+  const [totalScrutins, scrutinsWithSlug, totalDossiers, dossiersWithSlug] = await Promise.all([
     db.scrutin.count(),
     db.scrutin.count({ where: { slug: { not: null } } }),
     db.legislativeDossier.count(),

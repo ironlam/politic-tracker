@@ -56,14 +56,24 @@ export function PoliticianSelector({
         // Map API response to expected format and filter out the other selected politician
         const mapped = data
           .filter((p: { id: string }) => p.id !== otherPoliticianId)
-          .map((p: { id: string; slug: string; fullName: string; photoUrl: string | null; party: string | null; partyColor: string | null; mandate: string | null }) => ({
-            id: p.id,
-            slug: p.slug,
-            fullName: p.fullName,
-            photoUrl: p.photoUrl,
-            currentParty: p.party ? { shortName: p.party, color: p.partyColor } : null,
-            currentMandate: p.mandate,
-          }));
+          .map(
+            (p: {
+              id: string;
+              slug: string;
+              fullName: string;
+              photoUrl: string | null;
+              party: string | null;
+              partyColor: string | null;
+              mandate: string | null;
+            }) => ({
+              id: p.id,
+              slug: p.slug,
+              fullName: p.fullName,
+              photoUrl: p.photoUrl,
+              currentParty: p.party ? { shortName: p.party, color: p.partyColor } : null,
+              currentMandate: p.mandate,
+            })
+          );
         setResults(mapped);
       } catch (error) {
         if ((error as Error).name !== "AbortError") {
@@ -135,7 +145,9 @@ export function PoliticianSelector({
               </span>
             )}
             {selectedPolitician.currentMandate && (
-              <p className="text-sm text-muted-foreground mt-1">{selectedPolitician.currentMandate}</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                {selectedPolitician.currentMandate}
+              </p>
             )}
           </div>
           <button

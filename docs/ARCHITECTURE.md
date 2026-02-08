@@ -6,16 +6,16 @@
 
 ## 1. Stack technique
 
-| Composant | Technologie | Version |
-|-----------|-------------|---------|
-| Framework | Next.js (App Router) | 16.x |
-| Langage | TypeScript | 5.x |
-| Base de données | PostgreSQL | 15+ |
-| ORM | Prisma | 7.x |
-| UI Components | shadcn/ui | - |
-| Styling | Tailwind CSS | 4.x |
-| Hébergement | Vercel | - |
-| Base de données | Supabase (PostgreSQL) | - |
+| Composant       | Technologie           | Version |
+| --------------- | --------------------- | ------- |
+| Framework       | Next.js (App Router)  | 16.x    |
+| Langage         | TypeScript            | 5.x     |
+| Base de données | PostgreSQL            | 15+     |
+| ORM             | Prisma                | 7.x     |
+| UI Components   | shadcn/ui             | -       |
+| Styling         | Tailwind CSS          | 4.x     |
+| Hébergement     | Vercel                | -       |
+| Base de données | Supabase (PostgreSQL) | -       |
 
 ---
 
@@ -164,25 +164,45 @@ politic-tracker/
 
 ```typescript
 enum MandateType {
-  DEPUTE, SENATEUR, DEPUTE_EUROPEEN,
-  PRESIDENT_REPUBLIQUE, PREMIER_MINISTRE,
-  MINISTRE, MINISTRE_DELEGUE, SECRETAIRE_ETAT,
-  PRESIDENT_REGION, PRESIDENT_DEPARTEMENT,
-  MAIRE, ADJOINT_MAIRE, CONSEILLER_REGIONAL,
-  CONSEILLER_DEPARTEMENTAL, CONSEILLER_MUNICIPAL
+  DEPUTE,
+  SENATEUR,
+  DEPUTE_EUROPEEN,
+  PRESIDENT_REPUBLIQUE,
+  PREMIER_MINISTRE,
+  MINISTRE,
+  MINISTRE_DELEGUE,
+  SECRETAIRE_ETAT,
+  PRESIDENT_REGION,
+  PRESIDENT_DEPARTEMENT,
+  MAIRE,
+  ADJOINT_MAIRE,
+  CONSEILLER_REGIONAL,
+  CONSEILLER_DEPARTEMENTAL,
+  CONSEILLER_MUNICIPAL,
 }
 
 enum AffairStatus {
-  ENQUETE_PRELIMINAIRE, MISE_EN_EXAMEN,
-  PROCES_EN_COURS, CONDAMNATION_PREMIERE_INSTANCE,
-  CONDAMNATION_DEFINITIVE, APPEL_EN_COURS,
-  RELAXE, NON_LIEU, PRESCRIPTION
+  ENQUETE_PRELIMINAIRE,
+  MISE_EN_EXAMEN,
+  PROCES_EN_COURS,
+  CONDAMNATION_PREMIERE_INSTANCE,
+  CONDAMNATION_DEFINITIVE,
+  APPEL_EN_COURS,
+  RELAXE,
+  NON_LIEU,
+  PRESCRIPTION,
 }
 
 enum DataSource {
-  ASSEMBLEE_NATIONALE, SENAT, GOUVERNEMENT,
-  HATVP, WIKIDATA, NOSDEPUTES, NOSSENATEURS,
-  WIKIPEDIA, MANUAL
+  ASSEMBLEE_NATIONALE,
+  SENAT,
+  GOUVERNEMENT,
+  HATVP,
+  WIKIDATA,
+  NOSDEPUTES,
+  NOSSENATEURS,
+  WIKIPEDIA,
+  MANUAL,
 }
 ```
 
@@ -219,16 +239,19 @@ enum DataSource {
 ## 5. Sécurité
 
 ### 5.1 Authentification admin
+
 - Cookie de session (HTTP-only)
 - Mot de passe hashé comparé côté serveur
 - Variable d'environnement `ADMIN_PASSWORD`
 
 ### 5.2 Protection des données
+
 - Pas de données personnelles des visiteurs collectées
 - Pas de cookies de tracking
 - Uniquement données publiques des représentants
 
 ### 5.3 Headers de sécurité (à implémenter)
+
 - Content-Security-Policy
 - X-Frame-Options
 - X-Content-Type-Options
@@ -239,11 +262,13 @@ enum DataSource {
 ## 6. Performance
 
 ### 6.1 Stratégies de rendu Next.js
+
 - **Pages statiques** : Accueil, Sources, Mentions légales
 - **Pages dynamiques** : Listes avec filtres, fiches individuelles
 - **API Routes** : Recherche, Admin
 
 ### 6.2 Optimisations
+
 - Images : URL externes (AN, Sénat, HATVP)
 - Pagination : 24 items par page
 - Débounce recherche : 200ms
@@ -253,6 +278,7 @@ enum DataSource {
 ## 7. Commandes
 
 ### 7.1 Développement
+
 ```bash
 npm run dev          # Serveur développement
 npm run build        # Build production
@@ -260,6 +286,7 @@ npm run start        # Serveur production
 ```
 
 ### 7.2 Base de données
+
 ```bash
 npm run db:push      # Appliquer schéma
 npm run db:generate  # Régénérer client Prisma
@@ -267,6 +294,7 @@ npm run db:studio    # Interface visuelle
 ```
 
 ### 7.3 Synchronisation
+
 ```bash
 npm run sync:assemblee       # Députés
 npm run sync:senat           # Sénateurs

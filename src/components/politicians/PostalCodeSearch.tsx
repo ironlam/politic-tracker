@@ -1,11 +1,10 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { PoliticianAvatar } from "./PoliticianAvatar";
-import { MANDATE_TYPE_LABELS } from "@/config/labels";
 
 interface GeoCommune {
   nom: string;
@@ -38,7 +37,6 @@ export function PostalCodeSearch() {
   const [postalCode, setPostalCode] = useState("");
   const [result, setResult] = useState<SearchResult | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
   const [isSearching, setIsSearching] = useState(false);
 
   const handleSearch = async () => {
@@ -70,9 +68,7 @@ export function PostalCodeSearch() {
       }
 
       // Use the most populated commune (for shared postal codes)
-      const commune = communes.reduce((a, b) =>
-        a.population > b.population ? a : b
-      );
+      const commune = communes.reduce((a, b) => (a.population > b.population ? a : b));
 
       // 2. Get department name from code
       const deptResponse = await fetch(
@@ -99,9 +95,7 @@ export function PostalCodeSearch() {
         deputies,
       });
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Une erreur est survenue"
-      );
+      setError(err instanceof Error ? err.message : "Une erreur est survenue");
     } finally {
       setIsSearching(false);
     }
@@ -172,27 +166,38 @@ export function PostalCodeSearch() {
 
       {/* Error message */}
       {error && (
-        <div id="postal-code-error" role="alert" aria-live="assertive" className="p-4 bg-destructive/10 text-destructive rounded-lg text-center">
+        <div
+          id="postal-code-error"
+          role="alert"
+          aria-live="assertive"
+          className="p-4 bg-destructive/10 text-destructive rounded-lg text-center"
+        >
           {error}
         </div>
       )}
 
       {/* Results */}
       {result && (
-        <div className="space-y-4" role="region" aria-live="polite" aria-label="Résultats de recherche">
+        <div
+          className="space-y-4"
+          role="region"
+          aria-live="polite"
+          aria-label="Résultats de recherche"
+        >
           <div className="text-center p-4 bg-muted rounded-lg">
             <p className="text-sm text-muted-foreground">
               Résultats pour <strong>{result.commune}</strong> ({result.department})
             </p>
             <p className="text-xs text-muted-foreground mt-1">
-              {result.deputies.length} député{result.deputies.length > 1 ? "s" : ""} dans ce département
+              {result.deputies.length} député{result.deputies.length > 1 ? "s" : ""} dans ce
+              département
             </p>
           </div>
 
           {result.deputies.length > 1 && (
             <div className="p-3 bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-200 rounded-lg text-sm">
-              <strong>Note :</strong> Votre département compte plusieurs circonscriptions.
-              Votre député dépend de votre adresse exacte.{" "}
+              <strong>Note :</strong> Votre département compte plusieurs circonscriptions. Votre
+              député dépend de votre adresse exacte.{" "}
               <a
                 href={`https://www.assemblee-nationale.fr/dyn/vos-deputes`}
                 target="_blank"
@@ -206,11 +211,7 @@ export function PostalCodeSearch() {
 
           <div className="grid gap-4">
             {result.deputies.map((deputy) => (
-              <Link
-                key={deputy.id}
-                href={`/politiques/${deputy.slug}`}
-                className="block group"
-              >
+              <Link key={deputy.id} href={`/politiques/${deputy.slug}`} className="block group">
                 <Card className="transition-all duration-200 hover:shadow-lg hover:border-primary/20">
                   <CardContent className="p-4">
                     <div className="flex items-center gap-4">
@@ -271,9 +272,7 @@ export function PostalCodeSearch() {
           {result.deputies.length === 0 && (
             <div className="text-center p-8 text-muted-foreground">
               <p>Aucun député trouvé pour ce département.</p>
-              <p className="text-sm mt-2">
-                Les données sont peut-être en cours de mise à jour.
-              </p>
+              <p className="text-sm mt-2">Les données sont peut-être en cours de mise à jour.</p>
             </div>
           )}
         </div>

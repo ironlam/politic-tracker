@@ -108,17 +108,20 @@ export function getClientIp(request: Request): string {
 
 // Cleanup old entries periodically (every 10 minutes)
 if (typeof setInterval !== "undefined") {
-  setInterval(() => {
-    const now = Date.now();
-    for (const [ip, entry] of attempts.entries()) {
-      // Remove if window expired and not blocked
-      if (!entry.blockedUntil && now - entry.firstAttempt > WINDOW_MS) {
-        attempts.delete(ip);
+  setInterval(
+    () => {
+      const now = Date.now();
+      for (const [ip, entry] of attempts.entries()) {
+        // Remove if window expired and not blocked
+        if (!entry.blockedUntil && now - entry.firstAttempt > WINDOW_MS) {
+          attempts.delete(ip);
+        }
+        // Remove if block expired
+        if (entry.blockedUntil && now >= entry.blockedUntil) {
+          attempts.delete(ip);
+        }
       }
-      // Remove if block expired
-      if (entry.blockedUntil && now >= entry.blockedUntil) {
-        attempts.delete(ip);
-      }
-    }
-  }, 10 * 60 * 1000);
+    },
+    10 * 60 * 1000
+  );
 }

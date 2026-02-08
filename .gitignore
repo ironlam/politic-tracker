@@ -35,6 +35,10 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 
+# IDE - JetBrains (keep shared config only)
+.idea/workspace.xml
+.idea/copilot.data.migration.ask2agent.xml
+
 # Claude Code local settings (may contain permissions)
 .claude/settings.local.json
 

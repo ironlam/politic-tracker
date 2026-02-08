@@ -4,15 +4,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import {
-  Send,
-  Bot,
-  User,
-  Loader2,
-  AlertCircle,
-  MessageSquare,
-  RefreshCw,
-} from "lucide-react";
+import { Send, Bot, User, Loader2, AlertCircle, MessageSquare, RefreshCw } from "lucide-react";
 
 const SUGGESTED_QUESTIONS = [
   "Qui est mon député et comment a-t-il voté ?",
@@ -24,11 +16,11 @@ const SUGGESTED_QUESTIONS = [
 // Ghost text autocomplete - single suggestion that completes what user is typing
 const AUTOCOMPLETE_COMPLETIONS: Record<string, string> = {
   // Questions citoyennes
-  "comment": "Comment fonctionne l'Assemblée nationale ?",
+  comment: "Comment fonctionne l'Assemblée nationale ?",
   "comment fonctionne": "Comment fonctionne le vote d'une loi en France ?",
   "c'est quoi": "C'est quoi la présomption d'innocence ?",
   "c'est quoi l": "C'est quoi l'Assemblée nationale ?",
-  "pourquoi": "Pourquoi mon député a voté contre ?",
+  pourquoi: "Pourquoi mon député a voté contre ?",
   "mon député": "Mon député : qui me représente ?",
   "mon dépu": "Mon député : qui me représente ?",
   // Questions sur les personnes
@@ -36,60 +28,60 @@ const AUTOCOMPLETE_COMPLETIONS: Record<string, string> = {
   "qui est le p": "Qui est le Premier ministre ?",
   "qui est le prem": "Qui est le Premier ministre ?",
   "qui est mar": "Qui est Marine Le Pen ?",
-  "parle": "Parle-moi du gouvernement actuel",
+  parle: "Parle-moi du gouvernement actuel",
   "parle-moi": "Parle-moi du gouvernement actuel",
   "parle-moi de": "Parle-moi de Marine Le Pen",
   // Questions sur les affaires
-  "quelle": "Quelles affaires judiciaires touchent des élus ?",
+  quelle: "Quelles affaires judiciaires touchent des élus ?",
   "quelles aff": "Quelles affaires judiciaires touchent des élus ?",
   "quelles affaires": "Quelles affaires judiciaires touchent des élus ?",
-  "affaire": "Affaires judiciaires en cours",
-  "condamn": "Quels élus ont été condamnés ?",
+  affaire: "Affaires judiciaires en cours",
+  condamn: "Quels élus ont été condamnés ?",
   // Patrimoine
-  "patrimoine": "Patrimoine déclaré des élus",
+  patrimoine: "Patrimoine déclaré des élus",
   "patrimoine de": "Patrimoine déclaré des élus",
-  "déclaration": "Déclarations HATVP des élus",
+  déclaration: "Déclarations HATVP des élus",
   // Signalement
-  "signaler": "Signaler une information manquante",
-  "corriger": "Corriger une information sur un élu",
+  signaler: "Signaler une information manquante",
+  corriger: "Corriger une information sur un élu",
   // Comparaison
-  "comparer": "Comparer deux élus",
-  "compar": "Comparer deux élus",
+  comparer: "Comparer deux élus",
+  compar: "Comparer deux élus",
   // Questions sur les votes/lois
-  "vote": "Votes récents à l'Assemblée",
+  vote: "Votes récents à l'Assemblée",
   "derniers v": "Derniers votes à l'Assemblée",
-  "loi": "Comment fonctionne le vote d'une loi ?",
-  "lois": "Lois en discussion à l'Assemblée",
-  "dossier": "Dossiers législatifs en cours",
+  loi: "Comment fonctionne le vote d'une loi ?",
+  lois: "Lois en discussion à l'Assemblée",
+  dossier: "Dossiers législatifs en cours",
   "quels dossiers": "Quels dossiers sont discutés à l'Assemblée ?",
   // Questions thématiques
-  "agricul": "Lois sur l'agriculture",
-  "écolog": "Dossiers sur l'environnement",
-  "santé": "Dossiers sur la santé",
-  "retraite": "Réforme des retraites",
-  "immigration": "Lois sur l'immigration",
+  agricul: "Lois sur l'agriculture",
+  écolog: "Dossiers sur l'environnement",
+  santé: "Dossiers sur la santé",
+  retraite: "Réforme des retraites",
+  immigration: "Lois sur l'immigration",
   // Questions sur les institutions
-  "assemblée": "C'est quoi l'Assemblée nationale ?",
-  "sénat": "C'est quoi le Sénat ?",
-  "gouvernement": "Composition du gouvernement actuel",
-  "député": "Qui sont les députés ?",
-  "sénateur": "Qui sont les sénateurs ?",
-  "institution": "Comment fonctionnent les institutions françaises ?",
+  assemblée: "C'est quoi l'Assemblée nationale ?",
+  sénat: "C'est quoi le Sénat ?",
+  gouvernement: "Composition du gouvernement actuel",
+  député: "Qui sont les députés ?",
+  sénateur: "Qui sont les sénateurs ?",
+  institution: "Comment fonctionnent les institutions françaises ?",
   // Questions sur les partis
-  "parti": "Quels sont les partis politiques ?",
-  "rn": "Membres du Rassemblement National",
-  "lfi": "Membres de La France Insoumise",
-  "républicain": "Membres des Républicains",
-  "macron": "Parle-moi d'Emmanuel Macron",
+  parti: "Quels sont les partis politiques ?",
+  rn: "Membres du Rassemblement National",
+  lfi: "Membres de La France Insoumise",
+  républicain: "Membres des Républicains",
+  macron: "Parle-moi d'Emmanuel Macron",
   "le pen": "Parle-moi de Marine Le Pen",
-  "mélenchon": "Parle-moi de Jean-Luc Mélenchon",
+  mélenchon: "Parle-moi de Jean-Luc Mélenchon",
   // Questions sur la presse
-  "presse": "Derniers articles de presse politique",
-  "actualité": "Actualités politiques récentes",
+  presse: "Derniers articles de presse politique",
+  actualité: "Actualités politiques récentes",
   // Questions générales
-  "combien": "Combien de députés et sénateurs ?",
+  combien: "Combien de députés et sénateurs ?",
   "combien de": "Combien de députés et sénateurs ?",
-  "statistique": "Statistiques de Transparence Politique",
+  statistique: "Statistiques de Transparence Politique",
 };
 
 interface Message {
@@ -171,93 +163,97 @@ export function ChatInterface() {
     }
 
     // Only show ghost if it's different and extends the input
-    if (bestMatch && bestMatch.toLowerCase() !== lowerInput && bestMatch.toLowerCase().startsWith(lowerInput)) {
+    if (
+      bestMatch &&
+      bestMatch.toLowerCase() !== lowerInput &&
+      bestMatch.toLowerCase().startsWith(lowerInput)
+    ) {
       setGhostText(bestMatch);
     } else {
       setGhostText(null);
     }
   }, [input]);
 
-  const sendMessage = useCallback(async (messageContent: string) => {
-    if (!messageContent.trim() || isLoading) return;
+  const sendMessage = useCallback(
+    async (messageContent: string) => {
+      if (!messageContent.trim() || isLoading) return;
 
-    setError(null);
-    setIsLoading(true);
-    scrollOnNewUserMessage.current = true;
+      setError(null);
+      setIsLoading(true);
+      scrollOnNewUserMessage.current = true;
 
-    // Add user message
-    const userMessage: Message = {
-      id: `user-${Date.now()}`,
-      role: "user",
-      content: messageContent,
-    };
-    const newMessages = [...messages, userMessage];
-    setMessages(newMessages);
-    setInput("");
-    // Reset textarea height after sending
-    if (inputRef.current) {
-      inputRef.current.style.height = "auto";
-    }
-
-    // Prepare assistant message placeholder
-    const assistantId = `assistant-${Date.now()}`;
-    setMessages([...newMessages, { id: assistantId, role: "assistant", content: "" }]);
-
-    try {
-      const response = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          messages: newMessages.map((m) => ({ role: m.role, content: m.content })),
-        }),
-      });
-
-      if (response.status === 429) {
-        setIsRateLimited(true);
-        const data = await response.json();
-        setRetryAfter(data.retryAfter || 60);
-        setMessages(newMessages); // Remove assistant placeholder
-        throw new Error("Trop de requêtes");
-      }
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "Une erreur s'est produite");
-      }
-
-      // Handle streaming response
-      const reader = response.body?.getReader();
-      const decoder = new TextDecoder();
-
-      if (!reader) {
-        throw new Error("Streaming non supporté");
-      }
-
-      let assistantContent = "";
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        const chunk = decoder.decode(value);
-        assistantContent += chunk;
-
-        // Update message content
-        setMessages((prev) =>
-          prev.map((m) =>
-            m.id === assistantId ? { ...m, content: assistantContent } : m
-          )
-        );
-      }
-
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error("Erreur inconnue"));
-      // Remove the empty assistant message on error
+      // Add user message
+      const userMessage: Message = {
+        id: `user-${Date.now()}`,
+        role: "user",
+        content: messageContent,
+      };
+      const newMessages = [...messages, userMessage];
       setMessages(newMessages);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [messages, isLoading]);
+      setInput("");
+      // Reset textarea height after sending
+      if (inputRef.current) {
+        inputRef.current.style.height = "auto";
+      }
+
+      // Prepare assistant message placeholder
+      const assistantId = `assistant-${Date.now()}`;
+      setMessages([...newMessages, { id: assistantId, role: "assistant", content: "" }]);
+
+      try {
+        const response = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            messages: newMessages.map((m) => ({ role: m.role, content: m.content })),
+          }),
+        });
+
+        if (response.status === 429) {
+          setIsRateLimited(true);
+          const data = await response.json();
+          setRetryAfter(data.retryAfter || 60);
+          setMessages(newMessages); // Remove assistant placeholder
+          throw new Error("Trop de requêtes");
+        }
+
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.error || "Une erreur s'est produite");
+        }
+
+        // Handle streaming response
+        const reader = response.body?.getReader();
+        const decoder = new TextDecoder();
+
+        if (!reader) {
+          throw new Error("Streaming non supporté");
+        }
+
+        let assistantContent = "";
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value);
+          assistantContent += chunk;
+
+          // Update message content
+          setMessages((prev) =>
+            prev.map((m) => (m.id === assistantId ? { ...m, content: assistantContent } : m))
+          );
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err : new Error("Erreur inconnue"));
+        // Remove the empty assistant message on error
+        setMessages(newMessages);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [messages, isLoading]
+  );
 
   // Handle form submit
   const handleSubmit = (e: React.FormEvent) => {
@@ -309,22 +305,17 @@ export function ChatInterface() {
   return (
     <div className="flex flex-col h-[600px] max-h-[80vh]">
       {/* Messages area */}
-      <div
-        ref={messagesContainerRef}
-        className="flex-1 overflow-y-auto p-4 space-y-4"
-      >
+      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center space-y-6">
             <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
               <MessageSquare className="w-8 h-8 text-primary" />
             </div>
             <div>
-              <h2 className="text-xl font-semibold mb-2">
-                Assistant Transparence Politique
-              </h2>
+              <h2 className="text-xl font-semibold mb-2">Assistant Transparence Politique</h2>
               <p className="text-muted-foreground max-w-md">
-                Posez vos questions sur la politique française : élus, votes,
-                affaires judiciaires, patrimoine, institutions ou dossiers législatifs.
+                Posez vos questions sur la politique française : élus, votes, affaires judiciaires,
+                patrimoine, institutions ou dossiers législatifs.
               </p>
             </div>
             <div className="flex flex-col gap-2 w-full max-w-md">
@@ -358,9 +349,7 @@ export function ChatInterface() {
                 <Card
                   className={cn(
                     "max-w-[80%] py-3 overflow-hidden",
-                    message.role === "user"
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted"
+                    message.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted"
                   )}
                 >
                   <CardContent className="p-0 px-4 overflow-hidden">
@@ -404,12 +393,7 @@ export function ChatInterface() {
                     <p className="text-sm text-destructive mb-2">
                       {error.message || "Une erreur s'est produite. Veuillez réessayer."}
                     </p>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleRetry}
-                      className="gap-2"
-                    >
+                    <Button variant="outline" size="sm" onClick={handleRetry} className="gap-2">
                       <RefreshCw className="w-3 h-3" />
                       Réessayer
                     </Button>
@@ -451,9 +435,7 @@ export function ChatInterface() {
                 aria-hidden="true"
               >
                 <span className="invisible">{input}</span>
-                <span className="text-muted-foreground/50">
-                  {ghostText.slice(input.length)}
-                </span>
+                <span className="text-muted-foreground/50">{ghostText.slice(input.length)}</span>
               </div>
             )}
             <textarea
@@ -558,8 +540,7 @@ function ChatMessageContent({ content }: { content: string }) {
           else if (url.startsWith("/politiques/")) {
             const name = url.split("/").pop()?.replace(/-/g, " ") || "";
             label = `Voir la fiche de ${name}`;
-          }
-          else if (url.startsWith("http")) label = "Voir la source officielle";
+          } else if (url.startsWith("http")) label = "Voir la source officielle";
 
           const isExternal = url.startsWith("http");
 
@@ -649,7 +630,9 @@ function renderInlineFormatting(text: string): React.ReactNode {
       }
 
       // Handle raw links in the remaining text (including partial paths like /politiques/)
-      const linkParts = part.split(/(\/politiques(?:\/[^\s,.)]*)?|\/partis(?:\/[^\s,.)]*)?|\/affaires(?:\/[^\s,.)]*)?|\/assemblee(?:\/[^\s,.)]*)?|\/votes(?:\/[^\s,.)]*)?|\/statistiques|\/institutions|https?:\/\/[^\s,.)]+)/g);
+      const linkParts = part.split(
+        /(\/politiques(?:\/[^\s,.)]*)?|\/partis(?:\/[^\s,.)]*)?|\/affaires(?:\/[^\s,.)]*)?|\/assemblee(?:\/[^\s,.)]*)?|\/votes(?:\/[^\s,.)]*)?|\/statistiques|\/institutions|https?:\/\/[^\s,.)]+)/g
+      );
 
       return linkParts.map((linkPart, linkIndex) => {
         const isInternalLink =
@@ -665,13 +648,17 @@ function renderInlineFormatting(text: string): React.ReactNode {
         if (isInternalLink || isExternalLink) {
           // Generate friendly label for internal links
           let label = linkPart;
-          if (linkPart === "/politiques" || linkPart === "/politiques/") label = "Voir tous les élus";
-          else if (linkPart === "/affaires" || linkPart === "/affaires/") label = "Voir toutes les affaires";
-          else if (linkPart === "/assemblee" || linkPart === "/assemblee/") label = "Voir les dossiers législatifs";
+          if (linkPart === "/politiques" || linkPart === "/politiques/")
+            label = "Voir tous les élus";
+          else if (linkPart === "/affaires" || linkPart === "/affaires/")
+            label = "Voir toutes les affaires";
+          else if (linkPart === "/assemblee" || linkPart === "/assemblee/")
+            label = "Voir les dossiers législatifs";
           else if (linkPart === "/votes" || linkPart === "/votes/") label = "Voir les votes";
           else if (linkPart === "/statistiques") label = "Voir les statistiques";
           else if (linkPart === "/institutions") label = "Voir les institutions";
-          else if (linkPart.startsWith("/politiques/")) label = linkPart.split("/").pop() || linkPart;
+          else if (linkPart.startsWith("/politiques/"))
+            label = linkPart.split("/").pop() || linkPart;
           else if (linkPart.startsWith("/partis/")) label = linkPart.split("/").pop() || linkPart;
           else if (linkPart.startsWith("/votes/")) label = "Voir ce vote";
           else if (linkPart.startsWith("/assemblee/")) label = "Voir ce dossier";

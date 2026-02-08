@@ -96,12 +96,12 @@ export async function indexDocument(params: {
       entityId,
       content,
       embedding: embedding as unknown as Prisma.InputJsonValue,
-      metadata: metadata as Prisma.InputJsonValue ?? null,
+      metadata: (metadata as Prisma.InputJsonValue) ?? null,
     },
     update: {
       content,
       embedding: embedding as unknown as Prisma.InputJsonValue,
-      metadata: metadata as Prisma.InputJsonValue ?? null,
+      metadata: (metadata as Prisma.InputJsonValue) ?? null,
       updatedAt: new Date(),
     },
   });
@@ -244,9 +244,7 @@ export async function indexPolitician(politicianId: string): Promise<void> {
 
   // Add affair summary (if any)
   if (politician.affairs.length > 0) {
-    parts.push(
-      `${politician.affairs.length} affaire(s) judiciaire(s)`
-    );
+    parts.push(`${politician.affairs.length} affaire(s) judiciaire(s)`);
   }
 
   const content = parts.join(". ");
@@ -275,9 +273,7 @@ export async function indexDossier(dossierId: string): Promise<void> {
 
   if (!dossier) return;
 
-  const parts: string[] = [
-    dossier.shortTitle || dossier.title,
-  ];
+  const parts: string[] = [dossier.shortTitle || dossier.title];
 
   if (dossier.number) {
     parts.push(`Numéro: ${dossier.number}`);
@@ -424,20 +420,20 @@ export async function indexParty(partyId: string): Promise<void> {
 
   const deputyCount = countByType["DEPUTE"] || 0;
   const senatorCount = countByType["SENATEUR"] || 0;
-  const ministerCount = (countByType["MINISTRE"] || 0) +
-                        (countByType["MINISTRE_DELEGUE"] || 0) +
-                        (countByType["SECRETAIRE_ETAT"] || 0);
+  const ministerCount =
+    (countByType["MINISTRE"] || 0) +
+    (countByType["MINISTRE_DELEGUE"] || 0) +
+    (countByType["SECRETAIRE_ETAT"] || 0);
   const mepCount = countByType["DEPUTE_EUROPEEN"] || 0;
 
-  const parts: string[] = [
-    `${party.name} (${party.shortName})`,
-  ];
+  const parts: string[] = [`${party.name} (${party.shortName})`];
 
   // Add detailed mandate counts
   const mandateParts: string[] = [];
   if (deputyCount > 0) mandateParts.push(`${deputyCount} député${deputyCount > 1 ? "s" : ""}`);
   if (senatorCount > 0) mandateParts.push(`${senatorCount} sénateur${senatorCount > 1 ? "s" : ""}`);
-  if (ministerCount > 0) mandateParts.push(`${ministerCount} ministre${ministerCount > 1 ? "s" : ""}`);
+  if (ministerCount > 0)
+    mandateParts.push(`${ministerCount} ministre${ministerCount > 1 ? "s" : ""}`);
   if (mepCount > 0) mandateParts.push(`${mepCount} eurodéputé${mepCount > 1 ? "s" : ""}`);
 
   if (mandateParts.length > 0) {
@@ -508,10 +504,11 @@ export async function indexGlobalStats(): Promise<void> {
   const deputyCount = countByType["DEPUTE"] || 0;
   const senatorCount = countByType["SENATEUR"] || 0;
   const mepCount = countByType["DEPUTE_EUROPEEN"] || 0;
-  const ministerCount = (countByType["MINISTRE"] || 0) +
-                        (countByType["MINISTRE_DELEGUE"] || 0) +
-                        (countByType["SECRETAIRE_ETAT"] || 0) +
-                        (countByType["PREMIER_MINISTRE"] || 0);
+  const ministerCount =
+    (countByType["MINISTRE"] || 0) +
+    (countByType["MINISTRE_DELEGUE"] || 0) +
+    (countByType["SECRETAIRE_ETAT"] || 0) +
+    (countByType["PREMIER_MINISTRE"] || 0);
 
   // Get affair counts
   const affairCount = await db.affair.count();
@@ -688,9 +685,7 @@ export async function indexAllOfType(
 /**
  * Get embedding stats
  */
-export async function getEmbeddingStats(): Promise<
-  Record<EmbeddingType, number>
-> {
+export async function getEmbeddingStats(): Promise<Record<EmbeddingType, number>> {
   const results = await db.chatEmbedding.groupBy({
     by: ["entityType"],
     _count: true,

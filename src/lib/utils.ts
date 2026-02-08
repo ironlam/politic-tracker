@@ -1,8 +1,8 @@
-import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
+  return twMerge(clsx(inputs));
 }
 
 export function generateSlug(text: string): string {
@@ -42,11 +42,7 @@ export function formatCurrency(amount: number | null): string {
  * @param maxLength - Maximum total length of the slug (default: 80)
  * @returns A slugified string in format "YYYY-MM-DD-title-slug"
  */
-export function generateDateSlug(
-  date: Date | null,
-  title: string,
-  maxLength: number = 80
-): string {
+export function generateDateSlug(date: Date | null, title: string, maxLength: number = 80): string {
   const datePrefix = date
     ? date.toISOString().split("T")[0]
     : new Date().toISOString().split("T")[0];

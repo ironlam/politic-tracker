@@ -5,8 +5,6 @@ import { db } from "@/lib/db";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { PoliticianAvatar } from "@/components/politicians/PoliticianAvatar";
-import { MANDATE_TYPE_LABELS } from "@/config/labels";
-
 interface PageProps {
   params: Promise<{ name: string }>;
 }
@@ -124,8 +122,8 @@ export default async function DepartmentPage({ params }: PageProps) {
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">{departmentName}</h1>
         <p className="text-muted-foreground">
-          {deputies.length} député{deputies.length > 1 ? "s" : ""} ·{" "}
-          {senators.length} sénateur{senators.length > 1 ? "s" : ""}
+          {deputies.length} député{deputies.length > 1 ? "s" : ""} · {senators.length} sénateur
+          {senators.length > 1 ? "s" : ""}
         </p>
       </div>
 
@@ -243,10 +241,7 @@ export default async function DepartmentPage({ params }: PageProps) {
 
       {/* Back link */}
       <div className="mt-8">
-        <Link
-          href="/departements"
-          className="text-sm text-muted-foreground hover:text-foreground"
-        >
+        <Link href="/departements" className="text-sm text-muted-foreground hover:text-foreground">
           ← Retour à la liste des départements
         </Link>
       </div>

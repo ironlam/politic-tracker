@@ -3,7 +3,11 @@ import { db } from "@/lib/db";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { AFFAIR_STATUS_LABELS, AFFAIR_STATUS_COLORS, AFFAIR_CATEGORY_LABELS } from "@/config/labels";
+import {
+  AFFAIR_STATUS_LABELS,
+  AFFAIR_STATUS_COLORS,
+  AFFAIR_CATEGORY_LABELS,
+} from "@/config/labels";
 import { formatDate } from "@/lib/utils";
 
 async function getAffairs() {
@@ -41,13 +45,27 @@ export default async function AdminAffairsPage() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b text-left">
-                    <th scope="col" className="pb-3 font-medium">Affaire</th>
-                    <th scope="col" className="pb-3 font-medium">Politique</th>
-                    <th scope="col" className="pb-3 font-medium">Catégorie</th>
-                    <th scope="col" className="pb-3 font-medium">Statut</th>
-                    <th scope="col" className="pb-3 font-medium">Sources</th>
-                    <th scope="col" className="pb-3 font-medium">Ajouté le</th>
-                    <th scope="col" className="pb-3 font-medium">Actions</th>
+                    <th scope="col" className="pb-3 font-medium">
+                      Affaire
+                    </th>
+                    <th scope="col" className="pb-3 font-medium">
+                      Politique
+                    </th>
+                    <th scope="col" className="pb-3 font-medium">
+                      Catégorie
+                    </th>
+                    <th scope="col" className="pb-3 font-medium">
+                      Statut
+                    </th>
+                    <th scope="col" className="pb-3 font-medium">
+                      Sources
+                    </th>
+                    <th scope="col" className="pb-3 font-medium">
+                      Ajouté le
+                    </th>
+                    <th scope="col" className="pb-3 font-medium">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -77,9 +95,7 @@ export default async function AdminAffairsPage() {
                           {AFFAIR_STATUS_LABELS[affair.status]}
                         </Badge>
                       </td>
-                      <td className="py-3 pr-4 text-center">
-                        {affair.sources.length}
-                      </td>
+                      <td className="py-3 pr-4 text-center">{affair.sources.length}</td>
                       <td className="py-3 pr-4 text-sm text-muted-foreground">
                         {formatDate(affair.createdAt)}
                       </td>
@@ -100,9 +116,7 @@ export default async function AdminAffairsPage() {
             </div>
           ) : (
             <div className="text-center py-8">
-              <p className="text-muted-foreground mb-4">
-                Aucune affaire documentée pour le moment
-              </p>
+              <p className="text-muted-foreground mb-4">Aucune affaire documentée pour le moment</p>
               <Button asChild>
                 <Link href="/admin/affaires/nouveau">Ajouter la première affaire</Link>
               </Button>

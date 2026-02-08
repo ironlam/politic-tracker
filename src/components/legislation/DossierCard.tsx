@@ -56,10 +56,7 @@ export function DossierCard({
             )}
             <CategoryBadge category={category} showIcon={false} />
           </div>
-          <Link
-            href={href}
-            className="text-sm font-medium hover:text-blue-600 line-clamp-1"
-          >
+          <Link href={href} className="text-sm font-medium hover:text-blue-600 line-clamp-1">
             {displayTitle}
           </Link>
         </div>
@@ -134,10 +131,7 @@ export function DossierCard({
             </div>
 
             <div className="flex items-center gap-2">
-              <Link
-                href={href}
-                className="text-sm text-blue-600 hover:underline"
-              >
+              <Link href={href} className="text-sm text-blue-600 hover:underline">
                 Détails
               </Link>
               {sourceUrl && (

@@ -42,9 +42,7 @@ const CHECKS: QualityCheck[] = [
       return {
         passed: affairs.length === 0,
         count: affairs.length,
-        details: affairs.slice(0, 10).map(
-          (a) => `${a.politician.fullName}: ${a.title}`
-        ),
+        details: affairs.slice(0, 10).map((a) => `${a.politician.fullName}: ${a.title}`),
       };
     },
   },
@@ -64,9 +62,7 @@ const CHECKS: QualityCheck[] = [
       return {
         passed: mandates.length < 10,
         count: mandates.length,
-        details: mandates.slice(0, 10).map(
-          (m) => `${m.fullName}: ${m.title}`
-        ),
+        details: mandates.slice(0, 10).map((m) => `${m.fullName}: ${m.title}`),
       };
     },
   },
@@ -126,7 +122,10 @@ const CHECKS: QualityCheck[] = [
             some: { isCurrent: true },
           },
         },
-        select: { fullName: true, mandates: { where: { isCurrent: true }, select: { type: true } } },
+        select: {
+          fullName: true,
+          mandates: { where: { isCurrent: true }, select: { type: true } },
+        },
       });
       // Filter out those who might legitimately have no party
       const partyMandateTypes: MandateType[] = [
@@ -166,9 +165,9 @@ const CHECKS: QualityCheck[] = [
       return {
         passed: mandates.length === 0,
         count: mandates.length,
-        details: mandates.slice(0, 10).map(
-          (m) => `${m.politician.fullName}: ${m.title} (${m.startDate?.getFullYear()})`
-        ),
+        details: mandates
+          .slice(0, 10)
+          .map((m) => `${m.politician.fullName}: ${m.title} (${m.startDate?.getFullYear()})`),
       };
     },
   },
@@ -256,9 +255,7 @@ const CHECKS: QualityCheck[] = [
       return {
         passed: duplicates.length < 5,
         count: duplicates.length,
-        details: duplicates.slice(0, 10).map(
-          (d) => `${d.fullName}: ${d.count} occurrences`
-        ),
+        details: duplicates.slice(0, 10).map((d) => `${d.fullName}: ${d.count} occurrences`),
       };
     },
   },

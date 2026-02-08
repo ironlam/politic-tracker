@@ -41,9 +41,7 @@ export default async function AdminDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Politiques
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Politiques</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold">{stats.politicianCount}</p>
@@ -104,9 +102,7 @@ export default async function AdminDashboard() {
                     >
                       {affair.title}
                     </Link>
-                    <p className="text-sm text-muted-foreground">
-                      {affair.politician.fullName}
-                    </p>
+                    <p className="text-sm text-muted-foreground">{affair.politician.fullName}</p>
                   </div>
                   <Link
                     href={`/admin/affaires/${affair.id}/edit`}

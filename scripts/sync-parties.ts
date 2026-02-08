@@ -15,11 +15,7 @@ import "dotenv/config";
 import { createCLI, type SyncHandler, type SyncResult } from "../src/lib/sync";
 import { db } from "../src/lib/db";
 import { DataSource, PoliticalPosition } from "../src/generated/prisma";
-import {
-  FRENCH_ASSEMBLY_PARTIES,
-  FRENCH_SENATE_PARTIES,
-  PartyConfig,
-} from "../src/config/parties";
+import { FRENCH_ASSEMBLY_PARTIES, FRENCH_SENATE_PARTIES, PartyConfig } from "../src/config/parties";
 
 const ALL_PARTY_CONFIGS: Record<string, PartyConfig> = {
   ...FRENCH_ASSEMBLY_PARTIES,
@@ -189,9 +185,7 @@ async function enrichFromWikidata(): Promise<{
 
     const shortName = result.shortName?.value || null;
     const foundedDate = result.foundedDate?.value ? new Date(result.foundedDate.value) : null;
-    const dissolvedDate = result.dissolvedDate?.value
-      ? new Date(result.dissolvedDate.value)
-      : null;
+    const dissolvedDate = result.dissolvedDate?.value ? new Date(result.dissolvedDate.value) : null;
     const wikidataColor = result.color?.value
       ? result.color.value.startsWith("#")
         ? result.color.value
@@ -235,7 +229,9 @@ async function enrichFromWikidata(): Promise<{
         where: {
           OR: [
             { name: { equals: name, mode: "insensitive" as const } },
-            ...(shortName ? [{ shortName: { equals: shortName, mode: "insensitive" as const } }] : []),
+            ...(shortName
+              ? [{ shortName: { equals: shortName, mode: "insensitive" as const } }]
+              : []),
           ],
         },
       });
@@ -383,7 +379,9 @@ Data sources:
     const errors: string[] = [];
 
     if (dryRun) {
-      console.log(`[DRY-RUN] Would sync parties ${config ? "(config only)" : "(config + Wikidata)"}`);
+      console.log(
+        `[DRY-RUN] Would sync parties ${config ? "(config only)" : "(config + Wikidata)"}`
+      );
       return { success: true, duration: 0, stats, errors };
     }
 

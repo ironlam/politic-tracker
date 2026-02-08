@@ -280,9 +280,7 @@ async function runTest(
       );
       if (!found) {
         result.passed = false;
-        result.errors.push(
-          `Missing any of: ${test.expect.containsAny.join(", ")}`
-        );
+        result.errors.push(`Missing any of: ${test.expect.containsAny.join(", ")}`);
       }
     }
 
@@ -413,9 +411,7 @@ async function main() {
   }
 
   // Average response time
-  const avgTime = Math.round(
-    results.reduce((sum, r) => sum + r.responseTime, 0) / results.length
-  );
+  const avgTime = Math.round(results.reduce((sum, r) => sum + r.responseTime, 0) / results.length);
   console.log(`\nAverage response time: ${avgTime}ms`);
 
   // JSON output

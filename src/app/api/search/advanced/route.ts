@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { searchPoliticians, getSearchFilterOptions, SearchFilters } from "@/services/search";
+import { searchPoliticians, SearchFilters } from "@/services/search";
 import { MandateType } from "@/generated/prisma";
 
 /**
@@ -125,7 +125,8 @@ export async function GET(request: NextRequest) {
   const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
   const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") || "20", 10)));
 
-  const hasAffairs = hasAffairsParam === "true" ? true : hasAffairsParam === "false" ? false : undefined;
+  const hasAffairs =
+    hasAffairsParam === "true" ? true : hasAffairsParam === "false" ? false : undefined;
   const isActive = isActiveParam === "true" ? true : isActiveParam === "false" ? false : undefined;
 
   const filters: SearchFilters = {

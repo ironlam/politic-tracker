@@ -69,17 +69,18 @@ async function getGlobalStats(): Promise<{
   totalMEPs: number;
   totalMinisters: number;
 }> {
-  const [totalAffairs, totalPoliticians, totalDossiers, totalVotes, mandateCounts] = await Promise.all([
-    db.affair.count(),
-    db.politician.count(),
-    db.legislativeDossier.count(),
-    db.scrutin.count(),
-    db.mandate.groupBy({
-      by: ["type"],
-      where: { isCurrent: true },
-      _count: true,
-    }),
-  ]);
+  const [totalAffairs, totalPoliticians, totalDossiers, totalVotes, mandateCounts] =
+    await Promise.all([
+      db.affair.count(),
+      db.politician.count(),
+      db.legislativeDossier.count(),
+      db.scrutin.count(),
+      db.mandate.groupBy({
+        by: ["type"],
+        where: { isCurrent: true },
+        _count: true,
+      }),
+    ]);
 
   const countByType: Record<string, number> = {};
   for (const m of mandateCounts) {
@@ -94,10 +95,11 @@ async function getGlobalStats(): Promise<{
     totalDeputies: countByType["DEPUTE"] || 0,
     totalSenators: countByType["SENATEUR"] || 0,
     totalMEPs: countByType["DEPUTE_EUROPEEN"] || 0,
-    totalMinisters: (countByType["MINISTRE"] || 0) +
-                    (countByType["MINISTRE_DELEGUE"] || 0) +
-                    (countByType["SECRETAIRE_ETAT"] || 0) +
-                    (countByType["PREMIER_MINISTRE"] || 0),
+    totalMinisters:
+      (countByType["MINISTRE"] || 0) +
+      (countByType["MINISTRE_DELEGUE"] || 0) +
+      (countByType["SECRETAIRE_ETAT"] || 0) +
+      (countByType["PREMIER_MINISTRE"] || 0),
   };
 }
 
@@ -142,7 +144,11 @@ async function buildContext(results: SearchResult[], query: string): Promise<str
       statsInfo += `- Total affaires judiciaires référencées: ${stats.totalAffairs}\n`;
       statsInfo += `- Rubrique complète: /affaires\n`;
     }
-    if (lowerQuery.includes("dossier") || lowerQuery.includes("loi") || lowerQuery.includes("législat")) {
+    if (
+      lowerQuery.includes("dossier") ||
+      lowerQuery.includes("loi") ||
+      lowerQuery.includes("législat")
+    ) {
       statsInfo += `- Total dossiers législatifs: ${stats.totalDossiers}\n`;
       statsInfo += `- Rubrique complète: /assemblee\n`;
     }
@@ -253,22 +259,20 @@ export async function POST(request: Request) {
     const { messages } = await request.json();
 
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
-      return new Response(
-        JSON.stringify({ error: "Messages requis" }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "Messages requis" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
     }
 
     // Get the last user message for RAG search
-    const lastUserMessage = messages
-      .filter((m: { role: string }) => m.role === "user")
-      .pop();
+    const lastUserMessage = messages.filter((m: { role: string }) => m.role === "user").pop();
 
     if (!lastUserMessage) {
-      return new Response(
-        JSON.stringify({ error: "Aucun message utilisateur" }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "Aucun message utilisateur" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
     }
 
     const userQuery = lastUserMessage.content;
@@ -352,9 +356,7 @@ export async function POST(request: Request) {
 export async function GET() {
   const hasAnthropic = !!process.env.ANTHROPIC_API_KEY;
   const hasVoyage = !!process.env.VOYAGE_API_KEY;
-  const hasUpstash =
-    !!process.env.UPSTASH_REDIS_REST_URL &&
-    !!process.env.UPSTASH_REDIS_REST_TOKEN;
+  const hasUpstash = !!process.env.UPSTASH_REDIS_REST_URL && !!process.env.UPSTASH_REDIS_REST_TOKEN;
 
   return new Response(
     JSON.stringify({

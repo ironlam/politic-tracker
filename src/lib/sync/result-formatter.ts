@@ -11,10 +11,13 @@ const SEPARATOR = "=".repeat(50);
 /**
  * Format and display sync results
  */
-export function formatResults(result: SyncResult, options?: {
-  showDuration?: boolean;
-  maxErrors?: number;
-}): void {
+export function formatResults(
+  result: SyncResult,
+  options?: {
+    showDuration?: boolean;
+    maxErrors?: number;
+  }
+): void {
   const { showDuration = true, maxErrors = 10 } = options ?? {};
 
   console.log("\n" + SEPARATOR);
@@ -46,11 +49,14 @@ export function formatResults(result: SyncResult, options?: {
 /**
  * Display script header
  */
-export function formatHeader(name: string, options?: {
-  mode?: string;
-  limit?: number;
-  extra?: Record<string, string>;
-}): void {
+export function formatHeader(
+  name: string,
+  options?: {
+    mode?: string;
+    limit?: number;
+    extra?: Record<string, string>;
+  }
+): void {
   const { mode, limit, extra } = options ?? {};
 
   console.log(SEPARATOR);

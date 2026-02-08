@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { POLITICAL_POSITION_LABELS, POLITICAL_POSITION_COLORS } from "@/config/labels";
@@ -66,12 +66,24 @@ export default async function AdminPartiesPage({ searchParams }: PageProps) {
             <table className="w-full">
               <thead>
                 <tr className="border-b text-left">
-                  <th scope="col" className="pb-3 font-medium">Nom</th>
-                  <th scope="col" className="pb-3 font-medium">Position</th>
-                  <th scope="col" className="pb-3 font-medium text-center">Membres</th>
-                  <th scope="col" className="pb-3 font-medium text-center">Historique</th>
-                  <th scope="col" className="pb-3 font-medium">Évolution</th>
-                  <th scope="col" className="pb-3 font-medium">Actions</th>
+                  <th scope="col" className="pb-3 font-medium">
+                    Nom
+                  </th>
+                  <th scope="col" className="pb-3 font-medium">
+                    Position
+                  </th>
+                  <th scope="col" className="pb-3 font-medium text-center">
+                    Membres
+                  </th>
+                  <th scope="col" className="pb-3 font-medium text-center">
+                    Historique
+                  </th>
+                  <th scope="col" className="pb-3 font-medium">
+                    Évolution
+                  </th>
+                  <th scope="col" className="pb-3 font-medium">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -105,12 +117,8 @@ export default async function AdminPartiesPage({ searchParams }: PageProps) {
                         <span className="text-muted-foreground">—</span>
                       )}
                     </td>
-                    <td className="py-3 pr-4 text-center">
-                      {party._count.politicians}
-                    </td>
-                    <td className="py-3 pr-4 text-center">
-                      {party._count.partyMemberships}
-                    </td>
+                    <td className="py-3 pr-4 text-center">{party._count.politicians}</td>
+                    <td className="py-3 pr-4 text-center">{party._count.partyMemberships}</td>
                     <td className="py-3 pr-4">
                       {party.predecessor && (
                         <span className="text-xs text-muted-foreground">

@@ -66,11 +66,7 @@ async function findPoliticianByExternalId(
   const found = await db.externalId.findFirst({
     where: {
       source,
-      OR: [
-        { externalId },
-        { externalId: idOrigine },
-        { externalId: `PA${idOrigine}` },
-      ],
+      OR: [{ externalId }, { externalId: idOrigine }, { externalId: `PA${idOrigine}` }],
     },
     select: { politicianId: true },
   });
@@ -81,10 +77,7 @@ async function findPoliticianByExternalId(
 /**
  * Find politician by name (fallback)
  */
-async function findPoliticianByName(
-  prenom: string,
-  nom: string
-): Promise<string | null> {
+async function findPoliticianByName(prenom: string, nom: string): Promise<string | null> {
   // Normalize name (HATVP has uppercase names)
   const normalizedNom = nom.charAt(0).toUpperCase() + nom.slice(1).toLowerCase();
 
@@ -196,10 +189,7 @@ async function syncDeclaration(
 /**
  * Update politician photo from HATVP if available and not already set
  */
-async function updatePhotoFromHATVP(
-  politicianId: string,
-  photoUrl: string | null
-): Promise<void> {
+async function updatePhotoFromHATVP(politicianId: string, photoUrl: string | null): Promise<void> {
   if (!photoUrl || photoUrl.trim() === "") return;
 
   const politician = await db.politician.findUnique({
@@ -228,10 +218,7 @@ async function updatePhotoFromHATVP(
 /**
  * Create/update HATVP external ID
  */
-async function upsertHATVPExternalId(
-  politicianId: string,
-  urlDossier: string
-): Promise<void> {
+async function upsertHATVPExternalId(politicianId: string, urlDossier: string): Promise<void> {
   if (!urlDossier) return;
 
   // Extract HATVP ID from URL (e.g., /consulter-les-declarations/d/prenom-nom)
@@ -295,7 +282,7 @@ export async function syncHATVP(): Promise<HATVPSyncResult> {
     // 4. Process each politician
     const notFoundPoliticians: string[] = [];
 
-    for (const [key, declarations] of byPolitician) {
+    for (const [_key, declarations] of byPolitician) {
       const firstDecl = declarations[0];
 
       // Try to find politician by external ID first

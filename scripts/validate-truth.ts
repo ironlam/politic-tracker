@@ -176,7 +176,9 @@ const VALIDATORS: Array<{
         actual,
         source: "https://www.assemblee-nationale.fr/dyn/la-presidente",
         fixable: true,
-        details: !president ? "Aucun mandat 'Président(e) de l'Assemblée' trouvé - peut nécessiter ajout manuel" : undefined,
+        details: !president
+          ? "Aucun mandat 'Président(e) de l'Assemblée' trouvé - peut nécessiter ajout manuel"
+          : undefined,
       };
     },
   },
@@ -254,7 +256,8 @@ const VALIDATORS: Array<{
         actual: `${withSources}/${total} (${Math.round((withSources / total) * 100)}%)`,
         source: "Intégrité données",
         fixable: false,
-        details: total !== withSources ? "CRITIQUE: Affaires sans source = risque juridique" : undefined,
+        details:
+          total !== withSources ? "CRITIQUE: Affaires sans source = risque juridique" : undefined,
       };
     },
   },

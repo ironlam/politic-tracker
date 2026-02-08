@@ -142,10 +142,7 @@ export function getCategoryColors(
  * @param key - The specific color key
  * @returns Tailwind class or undefined
  */
-export function getTailwindClass(
-  category: ColorCategory,
-  key: string
-): string | undefined {
+export function getTailwindClass(category: ColorCategory, key: string): string | undefined {
   const categoryColors = COLORS[category] as Record<string, ColorVariant>;
   return categoryColors?.[key]?.tailwind;
 }

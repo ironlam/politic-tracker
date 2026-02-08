@@ -70,11 +70,7 @@ export default async function AdminPoliticianPage({ params }: PageProps) {
       </div>
 
       <div className="flex items-start gap-6">
-        <PoliticianAvatar
-          photoUrl={politician.photoUrl}
-          fullName={politician.fullName}
-          size="xl"
-        />
+        <PoliticianAvatar photoUrl={politician.photoUrl} fullName={politician.fullName} size="xl" />
         <div>
           <h1 className="text-2xl font-bold">{politician.fullName}</h1>
           {politician.currentParty && (
@@ -91,9 +87,7 @@ export default async function AdminPoliticianPage({ params }: PageProps) {
             </Badge>
           )}
           {politician.mandates[0] && (
-            <p className="text-muted-foreground mt-1">
-              {politician.mandates[0].title}
-            </p>
+            <p className="text-muted-foreground mt-1">{politician.mandates[0].title}</p>
           )}
         </div>
       </div>
@@ -148,9 +142,7 @@ export default async function AdminPoliticianPage({ params }: PageProps) {
           <CardContent className="space-y-3">
             <div className="grid grid-cols-2 gap-2 text-sm">
               <span className="text-muted-foreground">URL</span>
-              <span className="font-mono text-xs break-all">
-                {politician.photoUrl || "—"}
-              </span>
+              <span className="font-mono text-xs break-all">{politician.photoUrl || "—"}</span>
 
               <span className="text-muted-foreground">Source</span>
               <span>{politician.photoSource || "—"}</span>
@@ -178,9 +170,15 @@ export default async function AdminPoliticianPage({ params }: PageProps) {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b">
-                      <th scope="col" className="text-left pb-2 font-medium">Source</th>
-                      <th scope="col" className="text-left pb-2 font-medium">ID</th>
-                      <th scope="col" className="text-left pb-2 font-medium">URL</th>
+                      <th scope="col" className="text-left pb-2 font-medium">
+                        Source
+                      </th>
+                      <th scope="col" className="text-left pb-2 font-medium">
+                        ID
+                      </th>
+                      <th scope="col" className="text-left pb-2 font-medium">
+                        URL
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -221,13 +219,9 @@ export default async function AdminPoliticianPage({ params }: PageProps) {
       {/* Affaires judiciaires */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>
-            Affaires judiciaires ({politician.affairs.length})
-          </CardTitle>
+          <CardTitle>Affaires judiciaires ({politician.affairs.length})</CardTitle>
           <Button asChild size="sm">
-            <Link href={`/admin/affaires/nouveau?politicianId=${politician.id}`}>
-              + Ajouter
-            </Link>
+            <Link href={`/admin/affaires/nouveau?politicianId=${politician.id}`}>+ Ajouter</Link>
           </Button>
         </CardHeader>
         <CardContent>
@@ -267,9 +261,7 @@ export default async function AdminPoliticianPage({ params }: PageProps) {
                         <Link href={`/admin/affaires/${affair.id}`}>Voir</Link>
                       </Button>
                       <Button variant="outline" size="sm" asChild>
-                        <Link href={`/admin/affaires/${affair.id}/edit`}>
-                          Modifier
-                        </Link>
+                        <Link href={`/admin/affaires/${affair.id}/edit`}>Modifier</Link>
                       </Button>
                     </div>
                   </div>

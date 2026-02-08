@@ -69,9 +69,7 @@ export default async function AdminPartyPage({ params }: PageProps) {
                   {POLITICAL_POSITION_LABELS[party.politicalPosition]}
                 </Badge>
               )}
-              {party.dissolvedDate && (
-                <Badge variant="secondary">Dissous</Badge>
-              )}
+              {party.dissolvedDate && <Badge variant="secondary">Dissous</Badge>}
             </div>
           </div>
         </div>
@@ -156,21 +154,15 @@ export default async function AdminPartyPage({ params }: PageProps) {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-3 gap-4 text-center">
               <div className="p-4 bg-blue-50 rounded-lg">
-                <p className="text-2xl font-bold text-blue-600">
-                  {party._count.politicians}
-                </p>
+                <p className="text-2xl font-bold text-blue-600">{party._count.politicians}</p>
                 <p className="text-sm text-muted-foreground">Membres actuels</p>
               </div>
               <div className="p-4 bg-green-50 rounded-lg">
-                <p className="text-2xl font-bold text-green-600">
-                  {party._count.partyMemberships}
-                </p>
+                <p className="text-2xl font-bold text-green-600">{party._count.partyMemberships}</p>
                 <p className="text-sm text-muted-foreground">Adhésions</p>
               </div>
               <div className="p-4 bg-red-50 rounded-lg">
-                <p className="text-2xl font-bold text-red-600">
-                  {party._count.affairsAtTime}
-                </p>
+                <p className="text-2xl font-bold text-red-600">{party._count.affairsAtTime}</p>
                 <p className="text-sm text-muted-foreground">Affaires</p>
               </div>
             </div>
@@ -235,10 +227,7 @@ export default async function AdminPartyPage({ params }: PageProps) {
             {party.externalIds.length > 0 ? (
               <div className="space-y-2">
                 {party.externalIds.map((ext) => (
-                  <div
-                    key={ext.id}
-                    className="flex items-center justify-between text-sm"
-                  >
+                  <div key={ext.id} className="flex items-center justify-between text-sm">
                     <Badge variant="outline">{DATA_SOURCE_LABELS[ext.source]}</Badge>
                     <span className="font-mono">{ext.externalId}</span>
                     {ext.url && (
@@ -277,9 +266,7 @@ export default async function AdminPartyPage({ params }: PageProps) {
                 </Link>
               ))}
               {party._count.politicians > 10 && (
-                <Badge variant="outline">
-                  +{party._count.politicians - 10} autres
-                </Badge>
+                <Badge variant="outline">+{party._count.politicians - 10} autres</Badge>
               )}
             </div>
           ) : (

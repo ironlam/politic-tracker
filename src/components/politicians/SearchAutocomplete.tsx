@@ -42,9 +42,7 @@ function ResultAvatar({ photoUrl, fullName }: { photoUrl: string | null; fullNam
   if (!photoUrl || hasError) {
     return (
       <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center shrink-0">
-        <span className="text-xs font-medium text-muted-foreground">
-          {getInitials(fullName)}
-        </span>
+        <span className="text-xs font-medium text-muted-foreground">{getInitials(fullName)}</span>
       </div>
     );
   }
@@ -177,7 +175,9 @@ export function SearchAutocomplete({
       {/* Screen reader announcements */}
       <div className="sr-only" aria-live="polite" aria-atomic="true">
         {isLoading && "Recherche en cours..."}
-        {!isLoading && results.length > 0 && `${results.length} résultat${results.length > 1 ? 's' : ''} trouvé${results.length > 1 ? 's' : ''}`}
+        {!isLoading &&
+          results.length > 0 &&
+          `${results.length} résultat${results.length > 1 ? "s" : ""} trouvé${results.length > 1 ? "s" : ""}`}
         {!isLoading && query.length >= 2 && results.length === 0 && "Aucun résultat"}
       </div>
 
@@ -215,7 +215,11 @@ export function SearchAutocomplete({
                     <p className="font-medium truncate">{result.fullName}</p>
                     <p className="text-xs text-muted-foreground flex items-center gap-1">
                       {result.mandate && (
-                        <span>{MANDATE_TYPE_LABELS[result.mandate as keyof typeof MANDATE_TYPE_LABELS] || result.mandate}</span>
+                        <span>
+                          {MANDATE_TYPE_LABELS[
+                            result.mandate as keyof typeof MANDATE_TYPE_LABELS
+                          ] || result.mandate}
+                        </span>
                       )}
                       {result.party && (
                         <>

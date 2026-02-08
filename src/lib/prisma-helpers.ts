@@ -81,9 +81,7 @@ import { DataSource, Prisma } from "../generated/prisma";
 /**
  * Build a map of external IDs to politician IDs for fast lookup
  */
-export async function buildExternalIdMap(
-  source: DataSource
-): Promise<Map<string, string>> {
+export async function buildExternalIdMap(source: DataSource): Promise<Map<string, string>> {
   const externalIds = await db.externalId.findMany({
     where: {
       source,
@@ -108,9 +106,7 @@ export async function buildExternalIdMap(
 /**
  * Build a map of external IDs to party IDs for fast lookup
  */
-export async function buildPartyExternalIdMap(
-  source: DataSource
-): Promise<Map<string, string>> {
+export async function buildPartyExternalIdMap(source: DataSource): Promise<Map<string, string>> {
   const externalIds = await db.externalId.findMany({
     where: {
       source,

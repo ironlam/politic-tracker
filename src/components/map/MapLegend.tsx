@@ -71,10 +71,7 @@ export function MapLegend({ mode, departments, isDarkMode }: MapLegendProps) {
       <div className="flex flex-wrap gap-2">
         {sortedParties.slice(0, 8).map((party) => (
           <div key={party.shortName} className="flex items-center gap-1">
-            <div
-              className="w-3 h-3 rounded-full"
-              style={{ backgroundColor: party.color }}
-            />
+            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: party.color }} />
             <span className="text-xs">
               {party.shortName} ({party.count})
             </span>
@@ -86,9 +83,7 @@ export function MapLegend({ mode, departments, isDarkMode }: MapLegendProps) {
               className="w-3 h-3 rounded-full"
               style={{ backgroundColor: isDarkMode ? "#374151" : "#e5e7eb" }}
             />
-            <span className="text-xs">
-              Sans majorité ({noDominantCount})
-            </span>
+            <span className="text-xs">Sans majorité ({noDominantCount})</span>
           </div>
         )}
         {sortedParties.length === 0 && noDominantCount === 0 && (

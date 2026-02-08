@@ -73,9 +73,7 @@ function isDeletable(p: PartyAuditInfo): boolean {
   );
 }
 
-function findDuplicates(
-  parties: PartyAuditInfo[]
-): Array<[PartyAuditInfo, PartyAuditInfo]> {
+function findDuplicates(parties: PartyAuditInfo[]): Array<[PartyAuditInfo, PartyAuditInfo]> {
   const duplicates: Array<[PartyAuditInfo, PartyAuditInfo]> = [];
   const seen = new Map<string, PartyAuditInfo>();
 
@@ -127,9 +125,7 @@ Modes:
     const parties = await fetchPartiesWithCounts();
     const deletable = parties.filter(isDeletable);
     const withPoliticians = parties.filter((p) => p.politicians > 0);
-    const withMemberships = parties.filter(
-      (p) => p.partyMemberships > 0 && p.politicians === 0
-    );
+    const withMemberships = parties.filter((p) => p.partyMemberships > 0 && p.politicians === 0);
     const dissolved = parties.filter((p) => p.dissolvedDate !== null);
     const withWikidata = parties.filter((p) => p.hasWikidata);
 
@@ -217,69 +213,49 @@ Modes:
         console.log("  None\n");
       } else {
         for (const p of orphans) {
-          const dissolved = p.dissolvedDate
-            ? ` (dissolved ${p.dissolvedDate.getFullYear()})`
-            : "";
+          const dissolved = p.dissolvedDate ? ` (dissolved ${p.dissolvedDate.getFullYear()})` : "";
           const wikidata = p.hasWikidata ? "" : " [no Wikidata]";
-          console.log(
-            `  - ${p.shortName}: ${p.name}${dissolved}${wikidata}`
-          );
+          console.log(`  - ${p.shortName}: ${p.name}${dissolved}${wikidata}`);
         }
         console.log();
       }
 
       // Kept with memberships
       if (keptWithMemberships.length > 0) {
-        console.log(
-          `PARTIES WITH MEMBERSHIPS ONLY (${keptWithMemberships.length}) - keep`
-        );
+        console.log(`PARTIES WITH MEMBERSHIPS ONLY (${keptWithMemberships.length}) - keep`);
         console.log("-".repeat(50));
         for (const p of keptWithMemberships) {
-          console.log(
-            `  - ${p.shortName}: ${p.name} (${p.partyMemberships} memberships)`
-          );
+          console.log(`  - ${p.shortName}: ${p.name} (${p.partyMemberships} memberships)`);
         }
         console.log();
       }
 
       // Kept with affairs
       if (keptWithAffairs.length > 0) {
-        console.log(
-          `PARTIES WITH AFFAIRS (${keptWithAffairs.length}) - keep`
-        );
+        console.log(`PARTIES WITH AFFAIRS (${keptWithAffairs.length}) - keep`);
         console.log("-".repeat(50));
         for (const p of keptWithAffairs) {
-          console.log(
-            `  - ${p.shortName}: ${p.name} (${p.affairsAtTime} affairs)`
-          );
+          console.log(`  - ${p.shortName}: ${p.name} (${p.affairsAtTime} affairs)`);
         }
         console.log();
       }
 
       // Kept with press
       if (keptWithPress.length > 0) {
-        console.log(
-          `PARTIES WITH PRESS MENTIONS (${keptWithPress.length}) - keep`
-        );
+        console.log(`PARTIES WITH PRESS MENTIONS (${keptWithPress.length}) - keep`);
         console.log("-".repeat(50));
         for (const p of keptWithPress) {
-          console.log(
-            `  - ${p.shortName}: ${p.name} (${p.pressMentions} mentions)`
-          );
+          console.log(`  - ${p.shortName}: ${p.name} (${p.pressMentions} mentions)`);
         }
         console.log();
       }
 
       // Kept with successors
       if (keptWithSuccessors.length > 0) {
-        console.log(
-          `PARTIES IN SUCCESSION CHAIN (${keptWithSuccessors.length}) - keep`
-        );
+        console.log(`PARTIES IN SUCCESSION CHAIN (${keptWithSuccessors.length}) - keep`);
         console.log("-".repeat(50));
         for (const p of keptWithSuccessors) {
-          console.log(
-            `  - ${p.shortName}: ${p.name} (${p.successors} successors)`
-          );
+          console.log(`  - ${p.shortName}: ${p.name} (${p.successors} successors)`);
         }
         console.log();
       }
@@ -289,18 +265,14 @@ Modes:
         console.log(`POTENTIAL DUPLICATES (${duplicates.length})`);
         console.log("-".repeat(50));
         for (const [a, b] of duplicates) {
-          console.log(
-            `  - "${a.shortName}" (${a.name}) vs "${b.shortName}" (${b.name})`
-          );
+          console.log(`  - "${a.shortName}" (${a.name}) vs "${b.shortName}" (${b.name})`);
         }
         console.log();
       }
 
       // Without Wikidata
       if (withoutWikidata.length > 0) {
-        console.log(
-          `PARTIES WITHOUT WIKIDATA ID (${withoutWikidata.length})`
-        );
+        console.log(`PARTIES WITHOUT WIKIDATA ID (${withoutWikidata.length})`);
         console.log("-".repeat(50));
         for (const p of withoutWikidata.slice(0, 20)) {
           console.log(`  - ${p.shortName}: ${p.name}`);
@@ -316,9 +288,7 @@ Modes:
       console.log("=".repeat(60));
       console.log();
       if (orphans.length > 0) {
-        console.log(
-          `Run with --clean --confirm to delete ${orphans.length} orphan parties.`
-        );
+        console.log(`Run with --clean --confirm to delete ${orphans.length} orphan parties.`);
         console.log("Run with --clean to preview deletions first (dry-run).");
       } else {
         console.log("No orphan parties to clean up.");
@@ -329,9 +299,7 @@ Modes:
       const isDryRun = !confirm;
 
       console.log(
-        isDryRun
-          ? "DRY-RUN: Preview of parties to delete"
-          : "DELETING orphan parties..."
+        isDryRun ? "DRY-RUN: Preview of parties to delete" : "DELETING orphan parties..."
       );
       console.log("-".repeat(50));
 
@@ -339,21 +307,15 @@ Modes:
         console.log("  No orphan parties to delete.\n");
       } else {
         for (const p of orphans) {
-          const dissolved = p.dissolvedDate
-            ? ` (dissolved ${p.dissolvedDate.getFullYear()})`
-            : "";
+          const dissolved = p.dissolvedDate ? ` (dissolved ${p.dissolvedDate.getFullYear()})` : "";
 
           if (isDryRun) {
-            console.log(
-              `  [DRY-RUN] Would delete: ${p.shortName} - ${p.name}${dissolved}`
-            );
+            console.log(`  [DRY-RUN] Would delete: ${p.shortName} - ${p.name}${dissolved}`);
           } else {
             try {
               await db.externalId.deleteMany({ where: { partyId: p.id } });
               await db.party.delete({ where: { id: p.id } });
-              console.log(
-                `  Deleted: ${p.shortName} - ${p.name}${dissolved}`
-              );
+              console.log(`  Deleted: ${p.shortName} - ${p.name}${dissolved}`);
               stats.deleted++;
             } catch (error) {
               const msg = `Failed to delete ${p.shortName}: ${error}`;

@@ -79,20 +79,13 @@ export function PressCard({
           </div>
         )}
         {/* Source badge overlay */}
-        <Badge className={`absolute top-2 right-2 ${sourceColor}`}>
-          {sourceName}
-        </Badge>
+        <Badge className={`absolute top-2 right-2 ${sourceColor}`}>{sourceName}</Badge>
       </a>
 
       {/* Content */}
       <div className="p-4">
         {/* Title */}
-        <a
-          href={url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="block"
-        >
+        <a href={url} target="_blank" rel="noopener noreferrer" className="block">
           <h3 className="font-semibold text-base line-clamp-2 group-hover:text-primary transition-colors">
             {title}
           </h3>
@@ -100,15 +93,11 @@ export function PressCard({
 
         {/* Description */}
         {description && (
-          <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
-            {description}
-          </p>
+          <p className="text-sm text-muted-foreground mt-2 line-clamp-2">{description}</p>
         )}
 
         {/* Date */}
-        <p className="text-xs text-muted-foreground mt-2">
-          {formatDate(publishedAt)}
-        </p>
+        <p className="text-xs text-muted-foreground mt-2">{formatDate(publishedAt)}</p>
 
         {/* Politicians mentioned */}
         {mentions.length > 0 && (

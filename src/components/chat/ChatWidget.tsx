@@ -75,9 +75,7 @@ export function ChatWidget() {
               <div>
                 <h3 className="font-medium text-sm">Assistant IA</h3>
                 {!isMinimized && (
-                  <p className="text-xs text-muted-foreground">
-                    Posez vos questions
-                  </p>
+                  <p className="text-xs text-muted-foreground">Posez vos questions</p>
                 )}
               </div>
             </div>

@@ -127,10 +127,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     // Provide helpful error messages
     if (error instanceof Error) {
       if (error.message.includes("ANTHROPIC_API_KEY")) {
-        return NextResponse.json(
-          { error: "Clé API Anthropic non configurée" },
-          { status: 500 }
-        );
+        return NextResponse.json({ error: "Clé API Anthropic non configurée" }, { status: 500 });
       }
       if (error.message.includes("rate limit")) {
         return NextResponse.json(

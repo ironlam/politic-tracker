@@ -31,7 +31,12 @@ function getAgreement(left: VotePosition, right: VotePosition): AgreementType {
   return "disagree";
 }
 
-export function VoteAgreement({ leftVotes, rightVotes, leftName, rightName }: VoteAgreementProps) {
+export function VoteAgreement({
+  leftVotes,
+  rightVotes,
+  leftName: _leftName,
+  rightName: _rightName,
+}: VoteAgreementProps) {
   // Create a map of scrutin ID to votes
   const leftVoteMap = new Map(leftVotes.map((v) => [v.scrutinId, v]));
   const rightVoteMap = new Map(rightVotes.map((v) => [v.scrutinId, v]));

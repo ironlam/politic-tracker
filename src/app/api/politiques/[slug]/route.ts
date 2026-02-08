@@ -35,20 +35,14 @@ import { getPoliticianBySlug } from "@/services/politicians";
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ slug: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
 
   try {
     const politician = await getPoliticianBySlug(slug);
 
     if (!politician) {
-      return NextResponse.json(
-        { error: "Représentant non trouvé" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Représentant non trouvé" }, { status: 404 });
     }
 
     return NextResponse.json({

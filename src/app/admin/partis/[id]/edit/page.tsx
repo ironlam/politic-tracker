@@ -131,9 +131,7 @@ export default function EditPartyPage() {
         </Link>
       </div>
 
-      {error && (
-        <div className="p-4 bg-red-50 text-red-600 rounded-lg">{error}</div>
-      )}
+      {error && <div className="p-4 bg-red-50 text-red-600 rounded-lg">{error}</div>}
 
       <form onSubmit={handleSubmit}>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -145,32 +143,17 @@ export default function EditPartyPage() {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Nom complet *</Label>
-                <Input
-                  id="name"
-                  name="name"
-                  defaultValue={party.name}
-                  required
-                />
+                <Input id="name" name="name" defaultValue={party.name} required />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="shortName">Abréviation *</Label>
-                  <Input
-                    id="shortName"
-                    name="shortName"
-                    defaultValue={party.shortName}
-                    required
-                  />
+                  <Input id="shortName" name="shortName" defaultValue={party.shortName} required />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="slug">Slug *</Label>
-                  <Input
-                    id="slug"
-                    name="slug"
-                    defaultValue={party.slug || ""}
-                    required
-                  />
+                  <Input id="slug" name="slug" defaultValue={party.slug || ""} required />
                 </div>
               </div>
 
@@ -210,13 +193,11 @@ export default function EditPartyPage() {
                     defaultValue={party.politicalPosition || ""}
                   >
                     <option value="">Non définie</option>
-                    {Object.entries(POLITICAL_POSITION_LABELS).map(
-                      ([value, label]) => (
-                        <option key={value} value={value}>
-                          {label}
-                        </option>
-                      )
-                    )}
+                    {Object.entries(POLITICAL_POSITION_LABELS).map(([value, label]) => (
+                      <option key={value} value={value}>
+                        {label}
+                      </option>
+                    ))}
                   </Select>
                 </div>
               </div>

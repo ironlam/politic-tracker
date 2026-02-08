@@ -68,10 +68,7 @@ export function AffairsTab({
   const maxByStatus = Math.max(...byStatus.map((s) => s.count), 1);
   const maxByCategory = Math.max(...byCategory.map((c) => c.count), 1);
   const maxByParty = Math.max(...byParty.map((p) => p.totalAffairs), 1);
-  const maxByPolitician = Math.max(
-    ...topPoliticians.map((p) => p._count.affairs),
-    1
-  );
+  const maxByPolitician = Math.max(...topPoliticians.map((p) => p._count.affairs), 1);
 
   return (
     <div>
@@ -122,9 +119,7 @@ export function AffairsTab({
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold">
-              {globalStats.politiciansWithAffairs}
-            </p>
+            <p className="text-3xl font-bold">{globalStats.politiciansWithAffairs}</p>
             <p className="text-sm text-muted-foreground">
               {globalStats.percentWithAffairs}% du total
             </p>
@@ -139,9 +134,7 @@ export function AffairsTab({
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold">{byParty.length}</p>
-            <p className="text-sm text-muted-foreground">
-              sur {globalStats.totalParties} partis
-            </p>
+            <p className="text-sm text-muted-foreground">sur {globalStats.totalParties} partis</p>
           </CardContent>
         </Card>
       </div>
@@ -163,10 +156,7 @@ export function AffairsTab({
                 <div key={status}>
                   <div className="flex justify-between text-sm mb-1">
                     <span className="truncate mr-2">
-                      <Badge
-                        className={AFFAIR_STATUS_COLORS[status]}
-                        variant="outline"
-                      >
+                      <Badge className={AFFAIR_STATUS_COLORS[status]} variant="outline">
                         {AFFAIR_STATUS_LABELS[status]}
                       </Badge>
                     </span>
@@ -192,10 +182,7 @@ export function AffairsTab({
             {byCategory.map(({ category, count }) => (
               <div key={category}>
                 <div className="flex justify-between text-sm mb-1">
-                  <Badge
-                    className={AFFAIR_SUPER_CATEGORY_COLORS[category]}
-                    variant="outline"
-                  >
+                  <Badge className={AFFAIR_SUPER_CATEGORY_COLORS[category]} variant="outline">
                     {AFFAIR_SUPER_CATEGORY_LABELS[category]}
                   </Badge>
                   <span className="font-medium">{count}</span>
@@ -241,11 +228,7 @@ export function AffairsTab({
                   </Link>
                   <span className="font-medium">{party.totalAffairs}</span>
                 </div>
-                <ProgressBar
-                  value={party.totalAffairs}
-                  max={maxByParty}
-                  color="bg-primary"
-                />
+                <ProgressBar value={party.totalAffairs} max={maxByParty} color="bg-primary" />
               </div>
             ))}
           </CardContent>
@@ -255,9 +238,7 @@ export function AffairsTab({
         <Card>
           <CardHeader>
             <CardTitle>Politiques les plus concernés</CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Top 10 par nombre d&apos;affaires
-            </p>
+            <p className="text-sm text-muted-foreground">Top 10 par nombre d&apos;affaires</p>
           </CardHeader>
           <CardContent className="space-y-3">
             {topPoliticians.map((politician) => (
@@ -273,8 +254,7 @@ export function AffairsTab({
                         variant="outline"
                         className="text-xs shrink-0"
                         style={{
-                          borderColor:
-                            politician.currentParty.color || undefined,
+                          borderColor: politician.currentParty.color || undefined,
                           color: politician.currentParty.color || undefined,
                         }}
                       >
@@ -288,11 +268,7 @@ export function AffairsTab({
                       <span
                         className="ml-1"
                         style={{
-                          color: getColor(
-                            "affairStatus",
-                            "CONDAMNATION_DEFINITIVE",
-                            "light"
-                          ),
+                          color: getColor("affairStatus", "CONDAMNATION_DEFINITIVE", "light"),
                         }}
                       >
                         ({politician.condamnations} cond.)

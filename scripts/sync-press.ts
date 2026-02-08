@@ -12,12 +12,7 @@
  */
 
 import "dotenv/config";
-import {
-  createCLI,
-  ProgressTracker,
-  type SyncHandler,
-  type SyncResult,
-} from "../src/lib/sync";
+import { createCLI, ProgressTracker, type SyncHandler, type SyncResult } from "../src/lib/sync";
 import { RSSClient, RSS_FEEDS, type RSSItem } from "../src/lib/api";
 import { db } from "../src/lib/db";
 
@@ -103,10 +98,37 @@ async function buildPartyIndex(): Promise<PartyName[]> {
  * Common French words to exclude from matching (avoid false positives)
  */
 const EXCLUDED_NAMES = new Set([
-  "paul", "jean", "pierre", "louis", "charles", "marie", "anne",
-  "fait", "gauche", "droite", "maire", "parti", "france", "etat",
-  "nord", "sud", "est", "ouest", "grand", "petit", "blanc", "noir",
-  "rouge", "vert", "bleu", "rose", "brun", "long", "court", "haut", "bas",
+  "paul",
+  "jean",
+  "pierre",
+  "louis",
+  "charles",
+  "marie",
+  "anne",
+  "fait",
+  "gauche",
+  "droite",
+  "maire",
+  "parti",
+  "france",
+  "etat",
+  "nord",
+  "sud",
+  "est",
+  "ouest",
+  "grand",
+  "petit",
+  "blanc",
+  "noir",
+  "rouge",
+  "vert",
+  "bleu",
+  "rose",
+  "brun",
+  "long",
+  "court",
+  "haut",
+  "bas",
 ]);
 
 /**
@@ -141,9 +163,7 @@ function findMentions(
     if (seenIds.has(politician.id)) continue;
 
     // Try full name first (more specific)
-    const fullNameRegex = new RegExp(
-      `\\b${escapeRegex(politician.normalizedFullName)}\\b`
-    );
+    const fullNameRegex = new RegExp(`\\b${escapeRegex(politician.normalizedFullName)}\\b`);
     if (fullNameRegex.test(normalizedText)) {
       matches.push({
         politicianId: politician.id,
@@ -160,9 +180,7 @@ function findMentions(
       politician.normalizedLastName.length >= 5 &&
       !EXCLUDED_NAMES.has(politician.normalizedLastName)
     ) {
-      const lastNameRegex = new RegExp(
-        `\\b${escapeRegex(politician.normalizedLastName)}\\b`
-      );
+      const lastNameRegex = new RegExp(`\\b${escapeRegex(politician.normalizedLastName)}\\b`);
       if (lastNameRegex.test(normalizedText)) {
         matches.push({
           politicianId: politician.id,
@@ -204,9 +222,7 @@ function findPartyMentions(
     if (seenIds.has(party.id)) continue;
 
     // Try full name first (more specific)
-    const fullNameRegex = new RegExp(
-      `\\b${escapeRegex(party.normalizedName)}\\b`
-    );
+    const fullNameRegex = new RegExp(`\\b${escapeRegex(party.normalizedName)}\\b`);
     if (fullNameRegex.test(normalizedText)) {
       matches.push({
         partyId: party.id,
@@ -222,9 +238,7 @@ function findPartyMentions(
       party.normalizedShortName.length >= 3 &&
       !EXCLUDED_PARTY_SHORTNAMES.has(party.normalizedShortName)
     ) {
-      const shortNameRegex = new RegExp(
-        `\\b${escapeRegex(party.normalizedShortName)}\\b`
-      );
+      const shortNameRegex = new RegExp(`\\b${escapeRegex(party.normalizedShortName)}\\b`);
       if (shortNameRegex.test(normalizedText)) {
         matches.push({
           partyId: party.id,
@@ -355,12 +369,19 @@ Options:
     for (const article of recentArticles) {
       const date = article.publishedAt.toISOString().split("T")[0];
       console.log(`  [${date}] ${article.title.slice(0, 60)}...`);
-      console.log(`    Source: ${article.feedSource}, Politicians: ${article._count.mentions}, Parties: ${article._count.partyMentions}`);
+      console.log(
+        `    Source: ${article.feedSource}, Politicians: ${article._count.mentions}, Parties: ${article._count.partyMentions}`
+      );
     }
   },
 
   async sync(options): Promise<SyncResult> {
-    const { dryRun = false, limit, feed, reindexParties = false } = options as {
+    const {
+      dryRun = false,
+      limit,
+      feed,
+      reindexParties = false,
+    } = options as {
       dryRun?: boolean;
       limit?: number;
       feed?: string;

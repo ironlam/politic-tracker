@@ -13,11 +13,15 @@ interface VotesTabProps {
 function CohesionBadge({ rate }: { rate: number }) {
   let classes = "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300";
   if (rate >= 90) classes = "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300";
-  else if (rate >= 75) classes = "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300";
-  else if (rate >= 60) classes = "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300";
+  else if (rate >= 75)
+    classes = "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300";
+  else if (rate >= 60)
+    classes = "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300";
 
   return (
-    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${classes}`}>
+    <span
+      className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${classes}`}
+    >
       {rate}%
     </span>
   );
@@ -26,10 +30,13 @@ function CohesionBadge({ rate }: { rate: number }) {
 function ParticipationBadge({ rate }: { rate: number }) {
   let classes = "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300";
   if (rate >= 80) classes = "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300";
-  else if (rate >= 60) classes = "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300";
+  else if (rate >= 60)
+    classes = "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300";
 
   return (
-    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${classes}`}>
+    <span
+      className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${classes}`}
+    >
       {rate}%
     </span>
   );
@@ -49,9 +56,7 @@ export function VotesTab({ data, chamberFilter }: VotesTabProps) {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold">
-              {global.totalScrutins.toLocaleString("fr-FR")}
-            </p>
+            <p className="text-3xl font-bold">{global.totalScrutins.toLocaleString("fr-FR")}</p>
           </CardContent>
         </Card>
 
@@ -115,9 +120,7 @@ export function VotesTab({ data, chamberFilter }: VotesTabProps) {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Par chambre
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Par chambre</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-baseline gap-2">
@@ -187,8 +190,12 @@ export function VotesTab({ data, chamberFilter }: VotesTabProps) {
           <CardContent>
             {/* Column headers */}
             <div className="flex justify-end gap-4 text-xs text-muted-foreground mb-3 pr-1">
-              <span title="Cohésion : pourcentage de membres votant dans la même direction">Cohésion</span>
-              <span title="Participation : pourcentage de votes effectifs (hors absences)">Participation</span>
+              <span title="Cohésion : pourcentage de membres votant dans la même direction">
+                Cohésion
+              </span>
+              <span title="Participation : pourcentage de votes effectifs (hors absences)">
+                Participation
+              </span>
             </div>
 
             <div className="space-y-4">
@@ -306,9 +313,7 @@ export function VotesTab({ data, chamberFilter }: VotesTabProps) {
                           {new Date(scrutin.votingDate).toLocaleDateString("fr-FR")}
                         </span>
                       </div>
-                      <p className="font-medium line-clamp-1 text-sm">
-                        {scrutin.title}
-                      </p>
+                      <p className="font-medium line-clamp-1 text-sm">{scrutin.title}</p>
                     </div>
                     <Badge
                       variant="outline"
@@ -366,20 +371,22 @@ export function VotesTab({ data, chamberFilter }: VotesTabProps) {
           </h2>
           <div className="text-sm text-blue-800 dark:text-blue-200 space-y-2">
             <p>
-              Les <strong>scrutins</strong> sont les votes officiels du Parlement.
-              Chaque député ou sénateur peut voter Pour, Contre, s&apos;Abstenir, ou être Absent.
+              Les <strong>scrutins</strong> sont les votes officiels du Parlement. Chaque député ou
+              sénateur peut voter Pour, Contre, s&apos;Abstenir, ou être Absent.
             </p>
             <p>
-              La <strong>cohésion de groupe</strong> indique si les membres d&apos;un même parti votent ensemble.
-              Un taux élevé (90%+) signifie que le parti vote en bloc ; un taux faible révèle des divisions internes.
+              La <strong>cohésion de groupe</strong> indique si les membres d&apos;un même parti
+              votent ensemble. Un taux élevé (90%+) signifie que le parti vote en bloc ; un taux
+              faible révèle des divisions internes.
             </p>
             <p>
-              Le <strong>taux de participation</strong> mesure la proportion de parlementaires qui se déplacent
-              pour voter (hors absences). Un taux bas peut indiquer un désintérêt ou des contraintes d&apos;agenda.
+              Le <strong>taux de participation</strong> mesure la proportion de parlementaires qui
+              se déplacent pour voter (hors absences). Un taux bas peut indiquer un désintérêt ou
+              des contraintes d&apos;agenda.
             </p>
             <p>
-              Le <strong>score de division</strong> d&apos;un scrutin mesure l&apos;écart entre les Pour et les Contre.
-              Plus le score est élevé, plus le vote était serré.
+              Le <strong>score de division</strong> d&apos;un scrutin mesure l&apos;écart entre les
+              Pour et les Contre. Plus le score est élevé, plus le vote était serré.
             </p>
           </div>
         </CardContent>

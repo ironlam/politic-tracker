@@ -94,7 +94,9 @@ export function FilterBar({
 
       {/* Sort */}
       <div className="flex items-center gap-2">
-        <label htmlFor="sort-select" className="text-sm text-muted-foreground whitespace-nowrap">Tri:</label>
+        <label htmlFor="sort-select" className="text-sm text-muted-foreground whitespace-nowrap">
+          Tri:
+        </label>
         <select
           id="sort-select"
           value={currentSort}
@@ -111,7 +113,9 @@ export function FilterBar({
 
       {/* Mandate type filter */}
       <div className="flex items-center gap-2">
-        <label htmlFor="mandate-select" className="text-sm text-muted-foreground whitespace-nowrap">Mandat:</label>
+        <label htmlFor="mandate-select" className="text-sm text-muted-foreground whitespace-nowrap">
+          Mandat:
+        </label>
         <select
           id="mandate-select"
           value={currentMandate}
@@ -123,10 +127,10 @@ export function FilterBar({
               value === "depute"
                 ? counts.deputes
                 : value === "senateur"
-                ? counts.senateurs
-                : value === "gouvernement"
-                ? counts.gouvernement
-                : null;
+                  ? counts.senateurs
+                  : value === "gouvernement"
+                    ? counts.gouvernement
+                    : null;
             return (
               <option key={value} value={value}>
                 {label}
@@ -138,7 +142,11 @@ export function FilterBar({
       </div>
 
       {/* Status filter (active/former) */}
-      <div className="flex items-center gap-2 sm:border-l sm:pl-4 w-full sm:w-auto" role="group" aria-label="Filtrer par statut">
+      <div
+        className="flex items-center gap-2 sm:border-l sm:pl-4 w-full sm:w-auto"
+        role="group"
+        aria-label="Filtrer par statut"
+      >
         <Badge
           variant={currentStatus === "" ? "default" : "outline"}
           className="cursor-pointer hover:bg-primary/10 transition-colors"
@@ -157,7 +165,9 @@ export function FilterBar({
           role="button"
           tabIndex={0}
           aria-pressed={currentStatus === "active"}
-          onKeyDown={(e) => e.key === "Enter" && updateParams("status", currentStatus === "active" ? "" : "active")}
+          onKeyDown={(e) =>
+            e.key === "Enter" && updateParams("status", currentStatus === "active" ? "" : "active")
+          }
         >
           Actifs ({counts.active})
         </Badge>
@@ -168,7 +178,9 @@ export function FilterBar({
           role="button"
           tabIndex={0}
           aria-pressed={currentStatus === "former"}
-          onKeyDown={(e) => e.key === "Enter" && updateParams("status", currentStatus === "former" ? "" : "former")}
+          onKeyDown={(e) =>
+            e.key === "Enter" && updateParams("status", currentStatus === "former" ? "" : "former")
+          }
         >
           Anciens ({counts.former})
         </Badge>

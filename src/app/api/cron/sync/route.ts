@@ -16,17 +16,11 @@ export async function GET(request: NextRequest) {
   const cronSecret = process.env.CRON_SECRET;
 
   if (!cronSecret) {
-    return NextResponse.json(
-      { error: "CRON_SECRET not configured" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "CRON_SECRET not configured" }, { status: 500 });
   }
 
   if (authHeader !== `Bearer ${cronSecret}`) {
-    return NextResponse.json(
-      { error: "Unauthorized" },
-      { status: 401 }
-    );
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
@@ -42,9 +36,6 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error("Cron sync error:", error);
-    return NextResponse.json(
-      { error: "Sync failed", details: String(error) },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Sync failed", details: String(error) }, { status: 500 });
   }
 }

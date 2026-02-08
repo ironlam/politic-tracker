@@ -2,7 +2,6 @@
 
 import { useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import Link from "next/link";
 import { PoliticianCard } from "./PoliticianCard";
 import { FilterBar, type SortOption, type MandateFilter, type StatusFilter } from "./FilterBar";
 import { Badge } from "@/components/ui/badge";
@@ -35,7 +34,7 @@ interface PoliticiansGridProps {
 
 export function PoliticiansGrid({
   politicians,
-  total,
+  total: _total,
   page,
   totalPages,
   parties,
@@ -43,10 +42,11 @@ export function PoliticiansGrid({
   filters,
 }: PoliticiansGridProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const _searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
 
-  const { search, partyFilter, convictionFilter, mandateFilter, statusFilter, sortOption } = filters;
+  const { search, partyFilter, convictionFilter, mandateFilter, statusFilter, sortOption } =
+    filters;
 
   // Build URL with current filters
   function buildUrl(newParams: Record<string, string | undefined>) {
@@ -133,10 +133,7 @@ export function PoliticiansGrid({
                 </Badge>
               ))}
               {parties.length > 6 && (
-                <PartySelect
-                  parties={parties.slice(6)}
-                  currentValue={partyFilter}
-                />
+                <PartySelect parties={parties.slice(6)} currentValue={partyFilter} />
               )}
             </div>
           </div>
@@ -146,10 +143,15 @@ export function PoliticiansGrid({
             <Badge
               variant={convictionFilter ? "destructive" : "outline"}
               className="cursor-pointer hover:bg-destructive/10 transition-colors"
-              onClick={() => navigateTo(buildUrl({ conviction: convictionFilter ? undefined : "true" }))}
+              onClick={() =>
+                navigateTo(buildUrl({ conviction: convictionFilter ? undefined : "true" }))
+              }
               role="button"
               tabIndex={0}
-              onKeyDown={(e) => e.key === "Enter" && navigateTo(buildUrl({ conviction: convictionFilter ? undefined : "true" }))}
+              onKeyDown={(e) =>
+                e.key === "Enter" &&
+                navigateTo(buildUrl({ conviction: convictionFilter ? undefined : "true" }))
+              }
               title="Inclut les condamnations en 1ère instance (appel possible) et définitives"
             >
               Avec décision de justice ({counts.withConviction})
@@ -207,11 +209,7 @@ export function PoliticiansGrid({
               </div>
             )}
             {politicians.map((politician) => (
-              <PoliticianCard
-                key={politician.id}
-                politician={politician}
-                showConvictionBadge
-              />
+              <PoliticianCard key={politician.id} politician={politician} showConvictionBadge />
             ))}
           </div>
 
@@ -224,13 +222,23 @@ export function PoliticiansGrid({
                 disabled={isPending || page <= 1}
                 aria-label="Page précédente"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
-                  <path fillRule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clipRule="evenodd" />
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                  className="w-4 h-4"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z"
+                    clipRule="evenodd"
+                  />
                 </svg>
                 <span className="hidden sm:inline">Précédent</span>
               </button>
               <span className="px-4 py-2 text-sm text-muted-foreground tabular-nums">
-                Page <span className="font-medium text-foreground">{page}</span> sur <span className="font-medium text-foreground">{totalPages}</span>
+                Page <span className="font-medium text-foreground">{page}</span> sur{" "}
+                <span className="font-medium text-foreground">{totalPages}</span>
               </span>
               <button
                 onClick={() => navigateTo(buildUrl({ page: String(page + 1) }))}
@@ -239,8 +247,17 @@ export function PoliticiansGrid({
                 aria-label="Page suivante"
               >
                 <span className="hidden sm:inline">Suivant</span>
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
-                  <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                  className="w-4 h-4"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z"
+                    clipRule="evenodd"
+                  />
                 </svg>
               </button>
             </nav>

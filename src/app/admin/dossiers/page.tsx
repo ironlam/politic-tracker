@@ -86,9 +86,7 @@ async function getCategories() {
     _count: true,
     orderBy: { _count: { category: "desc" } },
   });
-  return result
-    .filter((r) => r.category)
-    .map((r) => ({ name: r.category!, count: r._count }));
+  return result.filter((r) => r.category).map((r) => ({ name: r.category!, count: r._count }));
 }
 
 async function getStats() {
@@ -114,11 +112,7 @@ export default async function AdminDossiersPage({ searchParams }: PageProps) {
   const page = parseInt(params.page || "1", 10);
   const status = params.status as DossierStatus | undefined;
   const hasSummary =
-    params.hasSummary === "true"
-      ? true
-      : params.hasSummary === "false"
-        ? false
-        : undefined;
+    params.hasSummary === "true" ? true : params.hasSummary === "false" ? false : undefined;
 
   const [{ dossiers, total, totalPages }, categories, stats] = await Promise.all([
     getDossiers({
@@ -191,12 +185,24 @@ export default async function AdminDossiersPage({ searchParams }: PageProps) {
               <table className="w-full">
                 <thead>
                   <tr className="border-b text-left">
-                    <th scope="col" className="pb-3 font-medium">Dossier</th>
-                    <th scope="col" className="pb-3 font-medium">Catégorie</th>
-                    <th scope="col" className="pb-3 font-medium">Statut</th>
-                    <th scope="col" className="pb-3 font-medium">Résumé IA</th>
-                    <th scope="col" className="pb-3 font-medium">Date</th>
-                    <th scope="col" className="pb-3 font-medium">Actions</th>
+                    <th scope="col" className="pb-3 font-medium">
+                      Dossier
+                    </th>
+                    <th scope="col" className="pb-3 font-medium">
+                      Catégorie
+                    </th>
+                    <th scope="col" className="pb-3 font-medium">
+                      Statut
+                    </th>
+                    <th scope="col" className="pb-3 font-medium">
+                      Résumé IA
+                    </th>
+                    <th scope="col" className="pb-3 font-medium">
+                      Date
+                    </th>
+                    <th scope="col" className="pb-3 font-medium">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -268,9 +274,7 @@ export default async function AdminDossiersPage({ searchParams }: PageProps) {
             </div>
           ) : (
             <div className="text-center py-8">
-              <p className="text-muted-foreground">
-                Aucun dossier trouvé avec ces critères
-              </p>
+              <p className="text-muted-foreground">Aucun dossier trouvé avec ces critères</p>
             </div>
           )}
 
@@ -299,9 +303,7 @@ export default async function AdminDossiersPage({ searchParams }: PageProps) {
                       query: { ...params, page: pageNum },
                     }}
                     className={`px-3 py-1 border rounded ${
-                      pageNum === page
-                        ? "bg-blue-600 text-white"
-                        : "hover:bg-gray-100"
+                      pageNum === page ? "bg-blue-600 text-white" : "hover:bg-gray-100"
                     }`}
                   >
                     {pageNum}

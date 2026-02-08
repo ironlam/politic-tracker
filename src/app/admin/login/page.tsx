@@ -65,7 +65,14 @@ export default function AdminLoginPage() {
               />
             </div>
             {error && (
-              <p id="password-error" role="alert" aria-live="assertive" className="text-sm text-red-600">{error}</p>
+              <p
+                id="password-error"
+                role="alert"
+                aria-live="assertive"
+                className="text-sm text-red-600"
+              >
+                {error}
+              </p>
             )}
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "Connexion..." : "Se connecter"}

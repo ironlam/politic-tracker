@@ -121,9 +121,7 @@ function decodeHtmlEntities(text: string): string {
   }
 
   // Handle numeric entities (&#123; or &#x7B;)
-  result = result.replace(/&#(\d+);/g, (_, code) =>
-    String.fromCharCode(parseInt(code, 10))
-  );
+  result = result.replace(/&#(\d+);/g, (_, code) => String.fromCharCode(parseInt(code, 10)));
   result = result.replace(/&#x([0-9a-fA-F]+);/g, (_, code) =>
     String.fromCharCode(parseInt(code, 16))
   );
@@ -243,13 +241,19 @@ export class RSSClient {
         // Get GUID (RSS) or ID (Atom)
         let guid = item.guid || item.id || "";
         if (typeof guid === "object" && guid !== null) {
-          guid = (guid as Record<string, unknown>)["#text"] || (guid as Record<string, unknown>)["@_isPermaLink"] || "";
+          guid =
+            (guid as Record<string, unknown>)["#text"] ||
+            (guid as Record<string, unknown>)["@_isPermaLink"] ||
+            "";
         }
 
         // Get link (handle various formats)
         let link = item.link || "";
         if (typeof link === "object" && link !== null) {
-          link = (link as Record<string, unknown>)["@_href"] || (link as Record<string, unknown>)["#text"] || "";
+          link =
+            (link as Record<string, unknown>)["@_href"] ||
+            (link as Record<string, unknown>)["#text"] ||
+            "";
         }
 
         // Get title
@@ -293,9 +297,7 @@ export class RSSClient {
    * Fetch all configured RSS feeds
    */
   async fetchAllFeeds(feedIds?: string[]): Promise<Map<string, RSSFeed>> {
-    const feeds = feedIds
-      ? RSS_FEEDS.filter((f) => feedIds.includes(f.id))
-      : RSS_FEEDS;
+    const feeds = feedIds ? RSS_FEEDS.filter((f) => feedIds.includes(f.id)) : RSS_FEEDS;
 
     const results = new Map<string, RSSFeed>();
 

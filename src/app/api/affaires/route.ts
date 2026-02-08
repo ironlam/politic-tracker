@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { AffairStatus, AffairCategory } from "@/generated/prisma";
 
 /**
  * @openapi
@@ -67,8 +68,8 @@ export async function GET(request: NextRequest) {
   const skip = (page - 1) * limit;
 
   const where = {
-    ...(status && { status: status as any }),
-    ...(category && { category: category as any }),
+    ...(status && { status: status as AffairStatus }),
+    ...(category && { category: category as AffairCategory }),
   };
 
   try {
@@ -130,9 +131,6 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error("API error:", error);
-    return NextResponse.json(
-      { error: "Erreur serveur" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }

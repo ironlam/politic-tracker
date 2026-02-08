@@ -46,7 +46,8 @@ const verifiedAffairs: VerifiedAffair[] = [
     updates: {
       verdictDate: new Date("2025-03-31"),
       status: "APPEL_EN_COURS",
-      sentence: "3 ans de prison dont 2 avec sursis (bracelet électronique), 100 000€ d'amende, 3 ans d'inéligibilité",
+      sentence:
+        "3 ans de prison dont 2 avec sursis (bracelet électronique), 100 000€ d'amende, 3 ans d'inéligibilité",
       prisonMonths: 36,
       prisonSuspended: false, // 1 an ferme sous bracelet
       fineAmount: 100000,
@@ -58,12 +59,14 @@ const verifiedAffairs: VerifiedAffair[] = [
     newSources: [
       {
         url: "https://www.franceinfo.fr/politique/marine-le-pen/affaire-des-assistants-parlementaires-du-fn-neuf-des-24-condamnes-dont-marine-le-pen-ont-fait-appel-a-ce-stade_7170375.html",
-        title: "Affaire des assistants parlementaires du FN : neuf des 24 condamnés, dont Marine Le Pen, ont fait appel",
+        title:
+          "Affaire des assistants parlementaires du FN : neuf des 24 condamnés, dont Marine Le Pen, ont fait appel",
         publisher: "France Info",
         publishedAt: new Date("2025-04-04"),
       },
     ],
-    notes: "CHANGEMENT STATUT : A fait appel - procès appel janvier-février 2026. Expert-comptable FN, ami de M. Le Pen.",
+    notes:
+      "CHANGEMENT STATUT : A fait appel - procès appel janvier-février 2026. Expert-comptable FN, ami de M. Le Pen.",
   },
 
   // === CLAUDE GUÉANT (Favoritisme sondages) - APPEL EN COURS ===
@@ -84,12 +87,14 @@ const verifiedAffairs: VerifiedAffair[] = [
     newSources: [
       {
         url: "https://www.leclubdesjuristes.com/en-bref/affaire-des-sondages-de-lelysee-claude-gueant-condamne-a-un-an-de-prison-avec-sursis-en-appel-12809/",
-        title: "Affaire des sondages de l'Élysée : Claude Guéant condamné à un an de prison avec sursis en appel",
+        title:
+          "Affaire des sondages de l'Élysée : Claude Guéant condamné à un an de prison avec sursis en appel",
         publisher: "Le Club des Juristes",
         publishedAt: new Date("2025-11-04"),
       },
     ],
-    notes: "CHANGEMENT STATUT : Pourvoi en cassation annoncé. Sondages Élysée 2007-2012 sans appel d'offres (4,7M€).",
+    notes:
+      "CHANGEMENT STATUT : Pourvoi en cassation annoncé. Sondages Élysée 2007-2012 sans appel d'offres (4,7M€).",
   },
 
   // === MICHEL FANGET - APPEL EN COURS (pourvoi cassation) ===
@@ -109,12 +114,14 @@ const verifiedAffairs: VerifiedAffair[] = [
     newSources: [
       {
         url: "https://www.francebleu.fr/infos/politique/michel-fanget-1652864429",
-        title: "Condamné en appel à deux ans d'inéligibilité, le député puydômois Michel Fanget maintient sa candidature",
+        title:
+          "Condamné en appel à deux ans d'inéligibilité, le député puydômois Michel Fanget maintient sa candidature",
         publisher: "France Bleu",
         publishedAt: new Date("2022-05-18"),
       },
     ],
-    notes: "CHANGEMENT STATUT : Pourvoi en cassation annoncé mai 2022. Complicité escroquerie CPAM. Pas réélu 2022.",
+    notes:
+      "CHANGEMENT STATUT : Pourvoi en cassation annoncé mai 2022. Complicité escroquerie CPAM. Pas réélu 2022.",
   },
 
   // === FRANÇOIS LÉOTARD - Outrage agent (DÉFINITIVE) ===
@@ -164,7 +171,8 @@ const verifiedAffairs: VerifiedAffair[] = [
         publishedAt: new Date("2015-06-01"),
       },
     ],
-    notes: "Affaire emplois fictifs Polynésie (Gaston Flosse). Appel confirmé 2014, recours rejeté 2015. Maire Papara destitué 2014.",
+    notes:
+      "Affaire emplois fictifs Polynésie (Gaston Flosse). Appel confirmé 2014, recours rejeté 2015. Maire Papara destitué 2014.",
   },
 
   // === CLAUDE PRADILLE - Corruption (DÉFINITIVE) ===
@@ -191,7 +199,8 @@ const verifiedAffairs: VerifiedAffair[] = [
         publishedAt: new Date("1995-05-24"),
       },
     ],
-    notes: "Corruption HLM Gard. Condamné 1995, définitif 2006. Recondam. 2021 pour organisation insolvabilité (2 ans bracelet).",
+    notes:
+      "Corruption HLM Gard. Condamné 1995, définitif 2006. Recondam. 2021 pour organisation insolvabilité (2 ans bracelet).",
   },
 
   // === CLAUDE PRADILLE - Subornation témoin (DÉFINITIVE) ===
@@ -224,12 +233,14 @@ const verifiedAffairs: VerifiedAffair[] = [
     newSources: [
       {
         url: "https://linsoumission.fr/2022/07/13/caroline-parmentier-deputee-rn/",
-        title: "Portrait – Caroline Parmentier, l'embarrassante attachée de presse de Marine Le Pen",
+        title:
+          "Portrait – Caroline Parmentier, l'embarrassante attachée de presse de Marine Le Pen",
         publisher: "L'Insoumission",
         publishedAt: new Date("2022-07-13"),
       },
     ],
-    notes: "Article journal Présent qualifiant immigrés de 'voyous ethniques'. Confirmé en cassation. Députée RN depuis 2022.",
+    notes:
+      "Article journal Présent qualifiant immigrés de 'voyous ethniques'. Confirmé en cassation. Députée RN depuis 2022.",
   },
 
   // === PADRIG MONTAUZIER - Attentat Versailles (DÉFINITIVE) ===
@@ -254,7 +265,8 @@ const verifiedAffairs: VerifiedAffair[] = [
         publishedAt: new Date("2021-06-26"),
       },
     ],
-    notes: "FLB - bombe galerie des Batailles 26/06/1978. Second procès : 15 ans supp. pour 30 attentats. Amnistié Mitterrand 1981.",
+    notes:
+      "FLB - bombe galerie des Batailles 26/06/1978. Second procès : 15 ans supp. pour 30 attentats. Amnistié Mitterrand 1981.",
   },
 
   // === GRÉGORY ZAOUI - Escroquerie taxe carbone (DÉFINITIVE) ===
@@ -271,7 +283,8 @@ const verifiedAffairs: VerifiedAffair[] = [
       verifiedAt: new Date(),
       verifiedBy: "verification-session-2026-02-03",
     },
-    notes: "Escroquerie taxe carbone (1,6 Mds€). Cerveau de 'l'arnaque du siècle'. Libéré 2020, reconstitué prisonnier nov 2024.",
+    notes:
+      "Escroquerie taxe carbone (1,6 Mds€). Cerveau de 'l'arnaque du siècle'. Libéré 2020, reconstitué prisonnier nov 2024.",
   },
 
   // === SIMON IBO - Incitation haine raciale (DÉFINITIVE) ===
@@ -340,7 +353,8 @@ const verifiedAffairs: VerifiedAffair[] = [
       verifiedAt: new Date(),
       verifiedBy: "verification-session-2026-02-03",
     },
-    notes: "Cinéaste et eurodéputé FN (1989-1992). Condamnation historique - définitive. Décédé 5 février 2000.",
+    notes:
+      "Cinéaste et eurodéputé FN (1989-1992). Condamnation historique - définitive. Décédé 5 février 2000.",
   },
 
   // === CLAUDE AUTANT-LARA - Discours de haine (DÉFINITIVE) ===
@@ -428,9 +442,7 @@ async function updateAffairs(dryRun: boolean = false) {
 
         if (affair.newSources && affair.newSources.length > 0) {
           for (const source of affair.newSources) {
-            const existingSource = existingAffair.sources.find(
-              (s) => s.url === source.url
-            );
+            const existingSource = existingAffair.sources.find((s) => s.url === source.url);
             if (!existingSource) {
               await prisma.source.create({
                 data: {

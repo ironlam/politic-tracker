@@ -1,6 +1,14 @@
 import Link from "next/link";
-import { MANDATE_TYPE_LABELS, AFFAIR_STATUS_LABELS, VOTE_POSITION_LABELS } from "@/config/labels";
-import type { Mandate, Affair, Declaration, Vote, Scrutin, MandateType, AffairStatus, VotePosition } from "@/types";
+import { MANDATE_TYPE_LABELS, AFFAIR_STATUS_LABELS } from "@/config/labels";
+import type {
+  Mandate,
+  Affair,
+  Declaration,
+  Vote,
+  Scrutin,
+  MandateType,
+  AffairStatus,
+} from "@/types";
 
 interface PoliticianData {
   id: string;
@@ -55,9 +63,7 @@ function getCurrentMandate(mandates: Mandate[]): Mandate | null {
 }
 
 function getTotalPatrimony(declarations: Declaration[]): number | null {
-  const latest = declarations
-    .filter((d) => d.totalNet !== null)
-    .sort((a, b) => b.year - a.year)[0];
+  const latest = declarations.filter((d) => d.totalNet !== null).sort((a, b) => b.year - a.year)[0];
   return latest?.totalNet ? Number(latest.totalNet) : null;
 }
 
@@ -91,7 +97,11 @@ export function ComparisonTable({ left, right }: ComparisonTableProps) {
                 left={left.birthDate ? `${formatDate(left.birthDate)} (${leftAge} ans)` : "-"}
                 right={right.birthDate ? `${formatDate(right.birthDate)} (${rightAge} ans)` : "-"}
               />
-              <Row label="Lieu de naissance" left={left.birthPlace || "-"} right={right.birthPlace || "-"} />
+              <Row
+                label="Lieu de naissance"
+                left={left.birthPlace || "-"}
+                right={right.birthPlace || "-"}
+              />
               <Row
                 label="Parti actuel"
                 left={left.currentParty?.name || "Sans étiquette"}
@@ -102,7 +112,9 @@ export function ComparisonTable({ left, right }: ComparisonTableProps) {
               <Row
                 label="Mandat actuel"
                 left={leftMandate ? MANDATE_TYPE_LABELS[leftMandate.type as MandateType] : "Aucun"}
-                right={rightMandate ? MANDATE_TYPE_LABELS[rightMandate.type as MandateType] : "Aucun"}
+                right={
+                  rightMandate ? MANDATE_TYPE_LABELS[rightMandate.type as MandateType] : "Aucun"
+                }
               />
               <Row
                 label="Circonscription"
@@ -151,8 +163,8 @@ export function ComparisonTable({ left, right }: ComparisonTableProps) {
               />
               <Row
                 label="Taux de participation"
-                left={`${(left.voteStats.total - (left.voteStats.nonVotant || 0)) > 0 ? Math.round(((left.voteStats.total - left.voteStats.absent - (left.voteStats.nonVotant || 0)) / (left.voteStats.total - (left.voteStats.nonVotant || 0))) * 100) : 0}%`}
-                right={`${(right.voteStats.total - (right.voteStats.nonVotant || 0)) > 0 ? Math.round(((right.voteStats.total - right.voteStats.absent - (right.voteStats.nonVotant || 0)) / (right.voteStats.total - (right.voteStats.nonVotant || 0))) * 100) : 0}%`}
+                left={`${left.voteStats.total - (left.voteStats.nonVotant || 0) > 0 ? Math.round(((left.voteStats.total - left.voteStats.absent - (left.voteStats.nonVotant || 0)) / (left.voteStats.total - (left.voteStats.nonVotant || 0))) * 100) : 0}%`}
+                right={`${right.voteStats.total - (right.voteStats.nonVotant || 0) > 0 ? Math.round(((right.voteStats.total - right.voteStats.absent - (right.voteStats.nonVotant || 0)) / (right.voteStats.total - (right.voteStats.nonVotant || 0))) * 100) : 0}%`}
               />
             </tbody>
           </table>
@@ -257,7 +269,10 @@ function MandateList({ mandates }: { mandates: Mandate[] }) {
       ) : (
         <ul className="space-y-2">
           {sorted.slice(0, 5).map((m) => (
-            <li key={m.id} className={`text-sm ${m.isCurrent ? "font-medium" : "text-muted-foreground"}`}>
+            <li
+              key={m.id}
+              className={`text-sm ${m.isCurrent ? "font-medium" : "text-muted-foreground"}`}
+            >
               {m.isCurrent && <span className="text-green-600 mr-1">●</span>}
               {MANDATE_TYPE_LABELS[m.type as MandateType]}
               {m.constituency && ` - ${m.constituency}`}

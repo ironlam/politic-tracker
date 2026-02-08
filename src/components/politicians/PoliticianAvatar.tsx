@@ -52,7 +52,9 @@ export function PoliticianAvatar({
   }
 
   return (
-    <div className={`relative rounded-full overflow-hidden flex-shrink-0 ${sizeClass} ${className}`}>
+    <div
+      className={`relative rounded-full overflow-hidden flex-shrink-0 ${sizeClass} ${className}`}
+    >
       <Image
         src={photoUrl}
         alt={displayName}

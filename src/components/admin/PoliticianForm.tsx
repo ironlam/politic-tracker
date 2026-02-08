@@ -73,18 +73,11 @@ export function PoliticianForm({ initialData, parties }: PoliticianFormProps) {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  function updateField<K extends keyof PoliticianFormData>(
-    field: K,
-    value: PoliticianFormData[K]
-  ) {
+  function updateField<K extends keyof PoliticianFormData>(field: K, value: PoliticianFormData[K]) {
     setFormData((prev) => ({ ...prev, [field]: value }));
   }
 
-  function updateExternalId(
-    index: number,
-    field: keyof ExternalIdData,
-    value: string
-  ) {
+  function updateExternalId(index: number, field: keyof ExternalIdData, value: string) {
     const newIds = [...formData.externalIds];
     newIds[index] = { ...newIds[index], [field]: value };
     setFormData((prev) => ({ ...prev, externalIds: newIds }));
@@ -143,10 +136,14 @@ export function PoliticianForm({ initialData, parties }: PoliticianFormProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {error && (
-        <div role="alert" aria-live="assertive" className="bg-red-50 text-red-700 p-4 rounded-md">{error}</div>
+        <div role="alert" aria-live="assertive" className="bg-red-50 text-red-700 p-4 rounded-md">
+          {error}
+        </div>
       )}
       {success && (
-        <div role="status" aria-live="polite" className="bg-green-50 text-green-700 p-4 rounded-md">{success}</div>
+        <div role="status" aria-live="polite" className="bg-green-50 text-green-700 p-4 rounded-md">
+          {success}
+        </div>
       )}
 
       {/* Informations générales */}
@@ -174,9 +171,7 @@ export function PoliticianForm({ initialData, parties }: PoliticianFormProps) {
               <Select
                 id="currentPartyId"
                 value={formData.currentPartyId || ""}
-                onChange={(e) =>
-                  updateField("currentPartyId", e.target.value || null)
-                }
+                onChange={(e) => updateField("currentPartyId", e.target.value || null)}
               >
                 <option value="">Aucun / Indépendant</option>
                 {parties.map((p) => (
@@ -226,9 +221,7 @@ export function PoliticianForm({ initialData, parties }: PoliticianFormProps) {
               <Input
                 id="birthPlace"
                 value={formData.birthPlace || ""}
-                onChange={(e) =>
-                  updateField("birthPlace", e.target.value || null)
-                }
+                onChange={(e) => updateField("birthPlace", e.target.value || null)}
               />
             </div>
           </div>
@@ -271,9 +264,7 @@ export function PoliticianForm({ initialData, parties }: PoliticianFormProps) {
               <Select
                 id="photoSource"
                 value={formData.photoSource || ""}
-                onChange={(e) =>
-                  updateField("photoSource", e.target.value || null)
-                }
+                onChange={(e) => updateField("photoSource", e.target.value || null)}
               >
                 <option value="">—</option>
                 {PHOTO_SOURCES.map((s) => (
@@ -295,9 +286,7 @@ export function PoliticianForm({ initialData, parties }: PoliticianFormProps) {
                   (e.target as HTMLImageElement).style.display = "none";
                 }}
               />
-              <p className="text-sm text-muted-foreground">
-                Aperçu de la photo
-              </p>
+              <p className="text-sm text-muted-foreground">Aperçu de la photo</p>
             </div>
           )}
         </CardContent>
@@ -306,20 +295,13 @@ export function PoliticianForm({ initialData, parties }: PoliticianFormProps) {
       {/* Identifiants externes */}
       <Card>
         <CardHeader>
-          <CardTitle>
-            Identifiants externes ({formData.externalIds.length})
-          </CardTitle>
+          <CardTitle>Identifiants externes ({formData.externalIds.length})</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {formData.externalIds.map((extId, index) => (
-            <div
-              key={extId.id || index}
-              className="border p-4 rounded-lg space-y-3"
-            >
+            <div key={extId.id || index} className="border p-4 rounded-lg space-y-3">
               <div className="flex justify-between items-center">
-                <Badge variant="outline">
-                  {DATA_SOURCE_LABELS[extId.source] || extId.source}
-                </Badge>
+                <Badge variant="outline">{DATA_SOURCE_LABELS[extId.source] || extId.source}</Badge>
                 <Button
                   type="button"
                   variant="ghost"
@@ -336,9 +318,7 @@ export function PoliticianForm({ initialData, parties }: PoliticianFormProps) {
                   <Label>Source</Label>
                   <Select
                     value={extId.source}
-                    onChange={(e) =>
-                      updateExternalId(index, "source", e.target.value)
-                    }
+                    onChange={(e) => updateExternalId(index, "source", e.target.value)}
                   >
                     {DATA_SOURCES.map((src) => (
                       <option key={src} value={src}>
@@ -352,9 +332,7 @@ export function PoliticianForm({ initialData, parties }: PoliticianFormProps) {
                   <Label>ID externe</Label>
                   <Input
                     value={extId.externalId}
-                    onChange={(e) =>
-                      updateExternalId(index, "externalId", e.target.value)
-                    }
+                    onChange={(e) => updateExternalId(index, "externalId", e.target.value)}
                     placeholder="PA722140, Q123456..."
                     className="font-mono"
                   />
@@ -365,9 +343,7 @@ export function PoliticianForm({ initialData, parties }: PoliticianFormProps) {
                   <Input
                     type="url"
                     value={extId.url || ""}
-                    onChange={(e) =>
-                      updateExternalId(index, "url", e.target.value)
-                    }
+                    onChange={(e) => updateExternalId(index, "url", e.target.value)}
                     placeholder="https://..."
                   />
                 </div>

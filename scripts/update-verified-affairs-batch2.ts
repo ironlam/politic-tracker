@@ -64,7 +64,8 @@ const verifiedAffairs: VerifiedAffair[] = [
         publishedAt: new Date("2015-03-03"),
       },
     ],
-    notes: "Inscription de faux électeurs - municipales 1995 et législatives 1997. Décédé le 27 mai 2025.",
+    notes:
+      "Inscription de faux électeurs - municipales 1995 et législatives 1997. Décédé le 27 mai 2025.",
   },
 
   // === WALLERAND DE SAINT-JUST - Affaire Jeanne (kits) ===
@@ -100,7 +101,8 @@ const verifiedAffairs: VerifiedAffair[] = [
     updates: {
       verdictDate: new Date("2024-06-19"),
       status: "CONDAMNATION_DEFINITIVE",
-      sentence: "2 ans de prison dont 18 mois avec sursis, 2 ans d'inéligibilité (réduit de 5 ans en appel)",
+      sentence:
+        "2 ans de prison dont 18 mois avec sursis, 2 ans d'inéligibilité (réduit de 5 ans en appel)",
       prisonMonths: 24,
       prisonSuspended: false, // 6 mois ferme
       ineligibilityMonths: 24,
@@ -116,7 +118,8 @@ const verifiedAffairs: VerifiedAffair[] = [
         publishedAt: new Date("2020-06-16"),
       },
     ],
-    notes: "Affaire Jeanne (prêts fictifs) - concepteur du montage financier - cassation 19 juin 2024",
+    notes:
+      "Affaire Jeanne (prêts fictifs) - concepteur du montage financier - cassation 19 juin 2024",
   },
 
   // === MICHEL MOUILLOT - Corruption (casinos) ===
@@ -135,7 +138,8 @@ const verifiedAffairs: VerifiedAffair[] = [
       verifiedAt: new Date(),
       verifiedBy: "verification-session-2026-02-03",
     },
-    notes: "Affaire des casinos de Cannes - pots-de-vin pour machines à sous - 33 mois de prison effectués",
+    notes:
+      "Affaire des casinos de Cannes - pots-de-vin pour machines à sous - 33 mois de prison effectués",
   },
 
   // === MICHEL MOUILLOT - Prise illégale d'intérêts ===
@@ -175,7 +179,8 @@ const verifiedAffairs: VerifiedAffair[] = [
     updates: {
       verdictDate: new Date("2009-05-20"),
       status: "CONDAMNATION_DEFINITIVE",
-      sentence: "2 ans de prison avec sursis, 75 000€ d'amende, 5 ans privation droits civiques, 10 ans d'inéligibilité",
+      sentence:
+        "2 ans de prison avec sursis, 75 000€ d'amende, 5 ans privation droits civiques, 10 ans d'inéligibilité",
       prisonMonths: 24,
       prisonSuspended: true,
       fineAmount: 75000,
@@ -192,7 +197,8 @@ const verifiedAffairs: VerifiedAffair[] = [
         publishedAt: new Date("2009-05-20"),
       },
     ],
-    notes: "Affaire Bédier/Delfau - pots-de-vin de l'entreprise AINETT. Déchu de son mandat par le Conseil constitutionnel. Décédé le 4 novembre 2018.",
+    notes:
+      "Affaire Bédier/Delfau - pots-de-vin de l'entreprise AINETT. Déchu de son mandat par le Conseil constitutionnel. Décédé le 4 novembre 2018.",
   },
 
   // === ÉRIC ZEMMOUR - Injure (mineurs isolés) ===
@@ -216,7 +222,8 @@ const verifiedAffairs: VerifiedAffair[] = [
         publishedAt: new Date("2025-12-02"),
       },
     ],
-    notes: "Propos sur les mineurs isolés (2020 sur CNews) - complicité d'injure publique et provocation à la haine",
+    notes:
+      "Propos sur les mineurs isolés (2020 sur CNews) - complicité d'injure publique et provocation à la haine",
   },
 
   // === ÉRIC ZEMMOUR - Incitation à la haine raciale (2019) ===
@@ -235,7 +242,8 @@ const verifiedAffairs: VerifiedAffair[] = [
     newSources: [
       {
         url: "https://www.francebleu.fr/infos/societe/eric-zemmour-a-ete-definitivement-condamne-pour-provocation-a-la-haine-raciale-et-injures-racistes-6052200",
-        title: "Éric Zemmour définitivement condamné pour provocation à la haine raciale et injures racistes",
+        title:
+          "Éric Zemmour définitivement condamné pour provocation à la haine raciale et injures racistes",
         publisher: "France Bleu",
         publishedAt: new Date("2025-09-17"),
       },
@@ -289,7 +297,8 @@ const verifiedAffairs: VerifiedAffair[] = [
     newSources: [
       {
         url: "https://www.franceinfo.fr/politique/ps/detournement-de-frais-de-mandat-l-ex-numero-un-du-ps-jean-christophe-cambadelis-condamne-a-huit-mois-de-prison-avec-sursis_6762874.html",
-        title: "L'ex-numéro un du PS Jean-Christophe Cambadélis condamné à huit mois de prison avec sursis",
+        title:
+          "L'ex-numéro un du PS Jean-Christophe Cambadélis condamné à huit mois de prison avec sursis",
         publisher: "France Info",
         publishedAt: new Date("2024-09-04"),
       },
@@ -362,9 +371,7 @@ async function updateAffairs(dryRun: boolean = false) {
 
         if (affair.newSources && affair.newSources.length > 0) {
           for (const source of affair.newSources) {
-            const existingSource = existingAffair.sources.find(
-              (s) => s.url === source.url
-            );
+            const existingSource = existingAffair.sources.find((s) => s.url === source.url);
             if (!existingSource) {
               await prisma.source.create({
                 data: {

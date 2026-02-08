@@ -19,7 +19,7 @@ const NODE_LIMITS = [
   { value: 50, label: "50 nœuds" },
 ];
 
-export function RelationsClient({ slug, politicianName }: RelationsClientProps) {
+export function RelationsClient({ slug, politicianName: _politicianName }: RelationsClientProps) {
   const [selectedTypes, setSelectedTypes] = useState<RelationType[]>(DEFAULT_RELATION_TYPES);
   const [nodeLimit, setNodeLimit] = useState(10);
   const [data, setData] = useState<RelationsResponse | null>(null);
@@ -123,10 +123,7 @@ export function RelationsClient({ slug, politicianName }: RelationsClientProps) 
         <div className="flex items-center justify-center h-[400px] border rounded-lg bg-destructive/5">
           <div className="text-center">
             <p className="text-destructive mb-2">{error}</p>
-            <button
-              onClick={fetchRelations}
-              className="text-sm text-primary hover:underline"
-            >
+            <button onClick={fetchRelations} className="text-sm text-primary hover:underline">
               Réessayer
             </button>
           </div>
@@ -162,15 +159,16 @@ export function RelationsClient({ slug, politicianName }: RelationsClientProps) 
               <div className="flex flex-col sm:flex-row justify-between gap-4">
                 <RelationLegend activeTypes={data.stats.byType} />
                 <div className="text-sm text-muted-foreground">
-                  {data.stats.totalConnections} connexion{data.stats.totalConnections > 1 ? "s" : ""} avec{" "}
-                  {data.nodes.length} représentant{data.nodes.length > 1 ? "s" : ""}
+                  {data.stats.totalConnections} connexion
+                  {data.stats.totalConnections > 1 ? "s" : ""} avec {data.nodes.length} représentant
+                  {data.nodes.length > 1 ? "s" : ""}
                 </div>
               </div>
 
               {/* Help text */}
               <p className="text-xs text-muted-foreground border-t pt-4">
-                Cliquez sur un noeud pour accéder à la fiche du représentant. Utilisez la molette pour
-                zoomer et glissez pour vous déplacer.
+                Cliquez sur un noeud pour accéder à la fiche du représentant. Utilisez la molette
+                pour zoomer et glissez pour vous déplacer.
               </p>
             </>
           )}

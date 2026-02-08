@@ -2,12 +2,7 @@ import Link from "next/link";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { MobileMenu } from "./MobileMenu";
 import { NavDropdown } from "./NavDropdown";
-import {
-  NAV_GROUPS,
-  CTA_COMPARER,
-  CTA_MON_DEPUTE,
-  CHAT_LINK,
-} from "@/config/navigation";
+import { NAV_GROUPS, CTA_COMPARER, CTA_MON_DEPUTE, CHAT_LINK } from "@/config/navigation";
 import { MapPin, GitCompare, MessageSquare } from "lucide-react";
 
 export function Header() {
@@ -31,10 +26,7 @@ export function Header() {
           </Link>
 
           {/* Desktop navigation */}
-          <nav
-            className="hidden lg:flex items-center gap-1"
-            aria-label="Navigation principale"
-          >
+          <nav className="hidden lg:flex items-center gap-1" aria-label="Navigation principale">
             {/* Dropdown menus */}
             {NAV_GROUPS.map((group) => (
               <NavDropdown key={group.label} group={group} />

@@ -26,6 +26,7 @@ interface RelationsGraphProps {
 }
 
 interface ForceGraphNode extends GraphNode {
+  [key: string]: unknown;
   x?: number;
   y?: number;
   fx?: number;
@@ -33,6 +34,7 @@ interface ForceGraphNode extends GraphNode {
 }
 
 interface ForceGraphLink {
+  [key: string]: unknown;
   source: string;
   target: string;
   type: RelationType;
@@ -49,10 +51,11 @@ export function RelationsGraph({
   isMobile = false,
 }: RelationsGraphProps) {
   const router = useRouter();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const graphRef = useRef<any>(null);
 
   // Combine center with other nodes
-  const allNodes: ForceGraphNode[] = [center, ...nodes];
+  const allNodes = [center, ...nodes] as ForceGraphNode[];
 
   const graphData = {
     nodes: allNodes,
@@ -86,21 +89,21 @@ export function RelationsGraph({
   }, [chargeStrength, linkDistance, nodeCount]);
 
   // Handle node click - navigate to politician page
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleNodeClick = useCallback(
-    (node: any) => {
-      if (node.slug) {
-        router.push(`/politiques/${node.slug}`);
+    (node: { [key: string]: unknown }) => {
+      const n = node as ForceGraphNode;
+      if (n.slug) {
+        router.push(`/politiques/${n.slug}`);
       }
     },
     [router]
   );
 
   // Custom node rendering - optimized for readability
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const nodeCanvasObject = useCallback(
-    (node: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
-      const isCenter = node.id === center.id;
+    (node: { [key: string]: unknown }, ctx: CanvasRenderingContext2D, globalScale: number) => {
+      const n = node as ForceGraphNode;
+      const isCenter = n.id === center.id;
       const baseRadius = isMobile ? 6 : 8;
       const radius = isCenter ? baseRadius * 1.5 : baseRadius;
 
@@ -110,14 +113,14 @@ export function RelationsGraph({
 
       // Draw circle with white background for contrast
       ctx.beginPath();
-      ctx.arc(node.x || 0, node.y || 0, radius + 2, 0, 2 * Math.PI);
+      ctx.arc(n.x || 0, n.y || 0, radius + 2, 0, 2 * Math.PI);
       ctx.fillStyle = "#fff";
       ctx.fill();
 
       // Draw colored circle
       ctx.beginPath();
-      ctx.arc(node.x || 0, node.y || 0, radius, 0, 2 * Math.PI);
-      ctx.fillStyle = node.party?.color || "#6B7280";
+      ctx.arc(n.x || 0, n.y || 0, radius, 0, 2 * Math.PI);
+      ctx.fillStyle = n.party?.color || "#6B7280";
       ctx.fill();
 
       // Draw border for center node
@@ -135,7 +138,7 @@ export function RelationsGraph({
         ctx.textBaseline = "top";
 
         // Get short name (first name + last initial or just last name)
-        const fullName = node.fullName || "";
+        const fullName = n.fullName || "";
         const parts = fullName.split(" ");
         let displayName = fullName;
         if (parts.length > 2) {
@@ -143,7 +146,7 @@ export function RelationsGraph({
           displayName = `${parts[0]} ${parts[parts.length - 1]}`;
         }
         if (displayName.length > 18) {
-          displayName = displayName.slice(0, 16) + "…";
+          displayName = displayName.slice(0, 16) + "\u2026";
         }
 
         // Draw text background for readability
@@ -151,29 +154,29 @@ export function RelationsGraph({
         const padding = 2;
         ctx.fillStyle = "rgba(255, 255, 255, 0.85)";
         ctx.fillRect(
-          (node.x || 0) - textWidth / 2 - padding,
-          (node.y || 0) + radius + 2,
+          (n.x || 0) - textWidth / 2 - padding,
+          (n.y || 0) + radius + 2,
           textWidth + padding * 2,
           scaledFontSize + 2
         );
 
         // Draw text
         ctx.fillStyle = isCenter ? "#000" : "#333";
-        ctx.fillText(displayName, node.x || 0, (node.y || 0) + radius + 3);
+        ctx.fillText(displayName, n.x || 0, (n.y || 0) + radius + 3);
       }
     },
     [center.id, isMobile]
   );
 
   // Custom link rendering
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const linkColor = useCallback((link: any) => {
-    return RELATION_TYPE_COLORS[link.type as RelationType] || "#999";
+  const linkColor = useCallback((link: { [key: string]: unknown }) => {
+    const l = link as ForceGraphLink;
+    return RELATION_TYPE_COLORS[l.type] || "#999";
   }, []);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const linkWidth = useCallback((link: any) => {
-    return Math.max(1, (link.strength || 5) / 3);
+  const linkWidth = useCallback((link: { [key: string]: unknown }) => {
+    const l = link as ForceGraphLink;
+    return Math.max(1, (l.strength || 5) / 3);
   }, []);
 
   return (
@@ -184,14 +187,15 @@ export function RelationsGraph({
         width={width}
         height={height}
         nodeId="id"
-        nodeLabel={(node: any) =>
-          `${node.fullName || ""}${node.party ? ` (${node.party.shortName})` : ""}`
-        }
+        nodeLabel={(node) => {
+          const n = node as ForceGraphNode;
+          return `${n.fullName || ""}${n.party ? ` (${n.party.shortName})` : ""}`;
+        }}
         nodeCanvasObject={nodeCanvasObject}
-        nodePointerAreaPaint={(node: any, color: string, ctx: CanvasRenderingContext2D) => {
+        nodePointerAreaPaint={(node, color: string, ctx: CanvasRenderingContext2D) => {
           ctx.fillStyle = color;
           ctx.beginPath();
-          ctx.arc(node.x || 0, node.y || 0, 15, 0, 2 * Math.PI);
+          ctx.arc((node.x as number) || 0, (node.y as number) || 0, 15, 0, 2 * Math.PI);
           ctx.fill();
         }}
         linkColor={linkColor}

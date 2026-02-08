@@ -99,9 +99,10 @@ async function getVoteStats(
       totalVotesFor: globalStats._sum.votesFor || 0,
       totalVotesAgainst: globalStats._sum.votesAgainst || 0,
       totalVotesAbstain: globalStats._sum.votesAbstain || 0,
-      participationRate: participationRow.total > 0
-        ? Math.round((participationRow.participating / participationRow.total) * 100)
-        : 0,
+      participationRate:
+        participationRow.total > 0
+          ? Math.round((participationRow.participating / participationRow.total) * 100)
+          : 0,
       anScrutins: chamberCounts.an,
       senatScrutins: chamberCounts.senat,
       adoptes: chamberCounts.adoptes,
@@ -215,13 +216,10 @@ function aggregatePartyStats(rows: PartyVoteRow[], limit: number): PartyVoteStat
     const participating = stats.pour + stats.contre + stats.abstention;
     const countedForParticipation = stats.totalVotes - stats.nonVotant;
     stats.participationRate =
-      countedForParticipation > 0
-        ? Math.round((participating / countedForParticipation) * 100)
-        : 0;
+      countedForParticipation > 0 ? Math.round((participating / countedForParticipation) * 100) : 0;
 
     const maxPosition = Math.max(stats.pour, stats.contre, stats.abstention);
-    stats.cohesionRate =
-      participating > 0 ? Math.round((maxPosition / participating) * 100) : 0;
+    stats.cohesionRate = participating > 0 ? Math.round((maxPosition / participating) * 100) : 0;
   }
 
   return Array.from(partyMap.values())
@@ -287,10 +285,7 @@ async function getDivisiveScrutins(
   return rows.map((s) => ({
     ...s,
     divisionScore: Math.round(
-      100 -
-        (Math.abs(s.votesFor - s.votesAgainst) /
-          (s.votesFor + s.votesAgainst)) *
-          100
+      100 - (Math.abs(s.votesFor - s.votesAgainst) / (s.votesFor + s.votesAgainst)) * 100
     ),
   }));
 }

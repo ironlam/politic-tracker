@@ -11,10 +11,13 @@ interface PoliticianCardProps {
 }
 
 // Format mandate for display (short version)
-function formatMandateShort(mandate: { type: string; constituency: string | null } | null | undefined): string | null {
+function formatMandateShort(
+  mandate: { type: string; constituency: string | null } | null | undefined
+): string | null {
   if (!mandate) return null;
 
-  const typeLabel = MANDATE_TYPE_LABELS[mandate.type as keyof typeof MANDATE_TYPE_LABELS] || mandate.type;
+  const typeLabel =
+    MANDATE_TYPE_LABELS[mandate.type as keyof typeof MANDATE_TYPE_LABELS] || mandate.type;
 
   if (mandate.constituency) {
     // Extract department name from "Département (numéro)"
@@ -27,15 +30,20 @@ function formatMandateShort(mandate: { type: string; constituency: string | null
 }
 
 export function PoliticianCard({ politician, showConvictionBadge = false }: PoliticianCardProps) {
-  const hasConviction = 'hasConviction' in politician && politician.hasConviction;
-  const affairCount = '_count' in politician ? politician._count.affairs : 0;
+  const hasConviction = "hasConviction" in politician && politician.hasConviction;
+  const affairCount = "_count" in politician ? politician._count.affairs : 0;
   const isDeceased = politician.deathDate !== null;
-  const currentMandate = 'currentMandate' in politician ? politician.currentMandate : null;
+  const currentMandate = "currentMandate" in politician ? politician.currentMandate : null;
   const mandateDisplay = formatMandateShort(currentMandate);
 
   return (
-    <Link href={`/politiques/${politician.slug}`} className="block group focus-visible:outline-none">
-      <Card className={`h-full transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-primary/30 focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2 ${hasConviction ? 'ring-1 ring-red-200 dark:ring-red-900/50' : ''}`}>
+    <Link
+      href={`/politiques/${politician.slug}`}
+      className="block group focus-visible:outline-none"
+    >
+      <Card
+        className={`h-full transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-primary/30 focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2 ${hasConviction ? "ring-1 ring-red-200 dark:ring-red-900/50" : ""}`}
+      >
         <CardContent className="pt-6">
           <div className="flex items-start gap-4">
             <div className="relative">
@@ -62,9 +70,7 @@ export function PoliticianCard({ politician, showConvictionBadge = false }: Poli
                 {politician.fullName}
               </p>
               {mandateDisplay && (
-                <p className="text-sm text-muted-foreground truncate mt-0.5">
-                  {mandateDisplay}
-                </p>
+                <p className="text-sm text-muted-foreground truncate mt-0.5">{mandateDisplay}</p>
               )}
               <div className="flex items-center gap-2 mt-3 flex-wrap">
                 {politician.currentParty && (
@@ -86,12 +92,15 @@ export function PoliticianCard({ politician, showConvictionBadge = false }: Poli
                 )}
                 {isDeceased && (
                   <Badge variant="outline" className="text-xs text-muted-foreground bg-muted/50">
-                    Décédé{politician.civility === 'Mme' ? 'e' : ''}
+                    Décédé{politician.civility === "Mme" ? "e" : ""}
                   </Badge>
                 )}
                 {showConvictionBadge && affairCount > 0 && (
-                  <Badge variant="outline" className="text-xs text-destructive/80 border-destructive/40 bg-destructive/5">
-                    {affairCount} affaire{affairCount > 1 ? 's' : ''}
+                  <Badge
+                    variant="outline"
+                    className="text-xs text-destructive/80 border-destructive/40 bg-destructive/5"
+                  >
+                    {affairCount} affaire{affairCount > 1 ? "s" : ""}
                   </Badge>
                 )}
               </div>

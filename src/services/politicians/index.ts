@@ -11,14 +11,7 @@ const DEFAULT_LIMIT = 20;
 export async function getPoliticians(
   filters: PoliticianFilters = {}
 ): Promise<PaginatedResponse<PoliticianWithParty>> {
-  const {
-    search,
-    partyId,
-    mandateType,
-    hasAffairs,
-    page = 1,
-    limit = DEFAULT_LIMIT,
-  } = filters;
+  const { search, partyId, mandateType, hasAffairs, page = 1, limit = DEFAULT_LIMIT } = filters;
 
   const where = {
     ...(search && {
@@ -63,9 +56,7 @@ export async function getPoliticians(
   };
 }
 
-export async function getPoliticianBySlug(
-  slug: string
-): Promise<PoliticianFull | null> {
+export async function getPoliticianBySlug(slug: string): Promise<PoliticianFull | null> {
   return db.politician.findUnique({
     where: { slug },
     include: {
@@ -86,9 +77,7 @@ export async function getPoliticianBySlug(
   });
 }
 
-export async function getPoliticianById(
-  id: string
-): Promise<PoliticianFull | null> {
+export async function getPoliticianById(id: string): Promise<PoliticianFull | null> {
   return db.politician.findUnique({
     where: { id },
     include: {
@@ -109,10 +98,7 @@ export async function getPoliticianById(
   });
 }
 
-export async function searchPoliticians(
-  query: string,
-  limit = 10
-): Promise<PoliticianWithParty[]> {
+export async function searchPoliticians(query: string, limit = 10): Promise<PoliticianWithParty[]> {
   return db.politician.findMany({
     where: {
       OR: [

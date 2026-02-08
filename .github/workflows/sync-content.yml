@@ -3,13 +3,13 @@ name: Sync Content (Legislation + AI)
 on:
   schedule:
     # Run every Sunday at 5:00 AM UTC (after votes sync)
-    - cron: '0 5 * * 0'
+    - cron: "0 5 * * 0"
   workflow_dispatch:
     inputs:
       summaries_limit:
-        description: 'Max AI summaries to generate (default: 20)'
+        description: "Max AI summaries to generate (default: 20)"
         required: false
-        default: '20'
+        default: "20"
         type: string
 
 env:
@@ -27,8 +27,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
-          cache: 'npm'
+          node-version: "22"
+          cache: "npm"
 
       - name: Install dependencies
         run: npm ci

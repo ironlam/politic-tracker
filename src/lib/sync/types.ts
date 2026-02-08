@@ -26,8 +26,8 @@ export interface SyncResult {
  * CLI option definition for help display
  */
 export interface CLIOptionDefinition {
-  name: string;           // "--limit"
-  alias?: string;         // "-l"
+  name: string; // "--limit"
+  alias?: string; // "-l"
   type: "boolean" | "number" | "string";
   description: string;
   default?: unknown;

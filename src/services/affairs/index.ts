@@ -13,14 +13,7 @@ const DEFAULT_LIMIT = 20;
 export async function getAffairs(
   filters: AffairFilters = {}
 ): Promise<PaginatedResponse<AffairWithPolitician>> {
-  const {
-    search,
-    politicianId,
-    status,
-    category,
-    page = 1,
-    limit = DEFAULT_LIMIT,
-  } = filters;
+  const { search, politicianId, status, category, page = 1, limit = DEFAULT_LIMIT } = filters;
 
   const where = {
     ...(search && {
@@ -61,9 +54,7 @@ export async function getAffairs(
   };
 }
 
-export async function getAffairBySlug(
-  slug: string
-): Promise<AffairWithPolitician | null> {
+export async function getAffairBySlug(slug: string): Promise<AffairWithPolitician | null> {
   return db.affair.findUnique({
     where: { slug },
     include: {
@@ -79,9 +70,7 @@ export async function getAffairBySlug(
   });
 }
 
-export async function getRecentAffairs(
-  limit = 10
-): Promise<AffairWithPolitician[]> {
+export async function getRecentAffairs(limit = 10): Promise<AffairWithPolitician[]> {
   return db.affair.findMany({
     include: {
       politician: {
@@ -96,9 +85,7 @@ export async function getRecentAffairs(
   });
 }
 
-export async function createAffair(
-  input: CreateAffairInput
-): Promise<AffairWithSources> {
+export async function createAffair(input: CreateAffairInput): Promise<AffairWithSources> {
   const slug = generateSlug(input.title);
 
   return db.affair.create({
@@ -138,19 +125,13 @@ export async function getAffairsStats() {
 
   return {
     total,
-    byStatus: byStatus.reduce<Record<string, number>>(
-      (acc, item) => {
-        acc[item.status] = item._count;
-        return acc;
-      },
-      {}
-    ),
-    byCategory: byCategory.reduce<Record<string, number>>(
-      (acc, item) => {
-        acc[item.category] = item._count;
-        return acc;
-      },
-      {}
-    ),
+    byStatus: byStatus.reduce<Record<string, number>>((acc, item) => {
+      acc[item.status] = item._count;
+      return acc;
+    }, {}),
+    byCategory: byCategory.reduce<Record<string, number>>((acc, item) => {
+      acc[item.category] = item._count;
+      return acc;
+    }, {}),
   };
 }

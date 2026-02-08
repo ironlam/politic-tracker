@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { MandateType } from "@/generated/prisma";
 import { getPoliticians } from "@/services/politicians";
 
 /**
@@ -73,7 +74,8 @@ export async function GET(request: NextRequest) {
   const partyId = searchParams.get("partyId") || undefined;
   const mandateType = searchParams.get("mandateType") || undefined;
   const hasAffairsParam = searchParams.get("hasAffairs");
-  const hasAffairs = hasAffairsParam === "true" ? true : hasAffairsParam === "false" ? false : undefined;
+  const hasAffairs =
+    hasAffairsParam === "true" ? true : hasAffairsParam === "false" ? false : undefined;
   const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
   const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") || "20", 10)));
 
@@ -81,7 +83,7 @@ export async function GET(request: NextRequest) {
     const result = await getPoliticians({
       search,
       partyId,
-      mandateType: mandateType as any,
+      mandateType: mandateType as MandateType,
       hasAffairs,
       page,
       limit,

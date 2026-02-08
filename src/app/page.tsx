@@ -27,12 +27,7 @@ async function getStats() {
     db.mandate.count({
       where: {
         type: {
-          in: [
-            "MINISTRE",
-            "PREMIER_MINISTRE",
-            "MINISTRE_DELEGUE",
-            "SECRETAIRE_ETAT",
-          ],
+          in: ["MINISTRE", "PREMIER_MINISTRE", "MINISTRE_DELEGUE", "SECRETAIRE_ETAT"],
         },
         isCurrent: true,
       },
@@ -43,10 +38,7 @@ async function getStats() {
     // Only count articles with politician or party mentions (relevant to politics)
     db.pressArticle.count({
       where: {
-        OR: [
-          { mentions: { some: {} } },
-          { partyMentions: { some: {} } },
-        ],
+        OR: [{ mentions: { some: {} } }, { partyMentions: { some: {} } }],
       },
     }),
   ]);
@@ -79,7 +71,7 @@ async function getRecentVotes() {
   });
 
   // Map to the expected format
-  return scrutins.map(s => ({
+  return scrutins.map((s) => ({
     id: s.id,
     slug: s.slug,
     title: s.title,
@@ -110,8 +102,8 @@ async function getRecentArticles() {
   const articles = await db.pressArticle.findMany({
     where: {
       OR: [
-        { mentions: { some: {} } },           // Has politician mentions
-        { partyMentions: { some: {} } },      // Has party mentions
+        { mentions: { some: {} } }, // Has politician mentions
+        { partyMentions: { some: {} } }, // Has party mentions
       ],
     },
     take: 5,
@@ -126,7 +118,7 @@ async function getRecentArticles() {
   });
 
   // Map feedSource to the expected format
-  return articles.map(a => ({
+  return articles.map((a) => ({
     ...a,
     source: a.feedSource.toUpperCase(),
   }));
@@ -148,17 +140,15 @@ async function getRecentAffairs() {
 }
 
 export default async function HomePage() {
-  const [stats, recentVotes, activeDossiers, recentArticles, recentAffairs] =
-    await Promise.all([
-      getStats(),
-      getRecentVotes(),
-      getActiveDossiers(),
-      getRecentArticles(),
-      getRecentAffairs(),
-    ]);
+  const [stats, recentVotes, activeDossiers, recentArticles, recentAffairs] = await Promise.all([
+    getStats(),
+    getRecentVotes(),
+    getActiveDossiers(),
+    getRecentArticles(),
+    getRecentAffairs(),
+  ]);
 
-  const siteUrl =
-    process.env.NEXT_PUBLIC_SITE_URL || "https://transparence-politique.fr";
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://transparence-politique.fr";
 
   return (
     <>
@@ -181,32 +171,17 @@ export default async function HomePage() {
                 </span>
               </h1>
               <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed">
-                Accédez aux informations publiques sur vos représentants
-                politiques. Mandats, déclarations de patrimoine, votes, affaires
-                judiciaires documentées.
+                Accédez aux informations publiques sur vos représentants politiques. Mandats,
+                déclarations de patrimoine, votes, affaires judiciaires documentées.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button
-                  asChild
-                  size="lg"
-                  className="text-base px-8 shadow-lg shadow-primary/20"
-                >
+                <Button asChild size="lg" className="text-base px-8 shadow-lg shadow-primary/20">
                   <Link href="/politiques">Explorer les représentants</Link>
                 </Button>
-                <Button
-                  asChild
-                  size="lg"
-                  variant="outline"
-                  className="text-base px-8"
-                >
+                <Button asChild size="lg" variant="outline" className="text-base px-8">
                   <Link href="/statistiques">Voir les statistiques</Link>
                 </Button>
-                <Button
-                  asChild
-                  size="lg"
-                  variant="outline"
-                  className="text-base px-8"
-                >
+                <Button asChild size="lg" variant="outline" className="text-base px-8">
                   <Link href="/comparer">Comparer</Link>
                 </Button>
               </div>
@@ -221,11 +196,7 @@ export default async function HomePage() {
         <DashboardStats stats={stats} />
 
         {/* Activity Tabs */}
-        <ActivityTabs
-          votes={recentVotes}
-          dossiers={activeDossiers}
-          articles={recentArticles}
-        />
+        <ActivityTabs votes={recentVotes} dossiers={activeDossiers} articles={recentArticles} />
 
         {/* Quick Tools */}
         <QuickTools />
@@ -236,12 +207,8 @@ export default async function HomePage() {
             <div className="container mx-auto px-4">
               <div className="flex justify-between items-end mb-8">
                 <div>
-                  <h2 className="text-2xl md:text-3xl font-bold mb-2">
-                    Affaires récentes
-                  </h2>
-                  <p className="text-muted-foreground">
-                    Dernières affaires documentées
-                  </p>
+                  <h2 className="text-2xl md:text-3xl font-bold mb-2">Affaires récentes</h2>
+                  <p className="text-muted-foreground">Dernières affaires documentées</p>
                 </div>
                 <Button variant="ghost" asChild className="text-primary">
                   <Link href="/affaires">Voir toutes &rarr;</Link>
@@ -250,8 +217,7 @@ export default async function HomePage() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {recentAffairs.map((affair) => {
-                  const relevantDate =
-                    affair.verdictDate || affair.startDate || affair.factsDate;
+                  const relevantDate = affair.verdictDate || affair.startDate || affair.factsDate;
                   return (
                     <Link
                       key={affair.id}
@@ -262,15 +228,11 @@ export default async function HomePage() {
                         <CardContent className="pt-6">
                           <div className="flex items-start gap-4">
                             <div className="w-12 h-12 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center shrink-0">
-                              <span className="text-amber-600 dark:text-amber-400 text-lg">
-                                !
-                              </span>
+                              <span className="text-amber-600 dark:text-amber-400 text-lg">!</span>
                             </div>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 mb-1">
-                                <p className="font-semibold truncate">
-                                  {affair.title}
-                                </p>
+                                <p className="font-semibold truncate">{affair.title}</p>
                               </div>
                               <p className="text-sm text-muted-foreground">
                                 {affair.politician.fullName}
@@ -301,23 +263,17 @@ export default async function HomePage() {
         {/* CTA Section */}
         <section className="py-20 bg-gradient-to-br from-primary/5 to-accent/10">
           <div className="container mx-auto px-4 text-center">
-            <h2 className="text-2xl md:text-3xl font-bold mb-4">
-              Un projet citoyen transparent
-            </h2>
+            <h2 className="text-2xl md:text-3xl font-bold mb-4">Un projet citoyen transparent</h2>
             <p className="text-muted-foreground max-w-2xl mx-auto mb-8">
-              Toutes nos sources sont documentées. Notre méthodologie est
-              publique. Nous respectons la présomption d&apos;innocence et le
-              droit de réponse.
+              Toutes nos sources sont documentées. Notre méthodologie est publique. Nous respectons
+              la présomption d&apos;innocence et le droit de réponse.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button asChild variant="outline" size="lg">
                 <Link href="/sources">Découvrir notre méthodologie</Link>
               </Button>
               <Button asChild size="lg">
-                <Link
-                  href="/soutenir"
-                  className="flex items-center gap-2"
-                >
+                <Link href="/soutenir" className="flex items-center gap-2">
                   <Heart className="h-4 w-4" />
                   Nous soutenir
                 </Link>

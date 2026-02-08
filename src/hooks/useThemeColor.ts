@@ -2,12 +2,7 @@
 
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
-import {
-  COLORS,
-  getColor,
-  getCategoryColors,
-  ColorCategory,
-} from "@/config/colors";
+import { COLORS, getColor, getCategoryColors, ColorCategory } from "@/config/colors";
 
 /**
  * Hook to get a color value that adapts to the current theme
@@ -38,9 +33,7 @@ export function useThemeColor(category: ColorCategory, key: string): string {
  * @param category - The color category
  * @returns Object with all colors in the category
  */
-export function useThemeCategoryColors(
-  category: ColorCategory
-): Record<string, string> {
+export function useThemeCategoryColors(category: ColorCategory): Record<string, string> {
   const { resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 

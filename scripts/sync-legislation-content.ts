@@ -39,8 +39,7 @@ async function downloadDocx(documentId: string): Promise<Buffer | null> {
   try {
     const response = await fetch(url, {
       headers: {
-        Accept:
-          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        Accept: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
       },
     });
 
@@ -221,9 +220,7 @@ Features:
       const docId = dossier.documentExternalId!;
 
       const progress = `[${i + 1}/${total}]`;
-      process.stdout.write(
-        `\r${progress} Downloading ${docId}...                    `
-      );
+      process.stdout.write(`\r${progress} Downloading ${docId}...                    `);
 
       try {
         if (dryRun) {

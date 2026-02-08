@@ -27,15 +27,10 @@ const adapter = new PrismaPg(pool);
 const db = new PrismaClient({ adapter });
 
 // Sensitive categories that require manual verification
-const SENSITIVE_CATEGORIES: AffairCategory[] = [
-  "AGRESSION_SEXUELLE",
-  "HARCELEMENT_SEXUEL",
-];
+const SENSITIVE_CATEGORIES: AffairCategory[] = ["AGRESSION_SEXUELLE", "HARCELEMENT_SEXUEL"];
 
 // Statuses that require verification (ensure no appeal in progress)
-const DEFINITIVE_STATUSES: AffairStatus[] = [
-  "CONDAMNATION_DEFINITIVE",
-];
+const DEFINITIVE_STATUSES: AffairStatus[] = ["CONDAMNATION_DEFINITIVE"];
 
 interface AuditResult {
   affairsWithoutSources: AffairInfo[];
@@ -143,7 +138,7 @@ async function runAudit(checkUrls: boolean): Promise<AuditResult> {
     },
   };
 
-  const allUrls: { affair: typeof affairs[0]; url: string }[] = [];
+  const allUrls: { affair: (typeof affairs)[0]; url: string }[] = [];
 
   for (const affair of affairs) {
     const politicianName = `${affair.politician.firstName} ${affair.politician.lastName}`;
@@ -222,16 +217,20 @@ async function runAudit(checkUrls: boolean): Promise<AuditResult> {
  * Print the audit report
  */
 function printReport(result: AuditResult) {
-  console.log("=" .repeat(60));
+  console.log("=".repeat(60));
   console.log("AUDIT REPORT - AFFAIRES JUDICIAIRES");
-  console.log("=" .repeat(60));
+  console.log("=".repeat(60));
   console.log();
 
   console.log("SUMMARY");
   console.log("-".repeat(40));
   console.log(`Total affairs:           ${result.summary.totalAffairs}`);
-  console.log(`Without sources:         ${result.summary.withoutSources} ${result.summary.withoutSources > 0 ? "⚠️" : "✓"}`);
-  console.log(`Broken URLs:             ${result.summary.brokenUrls} ${result.summary.brokenUrls > 0 ? "⚠️" : "✓"}`);
+  console.log(
+    `Without sources:         ${result.summary.withoutSources} ${result.summary.withoutSources > 0 ? "⚠️" : "✓"}`
+  );
+  console.log(
+    `Broken URLs:             ${result.summary.brokenUrls} ${result.summary.brokenUrls > 0 ? "⚠️" : "✓"}`
+  );
   console.log(`Sensitive categories:    ${result.summary.sensitiveCount} (require manual review)`);
   console.log(`Definitive convictions:  ${result.summary.definitiveCount} (require verification)`);
   console.log();
@@ -283,9 +282,9 @@ function printReport(result: AuditResult) {
     console.log();
   }
 
-  console.log("=" .repeat(60));
+  console.log("=".repeat(60));
   console.log("RECOMMENDATIONS");
-  console.log("=" .repeat(60));
+  console.log("=".repeat(60));
   console.log();
 
   if (result.summary.withoutSources > 0) {
@@ -322,9 +321,7 @@ function exportToCsv(result: AuditResult) {
   const timestamp = new Date().toISOString().split("T")[0];
   const filename = `audit-affairs-${timestamp}.csv`;
 
-  const rows: string[] = [
-    "Type,Politician,Title,Category,Status,Sources,URLs,Issue",
-  ];
+  const rows: string[] = ["Type,Politician,Title,Category,Status,Sources,URLs,Issue"];
 
   for (const affair of result.affairsWithoutSources) {
     rows.push(

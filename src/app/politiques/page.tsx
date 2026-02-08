@@ -1,6 +1,10 @@
 import { Metadata } from "next";
 import { db } from "@/lib/db";
-import { type SortOption, type MandateFilter, type StatusFilter } from "@/components/politicians/FilterBar";
+import {
+  type SortOption,
+  type MandateFilter,
+  type StatusFilter,
+} from "@/components/politicians/FilterBar";
 import { AffairStatus, MandateType } from "@/generated/prisma";
 import { SearchForm } from "@/components/politicians/SearchForm";
 import { PoliticiansGrid } from "@/components/politicians/PoliticiansGrid";
@@ -162,10 +166,7 @@ async function getParties() {
     where: {
       politicians: { some: {} }, // Only parties with members
     },
-    orderBy: [
-      { politicians: { _count: "desc" } },
-      { name: "asc" },
-    ],
+    orderBy: [{ politicians: { _count: "desc" } }, { name: "asc" }],
     include: {
       _count: { select: { politicians: true } },
     },
@@ -249,7 +250,15 @@ export default async function PolitiquesPage({ searchParams }: PageProps) {
   const page = parseInt(params.page || "1", 10);
 
   const [{ politicians, total, totalPages }, parties, counts] = await Promise.all([
-    getPoliticians(search, partyFilter, convictionFilter, mandateFilter, statusFilter, sortOption, page),
+    getPoliticians(
+      search,
+      partyFilter,
+      convictionFilter,
+      mandateFilter,
+      statusFilter,
+      sortOption,
+      page
+    ),
     getParties(),
     getFilterCounts(),
   ]);
@@ -267,7 +276,8 @@ export default async function PolitiquesPage({ searchParams }: PageProps) {
           <p className="text-muted-foreground">
             {total} représentants
             {search && ` pour "${search}"`}
-            {activeFilterCount > 0 && ` (${activeFilterCount} filtre${activeFilterCount > 1 ? "s" : ""} actif${activeFilterCount > 1 ? "s" : ""})`}
+            {activeFilterCount > 0 &&
+              ` (${activeFilterCount} filtre${activeFilterCount > 1 ? "s" : ""} actif${activeFilterCount > 1 ? "s" : ""})`}
           </p>
         </div>
         <ExportButton

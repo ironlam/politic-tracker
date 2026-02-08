@@ -5,7 +5,8 @@ import { Badge } from "@/components/ui/badge";
 
 export const metadata: Metadata = {
   title: "Sources et Méthodologie",
-  description: "Nos sources de données, notre méthodologie et notre engagement pour la transparence",
+  description:
+    "Nos sources de données, notre méthodologie et notre engagement pour la transparence",
 };
 
 const DATA_SOURCES = [
@@ -137,8 +138,8 @@ export default function SourcesPage() {
       <div className="mb-12">
         <h1 className="text-3xl font-bold mb-4">Sources et Méthodologie</h1>
         <p className="text-lg text-muted-foreground">
-          Notre engagement : des données vérifiables, une méthodologie transparente,
-          et le respect de la présomption d&apos;innocence.
+          Notre engagement : des données vérifiables, une méthodologie transparente, et le respect
+          de la présomption d&apos;innocence.
         </p>
       </div>
 
@@ -149,23 +150,23 @@ export default function SourcesPage() {
         </CardHeader>
         <CardContent className="prose prose-sm max-w-none">
           <p className="text-base leading-relaxed">
-            <strong>Transparence Politique</strong> est un projet citoyen indépendant
-            qui rassemble les informations publiques sur les responsables politiques français :
-            parcours, mandats, votes, déclarations et affaires judiciaires.
+            <strong>Transparence Politique</strong> est un projet citoyen indépendant qui rassemble
+            les informations publiques sur les responsables politiques français : parcours, mandats,
+            votes, déclarations et affaires judiciaires.
           </p>
           <p className="text-base leading-relaxed mt-4">
-            La démocratie repose sur des citoyens informés. Nous facilitons l&apos;accès
-            à des données dispersées entre de nombreuses sources officielles pour permettre
-            à chacun d&apos;exercer son droit de regard sur ses représentants.
+            La démocratie repose sur des citoyens informés. Nous facilitons l&apos;accès à des
+            données dispersées entre de nombreuses sources officielles pour permettre à chacun
+            d&apos;exercer son droit de regard sur ses représentants.
           </p>
           <p className="text-base leading-relaxed mt-4">
-            Nous appliquons les mêmes critères à tous les élus, indépendamment de leur
-            appartenance partisane. Les données proviennent de sources officielles
-            (Assemblée nationale, Sénat, HATVP) et sont documentées de façon transparente.
+            Nous appliquons les mêmes critères à tous les élus, indépendamment de leur appartenance
+            partisane. Les données proviennent de sources officielles (Assemblée nationale, Sénat,
+            HATVP) et sont documentées de façon transparente.
           </p>
           <p className="text-base leading-relaxed mt-4">
-            Ce projet est <strong>open source</strong> et contributif. Le code, les données
-            et la méthodologie sont accessibles à tous.
+            Ce projet est <strong>open source</strong> et contributif. Le code, les données et la
+            méthodologie sont accessibles à tous.
           </p>
         </CardContent>
       </Card>
@@ -190,9 +191,7 @@ export default function SourcesPage() {
                       </Badge>
                       <h3 className="font-semibold">{source.name}</h3>
                     </div>
-                    <p className="text-sm text-muted-foreground mb-3">
-                      {source.description}
-                    </p>
+                    <p className="text-sm text-muted-foreground mb-3">{source.description}</p>
                     <div className="flex flex-wrap gap-1 mb-2">
                       {source.fields.map((field) => (
                         <Badge key={field} variant="outline" className="text-xs">
@@ -245,10 +244,19 @@ export default function SourcesPage() {
         </p>
         <div className="grid gap-4">
           {INCLUSION_CRITERIA.map((criterion) => (
-            <Card key={criterion.title} className={criterion.included ? "border-green-200 dark:border-green-900" : "border-red-200 dark:border-red-900"}>
+            <Card
+              key={criterion.title}
+              className={
+                criterion.included
+                  ? "border-green-200 dark:border-green-900"
+                  : "border-red-200 dark:border-red-900"
+              }
+            >
               <CardContent className="pt-6">
                 <div className="flex items-start gap-3">
-                  <span className={`text-lg ${criterion.included ? "text-green-600" : "text-red-600"}`}>
+                  <span
+                    className={`text-lg ${criterion.included ? "text-green-600" : "text-red-600"}`}
+                  >
                     {criterion.included ? "✓" : "✗"}
                   </span>
                   <div>
@@ -272,25 +280,24 @@ export default function SourcesPage() {
             <div>
               <h3 className="font-semibold mb-1">Présomption d&apos;innocence</h3>
               <p className="text-sm text-muted-foreground">
-                Conformément à l&apos;article 9-1 du Code civil, toute personne a droit
-                au respect de la présomption d&apos;innocence. Les affaires en cours
-                ne préjugent en rien de la culpabilité des personnes concernées.
+                Conformément à l&apos;article 9-1 du Code civil, toute personne a droit au respect
+                de la présomption d&apos;innocence. Les affaires en cours ne préjugent en rien de la
+                culpabilité des personnes concernées.
               </p>
             </div>
             <div>
               <h3 className="font-semibold mb-1">Droit de réponse</h3>
               <p className="text-sm text-muted-foreground">
-                Toute personne citée dispose d&apos;un droit de réponse. Les demandes
-                de correction ou de mise à jour peuvent être adressées via notre
-                formulaire de contact.
+                Toute personne citée dispose d&apos;un droit de réponse. Les demandes de correction
+                ou de mise à jour peuvent être adressées via notre formulaire de contact.
               </p>
             </div>
             <div>
               <h3 className="font-semibold mb-1">Données personnelles</h3>
               <p className="text-sm text-muted-foreground">
-                Les données publiées sont issues de sources publiques officielles.
-                Conformément au RGPD, les personnes concernées peuvent exercer
-                leurs droits d&apos;accès, de rectification et d&apos;opposition.
+                Les données publiées sont issues de sources publiques officielles. Conformément au
+                RGPD, les personnes concernées peuvent exercer leurs droits d&apos;accès, de
+                rectification et d&apos;opposition.
               </p>
             </div>
           </CardContent>
@@ -307,8 +314,8 @@ export default function SourcesPage() {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
-                Consultez les votes nominatifs de chaque député sur les scrutins publics.
-                Importés depuis NosDéputés.fr pour la 16e législature.
+                Consultez les votes nominatifs de chaque député sur les scrutins publics. Importés
+                depuis NosDéputés.fr pour la 16e législature.
               </p>
             </CardContent>
           </Card>
@@ -318,8 +325,8 @@ export default function SourcesPage() {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
-                Visualisez les connexions entre politiciens : même parti, même gouvernement,
-                même législature, même département.
+                Visualisez les connexions entre politiciens : même parti, même gouvernement, même
+                législature, même département.
               </p>
             </CardContent>
           </Card>
@@ -342,8 +349,8 @@ export default function SourcesPage() {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
-                Liens directs vers les déclarations de patrimoine et d&apos;intérêts
-                publiées par la Haute Autorité pour la Transparence de la Vie Publique.
+                Liens directs vers les déclarations de patrimoine et d&apos;intérêts publiées par la
+                Haute Autorité pour la Transparence de la Vie Publique.
               </p>
             </CardContent>
           </Card>
@@ -356,27 +363,28 @@ export default function SourcesPage() {
         <Card>
           <CardContent className="pt-6">
             <p className="text-sm text-muted-foreground mb-4">
-              Notre système utilise une architecture multi-sources permettant de
-              croiser et enrichir les données provenant de différentes origines :
+              Notre système utilise une architecture multi-sources permettant de croiser et enrichir
+              les données provenant de différentes origines :
             </p>
             <ul className="text-sm text-muted-foreground space-y-2 list-disc list-inside">
               <li>
-                <strong>Identifiants uniques</strong> : Chaque politicien est lié à ses
-                identifiants dans chaque source (AN, Sénat, PE, Wikidata, HATVP)
+                <strong>Identifiants uniques</strong> : Chaque politicien est lié à ses identifiants
+                dans chaque source (AN, Sénat, PE, Wikidata, HATVP)
               </li>
               <li>
-                <strong>Matching intelligent</strong> : Recherche par ID externe, puis par
-                nom avec gestion des variantes (particules, accents)
+                <strong>Matching intelligent</strong> : Recherche par ID externe, puis par nom avec
+                gestion des variantes (particules, accents)
               </li>
               <li>
-                <strong>Priorité des sources</strong> : Les données officielles (AN, Sénat, Gouvernement)
-                prévalent sur les sources tierces
+                <strong>Priorité des sources</strong> : Les données officielles (AN, Sénat,
+                Gouvernement) prévalent sur les sources tierces
               </li>
               <li>
                 <strong>Traçabilité</strong> : Chaque donnée conserve sa source d&apos;origine
               </li>
               <li>
-                <strong>Synchronisation automatique</strong> : Mise à jour hebdomadaire via GitHub Actions
+                <strong>Synchronisation automatique</strong> : Mise à jour hebdomadaire via GitHub
+                Actions
               </li>
             </ul>
           </CardContent>
@@ -391,10 +399,7 @@ export default function SourcesPage() {
             <p className="text-sm text-muted-foreground mb-4">
               Nous nous engageons à corriger rapidement toute erreur signalée.
             </p>
-            <Link
-              href="/mentions-legales"
-              className="text-sm text-blue-600 hover:underline"
-            >
+            <Link href="/mentions-legales" className="text-sm text-blue-600 hover:underline">
               Nous contacter via les mentions légales
             </Link>
           </CardContent>

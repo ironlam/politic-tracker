@@ -1,5 +1,4 @@
 import { Metadata } from "next";
-import { Suspense } from "react";
 import { db } from "@/lib/db";
 import { PoliticianSelector, ComparisonTable, VoteAgreement } from "@/components/compare";
 import { MANDATE_TYPE_LABELS } from "@/config/labels";
@@ -7,7 +6,8 @@ import type { MandateType } from "@/types";
 
 export const metadata: Metadata = {
   title: "Comparer des politiques",
-  description: "Comparez deux représentants politiques français : mandats, votes, affaires judiciaires, patrimoine déclaré.",
+  description:
+    "Comparez deux représentants politiques français : mandats, votes, affaires judiciaires, patrimoine déclaré.",
 };
 
 interface PageProps {
@@ -90,42 +90,6 @@ async function getPoliticianPreview(slug: string) {
   };
 }
 
-function ComparePlaceholder({ position }: { position: "left" | "right" }) {
-  return (
-    <div className="flex-1">
-      <Suspense fallback={<div className="bg-muted rounded-lg p-4 h-24 animate-pulse" />}>
-        <PoliticianSelectorWrapper position={position} />
-      </Suspense>
-    </div>
-  );
-}
-
-async function PoliticianSelectorWrapper({
-  position,
-  leftSlug,
-  rightSlug,
-}: {
-  position: "left" | "right";
-  leftSlug?: string;
-  rightSlug?: string;
-}) {
-  const slug = position === "left" ? leftSlug : rightSlug;
-  const otherSlug = position === "left" ? rightSlug : leftSlug;
-
-  const [selectedPolitician, otherPolitician] = await Promise.all([
-    slug ? getPoliticianPreview(slug) : null,
-    otherSlug ? getPoliticianPreview(otherSlug) : null,
-  ]);
-
-  return (
-    <PoliticianSelector
-      position={position}
-      selectedPolitician={selectedPolitician}
-      otherPoliticianId={otherPolitician?.id}
-    />
-  );
-}
-
 export default async function ComparerPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const leftSlug = params.left;
@@ -151,7 +115,8 @@ export default async function ComparerPage({ searchParams }: PageProps) {
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Comparer des politiques</h1>
         <p className="text-muted-foreground">
-          Sélectionnez deux représentants pour comparer leurs mandats, votes, affaires et patrimoine.
+          Sélectionnez deux représentants pour comparer leurs mandats, votes, affaires et
+          patrimoine.
         </p>
       </div>
 

@@ -1,11 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyPassword, createSession, destroySession } from "@/lib/auth";
-import {
-  checkRateLimit,
-  recordFailedAttempt,
-  clearAttempts,
-  getClientIp,
-} from "@/lib/rate-limit";
+import { checkRateLimit, recordFailedAttempt, clearAttempts, getClientIp } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
   const ip = getClientIp(request);
@@ -31,10 +26,7 @@ export async function POST(request: NextRequest) {
     const { password } = await request.json();
 
     if (!password) {
-      return NextResponse.json(
-        { error: "Mot de passe requis" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Mot de passe requis" }, { status: 400 });
     }
 
     const isValid = await verifyPassword(password);

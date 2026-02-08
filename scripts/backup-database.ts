@@ -186,9 +186,7 @@ function cleanBackups(daysToKeep: number): void {
     return;
   }
 
-  const files = fs
-    .readdirSync(BACKUP_DIR)
-    .filter((f) => f.startsWith("backup-"));
+  const files = fs.readdirSync(BACKUP_DIR).filter((f) => f.startsWith("backup-"));
 
   const cutoffDate = new Date();
   cutoffDate.setDate(cutoffDate.getDate() - daysToKeep);

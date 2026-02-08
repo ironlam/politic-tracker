@@ -3,7 +3,7 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import type { SerializedMandate, SerializedAffairWithSources, MandateType, AffairStatus } from "@/types";
+import type { SerializedMandate, SerializedAffairWithSources, AffairStatus } from "@/types";
 import { MANDATE_TYPE_LABELS, AFFAIR_STATUS_LABELS, AFFAIR_CATEGORY_LABELS } from "@/config/labels";
 import {
   MANDATE_TYPE_COLORS,
@@ -38,7 +38,7 @@ interface TimelineAffair {
 export function InteractiveTimeline({
   mandates,
   affairs,
-  birthDate,
+  birthDate: _birthDate,
   deathDate,
 }: InteractiveTimelineProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -144,7 +144,9 @@ export function InteractiveTimeline({
   const svgHeight = useMemo(() => {
     const { header, rowHeight, affairsRow, padding } = TIMELINE_CONFIG.height;
     const mandateRows = mandatesByRow.length;
-    return header + (mandateRows * rowHeight) + (timelineAffairs.length > 0 ? affairsRow : 0) + padding * 2;
+    return (
+      header + mandateRows * rowHeight + (timelineAffairs.length > 0 ? affairsRow : 0) + padding * 2
+    );
   }, [mandatesByRow.length, timelineAffairs.length]);
 
   // Generate year markers
@@ -475,14 +477,15 @@ export function InteractiveTimeline({
           {/* Screen reader summary */}
           <div className="sr-only">
             <h3>Résumé de la chronologie</h3>
-            <p>Période: {minYear} à {maxYear}</p>
+            <p>
+              Période: {minYear} à {maxYear}
+            </p>
             <h4>Mandats ({mandates.length})</h4>
             <ul>
               {mandates.map((m) => (
                 <li key={m.id}>
                   {MANDATE_TYPE_LABELS[m.type]}
-                  {m.constituency && `, ${m.constituency}`}:
-                  {new Date(m.startDate).getFullYear()} -{" "}
+                  {m.constituency && `, ${m.constituency}`}:{new Date(m.startDate).getFullYear()} -{" "}
                   {m.isCurrent ? "présent" : m.endDate ? new Date(m.endDate).getFullYear() : ""}
                 </li>
               ))}

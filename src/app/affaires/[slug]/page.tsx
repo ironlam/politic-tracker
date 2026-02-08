@@ -112,9 +112,7 @@ export default async function AffairDetailPage({ params }: PageProps) {
           <Badge className={AFFAIR_STATUS_COLORS[affair.status]}>
             {AFFAIR_STATUS_LABELS[affair.status]}
           </Badge>
-          <Badge variant="outline">
-            {AFFAIR_CATEGORY_LABELS[affair.category]}
-          </Badge>
+          <Badge variant="outline">{AFFAIR_CATEGORY_LABELS[affair.category]}</Badge>
         </div>
 
         <h1 className="text-3xl font-bold mb-4">{affair.title}</h1>
@@ -134,9 +132,10 @@ export default async function AffairDetailPage({ params }: PageProps) {
             {partyToShow && (
               <p className="text-sm text-muted-foreground">
                 {partyToShow.name}
-                {affair.partyAtTime && affair.partyAtTime.id !== affair.politician.currentParty?.id && (
-                  <span className="text-xs"> (à l&apos;époque)</span>
-                )}
+                {affair.partyAtTime &&
+                  affair.partyAtTime.id !== affair.politician.currentParty?.id && (
+                    <span className="text-xs"> (à l&apos;époque)</span>
+                  )}
               </p>
             )}
           </div>
@@ -147,8 +146,8 @@ export default async function AffairDetailPage({ params }: PageProps) {
       {AFFAIR_STATUS_NEEDS_PRESUMPTION[affair.status] && (
         <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-4 mb-6">
           <p className="text-sm text-amber-800 dark:text-amber-200">
-            <strong>Présomption d&apos;innocence :</strong> Cette affaire est en cours.
-            La personne concernée est présumée innocente jusqu&apos;à condamnation définitive.
+            <strong>Présomption d&apos;innocence :</strong> Cette affaire est en cours. La personne
+            concernée est présumée innocente jusqu&apos;à condamnation définitive.
           </p>
         </div>
       )}
@@ -238,14 +237,18 @@ export default async function AffairDetailPage({ params }: PageProps) {
         </CardHeader>
         <CardContent>
           <SentenceDetails affair={affair} />
-          {!affair.sentence && !affair.prisonMonths && !affair.fineAmount &&
-           !affair.ineligibilityMonths && !affair.communityService && !affair.otherSentence && (
-            <p className="text-muted-foreground text-sm">
-              {AFFAIR_STATUS_NEEDS_PRESUMPTION[affair.status]
-                ? "Affaire en cours - pas encore de verdict"
-                : "Peine non renseignée"}
-            </p>
-          )}
+          {!affair.sentence &&
+            !affair.prisonMonths &&
+            !affair.fineAmount &&
+            !affair.ineligibilityMonths &&
+            !affair.communityService &&
+            !affair.otherSentence && (
+              <p className="text-muted-foreground text-sm">
+                {AFFAIR_STATUS_NEEDS_PRESUMPTION[affair.status]
+                  ? "Affaire en cours - pas encore de verdict"
+                  : "Peine non renseignée"}
+              </p>
+            )}
         </CardContent>
       </Card>
 
@@ -264,9 +267,7 @@ export default async function AffairDetailPage({ params }: PageProps) {
       {/* Sources */}
       <Card className="mb-6">
         <CardHeader>
-          <h2 className="text-lg font-semibold">
-            Sources ({affair.sources.length})
-          </h2>
+          <h2 className="text-lg font-semibold">Sources ({affair.sources.length})</h2>
         </CardHeader>
         <CardContent>
           {affair.sources.length > 0 ? (
@@ -289,8 +290,7 @@ export default async function AffairDetailPage({ params }: PageProps) {
                         <span>
                           {source.publisher?.toLowerCase() === "wikidata"
                             ? `mis à jour le ${formatDate(source.publishedAt)}`
-                            : formatDate(source.publishedAt)
-                          }
+                            : formatDate(source.publishedAt)}
                         </span>
                       </>
                     )}
@@ -309,8 +309,17 @@ export default async function AffairDetailPage({ params }: PageProps) {
         <Card className="bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-800">
           <CardContent className="pt-6">
             <div className="flex items-center gap-2 text-green-800 dark:text-green-200">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
-                <path fillRule="evenodd" d="M16.403 12.652a3 3 0 000-5.304 3 3 0 00-3.75-3.751 3 3 0 00-5.305 0 3 3 0 00-3.751 3.75 3 3 0 000 5.305 3 3 0 003.75 3.751 3 3 0 005.305 0 3 3 0 003.751-3.75zm-2.546-4.46a.75.75 0 00-1.214-.883l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clipRule="evenodd" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                className="w-5 h-5"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M16.403 12.652a3 3 0 000-5.304 3 3 0 00-3.75-3.751 3 3 0 00-5.305 0 3 3 0 00-3.751 3.75 3 3 0 000 5.305 3 3 0 003.75 3.751 3 3 0 005.305 0 3 3 0 003.751-3.75zm-2.546-4.46a.75.75 0 00-1.214-.883l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"
+                  clipRule="evenodd"
+                />
               </svg>
               <span className="font-medium">Information vérifiée</span>
             </div>
@@ -330,10 +339,7 @@ export default async function AffairDetailPage({ params }: PageProps) {
         >
           ← Voir la fiche de {affair.politician.fullName}
         </Link>
-        <Link
-          href="/affaires"
-          className="text-sm text-blue-600 hover:underline"
-        >
+        <Link href="/affaires" className="text-sm text-blue-600 hover:underline">
           ← Retour à la liste des affaires
         </Link>
       </div>

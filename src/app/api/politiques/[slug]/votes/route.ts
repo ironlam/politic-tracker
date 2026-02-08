@@ -83,10 +83,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
     });
 
     if (!politician) {
-      return NextResponse.json(
-        { error: "Politique non trouvé" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Politique non trouvé" }, { status: 404 });
     }
 
     // Get votes with scrutin info
@@ -159,9 +156,8 @@ export async function GET(request: NextRequest, context: RouteContext) {
     // Participation = votes expressed / total (excluding absents and non-votants)
     const expressed = votingStats.pour + votingStats.contre + votingStats.abstention;
     const countedForParticipation = votingStats.total - votingStats.nonVotant;
-    votingStats.participationRate = countedForParticipation > 0
-      ? Math.round((expressed / countedForParticipation) * 100)
-      : 0;
+    votingStats.participationRate =
+      countedForParticipation > 0 ? Math.round((expressed / countedForParticipation) * 100) : 0;
 
     return NextResponse.json({
       politician: {
@@ -188,9 +184,6 @@ export async function GET(request: NextRequest, context: RouteContext) {
     });
   } catch (error) {
     console.error("API error:", error);
-    return NextResponse.json(
-      { error: "Erreur serveur" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }

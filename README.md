@@ -29,15 +29,15 @@ Centraliser les informations publiques sur les représentants politiques frança
 
 ## Stack technique
 
-| Technologie | Usage |
-|-------------|-------|
-| **Next.js 16** | Framework React (App Router) |
-| **TypeScript** | Typage statique |
-| **Prisma 7** | ORM |
-| **PostgreSQL** | Base de données (Supabase) |
-| **Tailwind CSS** | Styles |
-| **shadcn/ui** | Composants UI |
-| **Vercel** | Hébergement |
+| Technologie      | Usage                        |
+| ---------------- | ---------------------------- |
+| **Next.js 16**   | Framework React (App Router) |
+| **TypeScript**   | Typage statique              |
+| **Prisma 7**     | ORM                          |
+| **PostgreSQL**   | Base de données (Supabase)   |
+| **Tailwind CSS** | Styles                       |
+| **shadcn/ui**    | Composants UI                |
+| **Vercel**       | Hébergement                  |
 
 ## Installation
 
@@ -91,13 +91,13 @@ Un workflow GitHub Actions s'exécute chaque dimanche à 4h00 (Paris) pour synch
 
 ### Sources de données
 
-| Source | Données | API |
-|--------|---------|-----|
-| Assemblée Nationale | Députés | data.gouv.fr |
-| Sénat | Sénateurs | senat.fr |
-| Gouvernement | Ministres | data.gouv.fr |
-| HATVP | Déclarations patrimoine | hatvp.fr |
-| Wikidata | Condamnations, décès | SPARQL |
+| Source              | Données                 | API          |
+| ------------------- | ----------------------- | ------------ |
+| Assemblée Nationale | Députés                 | data.gouv.fr |
+| Sénat               | Sénateurs               | senat.fr     |
+| Gouvernement        | Ministres               | data.gouv.fr |
+| HATVP               | Déclarations patrimoine | hatvp.fr     |
+| Wikidata            | Condamnations, décès    | SPARQL       |
 
 ## Structure du projet
 
@@ -129,13 +129,13 @@ docs/                     # Documentation
 
 ## Documentation
 
-| Document | Description |
-|----------|-------------|
+| Document                                    | Description                   |
+| ------------------------------------------- | ----------------------------- |
 | [SPECIFICATION.md](./docs/SPECIFICATION.md) | Spécifications fonctionnelles |
-| [ARCHITECTURE.md](./docs/ARCHITECTURE.md) | Architecture technique |
-| [DATASOURCES.md](./docs/DATASOURCES.md) | Sources de données |
-| [ROADMAP.md](./docs/ROADMAP.md) | Évolutions prévues |
-| [LEGAL.md](./docs/LEGAL.md) | Aspects juridiques |
+| [ARCHITECTURE.md](./docs/ARCHITECTURE.md)   | Architecture technique        |
+| [DATASOURCES.md](./docs/DATASOURCES.md)     | Sources de données            |
+| [ROADMAP.md](./docs/ROADMAP.md)             | Évolutions prévues            |
+| [LEGAL.md](./docs/LEGAL.md)                 | Aspects juridiques            |
 
 ## Contribuer
 

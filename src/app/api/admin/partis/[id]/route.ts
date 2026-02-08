@@ -26,10 +26,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     return NextResponse.json(party);
   } catch (error) {
     console.error("Error fetching party:", error);
-    return NextResponse.json(
-      { error: "Erreur lors de la récupération du parti" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Erreur lors de la récupération du parti" }, { status: 500 });
   }
 }
 
@@ -40,10 +37,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
     // Validate required fields
     if (!body.name || !body.shortName || !body.slug) {
-      return NextResponse.json(
-        { error: "Nom, abréviation et slug sont requis" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Nom, abréviation et slug sont requis" }, { status: 400 });
     }
 
     // Check if slug is unique (excluding current party)
@@ -79,10 +73,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     // Validate political position if provided
     const validPositions = Object.values(PoliticalPosition);
     if (body.politicalPosition && !validPositions.includes(body.politicalPosition)) {
-      return NextResponse.json(
-        { error: "Position politique invalide" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Position politique invalide" }, { status: 400 });
     }
 
     // Prevent circular predecessor references
@@ -130,10 +121,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     return NextResponse.json(updatedParty);
   } catch (error) {
     console.error("Error updating party:", error);
-    return NextResponse.json(
-      { error: "Erreur lors de la mise à jour du parti" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Erreur lors de la mise à jour du parti" }, { status: 500 });
   }
 }
 
@@ -162,28 +150,36 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
 
     if (party._count.politicians > 0) {
       return NextResponse.json(
-        { error: `Ce parti a ${party._count.politicians} membres actuels. Supprimez d'abord les liens.` },
+        {
+          error: `Ce parti a ${party._count.politicians} membres actuels. Supprimez d'abord les liens.`,
+        },
         { status: 400 }
       );
     }
 
     if (party._count.partyMemberships > 0) {
       return NextResponse.json(
-        { error: `Ce parti a ${party._count.partyMemberships} adhésions historiques. Supprimez d'abord l'historique.` },
+        {
+          error: `Ce parti a ${party._count.partyMemberships} adhésions historiques. Supprimez d'abord l'historique.`,
+        },
         { status: 400 }
       );
     }
 
     if (party._count.affairsAtTime > 0) {
       return NextResponse.json(
-        { error: `Ce parti est référencé dans ${party._count.affairsAtTime} affaires judiciaires. Supprimez d'abord les références.` },
+        {
+          error: `Ce parti est référencé dans ${party._count.affairsAtTime} affaires judiciaires. Supprimez d'abord les références.`,
+        },
         { status: 400 }
       );
     }
 
     if (party._count.pressMentions > 0) {
       return NextResponse.json(
-        { error: `Ce parti est mentionné dans ${party._count.pressMentions} articles de presse. Supprimez d'abord les mentions.` },
+        {
+          error: `Ce parti est mentionné dans ${party._count.pressMentions} articles de presse. Supprimez d'abord les mentions.`,
+        },
         { status: 400 }
       );
     }
@@ -195,9 +191,6 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Error deleting party:", error);
-    return NextResponse.json(
-      { error: "Erreur lors de la suppression du parti" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Erreur lors de la suppression du parti" }, { status: 500 });
   }
 }

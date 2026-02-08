@@ -15,11 +15,6 @@ export {
 export { ProgressTracker, createProgress } from "./progress-tracker";
 export { CheckpointManager, createCheckpoint } from "./checkpoint";
 
-export type {
-  SyncHandler,
-  SyncOptions,
-  SyncResult,
-  CLIOptionDefinition,
-} from "./types";
+export type { SyncHandler, SyncOptions, SyncResult, CLIOptionDefinition } from "./types";
 export type { ProgressOptions, ProgressStats } from "./progress-tracker";
 export type { Checkpoint, CheckpointManagerOptions } from "./checkpoint";

@@ -10,14 +10,14 @@ Ce document détaille le cadre juridique applicable au projet Transparence Polit
 
 ### 1.1 Textes de référence
 
-| Texte | Application |
-|-------|-------------|
-| **Loi du 29 juillet 1881** | Liberté de la presse, diffamation, droit de réponse |
-| **Article 9-1 du Code civil** | Présomption d'innocence |
-| **RGPD** | Protection des données personnelles |
-| **Loi du 6 janvier 1978 (CNIL)** | Informatique et libertés |
-| **Loi du 11 octobre 2013** | Transparence de la vie publique (HATVP) |
-| **Code pénal art. 226-1 et suivants** | Respect de la vie privée |
+| Texte                                 | Application                                         |
+| ------------------------------------- | --------------------------------------------------- |
+| **Loi du 29 juillet 1881**            | Liberté de la presse, diffamation, droit de réponse |
+| **Article 9-1 du Code civil**         | Présomption d'innocence                             |
+| **RGPD**                              | Protection des données personnelles                 |
+| **Loi du 6 janvier 1978 (CNIL)**      | Informatique et libertés                            |
+| **Loi du 11 octobre 2013**            | Transparence de la vie publique (HATVP)             |
+| **Code pénal art. 226-1 et suivants** | Respect de la vie privée                            |
 
 ### 1.2 Statut du site
 
@@ -29,13 +29,13 @@ Service de communication publique en ligne édité à titre non professionnel (a
 
 ### 2.1 Données réutilisables
 
-| Type de donnée | Source | Licence |
-|----------------|--------|---------|
-| Identité des élus | AN, Sénat, JO | Licence Ouverte (Etalab) |
-| Mandats et fonctions | data.gouv.fr | Licence Ouverte |
-| Déclarations de patrimoine | HATVP | Licence Ouverte |
-| Condamnations définitives | Presse, Légifrance | Données publiques |
-| Photos officielles | AN, Sénat | Réutilisation autorisée |
+| Type de donnée             | Source             | Licence                  |
+| -------------------------- | ------------------ | ------------------------ |
+| Identité des élus          | AN, Sénat, JO      | Licence Ouverte (Etalab) |
+| Mandats et fonctions       | data.gouv.fr       | Licence Ouverte          |
+| Déclarations de patrimoine | HATVP              | Licence Ouverte          |
+| Condamnations définitives  | Presse, Légifrance | Données publiques        |
+| Photos officielles         | AN, Sénat          | Réutilisation autorisée  |
 
 ### 2.2 Informations publiables
 
@@ -72,14 +72,14 @@ Service de communication publique en ligne édité à titre non professionnel (a
 
 ### 4.2 Application sur le site
 
-| Statut judiciaire | Affichage |
-|-------------------|-----------|
-| Enquête préliminaire | Mention explicite + rappel présomption |
-| Mise en examen | Mention explicite + rappel présomption |
-| Procès en cours | Mention explicite + rappel présomption |
-| Condamnation 1ère instance | Mention "appel possible" |
-| Condamnation définitive | Pas de mention spéciale |
-| Relaxe / Non-lieu | Affichage de l'issue favorable |
+| Statut judiciaire          | Affichage                              |
+| -------------------------- | -------------------------------------- |
+| Enquête préliminaire       | Mention explicite + rappel présomption |
+| Mise en examen             | Mention explicite + rappel présomption |
+| Procès en cours            | Mention explicite + rappel présomption |
+| Condamnation 1ère instance | Mention "appel possible"               |
+| Condamnation définitive    | Pas de mention spéciale                |
+| Relaxe / Non-lieu          | Affichage de l'issue favorable         |
 
 ### 4.3 Formulation type
 
@@ -113,12 +113,12 @@ Toute personne nommée ou désignée dans un service de communication au public 
 
 ### 6.1 Données des représentants politiques
 
-| Donnée | Base légale | Justification |
-|--------|-------------|---------------|
-| Identité | Intérêt légitime | Personnalité publique |
-| Mandats | Intérêt légitime | Information citoyenne |
-| Patrimoine | Loi (HATVP) | Obligation légale de publication |
-| Affaires judiciaires | Intérêt légitime | Débat d'intérêt général |
+| Donnée               | Base légale      | Justification                    |
+| -------------------- | ---------------- | -------------------------------- |
+| Identité             | Intérêt légitime | Personnalité publique            |
+| Mandats              | Intérêt légitime | Information citoyenne            |
+| Patrimoine           | Loi (HATVP)      | Obligation légale de publication |
+| Affaires judiciaires | Intérêt légitime | Débat d'intérêt général          |
 
 ### 6.2 Données des visiteurs
 
@@ -129,6 +129,7 @@ Toute personne nommée ou désignée dans un service de communication au public 
 ### 6.3 Droits des personnes
 
 Les représentants politiques mentionnés disposent de :
+
 - Droit d'accès (article 15 RGPD)
 - Droit de rectification (article 16 RGPD)
 - Droit d'opposition (article 21 RGPD) - appréciation au cas par cas
@@ -139,11 +140,11 @@ Les représentants politiques mentionnés disposent de :
 
 ### 7.1 Contenus du site
 
-| Contenu | Licence |
-|---------|---------|
-| Code source | MIT |
+| Contenu            | Licence        |
+| ------------------ | -------------- |
+| Code source        | MIT            |
 | Données factuelles | Domaine public |
-| Textes éditoriaux | CC BY-SA 4.0 |
+| Textes éditoriaux  | CC BY-SA 4.0   |
 
 ### 7.2 Crédits obligatoires
 

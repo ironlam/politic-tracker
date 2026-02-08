@@ -1,38 +1,111 @@
 import { db } from "@/lib/db";
 import { findDepartmentCode } from "@/config/departments";
 import { DEPARTMENTS } from "@/config/departments";
-import {
-  extractTemporalModifiers,
-  DOSSIER_STATUS_LABELS,
-  formatCurrency,
-} from "./helpers";
+import { extractTemporalModifiers, DOSSIER_STATUS_LABELS, formatCurrency } from "./helpers";
 
 /**
  * Thematic keyword groups for expanding search terms.
  * When a user query touches a theme, related keywords are used to search dossiers/votes.
  */
 const THEME_KEYWORDS: Record<string, string[]> = {
-  agriculture: ["agricole", "agriculteur", "paysan", "ferme", "exploitation", "pac", "élevage", "culture"],
+  agriculture: [
+    "agricole",
+    "agriculteur",
+    "paysan",
+    "ferme",
+    "exploitation",
+    "pac",
+    "élevage",
+    "culture",
+  ],
   santé: ["santé", "hôpital", "médecin", "soin", "maladie", "sécu", "médical", "pandémie"],
-  éducation: ["éducation", "école", "enseignant", "professeur", "étudiant", "université", "scolaire", "formation"],
-  environnement: ["environnement", "écologie", "climat", "carbone", "énergie", "pollution", "vert", "biodiversité"],
-  économie: ["économie", "entreprise", "emploi", "travail", "chômage", "salaire", "fiscal", "croissance"],
+  éducation: [
+    "éducation",
+    "école",
+    "enseignant",
+    "professeur",
+    "étudiant",
+    "université",
+    "scolaire",
+    "formation",
+  ],
+  environnement: [
+    "environnement",
+    "écologie",
+    "climat",
+    "carbone",
+    "énergie",
+    "pollution",
+    "vert",
+    "biodiversité",
+  ],
+  économie: [
+    "économie",
+    "entreprise",
+    "emploi",
+    "travail",
+    "chômage",
+    "salaire",
+    "fiscal",
+    "croissance",
+  ],
   retraite: ["retraite", "pension", "âge", "cotisation", "réforme"],
   logement: ["logement", "loyer", "locataire", "propriétaire", "hlm", "immobilier", "logis"],
   sécurité: ["sécurité", "police", "gendarmerie", "délinquance", "criminalité", "terrorisme"],
   immigration: ["immigration", "migrant", "asile", "frontière", "étranger", "nationalité"],
   transport: ["transport", "train", "sncf", "route", "autoroute", "mobilité", "vélo", "métro"],
-  numérique: ["numérique", "internet", "données", "intelligence artificielle", "ia", "cyber", "tech"],
+  numérique: [
+    "numérique",
+    "internet",
+    "données",
+    "intelligence artificielle",
+    "ia",
+    "cyber",
+    "tech",
+  ],
   défense: ["défense", "armée", "militaire", "otan", "soldat", "guerre"],
   international: ["international", "diplomatie", "europe", "onu", "traité", "coopération"],
   culture: ["culture", "art", "patrimoine culturel", "musée", "cinéma", "livre", "spectacle"],
   justice: ["justice", "tribunal", "magistrat", "prison", "peine", "droit", "judiciaire"],
-  outremer: ["outre-mer", "dom-tom", "guadeloupe", "martinique", "réunion", "guyane", "mayotte", "polynésie", "calédonie"],
-  collectivités: ["collectivité", "commune", "mairie", "région", "département", "décentralisation", "maire"],
-  démocratie: ["démocratie", "référendum", "citoyen", "participation", "représentation", "élection", "suffrage"],
+  outremer: [
+    "outre-mer",
+    "dom-tom",
+    "guadeloupe",
+    "martinique",
+    "réunion",
+    "guyane",
+    "mayotte",
+    "polynésie",
+    "calédonie",
+  ],
+  collectivités: [
+    "collectivité",
+    "commune",
+    "mairie",
+    "région",
+    "département",
+    "décentralisation",
+    "maire",
+  ],
+  démocratie: [
+    "démocratie",
+    "référendum",
+    "citoyen",
+    "participation",
+    "représentation",
+    "élection",
+    "suffrage",
+  ],
   social: ["social", "solidarité", "pauvreté", "minima sociaux", "rsa", "allocation", "handicap"],
   fiscalité: ["fiscalité", "impôt", "taxe", "tva", "isf", "dette", "budget", "dépense publique"],
-  europe: ["europe", "union européenne", "bruxelles", "directive", "eurodéputé", "parlement européen"],
+  europe: [
+    "europe",
+    "union européenne",
+    "bruxelles",
+    "directive",
+    "eurodéputé",
+    "parlement européen",
+  ],
 };
 
 /**
@@ -88,7 +161,11 @@ export async function searchDatabaseByKeywords(query: string): Promise<string | 
   }
 
   // ─── Search parties ───────────────────────────────────────────
-  if (lowerQuery.includes("parti") || lowerQuery.includes("groupe") || lowerQuery.includes("politique")) {
+  if (
+    lowerQuery.includes("parti") ||
+    lowerQuery.includes("groupe") ||
+    lowerQuery.includes("politique")
+  ) {
     const parties = await db.party.findMany({
       where: {
         OR: words.map((word) => ({
@@ -116,9 +193,7 @@ export async function searchDatabaseByKeywords(query: string): Promise<string | 
     keywords.some((kw) => lowerQuery.includes(kw))
   );
   const isVoteQuery =
-    lowerQuery.includes("vote") ||
-    lowerQuery.includes("scrutin") ||
-    lowerQuery.includes("loi");
+    lowerQuery.includes("vote") || lowerQuery.includes("scrutin") || lowerQuery.includes("loi");
 
   if (isThematicQuery || isVoteQuery) {
     const searchTerms = words.filter((w) => w.length > 3);
@@ -155,10 +230,10 @@ export async function searchDatabaseByKeywords(query: string): Promise<string | 
         const dossierLink = d.slug || d.id;
         results.push(
           `**${d.shortTitle || d.title.slice(0, 80)}**\n` +
-          `Statut : ${status}` +
-          (d.category ? ` | Catégorie : ${d.category}` : "") +
-          (d.filingDate ? `\nDate : ${d.filingDate.toLocaleDateString("fr-FR")}` : "") +
-          `\n→ /assemblee/${dossierLink}`
+            `Statut : ${status}` +
+            (d.category ? ` | Catégorie : ${d.category}` : "") +
+            (d.filingDate ? `\nDate : ${d.filingDate.toLocaleDateString("fr-FR")}` : "") +
+            `\n→ /assemblee/${dossierLink}`
         );
       }
 
@@ -189,9 +264,9 @@ export async function searchDatabaseByKeywords(query: string): Promise<string | 
         const scrutinLink = s.slug || s.id;
         results.push(
           `**Vote : ${s.title.slice(0, 100)}${s.title.length > 100 ? "…" : ""}**\n` +
-          `Date : ${s.votingDate.toLocaleDateString("fr-FR")} — ${adopted}\n` +
-          `Pour : ${s.votesFor}, Contre : ${s.votesAgainst}, Abstention : ${s.votesAbstain}\n` +
-          `→ /votes/${scrutinLink}`
+            `Date : ${s.votingDate.toLocaleDateString("fr-FR")} — ${adopted}\n` +
+            `Pour : ${s.votesFor}, Contre : ${s.votesAgainst}, Abstention : ${s.votesAbstain}\n` +
+            `→ /votes/${scrutinLink}`
         );
       }
     }
@@ -319,17 +394,17 @@ export async function searchDatabaseByKeywords(query: string): Promise<string | 
 
     results.push(
       `**Statistiques de Transparence Politique :**\n` +
-      `• ${deputeCount} députés en exercice (577 sièges)\n` +
-      `• ${senateurCount} sénateurs en exercice (348 sièges)\n` +
-      `• ${mepCount} eurodéputés français (81 sièges)\n` +
-      `• ${ministerCount} membres du gouvernement\n` +
-      `• ${partyCount} partis politiques référencés\n` +
-      `• ${affairCount} affaires judiciaires référencées\n` +
-      `• ${dossierCount} dossiers législatifs\n` +
-      `• ${voteCount} scrutins enregistrés\n` +
-      `• ${declCount} déclarations HATVP\n\n` +
-      `→ Statistiques détaillées : /statistiques\n` +
-      `→ Carte des élus : /carte`
+        `• ${deputeCount} députés en exercice (577 sièges)\n` +
+        `• ${senateurCount} sénateurs en exercice (348 sièges)\n` +
+        `• ${mepCount} eurodéputés français (81 sièges)\n` +
+        `• ${ministerCount} membres du gouvernement\n` +
+        `• ${partyCount} partis politiques référencés\n` +
+        `• ${affairCount} affaires judiciaires référencées\n` +
+        `• ${dossierCount} dossiers législatifs\n` +
+        `• ${voteCount} scrutins enregistrés\n` +
+        `• ${declCount} déclarations HATVP\n\n` +
+        `→ Statistiques détaillées : /statistiques\n` +
+        `→ Carte des élus : /carte`
     );
   }
 

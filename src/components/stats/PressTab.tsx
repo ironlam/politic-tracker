@@ -40,15 +40,8 @@ const sourceLabels: Record<string, string> = {
   MEDIAPART: "Mediapart",
 };
 
-export function PressTab({
-  stats,
-  topPoliticians,
-  topParties,
-}: PressTabProps) {
-  const maxByPolitician = Math.max(
-    ...topPoliticians.map((p) => p.mentionCount),
-    1
-  );
+export function PressTab({ stats, topPoliticians, topParties }: PressTabProps) {
+  const maxByPolitician = Math.max(...topPoliticians.map((p) => p.mentionCount), 1);
   const maxByParty = Math.max(...topParties.map((p) => p.mentionCount), 1);
   const maxBySource = Math.max(...stats.bySource.map((s) => s.count), 1);
 
@@ -80,9 +73,7 @@ export function PressTab({
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Ce mois
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Ce mois</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold">{stats.lastMonth}</p>
@@ -91,9 +82,7 @@ export function PressTab({
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Sources
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Sources</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold">{stats.bySource.length}</p>
@@ -110,9 +99,7 @@ export function PressTab({
           {stats.bySource.map(({ source, count }) => (
             <div key={source}>
               <div className="flex justify-between text-sm mb-1">
-                <Badge variant="outline">
-                  {sourceLabels[source] || source}
-                </Badge>
+                <Badge variant="outline">{sourceLabels[source] || source}</Badge>
                 <span className="font-medium">{count}</span>
               </div>
               <ProgressBar
@@ -130,15 +117,11 @@ export function PressTab({
         <Card>
           <CardHeader>
             <CardTitle>Politiques les plus cités</CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Top 10 des mentions dans la presse
-            </p>
+            <p className="text-sm text-muted-foreground">Top 10 des mentions dans la presse</p>
           </CardHeader>
           <CardContent className="space-y-3">
             {topPoliticians.length === 0 ? (
-              <p className="text-muted-foreground text-sm">
-                Aucune mention indexée
-              </p>
+              <p className="text-muted-foreground text-sm">Aucune mention indexée</p>
             ) : (
               topPoliticians.map((politician) => (
                 <div key={politician.id}>
@@ -161,9 +144,7 @@ export function PressTab({
                         </Badge>
                       )}
                     </Link>
-                    <span className="font-medium shrink-0 ml-2">
-                      {politician.mentionCount}
-                    </span>
+                    <span className="font-medium shrink-0 ml-2">{politician.mentionCount}</span>
                   </div>
                   <ProgressBar
                     value={politician.mentionCount}
@@ -180,15 +161,11 @@ export function PressTab({
         <Card>
           <CardHeader>
             <CardTitle>Partis les plus cités</CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Top 5 des mentions dans la presse
-            </p>
+            <p className="text-sm text-muted-foreground">Top 5 des mentions dans la presse</p>
           </CardHeader>
           <CardContent className="space-y-3">
             {topParties.length === 0 ? (
-              <p className="text-muted-foreground text-sm">
-                Aucune mention indexée
-              </p>
+              <p className="text-muted-foreground text-sm">Aucune mention indexée</p>
             ) : (
               topParties.map((party) => (
                 <div key={party.id}>
@@ -221,10 +198,7 @@ export function PressTab({
 
       {/* Link to press page */}
       <div className="mt-6 text-center">
-        <Link
-          href="/presse"
-          className="text-primary hover:underline text-sm font-medium"
-        >
+        <Link href="/presse" className="text-primary hover:underline text-sm font-medium">
           Voir tous les articles de presse &rarr;
         </Link>
       </div>

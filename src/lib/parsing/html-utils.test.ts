@@ -59,9 +59,7 @@ describe("decodeHtmlEntities", () => {
   });
 
   it("should handle mixed entities", () => {
-    expect(decodeHtmlEntities("Fran&ccedil;ois &#233;tait l&agrave;")).toBe(
-      "François était là"
-    );
+    expect(decodeHtmlEntities("Fran&ccedil;ois &#233;tait l&agrave;")).toBe("François était là");
   });
 
   it("should handle empty and null-like inputs", () => {
@@ -84,9 +82,7 @@ describe("stripHtml", () => {
   });
 
   it("should remove nested tags", () => {
-    expect(stripHtml("<div><p>Hello <b>World</b></p></div>")).toBe(
-      "Hello World"
-    );
+    expect(stripHtml("<div><p>Hello <b>World</b></p></div>")).toBe("Hello World");
   });
 
   it("should remove self-closing tags", () => {
@@ -147,9 +143,7 @@ describe("extractText", () => {
   });
 
   it("should decode entities and clean whitespace", () => {
-    expect(extractText("<p>Fran&ccedil;ois   Hollande</p>")).toBe(
-      "François Hollande"
-    );
+    expect(extractText("<p>Fran&ccedil;ois   Hollande</p>")).toBe("François Hollande");
   });
 
   it("should handle complex HTML", () => {
@@ -170,15 +164,13 @@ describe("extractText", () => {
 
 describe("extractAttribute", () => {
   it("should extract href attribute", () => {
-    expect(
-      extractAttribute('<a href="https://example.com">Link</a>', "href")
-    ).toBe("https://example.com");
+    expect(extractAttribute('<a href="https://example.com">Link</a>', "href")).toBe(
+      "https://example.com"
+    );
   });
 
   it("should extract src attribute", () => {
-    expect(extractAttribute('<img src="photo.jpg" alt="Photo">', "src")).toBe(
-      "photo.jpg"
-    );
+    expect(extractAttribute('<img src="photo.jpg" alt="Photo">', "src")).toBe("photo.jpg");
   });
 
   it("should handle single quotes", () => {

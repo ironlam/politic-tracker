@@ -10,10 +10,10 @@ export async function GET(request: NextRequest) {
   const limit = parseInt(searchParams.get("limit") || "20");
 
   try {
-    const stats = await voteStatsService.getVoteStats(
-      chamber || undefined,
-      { partyLimit: limit, divisiveLimit: limit }
-    );
+    const stats = await voteStatsService.getVoteStats(chamber || undefined, {
+      partyLimit: limit,
+      divisiveLimit: limit,
+    });
 
     return NextResponse.json({
       parties: stats.parties,
@@ -28,9 +28,6 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error("Error fetching vote stats:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch vote stats" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to fetch vote stats" }, { status: 500 });
   }
 }

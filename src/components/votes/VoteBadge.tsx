@@ -16,10 +16,7 @@ export function VotePositionBadge({ position, size = "md" }: VotePositionBadgePr
   const sizeClasses = size === "sm" ? "text-xs px-1.5 py-0.5" : "";
 
   return (
-    <Badge
-      variant="outline"
-      className={`${VOTE_POSITION_COLORS[position]} ${sizeClasses}`}
-    >
+    <Badge variant="outline" className={`${VOTE_POSITION_COLORS[position]} ${sizeClasses}`}>
       {VOTE_POSITION_LABELS[position]}
     </Badge>
   );
@@ -30,9 +27,5 @@ interface VotingResultBadgeProps {
 }
 
 export function VotingResultBadge({ result }: VotingResultBadgeProps) {
-  return (
-    <Badge className={VOTING_RESULT_COLORS[result]}>
-      {VOTING_RESULT_LABELS[result]}
-    </Badge>
-  );
+  return <Badge className={VOTING_RESULT_COLORS[result]}>{VOTING_RESULT_LABELS[result]}</Badge>;
 }

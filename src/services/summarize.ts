@@ -1,5 +1,5 @@
 /**
- * AI Summary Service for Legislative Dossiers
+ * AI Summary Service for Legislative Dossiers and Scrutins
  *
  * Uses Claude Haiku for cost-effective summarization of legislative texts.
  * Designed for batch processing, not real-time use.
@@ -107,6 +107,113 @@ ${hasRichContent ? "- Un exposé des motifs complet est fourni : extrais les mes
     };
   } catch {
     // If JSON parsing fails, try to extract content manually
+    console.error("Failed to parse JSON response:", textContent.text);
+
+    return {
+      shortSummary: request.title,
+      keyPoints: [],
+    };
+  }
+}
+
+export interface ScrutinSummaryRequest {
+  title: string;
+  chamber: "AN" | "SENAT";
+  votingDate: string;
+  result: "ADOPTED" | "REJECTED";
+  votesFor: number;
+  votesAgainst: number;
+  votesAbstain: number;
+}
+
+/**
+ * Generate a summary for a parliamentary scrutin (vote)
+ */
+export async function summarizeScrutin(request: ScrutinSummaryRequest): Promise<SummaryResponse> {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+
+  if (!apiKey) {
+    throw new Error("ANTHROPIC_API_KEY environment variable is not set");
+  }
+
+  const chamberLabel = request.chamber === "AN" ? "Assemblée nationale" : "Sénat";
+  const resultLabel = request.result === "ADOPTED" ? "Adopté" : "Rejeté";
+  const total = request.votesFor + request.votesAgainst + request.votesAbstain;
+
+  const prompt = `Tu es un expert en politique française. Résume ce scrutin parlementaire de manière claire et accessible pour les citoyens.
+
+Titre du scrutin: ${request.title}
+Chambre: ${chamberLabel}
+Date du vote: ${request.votingDate}
+Résultat: ${resultLabel}
+Votes pour: ${request.votesFor}/${total}
+Votes contre: ${request.votesAgainst}/${total}
+Abstentions: ${request.votesAbstain}/${total}
+
+Réponds en JSON avec ce format exact:
+{
+  "shortSummary": "Résumé en 1-2 phrases simples expliquant l'objet du vote et son résultat",
+  "keyPoints": [
+    "Point clé 1 (court, factuel)",
+    "Point clé 2",
+    "Point clé 3"
+  ]
+}
+
+Consignes:
+- Traduis le jargon parlementaire en français simple et compréhensible
+- Explique concrètement ce sur quoi les parlementaires ont voté
+- Mentionne le résultat du vote (adopté/rejeté)
+- Sois objectif et factuel, pas de jugement politique
+- Maximum 4 points clés
+- Si le titre mentionne un article, un amendement ou un texte de loi, explique brièvement de quoi il s'agit`;
+
+  const response = await fetch(ANTHROPIC_API_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01",
+    },
+    body: JSON.stringify({
+      model: MODEL,
+      max_tokens: MAX_TOKENS,
+      messages: [
+        {
+          role: "user",
+          content: prompt,
+        },
+      ],
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`Anthropic API error: ${response.status} - ${error}`);
+  }
+
+  const data = await response.json();
+
+  const textContent = data.content?.find((c: { type: string }) => c.type === "text");
+  if (!textContent?.text) {
+    throw new Error("No text content in API response");
+  }
+
+  try {
+    let jsonStr = textContent.text;
+
+    const jsonMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (jsonMatch) {
+      jsonStr = jsonMatch[1];
+    }
+
+    const parsed = JSON.parse(jsonStr.trim());
+
+    return {
+      shortSummary: parsed.shortSummary || "",
+      keyPoints: Array.isArray(parsed.keyPoints) ? parsed.keyPoints : [],
+    };
+  } catch {
     console.error("Failed to parse JSON response:", textContent.text);
 
     return {

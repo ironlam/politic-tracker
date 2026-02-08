@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { VotingResultBadge, VotePositionBadge } from "@/components/votes";
 import { PoliticianAvatar } from "@/components/politicians/PoliticianAvatar";
 import { formatDate } from "@/lib/utils";
-import { ExternalLink, Calendar, Users } from "lucide-react";
+import { ExternalLink, Calendar, Users, Sparkles } from "lucide-react";
 import type { VotePosition } from "@/types";
 
 interface PageProps {
@@ -86,9 +86,14 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     return { title: "Scrutin non trouvé" };
   }
 
+  const summaryFirstLine = scrutin.summary?.split("\n")[0];
+  const description =
+    summaryFirstLine ||
+    `Scrutin du ${formatDate(scrutin.votingDate)} - ${scrutin.result === "ADOPTED" ? "Adopté" : "Rejeté"} avec ${scrutin.votesFor} pour, ${scrutin.votesAgainst} contre et ${scrutin.votesAbstain} abstentions.`;
+
   return {
     title: scrutin.title,
-    description: `Scrutin du ${formatDate(scrutin.votingDate)} - ${scrutin.result === "ADOPTED" ? "Adopté" : "Rejeté"} avec ${scrutin.votesFor} pour, ${scrutin.votesAgainst} contre et ${scrutin.votesAbstain} abstentions.`,
+    description,
   };
 }
 
@@ -167,6 +172,43 @@ export default async function ScrutinPage({ params }: PageProps) {
           )}
         </div>
       </div>
+
+      {/* AI Summary */}
+      {scrutin.summary && (
+        <Card className="mb-8 border-blue-200 bg-blue-50/50 dark:bg-blue-950/20 dark:border-blue-900">
+          <CardHeader className="pb-2">
+            <div className="flex items-center gap-2">
+              <h2 className="text-lg font-semibold">En bref</h2>
+              <Badge variant="outline" className="gap-1 text-xs">
+                <Sparkles className="h-3 w-3" />
+                Résumé IA
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="prose prose-sm dark:prose-invert max-w-none">
+              {scrutin.summary.split("\n").map((line, i) => {
+                if (line.startsWith("**") && line.endsWith("**")) {
+                  return (
+                    <p key={i} className="font-semibold mt-3 mb-1">
+                      {line.replace(/\*\*/g, "")}
+                    </p>
+                  );
+                }
+                if (line.startsWith("\u2022 ")) {
+                  return (
+                    <p key={i} className="ml-4 text-muted-foreground">
+                      {line}
+                    </p>
+                  );
+                }
+                if (line.trim() === "") return null;
+                return <p key={i}>{line}</p>;
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Results summary */}
       <Card className="mb-8">

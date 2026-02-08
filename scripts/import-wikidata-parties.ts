@@ -2,6 +2,7 @@ import { PrismaClient, PoliticalPosition, DataSource } from "../src/generated/pr
 import { PrismaPg } from "@prisma/adapter-pg";
 import { Pool } from "pg";
 import { config } from "dotenv";
+import { generateSlug } from "../src/lib/utils";
 
 config();
 
@@ -244,6 +245,7 @@ async function importParty(result: WikidataPartyResult): Promise<boolean> {
       data: {
         name,
         shortName,
+        slug: generateSlug(name),
         foundedDate,
         dissolvedDate,
         color,

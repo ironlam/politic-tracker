@@ -96,7 +96,7 @@ export default async function AdminPartiesPage({ searchParams }: PageProps) {
                           style={{ backgroundColor: party.color || "#888" }}
                         />
                         <Link
-                          href={`/partis/${party.slug}`}
+                          href={party.slug ? `/partis/${party.slug}` : "/partis"}
                           className="font-medium hover:underline"
                         >
                           {party.name}

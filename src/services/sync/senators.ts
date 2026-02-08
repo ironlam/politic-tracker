@@ -255,6 +255,7 @@ async function syncSenateGroups(
         data: {
           name: mapping.fullName,
           shortName: mapping.shortName,
+          slug: generateSlug(mapping.fullName),
           color: mapping.color,
         },
       });

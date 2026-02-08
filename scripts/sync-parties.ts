@@ -16,6 +16,7 @@ import { createCLI, type SyncHandler, type SyncResult } from "../src/lib/sync";
 import { db } from "../src/lib/db";
 import { DataSource, PoliticalPosition } from "../src/generated/prisma";
 import { FRENCH_ASSEMBLY_PARTIES, FRENCH_SENATE_PARTIES, PartyConfig } from "../src/config/parties";
+import { generateSlug } from "../src/lib/utils";
 
 const ALL_PARTY_CONFIGS: Record<string, PartyConfig> = {
   ...FRENCH_ASSEMBLY_PARTIES,
@@ -292,6 +293,7 @@ async function enrichFromWikidata(): Promise<{
         data: {
           name,
           shortName,
+          slug: generateSlug(name),
           foundedDate,
           dissolvedDate,
           color: wikidataColor,

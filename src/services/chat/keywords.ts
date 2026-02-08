@@ -183,7 +183,7 @@ export async function searchDatabaseByKeywords(query: string): Promise<string | 
 
     for (const party of parties) {
       results.push(
-        `**${party.name}** (${party.shortName || ""}) — ${party._count.politicians} membre(s)\n→ /partis/${party.slug}`
+        `**${party.name}** (${party.shortName || ""}) — ${party._count.politicians} membre(s)${party.slug ? `\n→ /partis/${party.slug}` : ""}`
       );
     }
   }

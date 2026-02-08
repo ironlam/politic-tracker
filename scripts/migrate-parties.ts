@@ -24,15 +24,14 @@ function generateSlug(text: string): string {
 async function main() {
   console.log("=== MIGRATION DES PARTIS ===\n");
 
-  // 1. Generate slugs for all parties without one
-  console.log("1. Génération des slugs...");
-  const partiesWithoutSlug = await db.party.findMany({
-    where: { slug: null },
-  });
+  // 1. Generate SEO-friendly slugs for all parties (name-based)
+  console.log("1. Migration des slugs (format SEO : nom complet)...");
+  const allParties = await db.party.findMany();
 
   const usedSlugs = new Set<string>();
-  for (const party of partiesWithoutSlug) {
-    let baseSlug = generateSlug(party.shortName || party.name);
+  let updated = 0;
+  for (const party of allParties) {
+    const baseSlug = generateSlug(party.name);
     let slug = baseSlug;
     let counter = 1;
     while (usedSlugs.has(slug)) {
@@ -41,12 +40,16 @@ async function main() {
     }
     usedSlugs.add(slug);
 
-    await db.party.update({
-      where: { id: party.id },
-      data: { slug },
-    });
+    if (party.slug !== slug) {
+      await db.party.update({
+        where: { id: party.id },
+        data: { slug },
+      });
+      console.log(`   ${party.shortName}: ${party.slug || "(null)"} → ${slug}`);
+      updated++;
+    }
   }
-  console.log(`   ✓ ${partiesWithoutSlug.length} slugs générés\n`);
+  console.log(`   ✓ ${updated}/${allParties.length} slugs mis à jour\n`);
 
   // 2. Delete orphan parties (no politicians, no memberships, no affairs)
   console.log("2. Suppression des partis orphelins...");

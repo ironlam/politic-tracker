@@ -525,6 +525,7 @@ model Vote {
   @@unique([scrutinId, politicianId])
   @@index([politicianId])
   @@index([scrutinId])
+  @@index([politicianId, position])
 }
 
 enum VotePosition {

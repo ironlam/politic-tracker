@@ -38,6 +38,9 @@ yarn-error.log*
 # Claude Code local settings (may contain permissions)
 .claude/settings.local.json
 
+# MCP config (contains API tokens)
+.mcp.json
+
 # vercel
 .vercel
 

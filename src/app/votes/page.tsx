@@ -140,7 +140,7 @@ export default async function VotesPage({ searchParams }: PageProps) {
         </div>
         <div className="flex items-center gap-2">
           <Link
-            href="/votes/stats"
+            href="/statistiques?tab=votes"
             className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-muted hover:bg-muted/80 text-sm font-medium transition-colors"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

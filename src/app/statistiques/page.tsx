@@ -16,6 +16,8 @@ import {
   type AffairSuperCategory,
 } from "@/config/labels";
 import type { AffairStatus, AffairCategory } from "@/types";
+import { voteStatsService } from "@/services/voteStats";
+import type { Chamber } from "@/generated/prisma";
 
 export const metadata: Metadata = {
   title: "Statistiques",
@@ -178,125 +180,10 @@ async function getTopPoliticiansWithAffairs() {
   }));
 }
 
-// Votes data fetchers
-async function getVotesStats(chamber: "all" | "AN" | "SENAT") {
-  const whereClause = chamber === "all" ? {} : { chamber };
-
-  const [totalVotes, anVotes, senatVotes, adoptes, rejetes] = await Promise.all(
-    [
-      db.scrutin.count({ where: whereClause }),
-      db.scrutin.count({ where: { chamber: "AN" } }),
-      db.scrutin.count({ where: { chamber: "SENAT" } }),
-      db.scrutin.count({ where: { ...whereClause, result: "ADOPTED" } }),
-      db.scrutin.count({ where: { ...whereClause, result: "REJECTED" } }),
-    ]
-  );
-
-  return { totalVotes, anVotes, senatVotes, adoptes, rejetes };
-}
-
-async function getVotesByParty(chamber: "all" | "AN" | "SENAT") {
-  // Get parties with votes
-  const parties = await db.party.findMany({
-    where: {
-      politicians: {
-        some: {
-          votes: { some: {} },
-        },
-      },
-    },
-    select: {
-      id: true,
-      slug: true,
-      name: true,
-      shortName: true,
-      color: true,
-    },
-  });
-
-  // For each party, count vote positions
-  const partyStats = await Promise.all(
-    parties.map(async (party) => {
-      const scrutinWhere =
-        chamber === "all" ? {} : { scrutin: { chamber } };
-
-      const [pour, contre, abstention] = await Promise.all([
-        db.vote.count({
-          where: {
-            politician: { currentPartyId: party.id },
-            position: "POUR",
-            ...scrutinWhere,
-          },
-        }),
-        db.vote.count({
-          where: {
-            politician: { currentPartyId: party.id },
-            position: "CONTRE",
-            ...scrutinWhere,
-          },
-        }),
-        db.vote.count({
-          where: {
-            politician: { currentPartyId: party.id },
-            position: "ABSTENTION",
-            ...scrutinWhere,
-          },
-        }),
-      ]);
-
-      return {
-        ...party,
-        totalVotes: pour + contre + abstention,
-        pour,
-        contre,
-        abstention,
-      };
-    })
-  );
-
-  return partyStats
-    .filter((p) => p.totalVotes > 0)
-    .sort((a, b) => b.totalVotes - a.totalVotes)
-    .slice(0, 10);
-}
-
-async function getTopContestedScrutins(chamber: "all" | "AN" | "SENAT") {
-  const whereClause = chamber === "all" ? {} : { chamber };
-
-  // Get scrutins where the margin is smallest
-  const scrutins = await db.scrutin.findMany({
-    where: whereClause,
-    select: {
-      id: true,
-      slug: true,
-      title: true,
-      votingDate: true,
-      chamber: true,
-      result: true,
-      votesFor: true,
-      votesAgainst: true,
-      votesAbstain: true,
-    },
-    orderBy: { votingDate: "desc" },
-    take: 100,
-  });
-
-  // Calculate margin, sort by smallest, and map to expected format
-  return scrutins
-    .map((s) => ({
-      id: s.id,
-      slug: s.slug,
-      title: s.title,
-      date: s.votingDate,
-      chamber: s.chamber,
-      result: s.result === "ADOPTED" ? "ADOPTE" : "REJETE",
-      totalPour: s.votesFor,
-      totalContre: s.votesAgainst,
-      totalAbstention: s.votesAbstain,
-      margin: Math.abs(s.votesFor - s.votesAgainst),
-    }))
-    .sort((a, b) => a.margin - b.margin)
-    .slice(0, 10);
+// Votes data fetcher (uses optimized service)
+async function getVotesData(chamber: "all" | "AN" | "SENAT") {
+  const chamberParam = chamber === "all" ? undefined : (chamber as Chamber);
+  return voteStatsService.getVoteStats(chamberParam);
 }
 
 // Press data fetchers
@@ -547,17 +434,11 @@ export default async function StatistiquesPage({ searchParams }: PageProps) {
       />
     );
   } else if (tab === "votes") {
-    const [stats, byParty, topScrutins] = await Promise.all([
-      getVotesStats(chamber),
-      getVotesByParty(chamber),
-      getTopContestedScrutins(chamber),
-    ]);
+    const voteStats = await getVotesData(chamber);
 
     content = (
       <VotesTab
-        stats={stats}
-        byParty={byParty}
-        topScrutins={topScrutins}
+        data={voteStats}
         chamberFilter={chamber}
       />
     );

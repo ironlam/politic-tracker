@@ -785,7 +785,9 @@ async function fetchPartyMembers(partySearch: string): Promise<string | null> {
     result += `\n`;
   }
 
-  result += `→ Page du parti : /partis/${party.slug}`;
+  if (party.slug) {
+    result += `→ Page du parti : /partis/${party.slug}`;
+  }
   return result;
 }
 

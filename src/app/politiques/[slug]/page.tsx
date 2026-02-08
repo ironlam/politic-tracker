@@ -232,7 +232,13 @@ export default async function PoliticianPage({ params }: PageProps) {
           <div>
             <h1 className="text-3xl font-bold mb-2">{politician.fullName}</h1>
             {politician.currentParty && (
-              <Link href={`/partis/${politician.currentParty.slug}`}>
+              <Link
+                href={
+                  politician.currentParty.slug
+                    ? `/partis/${politician.currentParty.slug}`
+                    : "/partis"
+                }
+              >
                 <Badge
                   className="text-sm hover:opacity-80 transition-opacity cursor-pointer"
                   style={{

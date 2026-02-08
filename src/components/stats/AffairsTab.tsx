@@ -212,7 +212,7 @@ export function AffairsTab({
               <div key={party.id}>
                 <div className="flex justify-between text-sm mb-1">
                   <Link
-                    href={`/partis/${party.slug}`}
+                    href={party.slug ? `/partis/${party.slug}` : "/partis"}
                     className="hover:underline flex items-center gap-2"
                   >
                     {party.color && (

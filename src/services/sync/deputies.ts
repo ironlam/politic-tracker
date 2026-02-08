@@ -80,9 +80,11 @@ async function syncParties(
 
   for (const [csvAbrev, fullName] of uniqueGroups) {
     const mapping = PARTY_MAPPINGS[csvAbrev];
+    const partyName = mapping?.fullName || fullName;
     const partyData = {
-      name: mapping?.fullName || fullName,
+      name: partyName,
       shortName: mapping?.shortName || csvAbrev,
+      slug: generateSlug(partyName),
       color: mapping?.color || "#888888",
     };
 

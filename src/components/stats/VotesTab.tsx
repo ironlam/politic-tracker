@@ -209,7 +209,7 @@ export function VotesTab({ data, chamberFilter }: VotesTabProps) {
                   <div key={party.partyId}>
                     <div className="flex justify-between text-sm mb-1">
                       <Link
-                        href={`/partis/${party.partySlug}`}
+                        href={party.partySlug ? `/partis/${party.partySlug}` : "/partis"}
                         className="hover:underline flex items-center gap-2"
                       >
                         {party.partyColor && (

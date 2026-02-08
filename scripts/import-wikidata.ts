@@ -253,6 +253,7 @@ async function findOrCreateParty(partyName: string): Promise<string | null> {
       data: {
         name: partyName,
         shortName,
+        slug: generateSlug(partyName),
       },
     });
     return party.id;

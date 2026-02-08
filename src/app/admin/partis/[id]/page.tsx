@@ -74,7 +74,7 @@ export default async function AdminPartyPage({ params }: PageProps) {
           </div>
         </div>
         <div className="flex gap-2">
-          <Link href={`/partis/${party.slug}`}>
+          <Link href={party.slug ? `/partis/${party.slug}` : "/partis"}>
             <Button variant="outline">Voir page publique</Button>
           </Link>
           <Link href={`/admin/partis/${party.id}/edit`}>

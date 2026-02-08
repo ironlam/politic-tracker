@@ -446,7 +446,9 @@ export default async function PartyPage({ params }: PageProps) {
                     <div>
                       <span className="text-sm text-muted-foreground block mb-1">Succède à</span>
                       <Link
-                        href={`/partis/${party.predecessor.slug}`}
+                        href={
+                          party.predecessor.slug ? `/partis/${party.predecessor.slug}` : "/partis"
+                        }
                         className="inline-flex items-center gap-2 text-blue-600 hover:underline"
                       >
                         <span
@@ -464,7 +466,7 @@ export default async function PartyPage({ params }: PageProps) {
                         {party.successors.map((successor) => (
                           <Link
                             key={successor.id}
-                            href={`/partis/${successor.slug}`}
+                            href={successor.slug ? `/partis/${successor.slug}` : "/partis"}
                             className="flex items-center gap-2 text-blue-600 hover:underline"
                           >
                             <span

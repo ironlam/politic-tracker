@@ -136,9 +136,7 @@ async function investigateRaphaelGlucksmann() {
   for (const m of glucksmann.mandates) {
     const status = m.isCurrent ? "[CURRENT]" : "";
     const group = m.europeanGroupCode ? `(${m.europeanGroupCode})` : "";
-    console.log(
-      `    - ${m.type}: ${m.title} ${group} ${status}`
-    );
+    console.log(`    - ${m.type}: ${m.title} ${group} ${status}`);
     console.log(
       `      ${m.startDate?.toISOString().slice(0, 10) || "?"} -> ${m.endDate?.toISOString().slice(0, 10) || "ongoing"}`
     );
@@ -301,10 +299,18 @@ async function investigateArticlesWithoutMentions() {
   const articlesWithNoMentions = totalArticles - articlesWithAnyMention;
 
   console.log(`\n  Total press articles: ${totalArticles}`);
-  console.log(`  With politician mentions: ${articlesWithPoliticianMentions} (${((articlesWithPoliticianMentions / totalArticles) * 100).toFixed(1)}%)`);
-  console.log(`  With party mentions: ${articlesWithPartyMentions} (${((articlesWithPartyMentions / totalArticles) * 100).toFixed(1)}%)`);
-  console.log(`  With any mention: ${articlesWithAnyMention} (${((articlesWithAnyMention / totalArticles) * 100).toFixed(1)}%)`);
-  console.log(`  With NO mentions: ${articlesWithNoMentions} (${((articlesWithNoMentions / totalArticles) * 100).toFixed(1)}%)`);
+  console.log(
+    `  With politician mentions: ${articlesWithPoliticianMentions} (${((articlesWithPoliticianMentions / totalArticles) * 100).toFixed(1)}%)`
+  );
+  console.log(
+    `  With party mentions: ${articlesWithPartyMentions} (${((articlesWithPartyMentions / totalArticles) * 100).toFixed(1)}%)`
+  );
+  console.log(
+    `  With any mention: ${articlesWithAnyMention} (${((articlesWithAnyMention / totalArticles) * 100).toFixed(1)}%)`
+  );
+  console.log(
+    `  With NO mentions: ${articlesWithNoMentions} (${((articlesWithNoMentions / totalArticles) * 100).toFixed(1)}%)`
+  );
 
   // Sample of articles without mentions
   const sampleNoMentions = await db.pressArticle.findMany({
@@ -323,7 +329,9 @@ async function investigateArticlesWithoutMentions() {
 
   console.log("\n  Sample articles with NO mentions:");
   for (const article of sampleNoMentions) {
-    console.log(`    [${article.feedSource}] ${article.publishedAt.toISOString().slice(0, 10)}: ${article.title.slice(0, 70)}...`);
+    console.log(
+      `    [${article.feedSource}] ${article.publishedAt.toISOString().slice(0, 10)}: ${article.title.slice(0, 70)}...`
+    );
   }
 
   // Breakdown by source
@@ -349,12 +357,11 @@ async function investigateArticlesWithoutMentions() {
 
   console.log("\n  Breakdown by source:");
   for (const row of bySource) {
-    const pct = Number(row.total) > 0
-      ? ((Number(row.with_mentions) / Number(row.total)) * 100).toFixed(1)
-      : "0.0";
-    console.log(
-      `    ${row.feedSource}: ${row.with_mentions}/${row.total} with mentions (${pct}%)`
-    );
+    const pct =
+      Number(row.total) > 0
+        ? ((Number(row.with_mentions) / Number(row.total)) * 100).toFixed(1)
+        : "0.0";
+    console.log(`    ${row.feedSource}: ${row.with_mentions}/${row.total} with mentions (${pct}%)`);
   }
 }
 

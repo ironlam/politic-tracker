@@ -16,13 +16,11 @@ import {
   getCategoriesForSuper,
   type AffairSuperCategory,
 } from "@/config/labels";
-import { formatDate } from "@/lib/utils";
 import type { AffairStatus, AffairCategory } from "@/types";
 
 export const metadata: Metadata = {
   title: "Affaires judiciaires",
-  description:
-    "Liste des affaires judiciaires impliquant des représentants politiques français",
+  description: "Liste des affaires judiciaires impliquant des représentants politiques français",
 };
 
 interface PageProps {
@@ -112,9 +110,7 @@ async function getStatusCounts() {
     _count: { status: true },
   });
 
-  return Object.fromEntries(
-    statusCounts.map((s) => [s.status, s._count.status])
-  );
+  return Object.fromEntries(statusCounts.map((s) => [s.status, s._count.status]));
 }
 
 export default async function AffairesPage({ searchParams }: PageProps) {
@@ -124,12 +120,11 @@ export default async function AffairesPage({ searchParams }: PageProps) {
   const categoryFilter = params.category || "";
   const page = parseInt(params.page || "1", 10);
 
-  const [{ affairs, total, totalPages }, superCounts, statusCounts] =
-    await Promise.all([
-      getAffairs(statusFilter, superCatFilter || undefined, categoryFilter, page),
-      getSuperCategoryCounts(),
-      getStatusCounts(),
-    ]);
+  const [{ affairs, total, totalPages }, superCounts, statusCounts] = await Promise.all([
+    getAffairs(statusFilter, superCatFilter || undefined, categoryFilter, page),
+    getSuperCategoryCounts(),
+    getStatusCounts(),
+  ]);
 
   const totalAffairs = Object.values(superCounts).reduce((a, b) => a + b, 0);
 
@@ -162,40 +157,35 @@ export default async function AffairesPage({ searchParams }: PageProps) {
 
       {/* Super-category cards */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
-        {(Object.keys(AFFAIR_SUPER_CATEGORY_LABELS) as AffairSuperCategory[]).map(
-          (superCat) => {
-            const count = superCounts[superCat] || 0;
-            const isActive = superCatFilter === superCat;
-            return (
-              <Link
-                key={superCat}
-                href={isActive ? "/affaires" : buildUrl({ supercat: superCat })}
+        {(Object.keys(AFFAIR_SUPER_CATEGORY_LABELS) as AffairSuperCategory[]).map((superCat) => {
+          const count = superCounts[superCat] || 0;
+          const isActive = superCatFilter === superCat;
+          return (
+            <Link key={superCat} href={isActive ? "/affaires" : buildUrl({ supercat: superCat })}>
+              <Card
+                className={`cursor-pointer transition-all hover:shadow-md ${
+                  isActive ? "ring-2 ring-primary" : ""
+                }`}
               >
-                <Card
-                  className={`cursor-pointer transition-all hover:shadow-md ${
-                    isActive ? "ring-2 ring-primary" : ""
-                  }`}
-                >
-                  <CardContent className="p-4">
-                    <div
-                      className={`text-2xl font-bold ${
-                        AFFAIR_SUPER_CATEGORY_COLORS[superCat].split(" ")[1]
-                      }`}
-                    >
-                      {count}
-                    </div>
-                    <div className="text-sm font-medium">
-                      {AFFAIR_SUPER_CATEGORY_LABELS[superCat]}
-                    </div>
-                    <div className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                      {AFFAIR_SUPER_CATEGORY_DESCRIPTIONS[superCat]}
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            );
-          }
-        )}
+                <CardContent className="p-4">
+                  <div
+                    className={`text-2xl font-bold ${
+                      AFFAIR_SUPER_CATEGORY_COLORS[superCat].split(" ")[1]
+                    }`}
+                  >
+                    {count}
+                  </div>
+                  <div className="text-sm font-medium">
+                    {AFFAIR_SUPER_CATEGORY_LABELS[superCat]}
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                    {AFFAIR_SUPER_CATEGORY_DESCRIPTIONS[superCat]}
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+          );
+        })}
       </div>
 
       {/* Status filter */}
@@ -203,10 +193,7 @@ export default async function AffairesPage({ searchParams }: PageProps) {
         <p className="text-sm font-medium mb-2">Filtrer par statut</p>
         <div className="flex flex-wrap gap-2">
           <Link href={buildUrl({ supercat: superCatFilter })}>
-            <Badge
-              variant={statusFilter === "" ? "default" : "outline"}
-              className="cursor-pointer"
-            >
+            <Badge variant={statusFilter === "" ? "default" : "outline"} className="cursor-pointer">
               Tous
             </Badge>
           </Link>
@@ -272,10 +259,10 @@ export default async function AffairesPage({ searchParams }: PageProps) {
               const dateLabel = affair.verdictDate
                 ? "Verdict"
                 : affair.startDate
-                ? "Révélation"
-                : affair.factsDate
-                ? "Faits"
-                : null;
+                  ? "Révélation"
+                  : affair.factsDate
+                    ? "Faits"
+                    : null;
               return (
                 <Card key={affair.id}>
                   <CardContent className="pt-6">
@@ -285,7 +272,9 @@ export default async function AffairesPage({ searchParams }: PageProps) {
                           {relevantDate && (
                             <Badge variant="secondary" className="font-mono text-base">
                               {new Date(relevantDate).getFullYear()}
-                              {dateLabel && <span className="ml-1 text-xs opacity-70">({dateLabel})</span>}
+                              {dateLabel && (
+                                <span className="ml-1 text-xs opacity-70">({dateLabel})</span>
+                              )}
                             </Badge>
                           )}
                           <Badge className={AFFAIR_SUPER_CATEGORY_COLORS[superCat]}>
@@ -294,14 +283,10 @@ export default async function AffairesPage({ searchParams }: PageProps) {
                           <Badge className={AFFAIR_STATUS_COLORS[affair.status]}>
                             {AFFAIR_STATUS_LABELS[affair.status]}
                           </Badge>
-                          <Badge variant="outline">
-                            {AFFAIR_CATEGORY_LABELS[affair.category]}
-                          </Badge>
+                          <Badge variant="outline">{AFFAIR_CATEGORY_LABELS[affair.category]}</Badge>
                         </div>
 
-                        <h2 className="text-lg font-semibold mb-1">
-                          {affair.title}
-                        </h2>
+                        <h2 className="text-lg font-semibold mb-1">{affair.title}</h2>
 
                         <Link
                           href={`/politiques/${affair.politician.slug}`}
@@ -311,10 +296,14 @@ export default async function AffairesPage({ searchParams }: PageProps) {
                           {(affair.partyAtTime || affair.politician.currentParty) && (
                             <span className="text-muted-foreground">
                               {" "}
-                              ({affair.partyAtTime?.shortName || affair.politician.currentParty?.shortName})
-                              {affair.partyAtTime && affair.partyAtTime.id !== affair.politician.currentParty?.id && (
-                                <span className="text-xs"> à l&apos;époque</span>
-                              )}
+                              (
+                              {affair.partyAtTime?.shortName ||
+                                affair.politician.currentParty?.shortName}
+                              )
+                              {affair.partyAtTime &&
+                                affair.partyAtTime.id !== affair.politician.currentParty?.id && (
+                                  <span className="text-xs"> à l&apos;époque</span>
+                                )}
                             </span>
                           )}
                         </Link>
@@ -332,9 +321,7 @@ export default async function AffairesPage({ searchParams }: PageProps) {
 
                       <div className="text-sm text-muted-foreground md:text-right md:min-w-[150px]">
                         {affair.sentence && (
-                          <p className="font-medium text-foreground mb-2">
-                            {affair.sentence}
-                          </p>
+                          <p className="font-medium text-foreground mb-2">{affair.sentence}</p>
                         )}
                         <p className="mb-2">
                           {affair.sources.length} source
@@ -404,14 +391,11 @@ export default async function AffairesPage({ searchParams }: PageProps) {
       {/* Info box */}
       <Card className="mt-8 bg-blue-50 border-blue-200">
         <CardContent className="pt-6">
-          <h3 className="font-semibold text-blue-900 mb-2">
-            À propos des données
-          </h3>
+          <h3 className="font-semibold text-blue-900 mb-2">À propos des données</h3>
           <p className="text-sm text-blue-800">
-            Chaque affaire est documentée avec au minimum une source vérifiable
-            (article de presse, décision de justice). La présomption
-            d&apos;innocence est systématiquement rappelée pour les affaires en
-            cours. Les informations proviennent de sources publiques : Wikidata,
+            Chaque affaire est documentée avec au minimum une source vérifiable (article de presse,
+            décision de justice). La présomption d&apos;innocence est systématiquement rappelée pour
+            les affaires en cours. Les informations proviennent de sources publiques : Wikidata,
             articles de presse, décisions de justice publiées.
           </p>
         </CardContent>

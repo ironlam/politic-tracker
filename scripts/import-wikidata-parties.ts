@@ -15,14 +15,14 @@ const WIKIDATA_ENDPOINT = "https://query.wikidata.org/sparql";
 
 // Map Wikidata political position IDs to our enum
 const POLITICAL_POSITION_MAP: Record<string, PoliticalPosition> = {
-  Q49768: "FAR_RIGHT",      // extrême droite
-  Q3909293: "RIGHT",        // droite
-  Q844984: "CENTER_RIGHT",  // centre droit
-  Q28738992: "CENTER",      // centre
-  Q1293577: "CENTER",       // centrisme
-  Q844839: "CENTER_LEFT",   // centre gauche
-  Q2169699: "LEFT",         // gauche
-  Q214503: "FAR_LEFT",      // extrême gauche
+  Q49768: "FAR_RIGHT", // extrême droite
+  Q3909293: "RIGHT", // droite
+  Q844984: "CENTER_RIGHT", // centre droit
+  Q28738992: "CENTER", // centre
+  Q1293577: "CENTER", // centrisme
+  Q844839: "CENTER_LEFT", // centre gauche
+  Q2169699: "LEFT", // gauche
+  Q214503: "FAR_LEFT", // extrême gauche
 };
 
 interface WikidataPartyResult {
@@ -197,7 +197,9 @@ async function importParty(result: WikidataPartyResult): Promise<boolean> {
       where: {
         OR: [
           { name: { equals: name, mode: "insensitive" as const } },
-          ...(shortName ? [{ shortName: { equals: shortName, mode: "insensitive" as const } }] : []),
+          ...(shortName
+            ? [{ shortName: { equals: shortName, mode: "insensitive" as const } }]
+            : []),
         ],
       },
     });

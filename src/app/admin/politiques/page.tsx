@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 
@@ -72,10 +72,18 @@ export default async function AdminPoliticiansPage({ searchParams }: PageProps) 
             <table className="w-full">
               <thead>
                 <tr className="border-b text-left">
-                  <th scope="col" className="pb-3 font-medium">Nom</th>
-                  <th scope="col" className="pb-3 font-medium">Parti</th>
-                  <th scope="col" className="pb-3 font-medium text-center">Affaires</th>
-                  <th scope="col" className="pb-3 font-medium">Actions</th>
+                  <th scope="col" className="pb-3 font-medium">
+                    Nom
+                  </th>
+                  <th scope="col" className="pb-3 font-medium">
+                    Parti
+                  </th>
+                  <th scope="col" className="pb-3 font-medium text-center">
+                    Affaires
+                  </th>
+                  <th scope="col" className="pb-3 font-medium">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -108,9 +116,7 @@ export default async function AdminPoliticiansPage({ searchParams }: PageProps) 
                     </td>
                     <td className="py-3 pr-4 text-center">
                       {politician._count.affairs > 0 ? (
-                        <Badge variant="destructive">
-                          {politician._count.affairs}
-                        </Badge>
+                        <Badge variant="destructive">{politician._count.affairs}</Badge>
                       ) : (
                         <span className="text-muted-foreground">0</span>
                       )}

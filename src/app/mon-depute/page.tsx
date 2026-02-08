@@ -14,8 +14,7 @@ export default function MonDeputePage() {
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold mb-4">Qui est mon député ?</h1>
           <p className="text-muted-foreground">
-            Entrez votre code postal pour trouver le ou les députés de votre
-            circonscription.
+            Entrez votre code postal pour trouver le ou les députés de votre circonscription.
           </p>
         </div>
 
@@ -23,9 +22,8 @@ export default function MonDeputePage() {
 
         <div className="mt-12 text-center text-sm text-muted-foreground">
           <p>
-            Les circonscriptions législatives ne correspondent pas exactement
-            aux codes postaux. Dans les grandes villes, plusieurs
-            circonscriptions peuvent coexister.
+            Les circonscriptions législatives ne correspondent pas exactement aux codes postaux.
+            Dans les grandes villes, plusieurs circonscriptions peuvent coexister.
           </p>
           <p className="mt-2">
             Source des données géographiques :{" "}

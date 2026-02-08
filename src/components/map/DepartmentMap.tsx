@@ -16,22 +16,18 @@ const DOMTOM_NAMES: Record<string, string> = {
 };
 
 // Dynamic import to avoid SSR issues with react-simple-maps
-const ComposableMap = dynamic(
-  () => import("react-simple-maps").then((m) => m.ComposableMap),
-  { ssr: false }
-);
-const Geographies = dynamic(
-  () => import("react-simple-maps").then((m) => m.Geographies),
-  { ssr: false }
-);
-const Geography = dynamic(
-  () => import("react-simple-maps").then((m) => m.Geography),
-  { ssr: false }
-);
-const ZoomableGroup = dynamic(
-  () => import("react-simple-maps").then((m) => m.ZoomableGroup),
-  { ssr: false }
-);
+const ComposableMap = dynamic(() => import("react-simple-maps").then((m) => m.ComposableMap), {
+  ssr: false,
+});
+const Geographies = dynamic(() => import("react-simple-maps").then((m) => m.Geographies), {
+  ssr: false,
+});
+const Geography = dynamic(() => import("react-simple-maps").then((m) => m.Geography), {
+  ssr: false,
+});
+const ZoomableGroup = dynamic(() => import("react-simple-maps").then((m) => m.ZoomableGroup), {
+  ssr: false,
+});
 
 interface DepartmentMapProps {
   departments: DepartmentStats[];
@@ -61,7 +57,10 @@ function DepartmentMapComponent({
   selectedDepartment,
   isDarkMode,
 }: DepartmentMapProps) {
-  const [position, setPosition] = useState({ coordinates: [2.5, 46.5] as [number, number], zoom: 1 });
+  const [position, setPosition] = useState({
+    coordinates: [2.5, 46.5] as [number, number],
+    zoom: 1,
+  });
 
   // Build lookup map
   const deptMap = new Map(departments.map((d) => [d.code, d]));
@@ -87,7 +86,9 @@ function DepartmentMapComponent({
   }, []);
 
   // Extract DOM-TOM departments for separate display
-  const domtomDepts = DOMTOM_CODES.map(code => deptMap.get(code)).filter(Boolean) as DepartmentStats[];
+  const domtomDepts = DOMTOM_CODES.map((code) => deptMap.get(code)).filter(
+    Boolean
+  ) as DepartmentStats[];
 
   return (
     <div className="relative w-full h-full flex flex-col">
@@ -152,7 +153,9 @@ function DepartmentMapComponent({
                       }}
                       tabIndex={dept ? 0 : -1}
                       role="button"
-                      aria-label={dept ? `${dept.name}: ${dept.totalElus} élus` : geo.properties.nom}
+                      aria-label={
+                        dept ? `${dept.name}: ${dept.totalElus} élus` : geo.properties.nom
+                      }
                       onKeyDown={(e) => {
                         if (e.key === "Enter" || e.key === " ") {
                           e.preventDefault();
@@ -192,11 +195,17 @@ function DepartmentMapComponent({
                 disabled={!dept}
                 title={dept ? `${DOMTOM_NAMES[code]}: ${dept.totalElus} élus` : DOMTOM_NAMES[code]}
               >
-                <span className={isDarkMode ? "text-white" : "text-white"} style={{ textShadow: "0 0 2px rgba(0,0,0,0.5)" }}>
+                <span
+                  className={isDarkMode ? "text-white" : "text-white"}
+                  style={{ textShadow: "0 0 2px rgba(0,0,0,0.5)" }}
+                >
                   {DOMTOM_NAMES[code]}
                 </span>
                 {dept && (
-                  <span className="bg-white/20 px-1 rounded text-white" style={{ textShadow: "0 0 2px rgba(0,0,0,0.5)" }}>
+                  <span
+                    className="bg-white/20 px-1 rounded text-white"
+                    style={{ textShadow: "0 0 2px rgba(0,0,0,0.5)" }}
+                  >
                     {dept.totalElus}
                   </span>
                 )}

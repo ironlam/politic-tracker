@@ -10,11 +10,7 @@ import {
   GeoTab,
   type StatsTabType,
 } from "@/components/stats";
-import {
-  AFFAIR_SUPER_CATEGORY_LABELS,
-  CATEGORY_TO_SUPER,
-  type AffairSuperCategory,
-} from "@/config/labels";
+import { CATEGORY_TO_SUPER, type AffairSuperCategory } from "@/config/labels";
 import type { AffairStatus, AffairCategory } from "@/types";
 import { voteStatsService } from "@/services/voteStats";
 import type { Chamber } from "@/generated/prisma";
@@ -27,25 +23,20 @@ export const metadata: Metadata = {
 
 // Affairs data fetchers
 async function getAffairsGlobalStats() {
-  const [
-    totalPoliticians,
-    totalAffairs,
-    totalParties,
-    politiciansWithAffairs,
-    condamnations,
-  ] = await Promise.all([
-    db.politician.count(),
-    db.affair.count(),
-    db.party.count({ where: { politicians: { some: {} } } }),
-    db.politician.count({ where: { affairs: { some: {} } } }),
-    db.affair.count({
-      where: {
-        status: {
-          in: ["CONDAMNATION_PREMIERE_INSTANCE", "CONDAMNATION_DEFINITIVE"],
+  const [totalPoliticians, totalAffairs, totalParties, politiciansWithAffairs, condamnations] =
+    await Promise.all([
+      db.politician.count(),
+      db.affair.count(),
+      db.party.count({ where: { politicians: { some: {} } } }),
+      db.politician.count({ where: { affairs: { some: {} } } }),
+      db.affair.count({
+        where: {
+          status: {
+            in: ["CONDAMNATION_PREMIERE_INSTANCE", "CONDAMNATION_DEFINITIVE"],
+          },
         },
-      },
-    }),
-  ]);
+      }),
+    ]);
 
   return {
     totalPoliticians,
@@ -54,9 +45,7 @@ async function getAffairsGlobalStats() {
     politiciansWithAffairs,
     condamnations,
     percentWithAffairs:
-      totalPoliticians > 0
-        ? ((politiciansWithAffairs / totalPoliticians) * 100).toFixed(1)
-        : "0",
+      totalPoliticians > 0 ? ((politiciansWithAffairs / totalPoliticians) * 100).toFixed(1) : "0",
   };
 }
 
@@ -141,10 +130,7 @@ async function getAffairsByParty() {
       color: p.color,
       slug: p.slug,
       politiciansWithAffairs: p._count.politicians,
-      totalAffairs: p.politicians.reduce(
-        (sum, pol) => sum + pol._count.affairs,
-        0
-      ),
+      totalAffairs: p.politicians.reduce((sum, pol) => sum + pol._count.affairs, 0),
     }))
     .sort((a, b) => b.totalAffairs - a.totalAffairs)
     .slice(0, 10);
@@ -192,23 +178,22 @@ async function getPressStats() {
   const lastWeek = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
   const lastMonth = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-  const [totalArticles, bySource, lastWeekCount, lastMonthCount] =
-    await Promise.all([
-      db.pressArticle.count(),
-      db.pressArticle.groupBy({
-        by: ["feedSource"],
-        _count: { feedSource: true },
-        orderBy: { _count: { feedSource: "desc" } },
-      }),
-      db.pressArticle.count({ where: { publishedAt: { gte: lastWeek } } }),
-      db.pressArticle.count({ where: { publishedAt: { gte: lastMonth } } }),
-    ]);
+  const [totalArticles, bySource, lastWeekCount, lastMonthCount] = await Promise.all([
+    db.pressArticle.count(),
+    db.pressArticle.groupBy({
+      by: ["feedSource"],
+      _count: { feedSource: true },
+      orderBy: { _count: { feedSource: "desc" } },
+    }),
+    db.pressArticle.count({ where: { publishedAt: { gte: lastWeek } } }),
+    db.pressArticle.count({ where: { publishedAt: { gte: lastMonth } } }),
+  ]);
 
   return {
     totalArticles,
     bySource: bySource.map((s) => ({
       source: s.feedSource.toUpperCase(),
-      count: s._count.feedSource
+      count: s._count.feedSource,
     })),
     lastWeek: lastWeekCount,
     lastMonth: lastMonthCount,
@@ -248,12 +233,12 @@ async function getTopPoliticiansMentioned() {
       };
     })
     .filter(Boolean) as {
-      id: string;
-      slug: string;
-      fullName: string;
-      party: { shortName: string | null; color: string | null } | null;
-      mentionCount: number;
-    }[];
+    id: string;
+    slug: string;
+    fullName: string;
+    party: { shortName: string | null; color: string | null } | null;
+    mentionCount: number;
+  }[];
 }
 
 async function getTopPartiesMentioned() {
@@ -287,13 +272,13 @@ async function getTopPartiesMentioned() {
       };
     })
     .filter(Boolean) as {
-      id: string;
-      slug: string;
-      name: string;
-      shortName: string | null;
-      color: string | null;
-      mentionCount: number;
-    }[];
+    id: string;
+    slug: string;
+    name: string;
+    shortName: string | null;
+    color: string | null;
+    mentionCount: number;
+  }[];
 }
 
 // Geo data fetchers
@@ -305,12 +290,7 @@ async function getGeoStats() {
     db.mandate.count({
       where: {
         type: {
-          in: [
-            "MINISTRE",
-            "PREMIER_MINISTRE",
-            "MINISTRE_DELEGUE",
-            "SECRETAIRE_ETAT",
-          ],
+          in: ["MINISTRE", "PREMIER_MINISTRE", "MINISTRE_DELEGUE", "SECRETAIRE_ETAT"],
         },
         isCurrent: true,
       },
@@ -415,14 +395,13 @@ export default async function StatistiquesPage({ searchParams }: PageProps) {
   let content;
 
   if (tab === "affaires") {
-    const [globalStats, byStatus, byCategory, byParty, topPoliticians] =
-      await Promise.all([
-        getAffairsGlobalStats(),
-        getAffairsByStatus(),
-        getAffairsByCategory(),
-        getAffairsByParty(),
-        getTopPoliticiansWithAffairs(),
-      ]);
+    const [globalStats, byStatus, byCategory, byParty, topPoliticians] = await Promise.all([
+      getAffairsGlobalStats(),
+      getAffairsByStatus(),
+      getAffairsByCategory(),
+      getAffairsByParty(),
+      getTopPoliticiansWithAffairs(),
+    ]);
 
     content = (
       <AffairsTab
@@ -436,12 +415,7 @@ export default async function StatistiquesPage({ searchParams }: PageProps) {
   } else if (tab === "votes") {
     const voteStats = await getVotesData(chamber);
 
-    content = (
-      <VotesTab
-        data={voteStats}
-        chamberFilter={chamber}
-      />
-    );
+    content = <VotesTab data={voteStats} chamberFilter={chamber} />;
   } else if (tab === "presse") {
     const [stats, topPoliticians, topParties] = await Promise.all([
       getPressStats(),
@@ -449,13 +423,7 @@ export default async function StatistiquesPage({ searchParams }: PageProps) {
       getTopPartiesMentioned(),
     ]);
 
-    content = (
-      <PressTab
-        stats={stats}
-        topPoliticians={topPoliticians}
-        topParties={topParties}
-      />
-    );
+    content = <PressTab stats={stats} topPoliticians={topPoliticians} topParties={topParties} />;
   } else if (tab === "geo") {
     const stats = await getGeoStats();
     content = <GeoTab stats={stats} />;
@@ -483,10 +451,9 @@ export default async function StatistiquesPage({ searchParams }: PageProps) {
             Note méthodologique
           </h2>
           <p className="text-sm text-blue-800 dark:text-blue-200">
-            Ces statistiques reflètent uniquement les données documentées dans
-            notre base. Une affaire en cours ne préjuge pas de la culpabilité
-            (présomption d&apos;innocence). Les données sont issues de sources
-            publiques et journalistiques vérifiables.
+            Ces statistiques reflètent uniquement les données documentées dans notre base. Une
+            affaire en cours ne préjuge pas de la culpabilité (présomption d&apos;innocence). Les
+            données sont issues de sources publiques et journalistiques vérifiables.
           </p>
         </CardContent>
       </Card>

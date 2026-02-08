@@ -128,9 +128,7 @@ async function syncDeputy(
     const partyId = partyMap.get(dep.groupeAbrev) || null;
 
     const birthDate = dep.naissance ? new Date(dep.naissance) : null;
-    const mandateStart = dep.datePriseFonction
-      ? new Date(dep.datePriseFonction)
-      : new Date();
+    const mandateStart = dep.datePriseFonction ? new Date(dep.datePriseFonction) : new Date();
 
     // Check if politician exists
     const existing = await db.politician.findFirst({
@@ -241,11 +239,7 @@ function getOrdinalSuffix(n: string): string {
 /**
  * Upsert external IDs for a politician
  */
-async function upsertExternalIds(
-  politicianId: string,
-  anId: string,
-  slug: string
-): Promise<void> {
+async function upsertExternalIds(politicianId: string, anId: string, slug: string): Promise<void> {
   // Assemblée Nationale ID
   await db.externalId.upsert({
     where: {

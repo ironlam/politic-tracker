@@ -260,7 +260,9 @@ async function importMemberships(results: WikidataMembershipResult[]): Promise<{
         where: { id: politicianId },
         data: { currentPartyId: partyId },
       });
-      console.log(`  → Linked ${politician.fullName} to party (${endDate ? "historical" : "current"})`);
+      console.log(
+        `  → Linked ${politician.fullName} to party (${endDate ? "historical" : "current"})`
+      );
       politiciansUpdated++;
     }
   }

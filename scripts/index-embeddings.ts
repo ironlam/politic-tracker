@@ -10,11 +10,7 @@
  */
 
 import "dotenv/config";
-import {
-  indexAllOfType,
-  getEmbeddingStats,
-  indexGlobalStats,
-} from "../src/services/embeddings";
+import { indexAllOfType, getEmbeddingStats, indexGlobalStats } from "../src/services/embeddings";
 import type { EmbeddingType } from "../src/generated/prisma";
 
 async function main() {

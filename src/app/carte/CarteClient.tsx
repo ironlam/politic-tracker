@@ -167,12 +167,7 @@ export function CarteClient({ initialDepartments, initialStats }: CarteClientPro
           </div>
         </div>
 
-        <MapFilters
-          filter={filter}
-          mode={mode}
-          onFilterChange={setFilter}
-          onModeChange={setMode}
-        />
+        <MapFilters filter={filter} mode={mode} onFilterChange={setFilter} onModeChange={setMode} />
       </div>
 
       {/* Map and sidebar container */}

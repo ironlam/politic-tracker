@@ -127,7 +127,11 @@ Features:
   },
 
   async sync(options): Promise<SyncResult> {
-    const { dryRun = false, limit, resume = false } = options as {
+    const {
+      dryRun = false,
+      limit,
+      resume = false,
+    } = options as {
       dryRun?: boolean;
       limit?: number;
       resume?: boolean;
@@ -281,7 +285,8 @@ Features:
                     politicianId: politician.id,
                     type: roleInfo.mandateType,
                     title: positionLabel,
-                    institution: roleInfo.mandateType === MandateType.DEPUTE ? "Assemblée nationale" : "Sénat",
+                    institution:
+                      roleInfo.mandateType === MandateType.DEPUTE ? "Assemblée nationale" : "Sénat",
                     role: roleInfo.role,
                     startDate,
                     endDate,
@@ -324,9 +329,7 @@ Features:
         const externalMandateId = `wikidata-${extId.externalId}-${pos.positionId}-${startDate.toISOString().split("T")[0]}`;
 
         if (dryRun) {
-          console.log(
-            `[DRY-RUN] ${politician.fullName} - ${title} (${startDate.getFullYear()})`
-          );
+          console.log(`[DRY-RUN] ${politician.fullName} - ${title} (${startDate.getFullYear()})`);
           stats.mandatesCreated++;
         } else {
           try {

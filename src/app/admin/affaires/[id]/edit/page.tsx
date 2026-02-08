@@ -26,10 +26,7 @@ async function getPoliticians() {
 
 export default async function EditAffairPage({ params }: PageProps) {
   const { id } = await params;
-  const [affair, politicians] = await Promise.all([
-    getAffair(id),
-    getPoliticians(),
-  ]);
+  const [affair, politicians] = await Promise.all([getAffair(id), getPoliticians()]);
 
   if (!affair) {
     notFound();

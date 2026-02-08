@@ -27,10 +27,7 @@ async function getParties() {
 
 export default async function EditPoliticianPage({ params }: PageProps) {
   const { id } = await params;
-  const [politician, parties] = await Promise.all([
-    getPolitician(id),
-    getParties(),
-  ]);
+  const [politician, parties] = await Promise.all([getPolitician(id), getParties()]);
 
   if (!politician) {
     notFound();
@@ -43,9 +40,7 @@ export default async function EditPoliticianPage({ params }: PageProps) {
     firstName: politician.firstName,
     lastName: politician.lastName,
     fullName: politician.fullName,
-    birthDate: politician.birthDate
-      ? politician.birthDate.toISOString().split("T")[0]
-      : null,
+    birthDate: politician.birthDate ? politician.birthDate.toISOString().split("T")[0] : null,
     birthPlace: politician.birthPlace,
     photoUrl: politician.photoUrl,
     photoSource: politician.photoSource,
@@ -66,9 +61,7 @@ export default async function EditPoliticianPage({ params }: PageProps) {
       >
         &larr; Retour à la fiche
       </Link>
-      <h1 className="text-2xl font-bold mt-2 mb-6">
-        Modifier : {politician.fullName}
-      </h1>
+      <h1 className="text-2xl font-bold mt-2 mb-6">Modifier : {politician.fullName}</h1>
       <PoliticianForm initialData={initialData} parties={parties} />
     </div>
   );

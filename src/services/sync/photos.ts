@@ -4,13 +4,13 @@ import { DataSource, MandateType } from "@/generated/prisma";
 // Photo source priority (higher = better)
 const PHOTO_PRIORITY: Record<string, number> = {
   "assemblee-nationale": 10,
-  "senat": 10,
-  "gouvernement": 10,
-  "hatvp": 8,
-  "nosdeputes": 5,
-  "nossenateurs": 5,
-  "wikidata": 3,
-  "manual": 1,
+  senat: 10,
+  gouvernement: 10,
+  hatvp: 8,
+  nosdeputes: 5,
+  nossenateurs: 5,
+  wikidata: 3,
+  manual: 1,
 };
 
 interface PhotoSyncResult {
@@ -80,33 +80,42 @@ function normalizeForHatvp(name: string): string {
 /**
  * Generate potential photo URLs based on politician data
  */
-async function getPotentialPhotoUrls(
-  politician: {
-    id: string;
-    slug: string;
-    firstName: string;
-    lastName: string;
-    externalIds: { source: DataSource; externalId: string }[];
-    mandates: { type: MandateType; isCurrent: boolean }[];
-  }
-): Promise<{ url: string; source: string }[]> {
+async function getPotentialPhotoUrls(politician: {
+  id: string;
+  slug: string;
+  firstName: string;
+  lastName: string;
+  externalIds: { source: DataSource; externalId: string }[];
+  mandates: { type: MandateType; isCurrent: boolean }[];
+}): Promise<{ url: string; source: string }[]> {
   const urls: { url: string; source: string }[] = [];
 
   // Check mandate types to determine which sources to try
   const hasDeputeMandate = politician.mandates.some((m) => m.type === MandateType.DEPUTE);
   const hasSenateurMandate = politician.mandates.some((m) => m.type === MandateType.SENATEUR);
-  const gouvernementTypes: MandateType[] = [MandateType.MINISTRE, MandateType.PREMIER_MINISTRE, MandateType.MINISTRE_DELEGUE, MandateType.SECRETAIRE_ETAT];
-  const hasGouvernementMandate = politician.mandates.some((m) => gouvernementTypes.includes(m.type));
+  const gouvernementTypes: MandateType[] = [
+    MandateType.MINISTRE,
+    MandateType.PREMIER_MINISTRE,
+    MandateType.MINISTRE_DELEGUE,
+    MandateType.SECRETAIRE_ETAT,
+  ];
+  const hasGouvernementMandate = politician.mandates.some((m) =>
+    gouvernementTypes.includes(m.type)
+  );
 
   // Get external IDs
-  const anId = politician.externalIds.find((e) => e.source === DataSource.ASSEMBLEE_NATIONALE)?.externalId;
+  const anId = politician.externalIds.find(
+    (e) => e.source === DataSource.ASSEMBLEE_NATIONALE
+  )?.externalId;
   const senatId = politician.externalIds.find((e) => e.source === DataSource.SENAT)?.externalId;
-  const wikidataId = politician.externalIds.find((e) => e.source === DataSource.WIKIDATA)?.externalId;
+  const wikidataId = politician.externalIds.find(
+    (e) => e.source === DataSource.WIKIDATA
+  )?.externalId;
 
   // 1. Assemblée Nationale (highest priority for deputies)
   if (anId && hasDeputeMandate) {
     urls.push({
-      url: `https://www.assemblee-nationale.fr/dyn/static/tribun/17/photos/${anId.replace('PA', '')}.jpg`,
+      url: `https://www.assemblee-nationale.fr/dyn/static/tribun/17/photos/${anId.replace("PA", "")}.jpg`,
       source: "assemblee-nationale",
     });
   }
@@ -157,7 +166,9 @@ async function getPotentialPhotoUrls(
 /**
  * Sync photos for all politicians without photos or with invalid photos
  */
-export async function syncPhotos(options: { validateExisting?: boolean } = {}): Promise<PhotoSyncResult> {
+export async function syncPhotos(
+  options: { validateExisting?: boolean } = {}
+): Promise<PhotoSyncResult> {
   const { validateExisting = false } = options;
 
   const result: PhotoSyncResult = {
@@ -247,7 +258,9 @@ export async function syncPhotos(options: { validateExisting?: boolean } = {}): 
 
       // Progress logging every 100 politicians
       if (result.checked % 100 === 0) {
-        console.log(`Progress: ${result.checked}/${politicians.length} checked, ${result.updated} updated`);
+        console.log(
+          `Progress: ${result.checked}/${politicians.length} checked, ${result.updated} updated`
+        );
       }
     }
 
@@ -282,9 +295,12 @@ export async function getPhotoStats() {
     total,
     withPhoto,
     withoutPhoto,
-    bySource: bySources.reduce((acc, s) => {
-      acc[s.photoSource || "unknown"] = s._count.photoSource;
-      return acc;
-    }, {} as Record<string, number>),
+    bySource: bySources.reduce(
+      (acc, s) => {
+        acc[s.photoSource || "unknown"] = s._count.photoSource;
+        return acc;
+      },
+      {} as Record<string, number>
+    ),
   };
 }

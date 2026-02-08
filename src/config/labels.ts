@@ -1,4 +1,14 @@
-import type { AffairStatus, AffairCategory, MandateType, DataSource, PoliticalPosition, AffairEventType, VotePosition, VotingResult, Chamber } from "@/types";
+import type {
+  AffairStatus,
+  AffairCategory,
+  MandateType,
+  DataSource,
+  PoliticalPosition,
+  AffairEventType,
+  VotePosition,
+  VotingResult,
+  Chamber,
+} from "@/types";
 
 export const AFFAIR_STATUS_LABELS: Record<AffairStatus, string> = {
   ENQUETE_PRELIMINAIRE: "Enquête préliminaire",
@@ -162,9 +172,7 @@ export const MANDATE_TYPE_LABELS: Record<MandateType, string> = {
 // Feminize institutional roles based on civility
 export function feminizeRole(role: string, civility?: string | null): string {
   if (civility !== "Mme") return role;
-  return role
-    .replace(/^Président /, "Présidente ")
-    .replace(/^Vice-président /, "Vice-présidente ");
+  return role.replace(/^Président /, "Présidente ").replace(/^Vice-président /, "Vice-présidente ");
 }
 
 // Salary information (public data, monthly gross in EUR)
@@ -216,13 +224,13 @@ export const POLITICAL_POSITION_LABELS: Record<PoliticalPosition, string> = {
 };
 
 export const POLITICAL_POSITION_COLORS: Record<PoliticalPosition, string> = {
-  FAR_LEFT: "#8B0000",    // Dark red
-  LEFT: "#FF6B6B",        // Light red
+  FAR_LEFT: "#8B0000", // Dark red
+  LEFT: "#FF6B6B", // Light red
   CENTER_LEFT: "#FFB6C1", // Pink
-  CENTER: "#FFEB3B",      // Yellow
-  CENTER_RIGHT: "#87CEEB",// Light blue
-  RIGHT: "#1E90FF",       // Blue
-  FAR_RIGHT: "#00008B",   // Dark blue
+  CENTER: "#FFEB3B", // Yellow
+  CENTER_RIGHT: "#87CEEB", // Light blue
+  RIGHT: "#1E90FF", // Blue
+  FAR_RIGHT: "#00008B", // Dark blue
 };
 
 // Order for display (left to right)

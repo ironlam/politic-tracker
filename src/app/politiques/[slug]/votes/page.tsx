@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { db } from "@/lib/db";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { PoliticianAvatar } from "@/components/politicians/PoliticianAvatar";
 import { VoteStats, VotePositionBadge, VotingResultBadge } from "@/components/votes";
 import { formatDate } from "@/lib/utils";
@@ -90,9 +90,8 @@ async function getVotes(politicianId: string, page: number, limit: number) {
 
   const expressed = votingStats.pour + votingStats.contre + votingStats.abstention;
   const countedForParticipation = votingStats.total - votingStats.nonVotant;
-  votingStats.participationRate = countedForParticipation > 0
-    ? Math.round((expressed / countedForParticipation) * 100)
-    : 0;
+  votingStats.participationRate =
+    countedForParticipation > 0 ? Math.round((expressed / countedForParticipation) * 100) : 0;
 
   return {
     votes,
@@ -147,10 +146,7 @@ export default async function PoliticianVotesPage({ params, searchParams }: Page
 
       {/* Header */}
       <div className="flex items-center gap-4 mb-8">
-        <Link
-          href={`/politiques/${slug}`}
-          className="text-muted-foreground hover:text-foreground"
-        >
+        <Link href={`/politiques/${slug}`} className="text-muted-foreground hover:text-foreground">
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <PoliticianAvatar
@@ -161,9 +157,7 @@ export default async function PoliticianVotesPage({ params, searchParams }: Page
         />
         <div>
           <h1 className="text-2xl font-bold">Votes de {politician.fullName}</h1>
-          <p className="text-muted-foreground">
-            {total} votes enregistrés
-          </p>
+          <p className="text-muted-foreground">{total} votes enregistrés</p>
         </div>
       </div>
 
@@ -179,8 +173,8 @@ export default async function PoliticianVotesPage({ params, searchParams }: Page
               <Info className="h-5 w-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
               <p className="text-sm text-blue-800 dark:text-blue-200">
                 En tant que <strong>{roleLabel}</strong>, {politician.fullName} ne participe
-                traditionnellement pas aux votes. Les votes &quot;Non-votant&quot;
-                ({stats.nonVotant}) reflètent cette convention institutionnelle.
+                traditionnellement pas aux votes. Les votes &quot;Non-votant&quot; (
+                {stats.nonVotant}) reflètent cette convention institutionnelle.
               </p>
             </div>
           );

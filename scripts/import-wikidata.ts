@@ -20,8 +20,8 @@ const CRIME_CATEGORY_MAP: Record<string, AffairCategory> = {
   // Sexual crimes - be very careful with these!
   "agression sexuelle": "AGRESSION_SEXUELLE",
   "sexual assault": "AGRESSION_SEXUELLE",
-  "viol": "AGRESSION_SEXUELLE", // Viol is legally distinct but grouped here
-  "rape": "AGRESSION_SEXUELLE",
+  viol: "AGRESSION_SEXUELLE", // Viol is legally distinct but grouped here
+  rape: "AGRESSION_SEXUELLE",
   "harcèlement sexuel": "HARCELEMENT_SEXUEL",
   "sexual harassment": "HARCELEMENT_SEXUEL",
 
@@ -35,24 +35,24 @@ const CRIME_CATEGORY_MAP: Record<string, AffairCategory> = {
   "violences sur mineur": "VIOLENCE",
   "violences sur ascendant": "VIOLENCE",
   "coups et blessures": "VIOLENCE",
-  "assault": "VIOLENCE",
-  "battery": "VIOLENCE",
-  "violence": "VIOLENCE", // Generic - must be LAST in violence category
+  assault: "VIOLENCE",
+  battery: "VIOLENCE",
+  violence: "VIOLENCE", // Generic - must be LAST in violence category
 
   // Corruption and financial crimes
   "corruption passive": "CORRUPTION_PASSIVE",
-  "corruption": "CORRUPTION",
+  corruption: "CORRUPTION",
   "trafic d'influence": "TRAFIC_INFLUENCE",
   "prise illégale d'intérêts": "PRISE_ILLEGALE_INTERETS",
-  "favoritisme": "FAVORITISME",
+  favoritisme: "FAVORITISME",
   "détournement de fonds publics": "DETOURNEMENT_FONDS_PUBLICS",
   "détournement de fonds": "DETOURNEMENT_FONDS_PUBLICS",
-  "embezzlement": "DETOURNEMENT_FONDS_PUBLICS",
+  embezzlement: "DETOURNEMENT_FONDS_PUBLICS",
   "fraude fiscale": "FRAUDE_FISCALE",
   "tax evasion": "FRAUDE_FISCALE",
   "tax fraud": "FRAUDE_FISCALE",
   "blanchiment d'argent": "BLANCHIMENT",
-  "blanchiment": "BLANCHIMENT",
+  blanchiment: "BLANCHIMENT",
   "money laundering": "BLANCHIMENT",
   "abus de biens sociaux": "ABUS_BIENS_SOCIAUX",
   "abus de confiance": "ABUS_CONFIANCE",
@@ -62,15 +62,15 @@ const CRIME_CATEGORY_MAP: Record<string, AffairCategory> = {
 
   // Other crimes
   "harcèlement moral": "HARCELEMENT_MORAL",
-  "diffamation": "DIFFAMATION",
-  "defamation": "DIFFAMATION",
-  "injure": "INJURE",
+  diffamation: "DIFFAMATION",
+  defamation: "DIFFAMATION",
+  injure: "INJURE",
   "faux et usage de faux": "FAUX_ET_USAGE_FAUX",
-  "forgery": "FAUX_ET_USAGE_FAUX",
-  "recel": "RECEL",
+  forgery: "FAUX_ET_USAGE_FAUX",
+  recel: "RECEL",
   "subornation de témoin": "AUTRE",
-  "menace": "MENACE",
-  "threat": "MENACE",
+  menace: "MENACE",
+  threat: "MENACE",
   "incitation à la haine": "INCITATION_HAINE",
 };
 
@@ -115,7 +115,8 @@ async function fetchWikidataConvictions(): Promise<WikidataResult[]> {
   const response = await fetch(url.toString(), {
     headers: {
       Accept: "application/json",
-      "User-Agent": "TransparencePolitique/1.0 (https://politic-tracker.vercel.app; contact@example.com)",
+      "User-Agent":
+        "TransparencePolitique/1.0 (https://politic-tracker.vercel.app; contact@example.com)",
     },
   });
 
@@ -161,8 +162,9 @@ function mapCrimeToCategory(crime: string): AffairCategory {
   const normalized = crime.toLowerCase().trim();
 
   // Sort keys by length (descending) to match more specific terms first
-  const sortedEntries = Object.entries(CRIME_CATEGORY_MAP)
-    .sort((a, b) => b[0].length - a[0].length);
+  const sortedEntries = Object.entries(CRIME_CATEGORY_MAP).sort(
+    (a, b) => b[0].length - a[0].length
+  );
 
   for (const [key, value] of sortedEntries) {
     if (normalized.includes(key)) {
@@ -180,8 +182,8 @@ const PARTY_SHORTNAME_MAP: Record<string, string> = {
   "Les Républicains": "LR",
   "La France insoumise": "LFI",
   "Parti socialiste": "PS",
-  "Reconquête": "REC",
-  "Renaissance": "RE",
+  Reconquête: "REC",
+  Renaissance: "RE",
   "Front national": "FN",
   "Rassemblement national": "RN",
   "Union pour un mouvement populaire": "UMP",
@@ -196,8 +198,8 @@ const PARTY_SHORTNAME_MAP: Record<string, string> = {
   "Parti communiste breton": "PCB",
   "Europe Écologie Les Verts": "EELV",
   "Mouvement démocrate": "MoDem",
-  "Horizons": "HOR",
-  "Jeanne": "Jeanne",
+  Horizons: "HOR",
+  Jeanne: "Jeanne",
   "Droit de chasse": "CPNT",
   "Parti républicain": "PR",
 };
@@ -228,7 +230,7 @@ async function findOrCreateParty(partyName: string): Promise<string | null> {
     // Generate initials from party name
     shortName = partyName
       .split(/\s+/)
-      .map(word => word[0]?.toUpperCase() || "")
+      .map((word) => word[0]?.toUpperCase() || "")
       .join("")
       .substring(0, 10);
   }
@@ -239,7 +241,9 @@ async function findOrCreateParty(partyName: string): Promise<string | null> {
   });
   if (existingWithShortName) {
     // Shortname conflict but different name - just link to existing party conceptually
-    console.log(`  Party shortName conflict: ${partyName} -> using existing ${existingWithShortName.name}`);
+    console.log(
+      `  Party shortName conflict: ${partyName} -> using existing ${existingWithShortName.name}`
+    );
     return null; // Don't link, as it's a different party
   }
 
@@ -397,7 +401,9 @@ async function importConviction(
 
   // Skip convictions before Ve République
   if (convictionDate && convictionDate.getFullYear() < VE_REPUBLIQUE_START) {
-    console.log(`  Skipping (conviction ${convictionDate.getFullYear()}): ${result.personLabel.value}`);
+    console.log(
+      `  Skipping (conviction ${convictionDate.getFullYear()}): ${result.personLabel.value}`
+    );
     return false;
   }
 
@@ -419,12 +425,7 @@ async function importConviction(
   const wikidataId = result.person.value.split("/").pop() || "";
 
   // Find or create politician
-  const politicianId = await findOrCreatePolitician(
-    firstName,
-    lastName,
-    birthDate,
-    wikidataId
-  );
+  const politicianId = await findOrCreatePolitician(firstName, lastName, birthDate, wikidataId);
 
   if (!politicianId) {
     return false;
@@ -471,7 +472,9 @@ async function importConviction(
         partyAtTimeId,
         sources: {
           create: {
-            url: result.article?.value || `https://www.wikidata.org/wiki/${result.person.value.split("/").pop()}`,
+            url:
+              result.article?.value ||
+              `https://www.wikidata.org/wiki/${result.person.value.split("/").pop()}`,
             title: `Wikidata - ${result.personLabel.value}`,
             publisher: "Wikidata",
             // Use conviction date as source date (not import date)

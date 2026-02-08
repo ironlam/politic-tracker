@@ -13,12 +13,7 @@ interface MapFiltersProps {
   onModeChange: (mode: DisplayMode) => void;
 }
 
-export function MapFilters({
-  filter,
-  mode,
-  onFilterChange,
-  onModeChange,
-}: MapFiltersProps) {
+export function MapFilters({ filter, mode, onFilterChange, onModeChange }: MapFiltersProps) {
   return (
     <div className="flex flex-wrap items-center gap-4">
       {/* Type filter */}

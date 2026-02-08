@@ -34,12 +34,14 @@ Créer un **observatoire citoyen de la transparence politique française** perme
 ### 2.1 État actuel (v1.0)
 
 #### Représentants couverts
+
 - [x] **Députés** : 577 (Assemblée nationale - XVIIe législature)
 - [x] **Sénateurs** : 348 (Sénat)
 - [x] **Gouvernement** : ~36 membres (ministres, secrétaires d'État)
 - [x] **Eurodéputés** : 81 (Parlement européen - députés français)
 
 #### Données par représentant
+
 - [x] **Identité** : Nom, prénom, civilité, photo, date de naissance/décès
 - [x] **Mandat actuel** : Fonction, circonscription, groupe politique
 - [x] **Parti politique** : Affiliation actuelle avec couleur
@@ -48,6 +50,7 @@ Créer un **observatoire citoyen de la transparence politique française** perme
 - [x] **Votes parlementaires** : Scrutins publics (NosDéputés - 16e législature)
 
 #### Fonctionnalités utilisateur
+
 - [x] Recherche par nom avec autocomplétion
 - [x] Filtres : parti, type de mandat, condamnation, statut (vivant/décédé)
 - [x] Tri : alphabétique, récent, nombre d'affaires
@@ -58,6 +61,7 @@ Créer un **observatoire citoyen de la transparence politique française** perme
 - [x] Dark mode
 
 #### Fonctionnalités admin
+
 - [x] Authentification sécurisée
 - [x] CRUD représentants politiques
 - [x] CRUD affaires judiciaires (source obligatoire)
@@ -92,16 +96,16 @@ Chaque représentant politique peut avoir des données provenant de **plusieurs 
 
 ### 3.2 Sources de données
 
-| Source | Code | Données | Fréquence sync |
-|--------|------|---------|----------------|
-| Assemblée Nationale | `ASSEMBLEE_NATIONALE` | Députés, mandats | Hebdomadaire |
-| Sénat | `SENAT` | Sénateurs, mandats | Hebdomadaire |
-| Gouvernement | `GOUVERNEMENT` | Ministres | À chaque remaniement |
-| Parlement Européen | `PARLEMENT_EUROPEEN` | Eurodéputés | Mensuelle |
-| HATVP | `HATVP` | Déclarations patrimoine | Mensuelle |
-| Wikidata | `WIKIDATA` | Condamnations, dates décès | Hebdomadaire |
-| NosDéputés | `NOSDEPUTES` | Photos, activité, votes | Mensuelle |
-| NosSénateurs | `NOSSENATEURS` | Photos, activité | Mensuelle |
+| Source              | Code                  | Données                    | Fréquence sync       |
+| ------------------- | --------------------- | -------------------------- | -------------------- |
+| Assemblée Nationale | `ASSEMBLEE_NATIONALE` | Députés, mandats           | Hebdomadaire         |
+| Sénat               | `SENAT`               | Sénateurs, mandats         | Hebdomadaire         |
+| Gouvernement        | `GOUVERNEMENT`        | Ministres                  | À chaque remaniement |
+| Parlement Européen  | `PARLEMENT_EUROPEEN`  | Eurodéputés                | Mensuelle            |
+| HATVP               | `HATVP`               | Déclarations patrimoine    | Mensuelle            |
+| Wikidata            | `WIKIDATA`            | Condamnations, dates décès | Hebdomadaire         |
+| NosDéputés          | `NOSDEPUTES`          | Photos, activité, votes    | Mensuelle            |
+| NosSénateurs        | `NOSSENATEURS`        | Photos, activité           | Mensuelle            |
 
 ### 3.3 Workflow de synchronisation
 
@@ -112,13 +116,13 @@ Chaque représentant politique peut avoir des données provenant de **plusieurs 
 
 ### 3.4 Priorité des photos
 
-| Priorité | Source | Score |
-|----------|--------|-------|
-| 1 | AN / Sénat / Gouvernement | 10 |
-| 2 | HATVP | 8 |
-| 3 | NosDéputés / NosSénateurs | 5 |
-| 4 | Wikidata | 3 |
-| 5 | Manuel | 1 |
+| Priorité | Source                    | Score |
+| -------- | ------------------------- | ----- |
+| 1        | AN / Sénat / Gouvernement | 10    |
+| 2        | HATVP                     | 8     |
+| 3        | NosDéputés / NosSénateurs | 5     |
+| 4        | Wikidata                  | 3     |
+| 5        | Manuel                    | 1     |
 
 ---
 
@@ -126,51 +130,51 @@ Chaque représentant politique peut avoir des données provenant de **plusieurs 
 
 ### 4.1 Super-catégories
 
-| Super-catégorie | Description |
-|-----------------|-------------|
-| **Probité** | Corruption, trafic d'influence, prise illégale d'intérêts |
-| **Finances** | Fraude fiscale, détournement, blanchiment |
-| **Personnes** | Harcèlement, violence, agressions |
-| **Expression** | Diffamation, injures, incitation à la haine |
-| **Autre** | Autres infractions |
+| Super-catégorie | Description                                               |
+| --------------- | --------------------------------------------------------- |
+| **Probité**     | Corruption, trafic d'influence, prise illégale d'intérêts |
+| **Finances**    | Fraude fiscale, détournement, blanchiment                 |
+| **Personnes**   | Harcèlement, violence, agressions                         |
+| **Expression**  | Diffamation, injures, incitation à la haine               |
+| **Autre**       | Autres infractions                                        |
 
 ### 4.2 Statuts judiciaires
 
-| Statut | Présomption d'innocence |
-|--------|-------------------------|
-| Enquête préliminaire | Oui |
-| Mise en examen | Oui |
-| Procès en cours | Oui |
-| Condamnation 1ère instance | Oui (appel possible) |
-| Condamnation définitive | Non |
-| Relaxe / Non-lieu | N/A |
+| Statut                     | Présomption d'innocence |
+| -------------------------- | ----------------------- |
+| Enquête préliminaire       | Oui                     |
+| Mise en examen             | Oui                     |
+| Procès en cours            | Oui                     |
+| Condamnation 1ère instance | Oui (appel possible)    |
+| Condamnation définitive    | Non                     |
+| Relaxe / Non-lieu          | N/A                     |
 
 ---
 
 ## 5. Métriques actuelles
 
-| Métrique | Valeur |
-|----------|--------|
-| Représentants | ~1100 |
-| Députés actifs | 577 |
-| Sénateurs actifs | 348 |
-| Eurodéputés | 81 |
-| Membres gouvernement | 36 |
-| Partis politiques | 55+ |
-| Déclarations HATVP | 3000+ |
-| Affaires documentées | ~90 |
-| Scrutins (votes) | ~2000 (16e législature) |
-| Couverture photos | ~91% |
+| Métrique             | Valeur                  |
+| -------------------- | ----------------------- |
+| Représentants        | ~1100                   |
+| Députés actifs       | 577                     |
+| Sénateurs actifs     | 348                     |
+| Eurodéputés          | 81                      |
+| Membres gouvernement | 36                      |
+| Partis politiques    | 55+                     |
+| Déclarations HATVP   | 3000+                   |
+| Affaires documentées | ~90                     |
+| Scrutins (votes)     | ~2000 (16e législature) |
+| Couverture photos    | ~91%                    |
 
 ---
 
 ## 6. Historique des versions
 
-| Date | Version | Changements |
-|------|---------|-------------|
-| 2026-01-18 | 0.1.0 | Setup initial, import députés |
-| 2026-01-20 | 0.5.0 | Import sénateurs, gouvernement, HATVP |
-| 2026-01-22 | 0.8.0 | Affaires Wikidata, statistiques, filtres |
-| 2026-01-24 | 1.0.0 | Dark mode, recherche avancée, documentation |
-| 2026-01-24 | 1.1.0 | Eurodéputés, votes parlementaires, institutions |
-| 2026-02-07 | 1.2.0 | Exposé des motifs : extraction .docx AN pour résumés IA enrichis |
+| Date       | Version | Changements                                                      |
+| ---------- | ------- | ---------------------------------------------------------------- |
+| 2026-01-18 | 0.1.0   | Setup initial, import députés                                    |
+| 2026-01-20 | 0.5.0   | Import sénateurs, gouvernement, HATVP                            |
+| 2026-01-22 | 0.8.0   | Affaires Wikidata, statistiques, filtres                         |
+| 2026-01-24 | 1.0.0   | Dark mode, recherche avancée, documentation                      |
+| 2026-01-24 | 1.1.0   | Eurodéputés, votes parlementaires, institutions                  |
+| 2026-02-07 | 1.2.0   | Exposé des motifs : extraction .docx AN pour résumés IA enrichis |

@@ -46,12 +46,8 @@ export default async function AdminDossierDetailPage({ params }: PageProps) {
           >
             &larr; Retour aux dossiers
           </Link>
-          <h1 className="text-2xl font-bold mt-2">
-            {dossier.shortTitle || dossier.title}
-          </h1>
-          {dossier.number && (
-            <p className="text-muted-foreground">{dossier.number}</p>
-          )}
+          <h1 className="text-2xl font-bold mt-2">{dossier.shortTitle || dossier.title}</h1>
+          {dossier.number && <p className="text-muted-foreground">{dossier.number}</p>}
         </div>
         <div className="flex gap-2">
           {dossier.sourceUrl && (
@@ -82,8 +78,7 @@ export default async function AdminDossierDetailPage({ params }: PageProps) {
               {dossier.category ? (
                 <Badge
                   className={
-                    DOSSIER_CATEGORY_COLORS[dossier.category] ||
-                    "bg-gray-100 text-gray-800"
+                    DOSSIER_CATEGORY_COLORS[dossier.category] || "bg-gray-100 text-gray-800"
                   }
                 >
                   {dossier.category}
@@ -171,9 +166,7 @@ export default async function AdminDossierDetailPage({ params }: PageProps) {
                   <div>
                     <span className="font-mono text-sm">#{amendment.number}</span>
                     {amendment.article && (
-                      <span className="text-muted-foreground ml-2">
-                        Art. {amendment.article}
-                      </span>
+                      <span className="text-muted-foreground ml-2">Art. {amendment.article}</span>
                     )}
                     {amendment.authorName && (
                       <span className="text-sm ml-2">{amendment.authorName}</span>

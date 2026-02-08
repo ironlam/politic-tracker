@@ -4,12 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
-import {
-  NAV_GROUPS,
-  CTA_COMPARER,
-  CTA_MON_DEPUTE,
-  CHAT_LINK,
-} from "@/config/navigation";
+import { NAV_GROUPS, CTA_COMPARER, CTA_MON_DEPUTE, CHAT_LINK } from "@/config/navigation";
 import { MapPin, GitCompare, MessageSquare } from "lucide-react";
 
 // Get all focusable elements within a container
@@ -142,10 +137,7 @@ export function MobileMenu() {
           aria-modal="true"
           aria-label="Menu de navigation"
         >
-          <nav
-            className="container mx-auto px-4 py-4"
-            aria-label="Navigation mobile"
-          >
+          <nav className="container mx-auto px-4 py-4" aria-label="Navigation mobile">
             {/* CTA Buttons */}
             <div className="flex gap-2 mb-4">
               <Link
@@ -162,9 +154,7 @@ export function MobileMenu() {
                 className="flex items-center justify-center gap-2 px-4 py-3 border border-border font-medium rounded-lg hover:bg-muted/50"
               >
                 <GitCompare className="h-5 w-5" />
-                <span className="sr-only sm:not-sr-only">
-                  {CTA_COMPARER.label}
-                </span>
+                <span className="sr-only sm:not-sr-only">{CTA_COMPARER.label}</span>
               </Link>
               <Link
                 href={CHAT_LINK.href}
@@ -184,9 +174,7 @@ export function MobileMenu() {
                 </p>
                 <ul className="space-y-1" role="list">
                   {group.items.map((item) => {
-                    const isActive =
-                      pathname === item.href ||
-                      pathname.startsWith(item.href + "/");
+                    const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
                     return (
                       <li key={item.href}>
                         <Link

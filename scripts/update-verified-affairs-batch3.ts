@@ -56,12 +56,14 @@ const verifiedAffairs: VerifiedAffair[] = [
     newSources: [
       {
         url: "https://www.francebleu.fr/infos/faits-divers-justice/100-000-euros-d-amende-pour-l-ancien-senateur-lr-philippe-nachbar-pour-detournement-de-frais-de-mandat-4757666",
-        title: "L'ancien sénateur LR Philippe Nachbar condamné à 100 000 euros d'amende pour détournement de frais de mandat",
+        title:
+          "L'ancien sénateur LR Philippe Nachbar condamné à 100 000 euros d'amende pour détournement de frais de mandat",
         publisher: "France Bleu",
         publishedAt: new Date("2023-01-10"),
       },
     ],
-    notes: "CRPC (plaider-coupable) - usage non conforme IRFM (98k€) 2015-2017. Première condamnation dans dossier IRFM.",
+    notes:
+      "CRPC (plaider-coupable) - usage non conforme IRFM (98k€) 2015-2017. Première condamnation dans dossier IRFM.",
   },
 
   // === AGNÈS CERIGHELLI - Homophobie ===
@@ -103,7 +105,8 @@ const verifiedAffairs: VerifiedAffair[] = [
     newSources: [
       {
         url: "https://france.news-pravda.com/france/2025/07/11/95135.html",
-        title: "La sénatrice LR Garriaud-Maylam est définitivement condamnée pour harcèlement moral",
+        title:
+          "La sénatrice LR Garriaud-Maylam est définitivement condamnée pour harcèlement moral",
         publisher: "Pravda France",
         publishedAt: new Date("2025-07-11"),
       },
@@ -118,7 +121,8 @@ const verifiedAffairs: VerifiedAffair[] = [
     updates: {
       verdictDate: new Date("2022-06-23"),
       status: "CONDAMNATION_DEFINITIVE",
-      sentence: "8 mois de prison avec sursis, 5 000€ de dommages et intérêts, interdiction d'approcher son ex-compagne",
+      sentence:
+        "8 mois de prison avec sursis, 5 000€ de dommages et intérêts, interdiction d'approcher son ex-compagne",
       prisonMonths: 8,
       prisonSuspended: true,
       fineAmount: 5000,
@@ -178,7 +182,8 @@ const verifiedAffairs: VerifiedAffair[] = [
     newSources: [
       {
         url: "https://www.francebleu.fr/infos/politique/legislatives-en-dordogne-jerome-peyrat-s-explique-sur-sa-condamnation-violence-1652693648",
-        title: "Législatives en Dordogne : Jérôme Peyrat s'explique sur sa condamnation pour violence",
+        title:
+          "Législatives en Dordogne : Jérôme Peyrat s'explique sur sa condamnation pour violence",
         publisher: "France Bleu",
         publishedAt: new Date("2022-05-16"),
       },
@@ -203,12 +208,14 @@ const verifiedAffairs: VerifiedAffair[] = [
     newSources: [
       {
         url: "https://www.francebleu.fr/infos/faits-divers-justice/bretagne-la-conseillere-regionale-catherine-blein-condamnee-en-appel-pour-apologie-du-terrorisme-1618334758",
-        title: "La conseillère régionale Catherine Blein condamnée en appel pour apologie du terrorisme",
+        title:
+          "La conseillère régionale Catherine Blein condamnée en appel pour apologie du terrorisme",
         publisher: "France Bleu",
         publishedAt: new Date("2021-04-13"),
       },
     ],
-    notes: "Tweet 'Œil pour Œil' après attentat Christchurch (mars 2019). Ex-FN exclue pour propos homophobes/islamophobes.",
+    notes:
+      "Tweet 'Œil pour Œil' après attentat Christchurch (mars 2019). Ex-FN exclue pour propos homophobes/islamophobes.",
   },
 
   // === JULIEN SANCHEZ - Incitation haine raciale ===
@@ -232,7 +239,8 @@ const verifiedAffairs: VerifiedAffair[] = [
         publishedAt: new Date("2023-05-15"),
       },
     ],
-    notes: "Commentaires haineux Facebook non supprimés (campagne 2012). CEDH rejette recours mai 2023.",
+    notes:
+      "Commentaires haineux Facebook non supprimés (campagne 2012). CEDH rejette recours mai 2023.",
   },
 
   // === HUBERT FAYARD - Proxénétisme ===
@@ -249,7 +257,8 @@ const verifiedAffairs: VerifiedAffair[] = [
       verifiedAt: new Date(),
       verifiedBy: "verification-session-2026-02-03",
     },
-    notes: "Proxénétisme aggravé - filles de l'Est. Ex-adjoint au maire de Vitrolles (FN), conseiller régional. Représentation Donetsk.",
+    notes:
+      "Proxénétisme aggravé - filles de l'Est. Ex-adjoint au maire de Vitrolles (FN), conseiller régional. Représentation Donetsk.",
   },
 
   // === PHILIPPE MARTIN (Gers) - Détournement fonds ===
@@ -259,7 +268,8 @@ const verifiedAffairs: VerifiedAffair[] = [
     updates: {
       verdictDate: new Date("2022-01-04"),
       status: "CONDAMNATION_DEFINITIVE",
-      sentence: "2 ans de prison avec sursis, 70 000€ d'amende, 3 ans d'inéligibilité, remboursement 238 000€",
+      sentence:
+        "2 ans de prison avec sursis, 70 000€ d'amende, 3 ans d'inéligibilité, remboursement 238 000€",
       prisonMonths: 24,
       prisonSuspended: true,
       fineAmount: 70000,
@@ -271,12 +281,14 @@ const verifiedAffairs: VerifiedAffair[] = [
     newSources: [
       {
         url: "https://www.francebleu.fr/infos/faits-divers-justice/le-president-du-conseil-departemental-du-gers-condamne-a-2-ans-de-prison-pour-emploi-fictif-1641316415",
-        title: "Le président du Conseil départemental du Gers condamné à deux ans de prison avec sursis pour emploi fictif",
+        title:
+          "Le président du Conseil départemental du Gers condamné à deux ans de prison avec sursis pour emploi fictif",
         publisher: "France Bleu",
         publishedAt: new Date("2022-01-04"),
       },
     ],
-    notes: "CRPC - emploi fictif ex-épouse comme assistante parlementaire 2002-2013. Démission 06/01/2022.",
+    notes:
+      "CRPC - emploi fictif ex-épouse comme assistante parlementaire 2002-2013. Démission 06/01/2022.",
   },
 
   // === JEAN-MICHEL BOUCHERON - Fraude fiscale ===
@@ -303,7 +315,8 @@ const verifiedAffairs: VerifiedAffair[] = [
         publishedAt: new Date("2018-03-27"),
       },
     ],
-    notes: "Organisation insolvabilité - retraite parlementaire sur compte de sa compagne. Déjà condamné 1994 et 1997.",
+    notes:
+      "Organisation insolvabilité - retraite parlementaire sur compte de sa compagne. Déjà condamné 1994 et 1997.",
   },
 
   // === MARTIN SOTTON - CHANGEMENT EN APPEL_EN_COURS ===
@@ -324,12 +337,14 @@ const verifiedAffairs: VerifiedAffair[] = [
     newSources: [
       {
         url: "https://france3-regions.franceinfo.fr/auvergne-rhone-alpes/rhone/soirees-alcoolisees-avec-des-mineurs-un-maire-du-rhone-condamne-a-6-mois-de-prison-avec-sursis-2760158.html",
-        title: "Soirées alcoolisées avec des mineurs : un maire du Rhône condamné à 6 mois de prison avec sursis",
+        title:
+          "Soirées alcoolisées avec des mineurs : un maire du Rhône condamné à 6 mois de prison avec sursis",
         publisher: "France 3",
         publishedAt: new Date("2023-04-01"),
       },
     ],
-    notes: "CHANGEMENT STATUT : Appel interjeté - réélu en septembre 2023 après nouvelles élections.",
+    notes:
+      "CHANGEMENT STATUT : Appel interjeté - réélu en septembre 2023 après nouvelles élections.",
   },
 
   // === MARTIN SOTTON - 2ème affaire ===
@@ -353,7 +368,8 @@ const verifiedAffairs: VerifiedAffair[] = [
     updates: {
       verdictDate: new Date("2022-10-14"),
       status: "APPEL_EN_COURS", // Appel annoncé
-      sentence: "2 ans de prison avec sursis, 20 000€ d'amende, 5 ans d'inéligibilité (exécution provisoire)",
+      sentence:
+        "2 ans de prison avec sursis, 20 000€ d'amende, 5 ans d'inéligibilité (exécution provisoire)",
       prisonMonths: 24,
       prisonSuspended: true,
       fineAmount: 20000,
@@ -370,7 +386,8 @@ const verifiedAffairs: VerifiedAffair[] = [
         publishedAt: new Date("2022-10-07"),
       },
     ],
-    notes: "CHANGEMENT STATUT : Appel annoncé - emploi fictif Patricia Arnould (25k€/an) 2011-2015. Démission forcée (exécution provisoire).",
+    notes:
+      "CHANGEMENT STATUT : Appel annoncé - emploi fictif Patricia Arnould (25k€/an) 2011-2015. Démission forcée (exécution provisoire).",
   },
 ];
 
@@ -445,9 +462,7 @@ async function updateAffairs(dryRun: boolean = false) {
 
         if (affair.newSources && affair.newSources.length > 0) {
           for (const source of affair.newSources) {
-            const existingSource = existingAffair.sources.find(
-              (s) => s.url === source.url
-            );
+            const existingSource = existingAffair.sources.find((s) => s.url === source.url);
             if (!existingSource) {
               await prisma.source.create({
                 data: {

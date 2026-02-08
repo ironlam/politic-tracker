@@ -42,13 +42,21 @@ export interface PartyMapping {
 export const PARTY_MAPPINGS: Record<string, PartyMapping> = {
   // Groupes parlementaires actuels (jan 2026)
   RN: { shortName: "RN", fullName: "Rassemblement National", color: "#0D378A" },
-  "LFI-NFP": { shortName: "LFI", fullName: "La France Insoumise - Nouveau Front Populaire", color: "#CC2443" },
+  "LFI-NFP": {
+    shortName: "LFI",
+    fullName: "La France Insoumise - Nouveau Front Populaire",
+    color: "#CC2443",
+  },
   SOC: { shortName: "SOC", fullName: "Socialistes et apparentés", color: "#FF8080" },
   EPR: { shortName: "EPR", fullName: "Ensemble pour la République", color: "#FFEB00" },
   DR: { shortName: "DR", fullName: "Droite Républicaine", color: "#0066CC" },
   DEM: { shortName: "DEM", fullName: "Les Démocrates", color: "#FF9900" },
   HOR: { shortName: "HOR", fullName: "Horizons & Indépendants", color: "#0001AA" },
-  LIOT: { shortName: "LIOT", fullName: "Libertés, Indépendants, Outre-mer et Territoires", color: "#AADDFF" },
+  LIOT: {
+    shortName: "LIOT",
+    fullName: "Libertés, Indépendants, Outre-mer et Territoires",
+    color: "#AADDFF",
+  },
   ECOS: { shortName: "ECOS", fullName: "Écologiste et Social", color: "#00C000" },
   GDR: { shortName: "GDR", fullName: "Gauche Démocrate et Républicaine", color: "#DD0000" },
   UDDPLR: { shortName: "UDR", fullName: "Union des Droites pour la République", color: "#8040C0" },
@@ -137,14 +145,14 @@ export interface SenatSyncResult {
 
 // From data.gouv.fr - Historique des Gouvernements
 export interface GouvernementCSV {
-  id: string;              // Government ID (e.g., "546")
-  gouvernement: string;    // Government name (PM name)
-  code_fonction: string;   // PM, ME, M, MD, SE
+  id: string; // Government ID (e.g., "546")
+  gouvernement: string; // Government name (PM name)
+  code_fonction: string; // PM, ME, M, MD, SE
   prenom: string;
   nom: string;
-  fonction: string;        // Full function title
-  date_debut_fonction: string;  // French date: "vendredi 13 décembre 2024"
-  date_fin_fonction: string;    // Empty if current
+  fonction: string; // Full function title
+  date_debut_fonction: string; // French date: "vendredi 13 décembre 2024"
+  date_fin_fonction: string; // Empty if current
 }
 
 export interface GouvernementSyncResult {
@@ -161,22 +169,22 @@ export interface GouvernementSyncResult {
 
 // From hatvp.fr/livraison/opendata/liste.csv
 export interface HATVPCSV {
-  civilite: string;           // M. / Mme
+  civilite: string; // M. / Mme
   prenom: string;
-  nom: string;                // NOM (uppercase)
-  classement: string;         // Internal sort key
-  type_mandat: string;        // depute, senateur, gouvernement, commune, etc.
-  qualite: string;            // Full mandate description
-  type_document: string;      // di, dim, dia, diam, dsp, dspm, dspfm
-  departement: string;        // Department code
-  date_publication: string;   // YYYY-MM-DD
-  date_depot: string;         // YYYY-MM-DD
-  nom_fichier: string;        // PDF filename
-  url_dossier: string;        // Relative URL to personal page
-  open_data: string;          // XML filename if available
+  nom: string; // NOM (uppercase)
+  classement: string; // Internal sort key
+  type_mandat: string; // depute, senateur, gouvernement, commune, etc.
+  qualite: string; // Full mandate description
+  type_document: string; // di, dim, dia, diam, dsp, dspm, dspfm
+  departement: string; // Department code
+  date_publication: string; // YYYY-MM-DD
+  date_depot: string; // YYYY-MM-DD
+  nom_fichier: string; // PDF filename
+  url_dossier: string; // Relative URL to personal page
+  open_data: string; // XML filename if available
   statut_publication: string; // Livree, Declaration deposee, etc.
-  id_origine: string;         // External ID (AN or Senat ID)
-  url_photo: string;          // Official photo URL
+  id_origine: string; // External ID (AN or Senat ID)
+  url_photo: string; // Official photo URL
 }
 
 export interface HATVPSyncResult {
@@ -190,42 +198,66 @@ export interface HATVPSyncResult {
 
 // HATVP document type to DeclarationType mapping
 export const HATVP_DOCUMENT_TYPE_MAPPING: Record<string, string> = {
-  "di": "INTERETS",
-  "dim": "INTERETS",
-  "dia": "INTERETS",
-  "diam": "INTERETS",
-  "dsp": "PATRIMOINE_DEBUT_MANDAT",
-  "dspm": "PATRIMOINE_MODIFICATION",
-  "dspfm": "PATRIMOINE_FIN_MANDAT",
+  di: "INTERETS",
+  dim: "INTERETS",
+  dia: "INTERETS",
+  diam: "INTERETS",
+  dsp: "PATRIMOINE_DEBUT_MANDAT",
+  dspm: "PATRIMOINE_MODIFICATION",
+  dspfm: "PATRIMOINE_FIN_MANDAT",
 };
 
 // Government function code to MandateType mapping
 export const GOUV_FUNCTION_MAPPING: Record<string, string> = {
-  "PM": "PREMIER_MINISTRE",
-  "PE": "PREMIER_MINISTRE",  // Sometimes written as PE
-  "ME": "MINISTRE",          // Ministre d'État is still a minister
-  "M": "MINISTRE",
-  "MD": "MINISTRE_DELEGUE",
-  "SE": "SECRETAIRE_ETAT",
+  PM: "PREMIER_MINISTRE",
+  PE: "PREMIER_MINISTRE", // Sometimes written as PE
+  ME: "MINISTRE", // Ministre d'État is still a minister
+  M: "MINISTRE",
+  MD: "MINISTRE_DELEGUE",
+  SE: "SECRETAIRE_ETAT",
 };
 
 // Senate group mappings (similar to PARTY_MAPPINGS for deputies)
 export const SENATE_GROUP_MAPPINGS: Record<string, PartyMapping> = {
   // Groupes sénatoriaux (jan 2026)
-  "RDPI": { shortName: "RDPI", fullName: "Rassemblement des démocrates progressistes et indépendants", color: "#FFEB00" },
-  "LR": { shortName: "LR", fullName: "Les Républicains", color: "#0066CC" },
-  "SER": { shortName: "SER", fullName: "Socialiste, Écologiste et Républicain", color: "#FF8080" },
-  "UC": { shortName: "UC", fullName: "Union Centriste", color: "#FF9900" },
-  "CRCE-K": { shortName: "CRCE", fullName: "Communiste, Républicain, Citoyen et Écologiste - Kanaky", color: "#DD0000" },
-  "CRCE": { shortName: "CRCE", fullName: "Communiste, Républicain, Citoyen et Écologiste", color: "#DD0000" },
-  "GEST": { shortName: "GEST", fullName: "Écologiste - Solidarité et Territoires", color: "#00C000" },
-  "RDSE": { shortName: "RDSE", fullName: "Rassemblement Démocratique et Social Européen", color: "#F0A000" },
-  "INDEP": { shortName: "INDEP", fullName: "Les Indépendants - République et Territoires", color: "#00AAAA" },
-  "RASNAG": { shortName: "RN", fullName: "Rassemblement National", color: "#0D378A" },
-  "RN": { shortName: "RN", fullName: "Rassemblement National", color: "#0D378A" },
-  "NI": { shortName: "NI", fullName: "Non-inscrits", color: "#AAAAAA" },
-  "SENRI": { shortName: "NI", fullName: "Sénateurs ne figurant sur la liste d'aucun groupe", color: "#AAAAAA" },
-}
+  RDPI: {
+    shortName: "RDPI",
+    fullName: "Rassemblement des démocrates progressistes et indépendants",
+    color: "#FFEB00",
+  },
+  LR: { shortName: "LR", fullName: "Les Républicains", color: "#0066CC" },
+  SER: { shortName: "SER", fullName: "Socialiste, Écologiste et Républicain", color: "#FF8080" },
+  UC: { shortName: "UC", fullName: "Union Centriste", color: "#FF9900" },
+  "CRCE-K": {
+    shortName: "CRCE",
+    fullName: "Communiste, Républicain, Citoyen et Écologiste - Kanaky",
+    color: "#DD0000",
+  },
+  CRCE: {
+    shortName: "CRCE",
+    fullName: "Communiste, Républicain, Citoyen et Écologiste",
+    color: "#DD0000",
+  },
+  GEST: { shortName: "GEST", fullName: "Écologiste - Solidarité et Territoires", color: "#00C000" },
+  RDSE: {
+    shortName: "RDSE",
+    fullName: "Rassemblement Démocratique et Social Européen",
+    color: "#F0A000",
+  },
+  INDEP: {
+    shortName: "INDEP",
+    fullName: "Les Indépendants - République et Territoires",
+    color: "#00AAAA",
+  },
+  RASNAG: { shortName: "RN", fullName: "Rassemblement National", color: "#0D378A" },
+  RN: { shortName: "RN", fullName: "Rassemblement National", color: "#0D378A" },
+  NI: { shortName: "NI", fullName: "Non-inscrits", color: "#AAAAAA" },
+  SENRI: {
+    shortName: "NI",
+    fullName: "Sénateurs ne figurant sur la liste d'aucun groupe",
+    color: "#AAAAAA",
+  },
+};
 
 // ============================================
 // EUROPEAN PARLIAMENT API TYPES
@@ -233,25 +265,25 @@ export const SENATE_GROUP_MAPPINGS: Record<string, PartyMapping> = {
 
 // From data.europarl.europa.eu API
 export interface EuroparlMEP {
-  id: string;                    // "person/97236"
-  type: string;                  // "Person"
-  identifier: string;            // "97236"
-  label: string;                 // "Marie TOUSSAINT"
-  familyName: string;            // "Toussaint"
-  givenName: string;             // "Marie"
-  sortLabel?: string;            // "TOUSSAINTMR"
-  officialFamilyName?: string;   // For non-Latin scripts
+  id: string; // "person/97236"
+  type: string; // "Person"
+  identifier: string; // "97236"
+  label: string; // "Marie TOUSSAINT"
+  familyName: string; // "Toussaint"
+  givenName: string; // "Marie"
+  sortLabel?: string; // "TOUSSAINTMR"
+  officialFamilyName?: string; // For non-Latin scripts
   officialGivenName?: string;
-  "api:country-of-representation": string;  // "FR"
-  "api:political-group": string;            // "Verts/ALE"
-  bday?: string;                 // "1987-05-27"
-  hasEmail?: string;             // "mailto:..."
-  hasGender?: string;            // URI
+  "api:country-of-representation": string; // "FR"
+  "api:political-group": string; // "Verts/ALE"
+  bday?: string; // "1987-05-27"
+  hasEmail?: string; // "mailto:..."
+  hasGender?: string; // URI
 }
 
 export interface EuroparlMEPDetail extends EuroparlMEP {
   hasMembership?: EuroparlMembership[];
-  image?: string;                // Photo URL
+  image?: string; // Photo URL
 }
 
 export interface EuroparlMembership {
@@ -279,16 +311,28 @@ export interface EuroparlSyncResult {
 
 // European Parliament political groups
 export const EU_POLITICAL_GROUP_MAPPINGS: Record<string, PartyMapping> = {
-  "PPE": { shortName: "PPE", fullName: "Parti populaire européen", color: "#3399FF" },
-  "S&D": { shortName: "S&D", fullName: "Alliance Progressiste des Socialistes et Démocrates", color: "#F0001C" },
-  "Renew": { shortName: "Renew", fullName: "Renew Europe", color: "#FFD700" },
-  "Verts/ALE": { shortName: "Verts/ALE", fullName: "Verts/Alliance libre européenne", color: "#009900" },
-  "ID": { shortName: "ID", fullName: "Identité et Démocratie", color: "#2B3856" },
-  "ECR": { shortName: "ECR", fullName: "Conservateurs et Réformistes européens", color: "#0054A5" },
-  "The Left": { shortName: "GUE/NGL", fullName: "La Gauche au Parlement européen", color: "#990000" },
-  "PfE": { shortName: "PfE", fullName: "Patriots for Europe", color: "#1E3A5F" },
-  "ESN": { shortName: "ESN", fullName: "Europe of Sovereign Nations", color: "#4A4A4A" },
-  "NI": { shortName: "NI", fullName: "Non-inscrits", color: "#999999" },
-}
+  PPE: { shortName: "PPE", fullName: "Parti populaire européen", color: "#3399FF" },
+  "S&D": {
+    shortName: "S&D",
+    fullName: "Alliance Progressiste des Socialistes et Démocrates",
+    color: "#F0001C",
+  },
+  Renew: { shortName: "Renew", fullName: "Renew Europe", color: "#FFD700" },
+  "Verts/ALE": {
+    shortName: "Verts/ALE",
+    fullName: "Verts/Alliance libre européenne",
+    color: "#009900",
+  },
+  ID: { shortName: "ID", fullName: "Identité et Démocratie", color: "#2B3856" },
+  ECR: { shortName: "ECR", fullName: "Conservateurs et Réformistes européens", color: "#0054A5" },
+  "The Left": {
+    shortName: "GUE/NGL",
+    fullName: "La Gauche au Parlement européen",
+    color: "#990000",
+  },
+  PfE: { shortName: "PfE", fullName: "Patriots for Europe", color: "#1E3A5F" },
+  ESN: { shortName: "ESN", fullName: "Europe of Sovereign Nations", color: "#4A4A4A" },
+  NI: { shortName: "NI", fullName: "Non-inscrits", color: "#999999" },
+};
 
 // ============================================

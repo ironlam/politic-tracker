@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       entity_type:
-        description: 'Entity type to index (all, POLITICIAN, DOSSIER, SCRUTIN, AFFAIR, PARTY)'
+        description: "Entity type to index (all, POLITICIAN, DOSSIER, SCRUTIN, AFFAIR, PARTY)"
         required: false
-        default: 'all'
+        default: "all"
         type: choice
         options:
           - all
@@ -36,8 +36,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
-          cache: 'npm'
+          node-version: "22"
+          cache: "npm"
 
       - name: Install dependencies
         run: npm ci

@@ -23,34 +23,57 @@ declare module "swagger-ui-react" {
 }
 
 declare module "react-force-graph-2d" {
-  import { Component, RefObject, Ref } from "react";
+  import { Component, Ref } from "react";
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // Force-graph node object with d3 simulation properties
+  // Uses index signature to allow arbitrary user-defined properties
+  interface NodeObject {
+    [key: string]: unknown;
+    id?: string | number;
+    x?: number;
+    y?: number;
+    fx?: number;
+    fy?: number;
+    vx?: number;
+    vy?: number;
+  }
+
+  // Force-graph link object
+  interface LinkObject {
+    [key: string]: unknown;
+    source?: string | number | NodeObject;
+    target?: string | number | NodeObject;
+  }
+
   interface ForceGraph2DProps {
     ref?: Ref<ForceGraph2D>;
-    graphData: { nodes: any[]; links: any[] };
+    graphData: { nodes: NodeObject[]; links: LinkObject[] };
     width?: number;
     height?: number;
     backgroundColor?: string;
     nodeId?: string;
-    nodeLabel?: string | ((node: any) => string);
-    nodeVal?: string | number | ((node: any) => number);
-    nodeColor?: string | ((node: any) => string);
-    nodeAutoColorBy?: string | ((node: any) => string | null);
-    nodeCanvasObject?: (node: any, ctx: CanvasRenderingContext2D, globalScale: number) => void;
-    nodeCanvasObjectMode?: string | ((node: any) => string);
-    nodePointerAreaPaint?: (node: any, color: string, ctx: CanvasRenderingContext2D) => void;
+    nodeLabel?: string | ((node: NodeObject) => string);
+    nodeVal?: string | number | ((node: NodeObject) => number);
+    nodeColor?: string | ((node: NodeObject) => string);
+    nodeAutoColorBy?: string | ((node: NodeObject) => string | null);
+    nodeCanvasObject?: (
+      node: NodeObject,
+      ctx: CanvasRenderingContext2D,
+      globalScale: number
+    ) => void;
+    nodeCanvasObjectMode?: string | ((node: NodeObject) => string);
+    nodePointerAreaPaint?: (node: NodeObject, color: string, ctx: CanvasRenderingContext2D) => void;
     linkSource?: string;
     linkTarget?: string;
-    linkLabel?: string | ((link: any) => string);
-    linkColor?: string | ((link: any) => string);
-    linkWidth?: number | ((link: any) => number);
-    linkDirectionalParticles?: number | ((link: any) => number);
-    linkDirectionalParticleWidth?: number | ((link: any) => number);
-    onNodeClick?: (node: any, event: MouseEvent) => void;
-    onNodeHover?: (node: any | null, prevNode: any | null) => void;
-    onLinkClick?: (link: any, event: MouseEvent) => void;
-    onLinkHover?: (link: any | null, prevLink: any | null) => void;
+    linkLabel?: string | ((link: LinkObject) => string);
+    linkColor?: string | ((link: LinkObject) => string);
+    linkWidth?: number | ((link: LinkObject) => number);
+    linkDirectionalParticles?: number | ((link: LinkObject) => number);
+    linkDirectionalParticleWidth?: number | ((link: LinkObject) => number);
+    onNodeClick?: (node: NodeObject, event: MouseEvent) => void;
+    onNodeHover?: (node: NodeObject | null, prevNode: NodeObject | null) => void;
+    onLinkClick?: (link: LinkObject, event: MouseEvent) => void;
+    onLinkHover?: (link: LinkObject | null, prevLink: LinkObject | null) => void;
     cooldownTicks?: number;
     cooldownTime?: number;
     onEngineStop?: () => void;
@@ -70,5 +93,6 @@ declare module "react-force-graph-2d" {
     pauseAnimation(): void;
     resumeAnimation(): void;
     refresh(): void;
+    d3Force(forceName: string, force?: unknown): unknown;
   }
 }

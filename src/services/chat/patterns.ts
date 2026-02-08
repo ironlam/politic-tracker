@@ -1,12 +1,7 @@
 import { db } from "@/lib/db";
 import { findDepartmentCode } from "@/config/departments";
 import { DEPARTMENTS } from "@/config/departments";
-import {
-  extractPersonName,
-  DOSSIER_STATUS_LABELS,
-  AFFAIR_STATUS_LABELS,
-  formatCurrency,
-} from "./helpers";
+import { extractPersonName, AFFAIR_STATUS_LABELS, formatCurrency } from "./helpers";
 
 /**
  * A pattern that matches a citizen query and returns direct context.
@@ -96,14 +91,12 @@ const PATTERNS: QueryPattern[] = [
       q.match(
         /(?:mon d[ée]put[ée]|qui me repr[ée]sente|d[ée]put[ée]s? (?:de |du |des |d')|[ée]lus? (?:de |du |des |d')|\b(\d{5})\b|[ée]lus? (?:dans le |en |dans l[ea] ))(.+)?/i
       ),
-    handler: async (q, match) => {
+    handler: async (q, _match) => {
       // Try to extract postal code
       const postalMatch = q.match(/\b(\d{5})\b/);
       if (postalMatch) {
         const postal = postalMatch[1];
-        const deptCode = postal.startsWith("97")
-          ? postal.slice(0, 3)
-          : postal.slice(0, 2);
+        const deptCode = postal.startsWith("97") ? postal.slice(0, 3) : postal.slice(0, 2);
         const dept = DEPARTMENTS[deptCode];
         if (dept) {
           return await fetchElusByDepartment(deptCode, dept.name);
@@ -552,7 +545,8 @@ async function fetchPoliticianProfile(searchName: string): Promise<string | null
   if (politician.declarations.length > 0) {
     const decl = politician.declarations[0];
     context += `\n**Déclaration HATVP** (${decl.year}) :\n`;
-    if (decl.totalNet) context += `• Patrimoine net déclaré : ${formatCurrency(Number(decl.totalNet))}\n`;
+    if (decl.totalNet)
+      context += `• Patrimoine net déclaré : ${formatCurrency(Number(decl.totalNet))}\n`;
   }
 
   if (politician.affairs.length > 0) {
@@ -561,9 +555,16 @@ async function fetchPoliticianProfile(searchName: string): Promise<string | null
       const status = AFFAIR_STATUS_LABELS[a.status] || a.status;
       context += `• ${a.title} — ${status}\n`;
     }
-    const DEFINITIVE_STATUSES = ["CONDAMNATION_DEFINITIVE", "RELAXE", "ACQUITTEMENT", "NON_LIEU", "PRESCRIPTION", "CLASSEMENT_SANS_SUITE"];
-    const isAllDefinitive = politician.affairs.every(
-      (a: { status: string }) => DEFINITIVE_STATUSES.includes(a.status)
+    const DEFINITIVE_STATUSES = [
+      "CONDAMNATION_DEFINITIVE",
+      "RELAXE",
+      "ACQUITTEMENT",
+      "NON_LIEU",
+      "PRESCRIPTION",
+      "CLASSEMENT_SANS_SUITE",
+    ];
+    const isAllDefinitive = politician.affairs.every((a: { status: string }) =>
+      DEFINITIVE_STATUSES.includes(a.status)
     );
     if (!isAllDefinitive) {
       context += `\n⚠️ Rappel : ${politician.fullName} bénéficie de la présomption d'innocence pour les affaires non définitivement jugées.`;
@@ -616,7 +617,14 @@ async function fetchPoliticianAffairs(searchName: string): Promise<string | null
 
   const hasNonDefinitive = politician.affairs.some(
     (a) =>
-      !["CONDAMNATION_DEFINITIVE", "RELAXE", "ACQUITTEMENT", "NON_LIEU", "PRESCRIPTION", "CLASSEMENT_SANS_SUITE"].includes(a.status)
+      ![
+        "CONDAMNATION_DEFINITIVE",
+        "RELAXE",
+        "ACQUITTEMENT",
+        "NON_LIEU",
+        "PRESCRIPTION",
+        "CLASSEMENT_SANS_SUITE",
+      ].includes(a.status)
   );
   if (hasNonDefinitive) {
     result += `⚠️ ${politician.fullName} bénéficie de la présomption d'innocence pour les affaires non définitivement jugées.\n`;
@@ -656,7 +664,8 @@ async function fetchPoliticianHATVP(searchName: string): Promise<string | null> 
     if (d.totalNet) result += `  Patrimoine net : ${formatCurrency(Number(d.totalNet))}\n`;
     if (d.realEstate) result += `  Immobilier : ${formatCurrency(Number(d.realEstate))}\n`;
     if (d.securities) result += `  Valeurs mobilières : ${formatCurrency(Number(d.securities))}\n`;
-    if (d.bankAccounts) result += `  Comptes bancaires : ${formatCurrency(Number(d.bankAccounts))}\n`;
+    if (d.bankAccounts)
+      result += `  Comptes bancaires : ${formatCurrency(Number(d.bankAccounts))}\n`;
     result += `\n`;
   }
 
@@ -719,9 +728,7 @@ async function fetchPoliticianVotes(
 
   for (const v of votes) {
     const title =
-      v.scrutin.title.length > 80
-        ? v.scrutin.title.slice(0, 80) + "…"
-        : v.scrutin.title;
+      v.scrutin.title.length > 80 ? v.scrutin.title.slice(0, 80) + "…" : v.scrutin.title;
     const link = v.scrutin.slug || v.scrutin.id;
     result += `• ${voteLabels[v.position] || v.position} — ${title}\n`;
     result += `  ${v.scrutin.votingDate.toLocaleDateString("fr-FR")}\n`;

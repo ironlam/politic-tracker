@@ -47,11 +47,7 @@ export async function setCurrentParty(
     });
 
     // 2. End current membership if different party
-    if (
-      endPreviousMembership &&
-      currentMembership &&
-      currentMembership.partyId !== partyId
-    ) {
+    if (endPreviousMembership && currentMembership && currentMembership.partyId !== partyId) {
       await tx.partyMembership.update({
         where: { id: currentMembership.id },
         data: { endDate: startDate },
@@ -82,10 +78,7 @@ export async function setCurrentParty(
  *
  * This ends the current membership and sets currentPartyId to null.
  */
-export async function removeParty(
-  politicianId: string,
-  endDate: Date = new Date()
-): Promise<void> {
+export async function removeParty(politicianId: string, endDate: Date = new Date()): Promise<void> {
   await db.$transaction(async (tx) => {
     // End current membership
     await tx.partyMembership.updateMany({

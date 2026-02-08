@@ -133,9 +133,10 @@ for politicians who have a Wikidata ID but no birth date in our database.
 
       if (dryRun) {
         const birthStr = dates.birthDate.toISOString().split("T")[0];
-        const deathStr = dates.deathDate && !politician.deathDate
-          ? ` (†${dates.deathDate.toISOString().split("T")[0]})`
-          : "";
+        const deathStr =
+          dates.deathDate && !politician.deathDate
+            ? ` (†${dates.deathDate.toISOString().split("T")[0]})`
+            : "";
         console.log(`[DRY-RUN] ${politician.fullName} -> ${birthStr}${deathStr}`);
         stats.birthDatesAdded++;
         if (dates.deathDate && !politician.deathDate) {
@@ -156,9 +157,10 @@ for politicians who have a Wikidata ID but no birth date in our database.
           });
 
           const birthStr = dates.birthDate.toISOString().split("T")[0];
-          const deathStr = dates.deathDate && !politician.deathDate
-            ? ` (†${dates.deathDate.toISOString().split("T")[0]})`
-            : "";
+          const deathStr =
+            dates.deathDate && !politician.deathDate
+              ? ` (†${dates.deathDate.toISOString().split("T")[0]})`
+              : "";
           console.log(`✓ ${politician.fullName} -> ${birthStr}${deathStr}`);
 
           stats.birthDatesAdded++;

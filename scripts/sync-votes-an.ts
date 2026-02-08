@@ -24,7 +24,8 @@ import { execSync } from "child_process";
 // Configuration
 const LEGISLATURE = 17;
 const TEMP_DIR = "/tmp/scrutins-an";
-const ZIP_URL_TEMPLATE = "https://data.assemblee-nationale.fr/static/openData/repository/{leg}/loi/scrutins/Scrutins.json.zip";
+const ZIP_URL_TEMPLATE =
+  "https://data.assemblee-nationale.fr/static/openData/repository/{leg}/loi/scrutins/Scrutins.json.zip";
 
 // Progress tracking
 const isTTY = process.stdout.isTTY === true;
@@ -54,28 +55,30 @@ function renderProgressBar(current: number, total: number, width: number = 30): 
 async function downloadFile(url: string, dest: string): Promise<void> {
   return new Promise((resolve, reject) => {
     const file = createWriteStream(dest);
-    https.get(url, (response) => {
-      if (response.statusCode === 302 || response.statusCode === 301) {
-        // Follow redirect
-        const redirectUrl = response.headers.location;
-        if (redirectUrl) {
-          downloadFile(redirectUrl, dest).then(resolve).catch(reject);
+    https
+      .get(url, (response) => {
+        if (response.statusCode === 302 || response.statusCode === 301) {
+          // Follow redirect
+          const redirectUrl = response.headers.location;
+          if (redirectUrl) {
+            downloadFile(redirectUrl, dest).then(resolve).catch(reject);
+            return;
+          }
+        }
+        if (response.statusCode !== 200) {
+          reject(new Error(`HTTP ${response.statusCode} for ${url}`));
           return;
         }
-      }
-      if (response.statusCode !== 200) {
-        reject(new Error(`HTTP ${response.statusCode} for ${url}`));
-        return;
-      }
-      response.pipe(file);
-      file.on("finish", () => {
-        file.close();
-        resolve();
+        response.pipe(file);
+        file.on("finish", () => {
+          file.close();
+          resolve();
+        });
+      })
+      .on("error", (err) => {
+        fs.unlinkSync(dest);
+        reject(err);
       });
-    }).on("error", (err) => {
-      fs.unlinkSync(dest);
-      reject(err);
-    });
   });
 }
 
@@ -145,7 +148,10 @@ function extractVotes(scrutin: ANScrutin): Array<{ acteurRef: string; position: 
     if (!decompte) continue;
 
     // Helper to extract votants
-    const extractVotants = (data: { votant: ANVotant | ANVotant[] } | null | undefined, position: VotePosition) => {
+    const extractVotants = (
+      data: { votant: ANVotant | ANVotant[] } | null | undefined,
+      position: VotePosition
+    ) => {
       if (!data?.votant) return;
       const votants = Array.isArray(data.votant) ? data.votant : [data.votant];
       for (const v of votants) {
@@ -171,7 +177,7 @@ async function buildActeurToIdMap(): Promise<Map<string, string>> {
   const externalIds = await db.externalId.findMany({
     where: {
       source: DataSource.ASSEMBLEE_NATIONALE,
-      politicianId: { not: null }
+      politicianId: { not: null },
     },
     select: { externalId: true, politicianId: true },
   });
@@ -224,7 +230,11 @@ async function generateUniqueScrutinSlug(date: Date, title: string): Promise<str
 /**
  * Main sync function
  */
-async function syncVotesAN(legislature: number = LEGISLATURE, dryRun: boolean = false, todayOnly: boolean = false) {
+async function syncVotesAN(
+  legislature: number = LEGISLATURE,
+  dryRun: boolean = false,
+  todayOnly: boolean = false
+) {
   const stats = {
     scrutinsProcessed: 0,
     scrutinsCreated: 0,
@@ -258,9 +268,11 @@ async function syncVotesAN(legislature: number = LEGISLATURE, dryRun: boolean = 
     console.log("✓ Extracted ZIP file");
 
     // Step 3: List JSON files
-    const jsonFiles = readdirSync(jsonDir).filter(f => f.endsWith(".json"));
+    const jsonFiles = readdirSync(jsonDir).filter((f) => f.endsWith(".json"));
     const total = jsonFiles.length;
-    console.log(`Found ${total} scrutins to process${todayOnly ? " (filtering for today only)" : ""}\n`);
+    console.log(
+      `Found ${total} scrutins to process${todayOnly ? " (filtering for today only)" : ""}\n`
+    );
 
     // Step 4: Build acteur map
     updateLine("Building acteur ID to politician map...");
@@ -298,7 +310,7 @@ async function syncVotesAN(legislature: number = LEGISLATURE, dryRun: boolean = 
         const votesAbstain = parseInt(s.syntheseVote?.decompte?.abstentions || "0", 10);
 
         // Extract scrutin number from UID (e.g., VTANR5L17V5283 -> 5283)
-        const scrutinNumber = s.numero || s.uid.replace(/^VTANR5L\d+V/, '');
+        const scrutinNumber = s.numero || s.uid.replace(/^VTANR5L\d+V/, "");
         const sourceUrl = `https://www.assemblee-nationale.fr/dyn/${legislature}/scrutins/${scrutinNumber}`;
 
         // Extract individual votes
@@ -366,7 +378,7 @@ async function syncVotesAN(legislature: number = LEGISLATURE, dryRun: boolean = 
             });
 
             await db.vote.createMany({
-              data: votesToCreate.map(v => ({
+              data: votesToCreate.map((v) => ({
                 scrutinId: scrutin.id,
                 politicianId: v.politicianId,
                 position: v.position,
@@ -386,7 +398,7 @@ async function syncVotesAN(legislature: number = LEGISLATURE, dryRun: boolean = 
             }
           }
           stats.scrutinsCreated++;
-          stats.votesCreated += individualVotes.filter(v => acteurToId.has(v.acteurRef)).length;
+          stats.votesCreated += individualVotes.filter((v) => acteurToId.has(v.acteurRef)).length;
         }
 
         stats.scrutinsProcessed++;
@@ -397,7 +409,6 @@ async function syncVotesAN(legislature: number = LEGISLATURE, dryRun: boolean = 
 
     // Cleanup
     rmSync(TEMP_DIR, { recursive: true });
-
   } catch (err) {
     stats.errors.push(`Fatal error: ${err instanceof Error ? err.message : String(err)}`);
   }
@@ -464,7 +475,11 @@ Features:
   },
 
   async sync(options): Promise<SyncResult> {
-    const { dryRun = false, leg, today = false } = options as {
+    const {
+      dryRun = false,
+      leg,
+      today = false,
+    } = options as {
       dryRun?: boolean;
       leg?: string;
       today?: boolean;

@@ -94,10 +94,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
     });
 
     if (!politician) {
-      return NextResponse.json(
-        { error: "Politique non trouvé" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Politique non trouvé" }, { status: 404 });
     }
 
     return NextResponse.json({
@@ -115,9 +112,6 @@ export async function GET(request: NextRequest, context: RouteContext) {
     });
   } catch (error) {
     console.error("API error:", error);
-    return NextResponse.json(
-      { error: "Erreur serveur" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }

@@ -24,7 +24,7 @@ interface VoteCardProps {
 
 export function VoteCard({
   id,
-  externalId,
+  externalId: _externalId,
   slug,
   title,
   votingDate,
@@ -35,7 +35,7 @@ export function VoteCard({
   votesAbstain,
   result,
   sourceUrl,
-  totalVotes,
+  totalVotes: _totalVotes,
 }: VoteCardProps) {
   // Use slug for URL if available, fallback to id
   const href = `/votes/${slug || id}`;
@@ -54,11 +54,11 @@ export function VoteCard({
             </Link>
             <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
               {chamber && (
-                <span className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium ${
-                  chamber === "AN"
-                    ? "bg-blue-100 text-blue-700"
-                    : "bg-rose-100 text-rose-700"
-                }`}>
+                <span
+                  className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium ${
+                    chamber === "AN" ? "bg-blue-100 text-blue-700" : "bg-rose-100 text-rose-700"
+                  }`}
+                >
                   <Building2 className="h-3 w-3" />
                   {CHAMBER_SHORT_LABELS[chamber]}
                 </span>
@@ -71,9 +71,7 @@ export function VoteCard({
                 <Users className="h-3 w-3" />
                 {total} votants
               </span>
-              <span className="text-muted-foreground/60">
-                {legislature}e législature
-              </span>
+              <span className="text-muted-foreground/60">{legislature}e législature</span>
             </div>
           </div>
           <div className="shrink-0 flex items-center gap-2">

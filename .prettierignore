@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+
+# Build output
+.next/
+out/
+build/
+
+# Generated files
+src/generated/
+next-env.d.ts
+
+# Package lock
+package-lock.json
+
+# Database backups
+backups/
+
+# Visual test snapshots
+tests/visual/snapshots/
+tests/visual/test-results/
+tests/visual/playwright-report/

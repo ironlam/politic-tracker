@@ -36,7 +36,8 @@ export function SearchForm({
     router.push(`/politiques${queryString ? `?${queryString}` : ""}`);
   };
 
-  const hasFilters = defaultSearch || partyFilter || convictionFilter || mandateFilter || statusFilter;
+  const hasFilters =
+    defaultSearch || partyFilter || convictionFilter || mandateFilter || statusFilter;
 
   return (
     <div className="flex gap-4 flex-wrap items-center">

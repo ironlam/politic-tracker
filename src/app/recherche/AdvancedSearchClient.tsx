@@ -78,34 +78,37 @@ export function AdvancedSearchClient() {
   }, []);
 
   // Search function
-  const performSearch = useCallback(async (page: number = 1) => {
-    setIsLoading(true);
-    setError(null);
+  const performSearch = useCallback(
+    async (page: number = 1) => {
+      setIsLoading(true);
+      setError(null);
 
-    const params = new URLSearchParams();
-    if (query) params.set("q", query);
-    if (partyId) params.set("party", partyId);
-    if (mandateType) params.set("mandate", mandateType);
-    if (department) params.set("department", department);
-    if (hasAffairs) params.set("hasAffairs", hasAffairs);
-    if (isActive) params.set("isActive", isActive);
-    params.set("page", String(page));
-    params.set("limit", "24");
+      const params = new URLSearchParams();
+      if (query) params.set("q", query);
+      if (partyId) params.set("party", partyId);
+      if (mandateType) params.set("mandate", mandateType);
+      if (department) params.set("department", department);
+      if (hasAffairs) params.set("hasAffairs", hasAffairs);
+      if (isActive) params.set("isActive", isActive);
+      params.set("page", String(page));
+      params.set("limit", "24");
 
-    // Update URL
-    router.push(`/recherche?${params.toString()}`, { scroll: false });
+      // Update URL
+      router.push(`/recherche?${params.toString()}`, { scroll: false });
 
-    try {
-      const response = await fetch(`/api/search/advanced?${params.toString()}`);
-      if (!response.ok) throw new Error("Erreur de recherche");
-      const data = await response.json();
-      setResults(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Erreur inconnue");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [query, partyId, mandateType, department, hasAffairs, isActive, router]);
+      try {
+        const response = await fetch(`/api/search/advanced?${params.toString()}`);
+        if (!response.ok) throw new Error("Erreur de recherche");
+        const data = await response.json();
+        setResults(data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Erreur inconnue");
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [query, partyId, mandateType, department, hasAffairs, isActive, router]
+  );
 
   // Initial search from URL params
   useEffect(() => {
@@ -133,7 +136,9 @@ export function AdvancedSearchClient() {
   };
 
   // Count active filters
-  const activeFiltersCount = [partyId, mandateType, department, hasAffairs, isActive].filter(Boolean).length;
+  const activeFiltersCount = [partyId, mandateType, department, hasAffairs, isActive].filter(
+    Boolean
+  ).length;
 
   return (
     <div className="space-y-6">
@@ -277,11 +282,7 @@ export function AdvancedSearchClient() {
       </Card>
 
       {/* Error */}
-      {error && (
-        <div className="p-4 bg-destructive/10 text-destructive rounded-lg">
-          {error}
-        </div>
-      )}
+      {error && <div className="p-4 bg-destructive/10 text-destructive rounded-lg">{error}</div>}
 
       {/* Results */}
       {results && (
@@ -329,7 +330,8 @@ export function AdvancedSearchClient() {
                             )}
                             {politician.currentMandate && (
                               <p className="text-xs text-muted-foreground mt-1">
-                                {MANDATE_TYPE_LABELS[politician.currentMandate.type] || politician.currentMandate.type}
+                                {MANDATE_TYPE_LABELS[politician.currentMandate.type] ||
+                                  politician.currentMandate.type}
                                 {politician.currentMandate.constituency && (
                                   <span className="block truncate">
                                     {politician.currentMandate.constituency}
@@ -339,7 +341,8 @@ export function AdvancedSearchClient() {
                             )}
                             {politician.affairsCount > 0 && (
                               <Badge variant="destructive" className="mt-1 text-xs">
-                                {politician.affairsCount} affaire{politician.affairsCount > 1 ? "s" : ""}
+                                {politician.affairsCount} affaire
+                                {politician.affairsCount > 1 ? "s" : ""}
                               </Badge>
                             )}
                           </div>

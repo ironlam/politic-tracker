@@ -235,7 +235,9 @@ test.describe("Politician with Affairs", () => {
     await page.waitForLoadState("networkidle");
 
     // Wait for affairs section heading to load
-    await expect(page.getByRole("heading", { name: "Affaires judiciaires" })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole("heading", { name: "Affaires judiciaires" })).toBeVisible({
+      timeout: 10000,
+    });
 
     // Scroll to affairs section
     await page.getByRole("heading", { name: "Affaires judiciaires" }).scrollIntoViewIfNeeded();
@@ -257,7 +259,9 @@ test.describe("Politician with Affairs - Mobile", () => {
     await page.waitForLoadState("networkidle");
 
     // Wait for affairs section heading to load
-    await expect(page.getByRole("heading", { name: "Affaires judiciaires" })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole("heading", { name: "Affaires judiciaires" })).toBeVisible({
+      timeout: 10000,
+    });
 
     // Scroll to affairs section
     await page.getByRole("heading", { name: "Affaires judiciaires" }).scrollIntoViewIfNeeded();

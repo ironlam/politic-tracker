@@ -1,12 +1,6 @@
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  GitCompare,
-  MapPin,
-  Map,
-  BarChart3,
-  ChevronRight,
-} from "lucide-react";
+import { GitCompare, MapPin, Map, BarChart3, ChevronRight } from "lucide-react";
 
 const tools = [
   {
@@ -49,9 +43,7 @@ export function QuickTools() {
       <div className="container mx-auto px-4">
         <div className="mb-8">
           <h2 className="text-2xl md:text-3xl font-bold mb-2">Outils</h2>
-          <p className="text-muted-foreground">
-            Accès rapide aux fonctionnalités clés
-          </p>
+          <p className="text-muted-foreground">Accès rapide aux fonctionnalités clés</p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
@@ -70,9 +62,7 @@ export function QuickTools() {
                       {tool.title}
                       <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
                     </h3>
-                    <p className="text-sm text-muted-foreground">
-                      {tool.description}
-                    </p>
+                    <p className="text-sm text-muted-foreground">{tool.description}</p>
                   </CardContent>
                 </Card>
               </Link>

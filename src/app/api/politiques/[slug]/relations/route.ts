@@ -80,7 +80,9 @@ export async function GET(request: NextRequest, context: RouteContext) {
   const limit = Math.min(50, Math.max(1, parseInt(searchParams.get("limit") || "10", 10)));
 
   const requestedTypes: RelationType[] = typesParam
-    ? (typesParam.split(",").filter((t) => ALL_RELATION_TYPES.includes(t as RelationType)) as RelationType[])
+    ? (typesParam
+        .split(",")
+        .filter((t) => ALL_RELATION_TYPES.includes(t as RelationType)) as RelationType[])
     : ALL_RELATION_TYPES;
 
   try {

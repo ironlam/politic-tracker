@@ -312,7 +312,9 @@ async function generateUniqueDossierSlug(date: Date | null, title: string): Prom
     const truncatedBase = baseSlug.slice(0, maxBaseLength).replace(/-$/, "");
     const slugWithSuffix = `${truncatedBase}${suffix}`;
 
-    const existsWithSuffix = await db.legislativeDossier.findUnique({ where: { slug: slugWithSuffix } });
+    const existsWithSuffix = await db.legislativeDossier.findUnique({
+      where: { slug: slugWithSuffix },
+    });
     if (!existsWithSuffix) return slugWithSuffix;
 
     counter++;
@@ -613,7 +615,13 @@ Features:
   },
 
   async sync(options): Promise<SyncResult> {
-    const { dryRun = false, limit, leg, active = false, today = false } = options as {
+    const {
+      dryRun = false,
+      limit,
+      leg,
+      active = false,
+      today = false,
+    } = options as {
       dryRun?: boolean;
       limit?: number;
       leg?: string;

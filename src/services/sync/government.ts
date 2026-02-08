@@ -42,9 +42,18 @@ const DATA_GOUV_CSV_URL =
 
 // French month names for date parsing
 const FRENCH_MONTHS: Record<string, number> = {
-  "janvier": 0, "février": 1, "mars": 2, "avril": 3,
-  "mai": 4, "juin": 5, "juillet": 6, "août": 7,
-  "septembre": 8, "octobre": 9, "novembre": 10, "décembre": 11,
+  janvier: 0,
+  février: 1,
+  mars: 2,
+  avril: 3,
+  mai: 4,
+  juin: 5,
+  juillet: 6,
+  août: 7,
+  septembre: 8,
+  octobre: 9,
+  novembre: 10,
+  décembre: 11,
 };
 
 /**
@@ -214,9 +223,7 @@ async function syncGovernmentMember(
 
     if (existing) {
       // Check if this specific mandate already exists
-      const existingMandate = existing.mandates.find(
-        (m) => m.externalId === externalId
-      );
+      const existingMandate = existing.mandates.find((m) => m.externalId === externalId);
 
       if (!existingMandate) {
         // Create new mandate for existing politician
@@ -282,7 +289,9 @@ async function upsertExternalId(politicianId: string, externalId: string): Promi
 /**
  * Main sync function - imports current government members
  */
-export async function syncGovernment(options: { currentOnly?: boolean } = {}): Promise<GouvernementSyncResult> {
+export async function syncGovernment(
+  options: { currentOnly?: boolean } = {}
+): Promise<GouvernementSyncResult> {
   const { currentOnly = true } = options;
 
   const result: GouvernementSyncResult = {
@@ -367,7 +376,9 @@ async function applyLocalCorrections(): Promise<{ applied: number; errors: strin
           });
 
           if (updated.count > 0) {
-            console.log(`   ✓ Ended mandate for ${endMandate.politicianName} (${endMandate.mandateType})`);
+            console.log(
+              `   ✓ Ended mandate for ${endMandate.politicianName} (${endMandate.mandateType})`
+            );
             result.applied++;
           }
         } else {

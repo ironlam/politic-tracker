@@ -28,10 +28,7 @@ function parseMarkdown(text: string): string {
   let html = text;
 
   // Escape HTML entities first (security)
-  html = html
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
+  html = html.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
   // Bold: **text** or __text__
   html = html.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");

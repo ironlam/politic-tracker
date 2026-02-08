@@ -93,9 +93,7 @@ export function decodeHtmlEntities(html: string): string {
   }
 
   // Replace decimal numeric entities: &#233;
-  result = result.replace(/&#(\d+);/g, (_, code) =>
-    String.fromCharCode(parseInt(code, 10))
-  );
+  result = result.replace(/&#(\d+);/g, (_, code) => String.fromCharCode(parseInt(code, 10)));
 
   // Replace hexadecimal numeric entities: &#x00E9; or &#xE9;
   result = result.replace(/&#x([0-9a-fA-F]+);/g, (_, code) =>
@@ -160,10 +158,7 @@ export function extractText(html: string): string {
  * extractAttribute('<a href="https://example.com">Link</a>', "href") // "https://example.com"
  * extractAttribute('<img src="photo.jpg" alt="Photo">', "src") // "photo.jpg"
  */
-export function extractAttribute(
-  html: string,
-  attribute: string
-): string | null {
+export function extractAttribute(html: string, attribute: string): string | null {
   if (!html || !attribute) return null;
 
   // Match both single and double quoted attribute values

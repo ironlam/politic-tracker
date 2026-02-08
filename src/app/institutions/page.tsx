@@ -16,8 +16,7 @@ import {
 
 export const metadata: Metadata = {
   title: "Comprendre les Institutions",
-  description:
-    "Guide simple pour comprendre les institutions politiques françaises et européennes",
+  description: "Guide simple pour comprendre les institutions politiques françaises et européennes",
 };
 
 interface Institution {
@@ -160,10 +159,7 @@ function InstitutionCard({ institution }: { institution: Institution }) {
     <Card className="h-full hover:shadow-md transition-shadow">
       <CardHeader className="pb-2">
         <div className="flex items-center gap-2">
-          <div
-            className="p-2 rounded-lg"
-            style={{ backgroundColor: `${institution.color}15` }}
-          >
+          <div className="p-2 rounded-lg" style={{ backgroundColor: `${institution.color}15` }}>
             <span style={{ color: institution.color }}>{institution.icon}</span>
           </div>
           <CardTitle className="text-lg">{institution.name}</CardTitle>
@@ -212,9 +208,7 @@ function ProcessDiagram() {
             <div className="font-semibold text-blue-700 dark:text-blue-300 mb-1">
               1. Projet de loi
             </div>
-            <p className="text-xs text-muted-foreground">
-              Gouvernement ou parlementaires
-            </p>
+            <p className="text-xs text-muted-foreground">Gouvernement ou parlementaires</p>
           </div>
           <div className="text-2xl text-muted-foreground hidden md:block">→</div>
           <div className="text-2xl text-muted-foreground md:hidden">↓</div>
@@ -222,19 +216,13 @@ function ProcessDiagram() {
             <div className="font-semibold text-indigo-700 dark:text-indigo-300 mb-1">
               2. Assemblée nationale
             </div>
-            <p className="text-xs text-muted-foreground">
-              Examen et vote
-            </p>
+            <p className="text-xs text-muted-foreground">Examen et vote</p>
           </div>
           <div className="text-2xl text-muted-foreground hidden md:block">→</div>
           <div className="text-2xl text-muted-foreground md:hidden">↓</div>
           <div className="flex-1 p-4 rounded-lg bg-red-50 dark:bg-red-950">
-            <div className="font-semibold text-red-700 dark:text-red-300 mb-1">
-              3. Sénat
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Examen et vote
-            </p>
+            <div className="font-semibold text-red-700 dark:text-red-300 mb-1">3. Sénat</div>
+            <p className="text-xs text-muted-foreground">Examen et vote</p>
           </div>
           <div className="text-2xl text-muted-foreground hidden md:block">→</div>
           <div className="text-2xl text-muted-foreground md:hidden">↓</div>
@@ -242,14 +230,12 @@ function ProcessDiagram() {
             <div className="font-semibold text-green-700 dark:text-green-300 mb-1">
               4. Promulgation
             </div>
-            <p className="text-xs text-muted-foreground">
-              Par le Président
-            </p>
+            <p className="text-xs text-muted-foreground">Par le Président</p>
           </div>
         </div>
         <p className="text-xs text-muted-foreground mt-4 text-center">
-          En cas de désaccord, une commission mixte paritaire (7 députés + 7 sénateurs)
-          tente de trouver un compromis. L&apos;Assemblée a le dernier mot.
+          En cas de désaccord, une commission mixte paritaire (7 députés + 7 sénateurs) tente de
+          trouver un compromis. L&apos;Assemblée a le dernier mot.
         </p>
       </CardContent>
     </Card>
@@ -269,10 +255,7 @@ function KeyNumbers() {
       {numbers.map((n) => (
         <Card key={n.label} className="text-center">
           <CardContent className="pt-6">
-            <div
-              className="text-3xl font-bold mb-1"
-              style={{ color: n.color }}
-            >
+            <div className="text-3xl font-bold mb-1" style={{ color: n.color }}>
               {n.value}
             </div>
             <div className="text-sm text-muted-foreground">{n.label}</div>
@@ -290,8 +273,8 @@ export default function InstitutionsPage() {
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-4">Comprendre les Institutions</h1>
         <p className="text-lg text-muted-foreground">
-          Un guide simple pour comprendre comment fonctionnent nos institutions
-          politiques, en France et en Europe.
+          Un guide simple pour comprendre comment fonctionnent nos institutions politiques, en
+          France et en Europe.
         </p>
       </div>
 
@@ -308,8 +291,8 @@ export default function InstitutionsPage() {
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground mb-4">
-            La démocratie française repose sur la séparation des trois pouvoirs,
-            principe fondamental pour éviter les abus :
+            La démocratie française repose sur la séparation des trois pouvoirs, principe
+            fondamental pour éviter les abus :
           </p>
           <div className="grid sm:grid-cols-3 gap-4">
             <div className="p-4 rounded-lg bg-background border">
@@ -326,9 +309,7 @@ export default function InstitutionsPage() {
             </div>
             <div className="p-4 rounded-lg bg-background border">
               <p className="font-semibold mb-1">Pouvoir judiciaire</p>
-              <p className="text-xs text-muted-foreground">
-                Juge les litiges. Tribunaux, Cours.
-              </p>
+              <p className="text-xs text-muted-foreground">Juge les litiges. Tribunaux, Cours.</p>
             </div>
           </div>
         </CardContent>
@@ -370,8 +351,8 @@ export default function InstitutionsPage() {
           Collectivités territoriales
         </h2>
         <p className="text-sm text-muted-foreground mb-4">
-          La France est divisée en 18 régions, 101 départements et près de 35 000 communes.
-          Chaque niveau a des compétences propres.
+          La France est divisée en 18 régions, 101 départements et près de 35 000 communes. Chaque
+          niveau a des compétences propres.
         </p>
         <div className="grid gap-4 md:grid-cols-3">
           {LOCAL_INSTITUTIONS.map((inst) => (
@@ -387,8 +368,8 @@ export default function InstitutionsPage() {
           Institutions européennes
         </h2>
         <p className="text-sm text-muted-foreground mb-4">
-          L&apos;Union européenne compte 27 États membres. Ses institutions principales
-          siègent à Bruxelles, Strasbourg et Luxembourg.
+          L&apos;Union européenne compte 27 États membres. Ses institutions principales siègent à
+          Bruxelles, Strasbourg et Luxembourg.
         </p>
         <div className="grid gap-4 md:grid-cols-2">
           {EU_INSTITUTIONS.map((inst) => (
@@ -411,9 +392,7 @@ export default function InstitutionsPage() {
               <div className="font-semibold text-blue-700 dark:text-blue-300 mb-1">
                 1. Proposition
               </div>
-              <p className="text-xs text-muted-foreground">
-                Commission européenne
-              </p>
+              <p className="text-xs text-muted-foreground">Commission européenne</p>
             </div>
             <div className="text-2xl text-muted-foreground hidden md:block">→</div>
             <div className="text-2xl text-muted-foreground md:hidden">↓</div>
@@ -421,9 +400,7 @@ export default function InstitutionsPage() {
               <div className="font-semibold text-indigo-700 dark:text-indigo-300 mb-1">
                 2. Parlement
               </div>
-              <p className="text-xs text-muted-foreground">
-                Amendements et vote
-              </p>
+              <p className="text-xs text-muted-foreground">Amendements et vote</p>
             </div>
             <div className="text-2xl text-muted-foreground hidden md:block">→</div>
             <div className="text-2xl text-muted-foreground md:hidden">↓</div>
@@ -431,9 +408,7 @@ export default function InstitutionsPage() {
               <div className="font-semibold text-purple-700 dark:text-purple-300 mb-1">
                 3. Conseil
               </div>
-              <p className="text-xs text-muted-foreground">
-                Vote des ministres
-              </p>
+              <p className="text-xs text-muted-foreground">Vote des ministres</p>
             </div>
             <div className="text-2xl text-muted-foreground hidden md:block">→</div>
             <div className="text-2xl text-muted-foreground md:hidden">↓</div>
@@ -441,14 +416,12 @@ export default function InstitutionsPage() {
               <div className="font-semibold text-green-700 dark:text-green-300 mb-1">
                 4. Adoption
               </div>
-              <p className="text-xs text-muted-foreground">
-                Directive ou règlement
-              </p>
+              <p className="text-xs text-muted-foreground">Directive ou règlement</p>
             </div>
           </div>
           <p className="text-xs text-muted-foreground mt-4 text-center">
-            La plupart des lois européennes sont adoptées en &quot;codécision&quot; :
-            le Parlement et le Conseil doivent tous deux approuver le texte.
+            La plupart des lois européennes sont adoptées en &quot;codécision&quot; : le Parlement
+            et le Conseil doivent tous deux approuver le texte.
           </p>
         </CardContent>
       </Card>
@@ -505,7 +478,8 @@ export default function InstitutionsPage() {
         <CardContent className="pt-6 text-center">
           <h3 className="font-semibold mb-2">Explorez nos données</h3>
           <p className="text-sm text-muted-foreground mb-4">
-            Découvrez les profils de vos représentants : députés, sénateurs, ministres et eurodéputés.
+            Découvrez les profils de vos représentants : députés, sénateurs, ministres et
+            eurodéputés.
           </p>
           <div className="flex flex-wrap justify-center gap-2">
             <Link

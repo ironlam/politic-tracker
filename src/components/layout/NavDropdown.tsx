@@ -114,10 +114,7 @@ export function NavDropdown({ group }: NavDropdownProps) {
       >
         {group.label}
         <ChevronDown
-          className={cn(
-            "h-4 w-4 transition-transform duration-200",
-            isOpen && "rotate-180"
-          )}
+          className={cn("h-4 w-4 transition-transform duration-200", isOpen && "rotate-180")}
         />
       </button>
 
@@ -143,9 +140,7 @@ export function NavDropdown({ group }: NavDropdownProps) {
                   </span>
                 </div>
                 {item.description && (
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {item.description}
-                  </p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{item.description}</p>
                 )}
               </Link>
             );

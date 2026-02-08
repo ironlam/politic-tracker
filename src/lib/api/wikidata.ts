@@ -342,12 +342,22 @@ export class WikidataService {
     entityIds: string[]
   ): Promise<Map<string, { isFrench: boolean; isPolitician: boolean; birthDate: Date | null }>> {
     const entities = await this.getEntities(entityIds);
-    const results = new Map<string, { isFrench: boolean; isPolitician: boolean; birthDate: Date | null }>();
+    const results = new Map<
+      string,
+      { isFrench: boolean; isPolitician: boolean; birthDate: Date | null }
+    >();
 
     entities.forEach((entity, id) => {
-      const isFrench = this.checkNationality(entity.claims[WIKIDATA_PROPS.NATIONALITY], WIKIDATA_ENTITIES.FRANCE);
-      const isHuman = this.checkInstanceOf(entity.claims[WIKIDATA_PROPS.INSTANCE_OF], WIKIDATA_ENTITIES.HUMAN);
-      const isPolitician = isHuman && this.checkPoliticalPositions(entity.claims[WIKIDATA_PROPS.POSITION_HELD]);
+      const isFrench = this.checkNationality(
+        entity.claims[WIKIDATA_PROPS.NATIONALITY],
+        WIKIDATA_ENTITIES.FRANCE
+      );
+      const isHuman = this.checkInstanceOf(
+        entity.claims[WIKIDATA_PROPS.INSTANCE_OF],
+        WIKIDATA_ENTITIES.HUMAN
+      );
+      const isPolitician =
+        isHuman && this.checkPoliticalPositions(entity.claims[WIKIDATA_PROPS.POSITION_HELD]);
       const birthDate = this.extractDate(entity.claims[WIKIDATA_PROPS.BIRTH_DATE]);
 
       results.set(id, { isFrench, isPolitician, birthDate });
@@ -373,7 +383,7 @@ export class WikidataService {
 
     // Wikidata format: +1977-12-21T00:00:00Z
     const timeStr = timeValue.time.replace(/^\+/, "").split("T")[0];
-    
+
     // Handle partial dates (1977-00-00 → January 1st)
     const parts = timeStr.split("-");
     const year = parseInt(parts[0], 10);
@@ -418,8 +428,9 @@ export class WikidataService {
         }
 
         // Party (P4100 or P102)
-        const partyClaims = claim.qualifiers[WIKIDATA_PROPS.PARLIAMENTARY_GROUP] ||
-                           claim.qualifiers[WIKIDATA_PROPS.POLITICAL_PARTY];
+        const partyClaims =
+          claim.qualifiers[WIKIDATA_PROPS.PARLIAMENTARY_GROUP] ||
+          claim.qualifiers[WIKIDATA_PROPS.POLITICAL_PARTY];
         if (partyClaims?.[0]?.datavalue?.value) {
           const partyValue = partyClaims[0].datavalue.value;
           if (typeof partyValue === "object" && "id" in partyValue) {
@@ -437,7 +448,9 @@ export class WikidataService {
   /**
    * Extract party affiliations from P102 claims
    */
-  private extractPartyAffiliations(claims: WikidataClaim[] | undefined): WikidataPartyAffiliation[] {
+  private extractPartyAffiliations(
+    claims: WikidataClaim[] | undefined
+  ): WikidataPartyAffiliation[] {
     if (!claims) return [];
 
     const affiliations: WikidataPartyAffiliation[] = [];

@@ -11,9 +11,7 @@ interface DeceasedSyncResult {
 /**
  * Fetch death dates from Wikidata for politicians with Wikidata IDs
  */
-async function fetchDeathDatesFromWikidata(
-  wikidataIds: string[]
-): Promise<Map<string, Date>> {
+async function fetchDeathDatesFromWikidata(wikidataIds: string[]): Promise<Map<string, Date>> {
   const results = new Map<string, Date>();
 
   // Process in batches of 50 to avoid URL length limits
@@ -117,7 +115,9 @@ export async function syncDeceasedFromWikidata(): Promise<DeceasedSyncResult> {
           data: { deathDate },
         });
         result.updated++;
-        console.log(`Updated ${politician.politician?.fullName}: deceased ${deathDate.toISOString().split("T")[0]}`);
+        console.log(
+          `Updated ${politician.politician?.fullName}: deceased ${deathDate.toISOString().split("T")[0]}`
+        );
       }
     }
 

@@ -13,12 +13,7 @@
  */
 
 import "dotenv/config";
-import {
-  createCLI,
-  ProgressTracker,
-  type SyncHandler,
-  type SyncResult,
-} from "../src/lib/sync";
+import { createCLI, ProgressTracker, type SyncHandler, type SyncResult } from "../src/lib/sync";
 import { WikidataService } from "../src/lib/api";
 import type { WikidataPartyAffiliation } from "../src/lib/api";
 import { db } from "../src/lib/db";
@@ -40,15 +35,11 @@ function findCurrentAffiliation(
 
   // If multiple current, pick the one with the latest start date
   if (current.length > 1) {
-    return current.sort(
-      (a, b) => (b.startDate?.getTime() ?? 0) - (a.startDate?.getTime() ?? 0)
-    )[0];
+    return current.sort((a, b) => (b.startDate?.getTime() ?? 0) - (a.startDate?.getTime() ?? 0))[0];
   }
 
   // All have end dates → pick the most recent one
-  return affiliations.sort(
-    (a, b) => (b.endDate?.getTime() ?? 0) - (a.endDate?.getTime() ?? 0)
-  )[0];
+  return affiliations.sort((a, b) => (b.endDate?.getTime() ?? 0) - (a.endDate?.getTime() ?? 0))[0];
 }
 
 const handler: SyncHandler = {
@@ -85,34 +76,33 @@ Options:
   },
 
   async showStats() {
-    const [totalMeps, mepsWithParty, mepsWithoutParty, mepsWithWikidata] =
-      await Promise.all([
-        db.politician.count({
-          where: {
+    const [totalMeps, mepsWithParty, mepsWithoutParty, mepsWithWikidata] = await Promise.all([
+      db.politician.count({
+        where: {
+          mandates: { some: { type: MandateType.DEPUTE_EUROPEEN, isCurrent: true } },
+        },
+      }),
+      db.politician.count({
+        where: {
+          mandates: { some: { type: MandateType.DEPUTE_EUROPEEN, isCurrent: true } },
+          currentPartyId: { not: null },
+        },
+      }),
+      db.politician.count({
+        where: {
+          mandates: { some: { type: MandateType.DEPUTE_EUROPEEN, isCurrent: true } },
+          currentPartyId: null,
+        },
+      }),
+      db.externalId.count({
+        where: {
+          source: DataSource.WIKIDATA,
+          politician: {
             mandates: { some: { type: MandateType.DEPUTE_EUROPEEN, isCurrent: true } },
           },
-        }),
-        db.politician.count({
-          where: {
-            mandates: { some: { type: MandateType.DEPUTE_EUROPEEN, isCurrent: true } },
-            currentPartyId: { not: null },
-          },
-        }),
-        db.politician.count({
-          where: {
-            mandates: { some: { type: MandateType.DEPUTE_EUROPEEN, isCurrent: true } },
-            currentPartyId: null,
-          },
-        }),
-        db.externalId.count({
-          where: {
-            source: DataSource.WIKIDATA,
-            politician: {
-              mandates: { some: { type: MandateType.DEPUTE_EUROPEEN, isCurrent: true } },
-            },
-          },
-        }),
-      ]);
+        },
+      }),
+    ]);
 
     console.log("\n" + "=".repeat(50));
     console.log("MEP National Party Stats");
@@ -136,7 +126,11 @@ Options:
   },
 
   async sync(options): Promise<SyncResult> {
-    const { dryRun = false, limit, force = false } = options as {
+    const {
+      dryRun = false,
+      limit,
+      force = false,
+    } = options as {
       dryRun?: boolean;
       limit?: number;
       force?: boolean;
@@ -204,9 +198,7 @@ Options:
     console.log(`Found ${wikidataToPartyId.size} parties with Wikidata IDs\n`);
 
     // 3. Batch-fetch P102 from Wikidata
-    const wikidataIds = meps
-      .map((m) => m.externalIds[0]?.externalId)
-      .filter(Boolean) as string[];
+    const wikidataIds = meps.map((m) => m.externalIds[0]?.externalId).filter(Boolean) as string[];
 
     console.log(`Fetching P102 (political party) for ${wikidataIds.length} entities...`);
     const partiesMap = await wikidata.getPoliticalParties(wikidataIds);
@@ -226,10 +218,7 @@ Options:
     let partyLabels = new Map<string, string>();
     if (unknownPartyIds.size > 0) {
       console.log(`Fetching labels for ${unknownPartyIds.size} unknown parties...`);
-      const labelEntities = await wikidata.getEntities(
-        Array.from(unknownPartyIds),
-        ["labels"]
-      );
+      const labelEntities = await wikidata.getEntities(Array.from(unknownPartyIds), ["labels"]);
       labelEntities.forEach((entity, id) => {
         const label = entity.labels.fr || entity.labels.en;
         if (label) partyLabels.set(id, label);
@@ -273,8 +262,7 @@ Options:
 
       if (!localPartyId) {
         stats.partyNotInDB++;
-        const partyLabel =
-          partyLabels.get(current.partyWikidataId) || current.partyWikidataId;
+        const partyLabel = partyLabels.get(current.partyWikidataId) || current.partyWikidataId;
 
         const existing = missingParties.get(current.partyWikidataId);
         if (existing) {
@@ -303,8 +291,7 @@ Options:
       }
 
       if (dryRun) {
-        const partyName =
-          wikidataToPartyId.get(current.partyWikidataId) || current.partyWikidataId;
+        const partyName = wikidataToPartyId.get(current.partyWikidataId) || current.partyWikidataId;
         console.log(
           `[DRY-RUN] ${mep.fullName} → ${partyName} (was: ${mep.currentParty?.shortName ?? "none"})`
         );
@@ -335,16 +322,12 @@ Options:
 
     if (missingParties.size > 0) {
       console.log("\n⚠ Parties found in Wikidata but not in local DB:");
-      const sorted = Array.from(missingParties.entries()).sort(
-        (a, b) => b[1].count - a[1].count
-      );
+      const sorted = Array.from(missingParties.entries()).sort((a, b) => b[1].count - a[1].count);
       for (const [wikidataId, info] of sorted) {
         const label = partyLabels.get(wikidataId) || "?";
         console.log(`  ${label} (${wikidataId}) — ${info.count} MEP(s)`);
       }
-      console.log(
-        "\n  → Run sync:parties to import missing parties, then re-run this script."
-      );
+      console.log("\n  → Run sync:parties to import missing parties, then re-run this script.");
     }
 
     return {

@@ -35,10 +35,7 @@ interface GeoTabProps {
 }
 
 export function GeoTab({ stats }: GeoTabProps) {
-  const maxByDepartment = Math.max(
-    ...stats.topDepartments.map((d) => d.total),
-    1
-  );
+  const maxByDepartment = Math.max(...stats.topDepartments.map((d) => d.total), 1);
   const maxByRegion = Math.max(...stats.byRegion.map((r) => r.total), 1);
 
   return (
@@ -47,15 +44,10 @@ export function GeoTab({ stats }: GeoTabProps) {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Députés
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Députés</CardTitle>
           </CardHeader>
           <CardContent>
-            <p
-              className="text-3xl font-bold"
-              style={{ color: getColor("chamber", "AN", "light") }}
-            >
+            <p className="text-3xl font-bold" style={{ color: getColor("chamber", "AN", "light") }}>
               {stats.totalByType.deputes}
             </p>
             <p className="text-sm text-muted-foreground">Assemblée nationale</p>
@@ -64,9 +56,7 @@ export function GeoTab({ stats }: GeoTabProps) {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Sénateurs
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Sénateurs</CardTitle>
           </CardHeader>
           <CardContent>
             <p
@@ -81,15 +71,10 @@ export function GeoTab({ stats }: GeoTabProps) {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Eurodéputés
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Eurodéputés</CardTitle>
           </CardHeader>
           <CardContent>
-            <p
-              className="text-3xl font-bold"
-              style={{ color: getColor("chamber", "PE", "light") }}
-            >
+            <p className="text-3xl font-bold" style={{ color: getColor("chamber", "PE", "light") }}>
               {stats.totalByType.meps}
             </p>
             <p className="text-sm text-muted-foreground">Parlement européen</p>
@@ -119,9 +104,7 @@ export function GeoTab({ stats }: GeoTabProps) {
         <Card>
           <CardHeader>
             <CardTitle>Départements avec le plus d&apos;élus</CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Top 15 (députés + sénateurs)
-            </p>
+            <p className="text-sm text-muted-foreground">Top 15 (députés + sénateurs)</p>
           </CardHeader>
           <CardContent className="space-y-3">
             {stats.topDepartments.map((dept) => (
@@ -136,9 +119,7 @@ export function GeoTab({ stats }: GeoTabProps) {
                     </Badge>
                     <span className="truncate">{dept.name}</span>
                   </Link>
-                  <span className="font-medium shrink-0 ml-2">
-                    {dept.total}
-                  </span>
+                  <span className="font-medium shrink-0 ml-2">{dept.total}</span>
                 </div>
                 {/* Stacked bar: deputes + senateurs */}
                 <div className="w-full h-4 rounded-full overflow-hidden flex bg-muted">
@@ -176,9 +157,7 @@ export function GeoTab({ stats }: GeoTabProps) {
         <Card>
           <CardHeader>
             <CardTitle>Distribution par région</CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Nombre d&apos;élus parlementaires
-            </p>
+            <p className="text-sm text-muted-foreground">Nombre d&apos;élus parlementaires</p>
           </CardHeader>
           <CardContent className="space-y-3">
             {stats.byRegion.map((region) => (
@@ -187,11 +166,7 @@ export function GeoTab({ stats }: GeoTabProps) {
                   <span>{region.name}</span>
                   <span className="font-medium">{region.total}</span>
                 </div>
-                <ProgressBar
-                  value={region.total}
-                  max={maxByRegion}
-                  color="bg-primary"
-                />
+                <ProgressBar value={region.total} max={maxByRegion} color="bg-primary" />
               </div>
             ))}
           </CardContent>

@@ -55,12 +55,8 @@ export function ActivityTabs({ votes, dossiers, articles }: ActivityTabsProps) {
       <div className="container mx-auto px-4">
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
           <div>
-            <h2 className="text-2xl md:text-3xl font-bold mb-2">
-              Dernières activités
-            </h2>
-            <p className="text-muted-foreground">
-              Actualités parlementaires et médiatiques
-            </p>
+            <h2 className="text-2xl md:text-3xl font-bold mb-2">Dernières activités</h2>
+            <p className="text-muted-foreground">Actualités parlementaires et médiatiques</p>
           </div>
         </div>
 
@@ -81,9 +77,7 @@ export function ActivityTabs({ votes, dossiers, articles }: ActivityTabsProps) {
                 <Icon className="h-4 w-4" />
                 {tab.label}
                 {tab.count > 0 && (
-                  <span className="text-xs text-muted-foreground">
-                    ({tab.count})
-                  </span>
+                  <span className="text-xs text-muted-foreground">({tab.count})</span>
                 )}
               </button>
             );
@@ -92,15 +86,9 @@ export function ActivityTabs({ votes, dossiers, articles }: ActivityTabsProps) {
 
         {/* Tab content */}
         <div className="bg-card border rounded-xl overflow-hidden">
-          {activeTab === "votes" && (
-            <VotesContent votes={votes} />
-          )}
-          {activeTab === "dossiers" && (
-            <DossiersContent dossiers={dossiers} />
-          )}
-          {activeTab === "presse" && (
-            <PresseContent articles={articles} />
-          )}
+          {activeTab === "votes" && <VotesContent votes={votes} />}
+          {activeTab === "dossiers" && <DossiersContent dossiers={dossiers} />}
+          {activeTab === "presse" && <PresseContent articles={articles} />}
         </div>
       </div>
     </section>
@@ -109,11 +97,7 @@ export function ActivityTabs({ votes, dossiers, articles }: ActivityTabsProps) {
 
 function VotesContent({ votes }: { votes: VoteItem[] }) {
   if (votes.length === 0) {
-    return (
-      <div className="p-8 text-center text-muted-foreground">
-        Aucun vote récent
-      </div>
-    );
+    return <div className="p-8 text-center text-muted-foreground">Aucun vote récent</div>;
   }
 
   return (
@@ -173,11 +157,7 @@ function VotesContent({ votes }: { votes: VoteItem[] }) {
 
 function DossiersContent({ dossiers }: { dossiers: DossierItem[] }) {
   if (dossiers.length === 0) {
-    return (
-      <div className="p-8 text-center text-muted-foreground">
-        Aucun dossier en cours
-      </div>
-    );
+    return <div className="p-8 text-center text-muted-foreground">Aucun dossier en cours</div>;
   }
 
   const statusLabels: Record<string, string> = {
@@ -206,9 +186,7 @@ function DossiersContent({ dossiers }: { dossiers: DossierItem[] }) {
                   </p>
                 )}
               </div>
-              <Badge
-                variant={dossier.status === "EN_COURS" ? "default" : "secondary"}
-              >
+              <Badge variant={dossier.status === "EN_COURS" ? "default" : "secondary"}>
                 {statusLabels[dossier.status] || dossier.status}
               </Badge>
             </Link>
@@ -229,11 +207,7 @@ function DossiersContent({ dossiers }: { dossiers: DossierItem[] }) {
 
 function PresseContent({ articles }: { articles: ArticleItem[] }) {
   if (articles.length === 0) {
-    return (
-      <div className="p-8 text-center text-muted-foreground">
-        Aucun article récent
-      </div>
-    );
+    return <div className="p-8 text-center text-muted-foreground">Aucun article récent</div>;
   }
 
   const sourceLabels: Record<string, string> = {
@@ -261,9 +235,7 @@ function PresseContent({ articles }: { articles: ArticleItem[] }) {
                   {formatDate(article.publishedAt)}
                 </p>
               </div>
-              <Badge variant="outline">
-                {sourceLabels[article.source] || article.source}
-              </Badge>
+              <Badge variant="outline">{sourceLabels[article.source] || article.source}</Badge>
             </a>
           </li>
         ))}

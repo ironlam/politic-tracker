@@ -95,7 +95,7 @@ function runTests(args: string[]): boolean {
 
     execSync(command, {
       stdio: "inherit",
-      env: { ...process.env, FORCE_COLOR: "1" }
+      env: { ...process.env, FORCE_COLOR: "1" },
     });
 
     return true;
@@ -116,11 +116,8 @@ function openReport() {
 
   try {
     // Try to open in browser
-    const openCommand = process.platform === "darwin"
-      ? "open"
-      : process.platform === "win32"
-        ? "start"
-        : "xdg-open";
+    const openCommand =
+      process.platform === "darwin" ? "open" : process.platform === "win32" ? "start" : "xdg-open";
 
     execSync(`${openCommand} ${reportPath}`, { stdio: "ignore" });
     log(`  Report opened in browser`, colors.green);

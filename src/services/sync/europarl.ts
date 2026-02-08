@@ -2,7 +2,7 @@ import { db } from "@/lib/db";
 import { generateSlug } from "@/lib/utils";
 import { MandateType, DataSource, PoliticalPosition } from "@/generated/prisma";
 import { EuroparlMEP, EuroparlSyncResult } from "./types";
-import { EUROPEAN_GROUPS, getEuropeanGroupConfig } from "@/config/parties";
+import { EUROPEAN_GROUPS } from "@/config/parties";
 
 const EUROPARL_API_BASE = "https://data.europarl.europa.eu/api/v2";
 const CURRENT_LEGISLATURE = 10; // 2024-2029
@@ -26,7 +26,7 @@ async function syncEuropeanGroups(): Promise<Map<string, string>> {
       name: groupConfig.name,
       shortName: groupConfig.shortName || null,
       color: groupConfig.color,
-      politicalPosition: groupConfig.politicalPosition as PoliticalPosition || null,
+      politicalPosition: (groupConfig.politicalPosition as PoliticalPosition) || null,
       wikidataId: groupConfig.wikidataId || null,
       website: groupConfig.website || null,
       legislature: CURRENT_LEGISLATURE,
@@ -78,9 +78,7 @@ async function fetchCurrentMEPs(): Promise<EuroparlMEP[]> {
  * Filter French MEPs from the list
  */
 function filterFrenchMEPs(meps: EuroparlMEP[]): EuroparlMEP[] {
-  const frenchMEPs = meps.filter(
-    (mep) => mep["api:country-of-representation"] === "FR"
-  );
+  const frenchMEPs = meps.filter((mep) => mep["api:country-of-representation"] === "FR");
   console.log(`Found ${frenchMEPs.length} French MEPs`);
   return frenchMEPs;
 }
@@ -380,7 +378,10 @@ export async function getEuroparlStats() {
   });
 
   // Count by group
-  const groupCounts = new Map<string, { code: string; name: string; color: string | null; count: number }>();
+  const groupCounts = new Map<
+    string,
+    { code: string; name: string; color: string | null; count: number }
+  >();
   for (const mandate of mandatesWithGroups) {
     const group = mandate.europeanGroup;
     const key = group?.id || "unknown";

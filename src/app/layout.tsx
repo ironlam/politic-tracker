@@ -54,8 +54,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Transparence Politique",
-    description:
-      "Observatoire citoyen des représentants politiques français.",
+    description: "Observatoire citoyen des représentants politiques français.",
     // Image generated automatically by opengraph-image.tsx
   },
   robots: {
@@ -94,7 +93,9 @@ export default function RootLayout({
             Aller au contenu principal
           </a>
           <Header />
-          <main id="main-content" role="main" className="flex-1" tabIndex={-1}>{children}</main>
+          <main id="main-content" role="main" className="flex-1" tabIndex={-1}>
+            {children}
+          </main>
           <Footer />
           <ChatWidget />
         </ThemeProvider>

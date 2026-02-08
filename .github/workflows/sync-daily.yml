@@ -3,9 +3,9 @@ name: Daily Sync
 on:
   schedule:
     # 3x per day (Paris time = UTC+1 in winter, UTC+2 in summer)
-    - cron: '0 5 * * *'   # ~6h Paris (winter) / ~7h (summer)
-    - cron: '0 11 * * *'  # ~12h Paris
-    - cron: '0 19 * * *'  # ~20h Paris (winter) / ~21h (summer)
+    - cron: "0 5 * * *" # ~6h Paris (winter) / ~7h (summer)
+    - cron: "0 11 * * *" # ~12h Paris
+    - cron: "0 19 * * *" # ~20h Paris (winter) / ~21h (summer)
   workflow_dispatch:
 
 env:
@@ -25,8 +25,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
-          cache: 'npm'
+          node-version: "22"
+          cache: "npm"
 
       - name: Install dependencies
         run: npm ci

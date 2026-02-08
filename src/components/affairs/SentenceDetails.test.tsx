@@ -110,9 +110,7 @@ describe("SentenceDetails", () => {
 
   it("should format months correctly", () => {
     // Less than 12 months
-    const { rerender } = render(
-      <SentenceDetails affair={{ prisonMonths: 8 }} />
-    );
+    const { rerender } = render(<SentenceDetails affair={{ prisonMonths: 8 }} />);
     expect(screen.getByText("8 mois")).toBeInTheDocument();
 
     // Exactly 1 year

@@ -269,8 +269,8 @@ export default async function CartePage() {
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Carte des Élus</h1>
         <p className="text-muted-foreground">
-          Visualisez la répartition des députés et sénateurs par département.
-          Cliquez sur un département pour voir les détails.
+          Visualisez la répartition des députés et sénateurs par département. Cliquez sur un
+          département pour voir les détails.
         </p>
       </div>
 

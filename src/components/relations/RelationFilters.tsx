@@ -34,10 +34,7 @@ export function RelationFilters({ selectedTypes, onChange }: RelationFiltersProp
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-medium">Types de relations</h3>
         {selectedTypes.length < ALL_RELATION_TYPES.length && (
-          <button
-            onClick={handleSelectAll}
-            className="text-xs text-primary hover:underline"
-          >
+          <button onClick={handleSelectAll} className="text-xs text-primary hover:underline">
             Tout sélectionner
           </button>
         )}

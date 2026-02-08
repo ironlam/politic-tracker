@@ -188,9 +188,7 @@ function StatCard({
         {value.toLocaleString("fr-FR")}
       </p>
       <p className="text-sm font-medium mt-1">{label}</p>
-      <p className="text-xs text-muted-foreground mt-0.5 hidden sm:block">
-        {description}
-      </p>
+      <p className="text-xs text-muted-foreground mt-0.5 hidden sm:block">{description}</p>
     </Link>
   );
 }

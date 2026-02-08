@@ -169,9 +169,7 @@ export default async function DossierDetailPage({ params }: PageProps) {
             <CardTitle className="text-lg">En bref</CardTitle>
           </CardHeader>
           <CardContent>
-            <MarkdownText className="text-foreground">
-              {dossier.summary}
-            </MarkdownText>
+            <MarkdownText className="text-foreground">{dossier.summary}</MarkdownText>
             {dossier.summaryDate && (
               <p className="text-xs text-muted-foreground mt-4">
                 Résumé généré le {formatDate(dossier.summaryDate)}
@@ -202,9 +200,7 @@ export default async function DossierDetailPage({ params }: PageProps) {
                       <Badge variant="outline" className="font-mono">
                         N° {amendment.number}
                       </Badge>
-                      <Badge
-                        className={AMENDMENT_STATUS_COLORS[amendment.status]}
-                      >
+                      <Badge className={AMENDMENT_STATUS_COLORS[amendment.status]}>
                         {AMENDMENT_STATUS_LABELS[amendment.status]}
                       </Badge>
                     </div>
@@ -215,13 +211,9 @@ export default async function DossierDetailPage({ params }: PageProps) {
                       </p>
                     )}
                     {amendment.article && (
-                      <p className="text-sm text-muted-foreground">
-                        Article {amendment.article}
-                      </p>
+                      <p className="text-sm text-muted-foreground">Article {amendment.article}</p>
                     )}
-                    {amendment.summary && (
-                      <p className="text-sm mt-2">{amendment.summary}</p>
-                    )}
+                    {amendment.summary && <p className="text-sm mt-2">{amendment.summary}</p>}
                   </div>
                 </div>
               ))}

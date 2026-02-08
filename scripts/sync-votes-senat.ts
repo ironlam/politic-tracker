@@ -22,7 +22,10 @@ import * as https from "https";
 // Configuration
 const BASE_URL = "https://www.senat.fr";
 const DEFAULT_SESSION = 2024; // Current session
-const AVAILABLE_SESSIONS = [2024, 2023, 2022, 2021, 2020, 2019, 2018, 2017, 2016, 2015, 2014, 2013, 2012, 2011, 2010, 2009, 2008, 2007, 2006];
+const AVAILABLE_SESSIONS = [
+  2024, 2023, 2022, 2021, 2020, 2019, 2018, 2017, 2016, 2015, 2014, 2013, 2012, 2011, 2010, 2009,
+  2008, 2007, 2006,
+];
 const RATE_LIMIT_MS = 200; // Delay between requests
 
 // Progress tracking
@@ -53,7 +56,6 @@ function renderProgressBar(current: number, total: number, width: number = 30): 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
-
 
 /**
  * Fetch content from URL
@@ -125,7 +127,11 @@ interface ScrutinMetadata {
   sourceUrl: string;
 }
 
-function parseScrutinMetadata(html: string, session: number, number: string): ScrutinMetadata | null {
+function parseScrutinMetadata(
+  html: string,
+  session: number,
+  number: string
+): ScrutinMetadata | null {
   try {
     // Decode HTML entities first
     const decodedHtml = decodeHtmlEntities(html);
@@ -141,13 +147,25 @@ function parseScrutinMetadata(html: string, session: number, number: string): Sc
 
     let title = `Scrutin n°${number}`;
     if (h1Match) {
-      let h1Text = h1Match[1].replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+      let h1Text = h1Match[1]
+        .replace(/<[^>]+>/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
       // Remove "En savoir plus" links
-      h1Text = h1Text.replace(/\s*En savoir plus\s*/gi, " ").replace(/\s+/g, " ").trim();
+      h1Text = h1Text
+        .replace(/\s*En savoir plus\s*/gi, " ")
+        .replace(/\s+/g, " ")
+        .trim();
       title = h1Text;
       if (h2Match) {
-        let h2Text = h2Match[1].replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
-        h2Text = h2Text.replace(/\s*En savoir plus\s*/gi, " ").replace(/\s+/g, " ").trim();
+        let h2Text = h2Match[1]
+          .replace(/<[^>]+>/g, " ")
+          .replace(/\s+/g, " ")
+          .trim();
+        h2Text = h2Text
+          .replace(/\s*En savoir plus\s*/gi, " ")
+          .replace(/\s+/g, " ")
+          .trim();
         // Append h2 content (the subject of the vote)
         if (h2Text.length < 200 && h2Text.length > 0) {
           title = `${h1Text} ${h2Text}`;
@@ -166,8 +184,21 @@ function parseScrutinMetadata(html: string, session: number, number: string): Sc
       const year = parseInt(dateMatch[3]);
 
       const months: Record<string, number> = {
-        janvier: 0, février: 1, fevrier: 1, mars: 2, avril: 3, mai: 4, juin: 5,
-        juillet: 6, août: 7, aout: 7, septembre: 8, octobre: 9, novembre: 10, décembre: 11, decembre: 11
+        janvier: 0,
+        février: 1,
+        fevrier: 1,
+        mars: 2,
+        avril: 3,
+        mai: 4,
+        juin: 5,
+        juillet: 6,
+        août: 7,
+        aout: 7,
+        septembre: 8,
+        octobre: 9,
+        novembre: 10,
+        décembre: 11,
+        decembre: 11,
       };
 
       const month = months[monthName] ?? 0;
@@ -180,14 +211,16 @@ function parseScrutinMetadata(html: string, session: number, number: string): Sc
     // Abstention : 33
 
     // Pattern 1: <strong>N</strong> pour/contre
-    const forMatch = html.match(/<strong>\s*(\d+)\s*<\/strong>\s*pour/i) ||
-                     textContent.match(/(\d+)\s+pour(?!\s+part)/i);
-    const againstMatch = html.match(/<strong>\s*(\d+)\s*<\/strong>\s*contre/i) ||
-                         textContent.match(/(\d+)\s+contre/i);
+    const forMatch =
+      html.match(/<strong>\s*(\d+)\s*<\/strong>\s*pour/i) ||
+      textContent.match(/(\d+)\s+pour(?!\s+part)/i);
+    const againstMatch =
+      html.match(/<strong>\s*(\d+)\s*<\/strong>\s*contre/i) || textContent.match(/(\d+)\s+contre/i);
 
     // Pattern 2: Abstention : N (plain text)
-    const abstainMatch = textContent.match(/abstention[s]?\s*:?\s*(\d+)/i) ||
-                         html.match(/<strong>\s*(\d+)\s*<\/strong>\s*abstention/i);
+    const abstainMatch =
+      textContent.match(/abstention[s]?\s*:?\s*(\d+)/i) ||
+      html.match(/<strong>\s*(\d+)\s*<\/strong>\s*abstention/i);
 
     const votesFor = forMatch ? parseInt(forMatch[1]) : 0;
     const votesAgainst = againstMatch ? parseInt(againstMatch[1]) : 0;
@@ -331,7 +364,11 @@ function sessionToLegislature(session: number): number {
 /**
  * Main sync function
  */
-async function syncVotesSenat(session: number | null = null, dryRun: boolean = false, todayOnly: boolean = false) {
+async function syncVotesSenat(
+  session: number | null = null,
+  dryRun: boolean = false,
+  todayOnly: boolean = false
+) {
   const stats = {
     scrutinsProcessed: 0,
     scrutinsCreated: 0,
@@ -499,7 +536,9 @@ async function syncVotesSenat(session: number | null = null, dryRun: boolean = f
           // Rate limiting
           await sleep(RATE_LIMIT_MS);
         } catch (err) {
-          stats.errors.push(`Session ${currentSession} n°${number}: ${err instanceof Error ? err.message : String(err)}`);
+          stats.errors.push(
+            `Session ${currentSession} n°${number}: ${err instanceof Error ? err.message : String(err)}`
+          );
         }
       }
 
@@ -577,7 +616,12 @@ Features:
   },
 
   async sync(options): Promise<SyncResult> {
-    const { dryRun = false, session: sessionStr, all = false, today = false } = options as {
+    const {
+      dryRun = false,
+      session: sessionStr,
+      all = false,
+      today = false,
+    } = options as {
       dryRun?: boolean;
       session?: string;
       all?: boolean;

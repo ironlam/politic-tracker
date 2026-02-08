@@ -16,9 +16,21 @@ const adapter = new PrismaPg(pool);
 const db = new PrismaClient({ adapter });
 
 const MONTHS: Record<string, number> = {
-  janvier: 0, février: 1, fevrier: 1, mars: 2, avril: 3, mai: 4, juin: 5,
-  juillet: 6, août: 7, aout: 7, septembre: 8, octobre: 9, novembre: 10,
-  décembre: 11, decembre: 11
+  janvier: 0,
+  février: 1,
+  fevrier: 1,
+  mars: 2,
+  avril: 3,
+  mai: 4,
+  juin: 5,
+  juillet: 6,
+  août: 7,
+  aout: 7,
+  septembre: 8,
+  octobre: 9,
+  novembre: 10,
+  décembre: 11,
+  decembre: 11,
 };
 
 function parseDateFromTitle(title: string): Date | null {
@@ -46,7 +58,7 @@ async function main() {
   // Find all Sénat scrutins
   const scrutins = await db.scrutin.findMany({
     where: { chamber: "SENAT" },
-    select: { id: true, title: true, votingDate: true }
+    select: { id: true, title: true, votingDate: true },
   });
 
   console.log(`Found ${scrutins.length} Sénat scrutins`);
@@ -69,8 +81,8 @@ async function main() {
     }
 
     // Check if date needs fixing (compare dates ignoring time)
-    const storedDateStr = scrutin.votingDate?.toISOString().split('T')[0];
-    const parsedDateStr = parsedDate.toISOString().split('T')[0];
+    const storedDateStr = scrutin.votingDate?.toISOString().split("T")[0];
+    const parsedDateStr = parsedDate.toISOString().split("T")[0];
 
     if (storedDateStr === parsedDateStr) {
       alreadyCorrect++;
@@ -80,10 +92,12 @@ async function main() {
     // Update the date
     await db.scrutin.update({
       where: { id: scrutin.id },
-      data: { votingDate: parsedDate }
+      data: { votingDate: parsedDate },
     });
 
-    console.log(`  ✅ Fixed: ${scrutin.title.substring(0, 50)}... (${storedDateStr} → ${parsedDateStr})`);
+    console.log(
+      `  ✅ Fixed: ${scrutin.title.substring(0, 50)}... (${storedDateStr} → ${parsedDateStr})`
+    );
     fixed++;
   }
 

@@ -58,7 +58,8 @@ const verifiedAffairs: VerifiedAffair[] = [
     newSources: [
       {
         url: "https://www.franceinfo.fr/politique/front-national/affaire-des-assistants-fn-au-parlement-europeen/marine-le-pen-louis-aliot-julien-odoul-on-a-liste-les-25-condamnations-a-l-issue-du-proces-des-assistants-parlementaires-du-fn_7162527.html",
-        title: "On a listé les 25 condamnations à l'issue du procès des assistants parlementaires du FN",
+        title:
+          "On a listé les 25 condamnations à l'issue du procès des assistants parlementaires du FN",
         publisher: "France Info",
         publishedAt: new Date("2025-03-31"),
       },
@@ -84,7 +85,8 @@ const verifiedAffairs: VerifiedAffair[] = [
     newSources: [
       {
         url: "https://www.europe1.fr/police-justice/fraude-fiscale-lex-assistant-de-jean-marie-le-pen-condamne-deux-ans-de-prison-avec-sursis-243313",
-        title: "Fraude fiscale : l'ex-assistant de Jean-Marie Le Pen condamné à deux ans de prison avec sursis",
+        title:
+          "Fraude fiscale : l'ex-assistant de Jean-Marie Le Pen condamné à deux ans de prison avec sursis",
         publisher: "Europe 1",
         publishedAt: new Date("2025-01-21"),
       },
@@ -117,7 +119,8 @@ const verifiedAffairs: VerifiedAffair[] = [
     updates: {
       verdictDate: new Date("2024-12-10"),
       status: "CONDAMNATION_DEFINITIVE",
-      sentence: "1 an de prison avec sursis, 2 ans d'inéligibilité, 45 000€ de dommages et intérêts",
+      sentence:
+        "1 an de prison avec sursis, 2 ans d'inéligibilité, 45 000€ de dommages et intérêts",
       prisonMonths: 12,
       prisonSuspended: true,
       ineligibilityMonths: 24,
@@ -154,7 +157,8 @@ const verifiedAffairs: VerifiedAffair[] = [
     newSources: [
       {
         url: "https://www.franceinfo.fr/societe/affaire/les-affaires-sarkozy/affaire-bygmalion-nicolas-sarkozy-definitivement-condamne-pour-le-financement-illegal-de-sa-campagne-presidentielle-de-2012-apres-le-rejet-de-son-pourvoi-en-cassation_7638986.html",
-        title: "Affaire Bygmalion : Nicolas Sarkozy définitivement condamné après le rejet de son pourvoi en cassation",
+        title:
+          "Affaire Bygmalion : Nicolas Sarkozy définitivement condamné après le rejet de son pourvoi en cassation",
         publisher: "France Info",
         publishedAt: new Date("2025-11-26"),
       },
@@ -169,7 +173,8 @@ const verifiedAffairs: VerifiedAffair[] = [
     updates: {
       verdictDate: new Date("2019-01-16"),
       status: "CONDAMNATION_DEFINITIVE",
-      sentence: "2 ans de prison dont 1 ferme, 75 000€ d'amende, 5 ans interdiction fonction publique",
+      sentence:
+        "2 ans de prison dont 1 ferme, 75 000€ d'amende, 5 ans interdiction fonction publique",
       prisonMonths: 24,
       prisonSuspended: false, // 1 an ferme
       fineAmount: 75000,
@@ -180,7 +185,8 @@ const verifiedAffairs: VerifiedAffair[] = [
     newSources: [
       {
         url: "https://www.franceinfo.fr/politique/claude-gueant/affaire-gueant/claude-gueant-definitivement-condamne-a-un-an-de-prison-ferme-dans-l-affaire-des-primes-en-liquide-du-ministere-de-l-interieur_3147663.html",
-        title: "Claude Guéant définitivement condamné à un an de prison ferme dans l'affaire des primes en liquide",
+        title:
+          "Claude Guéant définitivement condamné à un an de prison ferme dans l'affaire des primes en liquide",
         publisher: "France Info",
         publishedAt: new Date("2019-01-16"),
       },
@@ -207,7 +213,8 @@ const verifiedAffairs: VerifiedAffair[] = [
     newSources: [
       {
         url: "https://www.franceinfo.fr/politique/affaire/affaire-balkany/blanchiment-de-fraude-fiscale-la-cour-de-cassation-confirme-la-culpabilite-des-epoux-balkany-mais-ordonne-un-nouveau-proces-pour-fixer-les-peines_4684347.html",
-        title: "Blanchiment de fraude fiscale : la Cour de cassation confirme la culpabilité des époux Balkany",
+        title:
+          "Blanchiment de fraude fiscale : la Cour de cassation confirme la culpabilité des époux Balkany",
         publisher: "France Info",
         publishedAt: new Date("2024-05-15"),
       },
@@ -231,7 +238,8 @@ const verifiedAffairs: VerifiedAffair[] = [
       verifiedAt: new Date(),
       verifiedBy: "verification-session-2026-02-03",
     },
-    notes: "Emploi de personnel municipal pour résidence privée (Moulin de Cossy à Giverny) - confirmé en appel 1997",
+    notes:
+      "Emploi de personnel municipal pour résidence privée (Moulin de Cossy à Giverny) - confirmé en appel 1997",
   },
 
   // === MARC JOULAUD ===
@@ -282,7 +290,8 @@ const verifiedAffairs: VerifiedAffair[] = [
         publishedAt: new Date("2025-12-16"),
       },
     ],
-    notes: "Propos tenus lors de la campagne présidentielle 2022 accusant la Cimade d'organiser l'immigration clandestine",
+    notes:
+      "Propos tenus lors de la campagne présidentielle 2022 accusant la Cimade d'organiser l'immigration clandestine",
   },
 
   // === SYLVIE ANDRIEUX ===
@@ -304,7 +313,8 @@ const verifiedAffairs: VerifiedAffair[] = [
     newSources: [
       {
         url: "https://www.francebleu.fr/infos/faits-divers-justice/la-deputee-socialiste-sylvie-andrieux-definitivement-condamnee-pour-detournement-de-fonds-publics-1478711566",
-        title: "La députée PS Sylvie Andrieux définitivement condamnée pour détournement de fonds publics",
+        title:
+          "La députée PS Sylvie Andrieux définitivement condamnée pour détournement de fonds publics",
         publisher: "France Bleu",
         publishedAt: new Date("2016-11-09"),
       },
@@ -319,7 +329,8 @@ const verifiedAffairs: VerifiedAffair[] = [
     updates: {
       verdictDate: new Date("1997-10-27"),
       status: "CONDAMNATION_DEFINITIVE",
-      sentence: "5 ans de prison dont 1 avec sursis, 400 000 francs d'amende, 5 ans d'inéligibilité",
+      sentence:
+        "5 ans de prison dont 1 avec sursis, 400 000 francs d'amende, 5 ans d'inéligibilité",
       prisonMonths: 60,
       prisonSuspended: false, // 4 ans ferme
       fineAmount: 60980, // ~400 000 francs
@@ -431,7 +442,8 @@ const verifiedAffairs: VerifiedAffair[] = [
     newSources: [
       {
         url: "https://www.romeurope.org/communique-de-presse-mrap-05-03-2016-condamnation-definitive-du-multirecidiviste-jean-marie-le-pen-pour-injures-racistes-envers-les-roms/",
-        title: "Condamnation définitive du multirécidiviste Jean-Marie Le Pen pour injures racistes envers les Roms",
+        title:
+          "Condamnation définitive du multirécidiviste Jean-Marie Le Pen pour injures racistes envers les Roms",
         publisher: "MRAP / Romeurope",
         publishedAt: new Date("2016-03-05"),
       },
@@ -468,12 +480,14 @@ const verifiedAffairs: VerifiedAffair[] = [
     newSources: [
       {
         url: "https://www.franceinfo.fr/politique/front-national/le-porte-parole-du-rassemblement-national-laurent-jacobelli-condamne-a-300-euros-d-amende-avec-sursis-pour-outrage-et-diffamation_7468933.html",
-        title: "Le porte-parole du RN Laurent Jacobelli condamné à 300 euros d'amende avec sursis pour outrage et diffamation",
+        title:
+          "Le porte-parole du RN Laurent Jacobelli condamné à 300 euros d'amende avec sursis pour outrage et diffamation",
         publisher: "France Info",
         publishedAt: new Date("2025-09-02"),
       },
     ],
-    notes: "ATTENTION: L'avocat de Belhaddad a annoncé qu'il allait faire appel - donc PAS définitif",
+    notes:
+      "ATTENTION: L'avocat de Belhaddad a annoncé qu'il allait faire appel - donc PAS définitif",
   },
 ];
 
@@ -546,9 +560,7 @@ async function updateAffairs(dryRun: boolean = false) {
         if (affair.newSources && affair.newSources.length > 0) {
           for (const source of affair.newSources) {
             // Vérifier si la source existe déjà
-            const existingSource = existingAffair.sources.find(
-              (s) => s.url === source.url
-            );
+            const existingSource = existingAffair.sources.find((s) => s.url === source.url);
             if (!existingSource) {
               await prisma.source.create({
                 data: {

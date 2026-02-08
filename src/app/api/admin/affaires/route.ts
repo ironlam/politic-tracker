@@ -65,17 +65,11 @@ export async function POST(request: NextRequest) {
 
     // Validation
     if (!data.politicianId || !data.title || !data.description) {
-      return NextResponse.json(
-        { error: "Champs requis manquants" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Champs requis manquants" }, { status: 400 });
     }
 
     if (!data.sources || data.sources.length === 0) {
-      return NextResponse.json(
-        { error: "Au moins une source est requise" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Au moins une source est requise" }, { status: 400 });
     }
 
     // Check politician exists
@@ -84,14 +78,11 @@ export async function POST(request: NextRequest) {
     });
 
     if (!politician) {
-      return NextResponse.json(
-        { error: "Politique non trouvé" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Politique non trouvé" }, { status: 404 });
     }
 
     // Generate unique slug
-    let baseSlug = generateSlug(data.title);
+    const baseSlug = generateSlug(data.title);
     let slug = baseSlug;
     let counter = 1;
 
@@ -154,9 +145,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(affair, { status: 201 });
   } catch (error) {
     console.error("Error creating affair:", error);
-    return NextResponse.json(
-      { error: "Erreur lors de la création" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Erreur lors de la création" }, { status: 500 });
   }
 }

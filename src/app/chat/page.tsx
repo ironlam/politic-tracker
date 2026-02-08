@@ -9,8 +9,7 @@ export const metadata: Metadata = {
     "Posez vos questions sur les représentants politiques français, les votes parlementaires et les dossiers législatifs. Réponses basées sur des sources officielles.",
   openGraph: {
     title: "Assistant IA - Transparence Politique",
-    description:
-      "Posez vos questions sur la politique française. Réponses sourcées et factuelles.",
+    description: "Posez vos questions sur la politique française. Réponses sourcées et factuelles.",
   },
 };
 
@@ -25,8 +24,8 @@ export default function ChatPage() {
         </div>
         <h1 className="text-3xl font-bold mb-3">Assistant Transparence Politique</h1>
         <p className="text-muted-foreground max-w-2xl mx-auto">
-          Posez vos questions sur les représentants politiques français, leurs mandats,
-          les votes parlementaires ou les dossiers législatifs en cours.
+          Posez vos questions sur les représentants politiques français, leurs mandats, les votes
+          parlementaires ou les dossiers législatifs en cours.
         </p>
       </div>
 
@@ -74,20 +73,17 @@ export default function ChatPage() {
         </h3>
         <ul className="text-sm text-muted-foreground space-y-1">
           <li>
-            • Les réponses sont basées uniquement sur notre base de données de sources
-            officielles
+            • Les réponses sont basées uniquement sur notre base de données de sources officielles
           </li>
           <li>
             • Toute affaire judiciaire est accompagnée d&apos;un rappel de la présomption
             d&apos;innocence
           </li>
           <li>
-            • L&apos;assistant refuse de répondre s&apos;il n&apos;a pas l&apos;information
-            dans sa base
+            • L&apos;assistant refuse de répondre s&apos;il n&apos;a pas l&apos;information dans sa
+            base
           </li>
-          <li>
-            • Aucune opinion politique n&apos;est exprimée, uniquement des faits
-          </li>
+          <li>• Aucune opinion politique n&apos;est exprimée, uniquement des faits</li>
         </ul>
         <p className="text-xs text-muted-foreground mt-3">
           <a href="/sources" className="underline hover:text-foreground">

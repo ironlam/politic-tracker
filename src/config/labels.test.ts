@@ -30,7 +30,9 @@ describe("AFFAIR_STATUS_LABELS", () => {
 
     statuses.forEach((status) => {
       expect(AFFAIR_STATUS_LABELS).toHaveProperty(status);
-      expect(typeof AFFAIR_STATUS_LABELS[status as keyof typeof AFFAIR_STATUS_LABELS]).toBe("string");
+      expect(typeof AFFAIR_STATUS_LABELS[status as keyof typeof AFFAIR_STATUS_LABELS]).toBe(
+        "string"
+      );
     });
   });
 
@@ -43,7 +45,11 @@ describe("AFFAIR_STATUS_LABELS", () => {
   it("should have presumption flags for all statuses", () => {
     Object.keys(AFFAIR_STATUS_LABELS).forEach((status) => {
       expect(AFFAIR_STATUS_NEEDS_PRESUMPTION).toHaveProperty(status);
-      expect(typeof AFFAIR_STATUS_NEEDS_PRESUMPTION[status as keyof typeof AFFAIR_STATUS_NEEDS_PRESUMPTION]).toBe("boolean");
+      expect(
+        typeof AFFAIR_STATUS_NEEDS_PRESUMPTION[
+          status as keyof typeof AFFAIR_STATUS_NEEDS_PRESUMPTION
+        ]
+      ).toBe("boolean");
     });
   });
 });

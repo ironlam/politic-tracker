@@ -87,17 +87,11 @@ export async function PUT(request: NextRequest, context: RouteContext) {
 
     // Validation
     if (!data.politicianId || !data.title || !data.description) {
-      return NextResponse.json(
-        { error: "Champs requis manquants" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Champs requis manquants" }, { status: 400 });
     }
 
     if (!data.sources || data.sources.length === 0) {
-      return NextResponse.json(
-        { error: "Au moins une source est requise" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Au moins une source est requise" }, { status: 400 });
     }
 
     // Update affair
@@ -156,10 +150,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     return NextResponse.json(affair);
   } catch (error) {
     console.error("Error updating affair:", error);
-    return NextResponse.json(
-      { error: "Erreur lors de la mise à jour" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Erreur lors de la mise à jour" }, { status: 500 });
   }
 }
 
@@ -197,9 +188,6 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Error deleting affair:", error);
-    return NextResponse.json(
-      { error: "Erreur lors de la suppression" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Erreur lors de la suppression" }, { status: 500 });
   }
 }

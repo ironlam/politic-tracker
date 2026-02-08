@@ -122,9 +122,7 @@ export function MobileMapView({ departments }: MobileMapViewProps) {
         ))}
 
         {filteredAndSorted.length === 0 && (
-          <div className="p-8 text-center text-muted-foreground">
-            Aucun département trouvé
-          </div>
+          <div className="p-8 text-center text-muted-foreground">Aucun département trouvé</div>
         )}
       </div>
     </div>

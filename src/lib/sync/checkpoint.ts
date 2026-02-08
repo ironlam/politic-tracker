@@ -149,7 +149,9 @@ export class CheckpointManager {
     // Check if checkpoint is too old
     const age = Date.now() - last.lastProcessedAt.getTime();
     if (age > this.maxAgeMs) {
-      console.log(`Checkpoint is stale (${Math.round(age / 1000 / 60)} minutes old), starting fresh`);
+      console.log(
+        `Checkpoint is stale (${Math.round(age / 1000 / 60)} minutes old), starting fresh`
+      );
       return false;
     }
 

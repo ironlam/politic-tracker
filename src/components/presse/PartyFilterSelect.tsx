@@ -14,11 +14,7 @@ interface PartyFilterSelectProps {
   baseUrl: string;
 }
 
-export function PartyFilterSelect({
-  parties,
-  currentPartyId,
-  baseUrl,
-}: PartyFilterSelectProps) {
+export function PartyFilterSelect({ parties, currentPartyId, baseUrl }: PartyFilterSelectProps) {
   const router = useRouter();
 
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {

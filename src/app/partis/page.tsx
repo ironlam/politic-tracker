@@ -24,10 +24,7 @@ async function getParties() {
         select: { shortName: true, slug: true },
       },
     },
-    orderBy: [
-      { politicians: { _count: "desc" } },
-      { name: "asc" },
-    ],
+    orderBy: [{ politicians: { _count: "desc" } }, { name: "asc" }],
   });
 }
 
@@ -40,21 +37,19 @@ export default async function PartiesPage() {
   );
   // Historical = dissolved AND has some history (members, memberships, or affairs)
   const historicalParties = parties.filter(
-    (p) => p.dissolvedDate && (p._count.politicians > 0 || p._count.partyMemberships > 0 || p._count.affairsAtTime > 0)
+    (p) =>
+      p.dissolvedDate &&
+      (p._count.politicians > 0 || p._count.partyMemberships > 0 || p._count.affairsAtTime > 0)
   );
 
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-2">Partis politiques</h1>
-      <p className="text-muted-foreground mb-8">
-        {parties.length} partis référencés
-      </p>
+      <p className="text-muted-foreground mb-8">{parties.length} partis référencés</p>
 
       {/* Active parties */}
       <section className="mb-12">
-        <h2 className="text-xl font-semibold mb-4">
-          Partis actuels ({activeParties.length})
-        </h2>
+        <h2 className="text-xl font-semibold mb-4">Partis actuels ({activeParties.length})</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {activeParties.map((party) => (
             <Link key={party.id} href={`/partis/${party.slug}`}>

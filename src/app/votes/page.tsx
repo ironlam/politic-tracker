@@ -9,7 +9,8 @@ import type { VotingResult, Chamber } from "@/types";
 
 export const metadata: Metadata = {
   title: "Votes parlementaires",
-  description: "Suivez les votes de l'Assemblée nationale et du Sénat. Consultez les scrutins et découvrez comment votent vos représentants.",
+  description:
+    "Suivez les votes de l'Assemblée nationale et du Sénat. Consultez les scrutins et découvrez comment votent vos représentants.",
 };
 
 interface PageProps {
@@ -135,7 +136,8 @@ export default async function VotesPage({ searchParams }: PageProps) {
         <div>
           <h1 className="text-3xl font-bold mb-2">Votes parlementaires</h1>
           <p className="text-muted-foreground">
-            Consultez les scrutins de l&apos;Assemblée nationale et du Sénat. Découvrez comment votent vos représentants.
+            Consultez les scrutins de l&apos;Assemblée nationale et du Sénat. Découvrez comment
+            votent vos représentants.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -144,7 +146,12 @@ export default async function VotesPage({ searchParams }: PageProps) {
             className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-muted hover:bg-muted/80 text-sm font-medium transition-colors"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+              />
             </svg>
             Statistiques
           </Link>
@@ -200,9 +207,7 @@ export default async function VotesPage({ searchParams }: PageProps) {
           <Link
             href={buildUrl({ result: undefined })}
             className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${
-              !result
-                ? "bg-primary text-primary-foreground"
-                : "bg-muted hover:bg-muted/80"
+              !result ? "bg-primary text-primary-foreground" : "bg-muted hover:bg-muted/80"
             }`}
           >
             Tous
@@ -212,9 +217,7 @@ export default async function VotesPage({ searchParams }: PageProps) {
               key={r}
               href={buildUrl({ result: r })}
               className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${
-                result === r
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted hover:bg-muted/80"
+                result === r ? "bg-primary text-primary-foreground" : "bg-muted hover:bg-muted/80"
               }`}
             >
               {VOTING_RESULT_LABELS[r]}
@@ -228,9 +231,7 @@ export default async function VotesPage({ searchParams }: PageProps) {
             <Link
               href={buildUrl({ chamber: undefined })}
               className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${
-                !chamber
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted hover:bg-muted/80"
+                !chamber ? "bg-primary text-primary-foreground" : "bg-muted hover:bg-muted/80"
               }`}
             >
               Toutes
@@ -265,9 +266,7 @@ export default async function VotesPage({ searchParams }: PageProps) {
                 key={leg.legislature}
                 href={buildUrl({
                   legislature:
-                    legislature === leg.legislature
-                      ? undefined
-                      : String(leg.legislature),
+                    legislature === leg.legislature ? undefined : String(leg.legislature),
                 })}
                 className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${
                   legislature === leg.legislature
@@ -312,7 +311,10 @@ export default async function VotesPage({ searchParams }: PageProps) {
           {legislature && (
             <Badge variant="secondary" className="gap-1">
               {legislature}e législature
-              <Link href={buildUrl({ legislature: undefined })} className="ml-1 hover:text-destructive">
+              <Link
+                href={buildUrl({ legislature: undefined })}
+                className="ml-1 hover:text-destructive"
+              >
                 ×
               </Link>
             </Badge>
@@ -391,8 +393,8 @@ export default async function VotesPage({ searchParams }: PageProps) {
             className="text-primary hover:underline"
           >
             data.assemblee-nationale.fr
-          </a>
-          {" "}et{" "}
+          </a>{" "}
+          et{" "}
           <a
             href="https://www.senat.fr/scrutin-public/"
             target="_blank"
@@ -400,8 +402,8 @@ export default async function VotesPage({ searchParams }: PageProps) {
             className="text-primary hover:underline"
           >
             senat.fr
-          </a>
-          {" "}(Open Data officiel)
+          </a>{" "}
+          (Open Data officiel)
         </p>
       </div>
     </div>

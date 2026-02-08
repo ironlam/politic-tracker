@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 
 export const metadata: Metadata = {
   title: "Soutenez Transparence Politique",
-  description: "Aidez-nous à maintenir et développer cette plateforme citoyenne d'information politique",
+  description:
+    "Aidez-nous à maintenir et développer cette plateforme citoyenne d'information politique",
 };
 
 const EXPENSES = [
@@ -61,8 +62,8 @@ export default function SoutenirPage() {
       <div className="mb-12 text-center">
         <h1 className="text-3xl font-bold mb-4">Soutenez Transparence Politique</h1>
         <p className="text-lg text-muted-foreground">
-          Un projet citoyen indépendant qui a besoin de votre soutien pour continuer
-          à informer sur la vie politique française.
+          Un projet citoyen indépendant qui a besoin de votre soutien pour continuer à informer sur
+          la vie politique française.
         </p>
       </div>
 
@@ -71,7 +72,8 @@ export default function SoutenirPage() {
         <CardContent className="pt-6 text-center">
           <h2 className="text-2xl font-bold mb-4">Faites un don</h2>
           <p className="text-muted-foreground mb-6">
-            Chaque contribution, même modeste, nous aide à maintenir ce service gratuit et sans publicité.
+            Chaque contribution, même modeste, nous aide à maintenir ce service gratuit et sans
+            publicité.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             {DONATION_PLATFORMS.map((platform) => (
@@ -82,20 +84,14 @@ export default function SoutenirPage() {
                 variant={platform.primary ? "default" : "outline"}
                 className="text-base"
               >
-                <a
-                  href={platform.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
+                <a href={platform.url} target="_blank" rel="noopener noreferrer">
                   Soutenir sur {platform.name}
                   <span className="sr-only"> (ouvre un nouvel onglet)</span>
                 </a>
               </Button>
             ))}
           </div>
-          <p className="text-sm text-muted-foreground mt-4">
-            {DONATION_PLATFORMS[0].description}
-          </p>
+          <p className="text-sm text-muted-foreground mt-4">{DONATION_PLATFORMS[0].description}</p>
         </CardContent>
       </Card>
 
@@ -105,18 +101,18 @@ export default function SoutenirPage() {
         <Card>
           <CardContent className="pt-6 prose prose-sm max-w-none">
             <p className="text-base leading-relaxed">
-              <strong>Transparence Politique</strong> est un projet 100% indépendant.
-              Nous ne recevons aucune subvention publique, aucun financement partisan,
-              et nous refusons la publicité pour garantir notre neutralité.
+              <strong>Transparence Politique</strong> est un projet 100% indépendant. Nous ne
+              recevons aucune subvention publique, aucun financement partisan, et nous refusons la
+              publicité pour garantir notre neutralité.
             </p>
             <p className="text-base leading-relaxed mt-4">
-              Notre mission : rendre accessible à tous les citoyens l&apos;information
-              sur leurs représentants politiques. Votes, mandats, déclarations de patrimoine,
-              affaires judiciaires... Tout est sourcé et vérifiable.
+              Notre mission : rendre accessible à tous les citoyens l&apos;information sur leurs
+              représentants politiques. Votes, mandats, déclarations de patrimoine, affaires
+              judiciaires... Tout est sourcé et vérifiable.
             </p>
             <p className="text-base leading-relaxed mt-4">
-              Vos dons nous permettent de couvrir les frais techniques et de développer
-              de nouvelles fonctionnalités pour mieux vous informer.
+              Vos dons nous permettent de couvrir les frais techniques et de développer de nouvelles
+              fonctionnalités pour mieux vous informer.
             </p>
           </CardContent>
         </Card>
@@ -127,10 +123,7 @@ export default function SoutenirPage() {
         <h2 className="text-2xl font-bold mb-6">Ce que vous financez</h2>
         <div className="grid gap-4 sm:grid-cols-2">
           {FEATURES_FUNDED.map((feature, index) => (
-            <div
-              key={index}
-              className="flex items-start gap-3 p-4 rounded-lg border bg-card"
-            >
+            <div key={index} className="flex items-start gap-3 p-4 rounded-lg border bg-card">
               <span className="text-green-600 mt-0.5">&#10003;</span>
               <span className="text-sm">{feature}</span>
             </div>
@@ -142,8 +135,8 @@ export default function SoutenirPage() {
       <section className="mb-12">
         <h2 className="text-2xl font-bold mb-6">Transparence des coûts</h2>
         <p className="text-muted-foreground mb-6">
-          Voici le détail de nos dépenses mensuelles. Nous nous engageons à une
-          gestion transparente de vos contributions.
+          Voici le détail de nos dépenses mensuelles. Nous nous engageons à une gestion transparente
+          de vos contributions.
         </p>
         <Card>
           <CardContent className="pt-6">
@@ -157,9 +150,7 @@ export default function SoutenirPage() {
                     <p className="font-medium">{expense.label}</p>
                     <p className="text-sm text-muted-foreground">{expense.description}</p>
                   </div>
-                  <span className="font-mono text-sm shrink-0 ml-4">
-                    {expense.amount}
-                  </span>
+                  <span className="font-mono text-sm shrink-0 ml-4">{expense.amount}</span>
                 </div>
               ))}
             </div>
@@ -181,8 +172,8 @@ export default function SoutenirPage() {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
-                Parlez de Transparence Politique autour de vous, sur les réseaux sociaux,
-                à vos proches. Plus nous sommes nombreux, plus notre voix porte.
+                Parlez de Transparence Politique autour de vous, sur les réseaux sociaux, à vos
+                proches. Plus nous sommes nombreux, plus notre voix porte.
               </p>
             </CardContent>
           </Card>
@@ -192,8 +183,8 @@ export default function SoutenirPage() {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
-                Le projet est open source. Développeurs, data scientists, designers :
-                vos contributions sont les bienvenues sur{" "}
+                Le projet est open source. Développeurs, data scientists, designers : vos
+                contributions sont les bienvenues sur{" "}
                 <a
                   href="https://github.com/ironlam/politic-tracker"
                   target="_blank"
@@ -213,8 +204,7 @@ export default function SoutenirPage() {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
-                Vous avez repéré une erreur, une donnée obsolète ? Contactez-nous
-                via les{" "}
+                Vous avez repéré une erreur, une donnée obsolète ? Contactez-nous via les{" "}
                 <Link href="/mentions-legales" className="text-blue-600 hover:underline">
                   mentions légales
                 </Link>
@@ -245,9 +235,8 @@ export default function SoutenirPage() {
           <CardContent className="pt-6 text-center">
             <h2 className="text-xl font-bold mb-2">Merci !</h2>
             <p className="text-muted-foreground">
-              Que vous choisissiez de nous soutenir financièrement ou autrement,
-              merci de croire en ce projet citoyen. Ensemble, rendons la politique
-              plus transparente.
+              Que vous choisissiez de nous soutenir financièrement ou autrement, merci de croire en
+              ce projet citoyen. Ensemble, rendons la politique plus transparente.
             </p>
           </CardContent>
         </Card>

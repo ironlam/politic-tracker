@@ -31,10 +31,7 @@ This script:
   },
 
   async showStats() {
-    const [deceasedStats, globalStats] = await Promise.all([
-      getDeceasedStats(),
-      getSyncStats(),
-    ]);
+    const [deceasedStats, globalStats] = await Promise.all([getDeceasedStats(), getSyncStats()]);
 
     console.log("\n" + "=".repeat(50));
     console.log("Deceased Stats");

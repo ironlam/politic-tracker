@@ -50,10 +50,7 @@ export async function GET(request: NextRequest) {
   const department = searchParams.get("department");
 
   if (!department) {
-    return NextResponse.json(
-      { error: "Le paramètre 'department' est requis" },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "Le paramètre 'department' est requis" }, { status: 400 });
   }
 
   try {
@@ -124,9 +121,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(result);
   } catch (error) {
     console.error("Error fetching deputies:", error);
-    return NextResponse.json(
-      { error: "Erreur lors de la recherche des députés" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Erreur lors de la recherche des députés" }, { status: 500 });
   }
 }

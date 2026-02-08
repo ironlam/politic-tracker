@@ -71,9 +71,7 @@ export default async function AdminAffairDetailPage({ params }: PageProps) {
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Catégorie</p>
-              <p className="font-medium">
-                {AFFAIR_CATEGORY_LABELS[affair.category]}
-              </p>
+              <p className="font-medium">{AFFAIR_CATEGORY_LABELS[affair.category]}</p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Statut</p>
@@ -89,8 +87,7 @@ export default async function AdminAffairDetailPage({ params }: PageProps) {
 
           {AFFAIR_STATUS_NEEDS_PRESUMPTION[affair.status] && (
             <div className="bg-amber-50 text-amber-800 p-3 rounded-md text-sm">
-              Cette affaire est en cours. La présomption d&apos;innocence
-              s&apos;applique.
+              Cette affaire est en cours. La présomption d&apos;innocence s&apos;applique.
             </div>
           )}
 
@@ -114,9 +111,7 @@ export default async function AdminAffairDetailPage({ params }: PageProps) {
               </dd>
             </div>
             <div>
-              <dt className="text-sm text-muted-foreground">
-                Date de révélation
-              </dt>
+              <dt className="text-sm text-muted-foreground">Date de révélation</dt>
               <dd className="font-medium">
                 {affair.startDate ? formatDate(affair.startDate) : "—"}
               </dd>
@@ -143,9 +138,7 @@ export default async function AdminAffairDetailPage({ params }: PageProps) {
                 <p className="font-medium">{affair.sentence}</p>
               </div>
             )}
-            {affair.appeal && (
-              <Badge variant="outline">Appel en cours</Badge>
-            )}
+            {affair.appeal && <Badge variant="outline">Appel en cours</Badge>}
           </CardContent>
         </Card>
       )}

@@ -1,11 +1,7 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
 
-export default async function AdminLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   // Check if user is authenticated (middleware handles redirect for protected routes)
   const cookieStore = await cookies();
   const session = cookieStore.get("admin_session");
@@ -28,37 +24,22 @@ export default async function AdminLayout({
                 Admin
               </Link>
               <nav className="flex gap-4 text-sm">
-                <Link
-                  href="/admin/affaires"
-                  className="hover:text-slate-300 transition-colors"
-                >
+                <Link href="/admin/affaires" className="hover:text-slate-300 transition-colors">
                   Affaires
                 </Link>
-                <Link
-                  href="/admin/politiques"
-                  className="hover:text-slate-300 transition-colors"
-                >
+                <Link href="/admin/politiques" className="hover:text-slate-300 transition-colors">
                   Politiques
                 </Link>
-                <Link
-                  href="/admin/partis"
-                  className="hover:text-slate-300 transition-colors"
-                >
+                <Link href="/admin/partis" className="hover:text-slate-300 transition-colors">
                   Partis
                 </Link>
-                <Link
-                  href="/admin/dossiers"
-                  className="hover:text-slate-300 transition-colors"
-                >
+                <Link href="/admin/dossiers" className="hover:text-slate-300 transition-colors">
                   Dossiers
                 </Link>
               </nav>
             </div>
             <div className="flex items-center gap-4">
-              <Link
-                href="/"
-                className="text-sm text-slate-300 hover:text-white"
-              >
+              <Link href="/" className="text-sm text-slate-300 hover:text-white">
                 Voir le site
               </Link>
               <LogoutButton />
@@ -76,10 +57,7 @@ export default async function AdminLayout({
 function LogoutButton() {
   return (
     <form action="/api/admin/logout" method="POST">
-      <button
-        type="submit"
-        className="text-sm text-slate-300 hover:text-white"
-      >
+      <button type="submit" className="text-sm text-slate-300 hover:text-white">
         Déconnexion
       </button>
     </form>

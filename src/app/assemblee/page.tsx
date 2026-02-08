@@ -29,11 +29,7 @@ interface PageProps {
 
 const ITEMS_PER_PAGE = 15;
 
-async function getDossiers(
-  status?: string,
-  category?: string,
-  page = 1
-) {
+async function getDossiers(status?: string, category?: string, page = 1) {
   const skip = (page - 1) * ITEMS_PER_PAGE;
 
   const where: Record<string, unknown> = {};
@@ -86,9 +82,7 @@ async function getCategoryCounts() {
   });
 
   return Object.fromEntries(
-    counts
-      .filter((c) => c.category)
-      .map((c) => [c.category!, c._count.category])
+    counts.filter((c) => c.category).map((c) => [c.category!, c._count.category])
   );
 }
 
@@ -104,12 +98,11 @@ export default async function AssembleePage({ searchParams }: PageProps) {
   const categoryFilter = params.category || "";
   const page = parseInt(params.page || "1", 10);
 
-  const [{ dossiers, total, totalPages }, statusCounts, categoryCounts] =
-    await Promise.all([
-      getDossiers(statusFilter, categoryFilter, page),
-      getStatusCounts(),
-      getCategoryCounts(),
-    ]);
+  const [{ dossiers, total, totalPages }, statusCounts, categoryCounts] = await Promise.all([
+    getDossiers(statusFilter, categoryFilter, page),
+    getStatusCounts(),
+    getCategoryCounts(),
+  ]);
 
   const totalDossiers = Object.values(statusCounts).reduce((a, b) => a + b, 0);
   const enCoursCount = statusCounts["EN_COURS"] || 0;
@@ -159,7 +152,11 @@ export default async function AssembleePage({ searchParams }: PageProps) {
           return (
             <Link
               key={status}
-              href={isActive ? buildUrl({ category: categoryFilter }) : buildUrl({ status, category: categoryFilter })}
+              href={
+                isActive
+                  ? buildUrl({ category: categoryFilter })
+                  : buildUrl({ status, category: categoryFilter })
+              }
             >
               <Card
                 className={`cursor-pointer transition-all hover:shadow-md ${
@@ -167,12 +164,8 @@ export default async function AssembleePage({ searchParams }: PageProps) {
                 }`}
               >
                 <CardContent className="p-4">
-                  <div className={`text-2xl font-bold ${colorClasses.split(" ")[1]}`}>
-                    {count}
-                  </div>
-                  <div className="text-sm font-medium">
-                    {DOSSIER_STATUS_LABELS[status]}
-                  </div>
+                  <div className={`text-2xl font-bold ${colorClasses.split(" ")[1]}`}>{count}</div>
+                  <div className="text-sm font-medium">{DOSSIER_STATUS_LABELS[status]}</div>
                 </CardContent>
               </Card>
             </Link>
@@ -311,11 +304,10 @@ export default async function AssembleePage({ searchParams }: PageProps) {
             À propos des données
           </h2>
           <p className="text-sm text-blue-800 dark:text-blue-200">
-            Les dossiers législatifs sont importés depuis le portail Open Data de
-            l&apos;Assemblée nationale (data.assemblee-nationale.fr). Cette page
-            présente une vue simplifiée pour faciliter la compréhension citoyenne.
-            Pour les détails complets, consultez directement le site de
-            l&apos;Assemblée.
+            Les dossiers législatifs sont importés depuis le portail Open Data de l&apos;Assemblée
+            nationale (data.assemblee-nationale.fr). Cette page présente une vue simplifiée pour
+            faciliter la compréhension citoyenne. Pour les détails complets, consultez directement
+            le site de l&apos;Assemblée.
           </p>
         </CardContent>
       </Card>

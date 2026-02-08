@@ -81,16 +81,15 @@ async function getArticles(params: {
 }
 
 async function getStats() {
-  const [totalArticles, bySource, totalMentions, totalPartyMentions] =
-    await Promise.all([
-      db.pressArticle.count(),
-      db.pressArticle.groupBy({
-        by: ["feedSource"],
-        _count: true,
-      }),
-      db.pressArticleMention.count(),
-      db.pressArticlePartyMention.count(),
-    ]);
+  const [totalArticles, bySource, totalMentions, totalPartyMentions] = await Promise.all([
+    db.pressArticle.count(),
+    db.pressArticle.groupBy({
+      by: ["feedSource"],
+      _count: true,
+    }),
+    db.pressArticleMention.count(),
+    db.pressArticlePartyMention.count(),
+  ]);
 
   return {
     totalArticles,
@@ -140,17 +139,14 @@ export default async function PressePage({ searchParams }: PageProps) {
   const partyId = params.party;
   const search = params.search;
 
-  const [{ articles, total, totalPages }, stats, partiesWithMentions] =
-    await Promise.all([
-      getArticles({ page, limit, source, partyId, search }),
-      getStats(),
-      getPartiesWithMentions(),
-    ]);
+  const [{ articles, total, totalPages }, stats, partiesWithMentions] = await Promise.all([
+    getArticles({ page, limit, source, partyId, search }),
+    getStats(),
+    getPartiesWithMentions(),
+  ]);
 
   // Get current party name for display
-  const currentParty = partyId
-    ? partiesWithMentions.find((p) => p.id === partyId)
-    : null;
+  const currentParty = partyId ? partiesWithMentions.find((p) => p.id === partyId) : null;
 
   // Build filter URL helper
   const buildUrl = (newParams: Record<string, string | undefined>) => {
@@ -182,8 +178,8 @@ export default async function PressePage({ searchParams }: PageProps) {
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Revue de presse</h1>
         <p className="text-muted-foreground">
-          Les derniers articles politiques du Monde, Politico et Mediapart
-          mentionnant les responsables politiques.
+          Les derniers articles politiques du Monde, Politico et Mediapart mentionnant les
+          responsables politiques.
         </p>
       </div>
 
@@ -194,21 +190,15 @@ export default async function PressePage({ searchParams }: PageProps) {
           <p className="text-sm text-muted-foreground">Articles</p>
         </div>
         <div className="bg-blue-50 rounded-lg p-4 text-center">
-          <p className="text-2xl font-bold text-blue-600">
-            {stats.totalMentions}
-          </p>
+          <p className="text-2xl font-bold text-blue-600">{stats.totalMentions}</p>
           <p className="text-sm text-muted-foreground">Politiciens cités</p>
         </div>
         <div className="bg-purple-50 rounded-lg p-4 text-center">
-          <p className="text-2xl font-bold text-purple-600">
-            {stats.totalPartyMentions}
-          </p>
+          <p className="text-2xl font-bold text-purple-600">{stats.totalPartyMentions}</p>
           <p className="text-sm text-muted-foreground">Partis cités</p>
         </div>
         <div className="bg-green-50 rounded-lg p-4 text-center">
-          <p className="text-2xl font-bold text-green-600">
-            {SOURCE_OPTIONS.length}
-          </p>
+          <p className="text-2xl font-bold text-green-600">{SOURCE_OPTIONS.length}</p>
           <p className="text-sm text-muted-foreground">Sources</p>
         </div>
       </div>
@@ -233,9 +223,7 @@ export default async function PressePage({ searchParams }: PageProps) {
           <Link
             href={buildUrl({ source: undefined })}
             className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${
-              !source
-                ? "bg-primary text-primary-foreground"
-                : "bg-muted hover:bg-muted/80"
+              !source ? "bg-primary text-primary-foreground" : "bg-muted hover:bg-muted/80"
             }`}
           >
             Toutes ({stats.totalArticles})
@@ -275,10 +263,7 @@ export default async function PressePage({ searchParams }: PageProps) {
           {search && (
             <Badge variant="secondary" className="gap-1">
               Recherche: {search}
-              <Link
-                href={buildUrl({ search: undefined })}
-                className="ml-1 hover:text-destructive"
-              >
+              <Link href={buildUrl({ search: undefined })} className="ml-1 hover:text-destructive">
                 ×
               </Link>
             </Badge>
@@ -286,10 +271,7 @@ export default async function PressePage({ searchParams }: PageProps) {
           {source && (
             <Badge variant="secondary" className="gap-1">
               {SOURCE_OPTIONS.find((s) => s.id === source)?.name || source}
-              <Link
-                href={buildUrl({ source: undefined })}
-                className="ml-1 hover:text-destructive"
-              >
+              <Link href={buildUrl({ source: undefined })} className="ml-1 hover:text-destructive">
                 ×
               </Link>
             </Badge>
@@ -304,18 +286,12 @@ export default async function PressePage({ searchParams }: PageProps) {
               }}
             >
               {currentParty.shortName}
-              <Link
-                href={buildUrl({ party: undefined })}
-                className="ml-1 hover:text-destructive"
-              >
+              <Link href={buildUrl({ party: undefined })} className="ml-1 hover:text-destructive">
                 ×
               </Link>
             </Badge>
           )}
-          <Link
-            href="/presse"
-            className="text-sm text-muted-foreground hover:text-foreground"
-          >
+          <Link href="/presse" className="text-sm text-muted-foreground hover:text-foreground">
             Effacer tout
           </Link>
         </div>
@@ -348,10 +324,7 @@ export default async function PressePage({ searchParams }: PageProps) {
         <div className="text-center py-12 text-muted-foreground">
           <p>Aucun article trouvé</p>
           {(source || partyId || search) && (
-            <Link
-              href="/presse"
-              className="text-primary hover:underline mt-2 inline-block"
-            >
+            <Link href="/presse" className="text-primary hover:underline mt-2 inline-block">
               Effacer les filtres
             </Link>
           )}
@@ -403,8 +376,8 @@ export default async function PressePage({ searchParams }: PageProps) {
             className="text-primary hover:underline"
           >
             Politico.eu
-          </a>
-          {" "}et{" "}
+          </a>{" "}
+          et{" "}
           <a
             href="https://www.mediapart.fr/articles/feed"
             target="_blank"

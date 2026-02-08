@@ -8,10 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import {
-  AFFAIR_STATUS_LABELS,
-  AFFAIR_CATEGORY_LABELS,
-} from "@/config/labels";
+import { AFFAIR_STATUS_LABELS, AFFAIR_CATEGORY_LABELS } from "@/config/labels";
 import type { AffairStatus, AffairCategory } from "@/types";
 
 interface Politician {
@@ -87,10 +84,7 @@ export function AffairForm({ politicians, initialData }: AffairFormProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  function updateField<K extends keyof AffairFormData>(
-    field: K,
-    value: AffairFormData[K]
-  ) {
+  function updateField<K extends keyof AffairFormData>(field: K, value: AffairFormData[K]) {
     setFormData((prev) => ({ ...prev, [field]: value }));
   }
 
@@ -148,9 +142,7 @@ export function AffairForm({ politicians, initialData }: AffairFormProps) {
     setLoading(true);
 
     try {
-      const url = isEditing
-        ? `/api/admin/affaires/${initialData.id}`
-        : "/api/admin/affaires";
+      const url = isEditing ? `/api/admin/affaires/${initialData.id}` : "/api/admin/affaires";
       const method = isEditing ? "PUT" : "POST";
 
       const response = await fetch(url, {
@@ -176,7 +168,9 @@ export function AffairForm({ politicians, initialData }: AffairFormProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {error && (
-        <div role="alert" aria-live="assertive" className="bg-red-50 text-red-700 p-4 rounded-md">{error}</div>
+        <div role="alert" aria-live="assertive" className="bg-red-50 text-red-700 p-4 rounded-md">
+          {error}
+        </div>
       )}
 
       <Card>
@@ -230,9 +224,7 @@ export function AffairForm({ politicians, initialData }: AffairFormProps) {
               <Select
                 id="category"
                 value={formData.category}
-                onChange={(e) =>
-                  updateField("category", e.target.value as AffairCategory)
-                }
+                onChange={(e) => updateField("category", e.target.value as AffairCategory)}
                 required
               >
                 {Object.entries(AFFAIR_CATEGORY_LABELS).map(([key, label]) => (
@@ -248,9 +240,7 @@ export function AffairForm({ politicians, initialData }: AffairFormProps) {
               <Select
                 id="status"
                 value={formData.status}
-                onChange={(e) =>
-                  updateField("status", e.target.value as AffairStatus)
-                }
+                onChange={(e) => updateField("status", e.target.value as AffairStatus)}
                 required
               >
                 {Object.entries(AFFAIR_STATUS_LABELS).map(([key, label]) => (
@@ -354,7 +344,8 @@ export function AffairForm({ politicians, initialData }: AffairFormProps) {
               placeholder="Ex: 2 ans de prison avec sursis, 5 ans d'inéligibilité"
             />
             <p className="text-xs text-muted-foreground mt-1">
-              Résumé textuel. Les champs détaillés ci-dessous sont prioritaires pour l&apos;affichage.
+              Résumé textuel. Les champs détaillés ci-dessous sont prioritaires pour
+              l&apos;affichage.
             </p>
           </div>
 
@@ -380,7 +371,9 @@ export function AffairForm({ politicians, initialData }: AffairFormProps) {
                 type="number"
                 min="0"
                 value={formData.prisonMonths || ""}
-                onChange={(e) => updateField("prisonMonths", e.target.value ? parseInt(e.target.value) : undefined)}
+                onChange={(e) =>
+                  updateField("prisonMonths", e.target.value ? parseInt(e.target.value) : undefined)
+                }
                 placeholder="0"
               />
             </div>
@@ -404,7 +397,9 @@ export function AffairForm({ politicians, initialData }: AffairFormProps) {
                 min="0"
                 step="100"
                 value={formData.fineAmount || ""}
-                onChange={(e) => updateField("fineAmount", e.target.value ? parseFloat(e.target.value) : undefined)}
+                onChange={(e) =>
+                  updateField("fineAmount", e.target.value ? parseFloat(e.target.value) : undefined)
+                }
                 placeholder="0"
               />
             </div>
@@ -416,7 +411,12 @@ export function AffairForm({ politicians, initialData }: AffairFormProps) {
                 type="number"
                 min="0"
                 value={formData.ineligibilityMonths || ""}
-                onChange={(e) => updateField("ineligibilityMonths", e.target.value ? parseInt(e.target.value) : undefined)}
+                onChange={(e) =>
+                  updateField(
+                    "ineligibilityMonths",
+                    e.target.value ? parseInt(e.target.value) : undefined
+                  )
+                }
                 placeholder="0"
               />
             </div>
@@ -428,7 +428,12 @@ export function AffairForm({ politicians, initialData }: AffairFormProps) {
                 type="number"
                 min="0"
                 value={formData.communityService || ""}
-                onChange={(e) => updateField("communityService", e.target.value ? parseInt(e.target.value) : undefined)}
+                onChange={(e) =>
+                  updateField(
+                    "communityService",
+                    e.target.value ? parseInt(e.target.value) : undefined
+                  )
+                }
                 placeholder="0"
               />
             </div>
@@ -496,9 +501,7 @@ export function AffairForm({ politicians, initialData }: AffairFormProps) {
                   <Label>Éditeur/Journal *</Label>
                   <Input
                     value={source.publisher}
-                    onChange={(e) =>
-                      updateSource(index, "publisher", e.target.value)
-                    }
+                    onChange={(e) => updateSource(index, "publisher", e.target.value)}
                     placeholder="Ex: Le Monde, Mediapart, AFP"
                     required
                   />
@@ -509,9 +512,7 @@ export function AffairForm({ politicians, initialData }: AffairFormProps) {
                   <Input
                     type="date"
                     value={source.publishedAt}
-                    onChange={(e) =>
-                      updateSource(index, "publishedAt", e.target.value)
-                    }
+                    onChange={(e) => updateSource(index, "publishedAt", e.target.value)}
                     required
                   />
                 </div>
@@ -537,17 +538,9 @@ export function AffairForm({ politicians, initialData }: AffairFormProps) {
 
       <div className="flex gap-4">
         <Button type="submit" disabled={loading}>
-          {loading
-            ? "Enregistrement..."
-            : isEditing
-            ? "Mettre à jour"
-            : "Créer l'affaire"}
+          {loading ? "Enregistrement..." : isEditing ? "Mettre à jour" : "Créer l'affaire"}
         </Button>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => router.push("/admin/affaires")}
-        >
+        <Button type="button" variant="outline" onClick={() => router.push("/admin/affaires")}>
           Annuler
         </Button>
       </div>

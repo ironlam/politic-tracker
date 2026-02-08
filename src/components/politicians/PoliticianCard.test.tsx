@@ -80,12 +80,7 @@ describe("PoliticianCard", () => {
       hasConviction: true,
       _count: { affairs: 2 },
     };
-    render(
-      <PoliticianCard
-        politician={politicianWithConviction}
-        showConvictionBadge
-      />
-    );
+    render(<PoliticianCard politician={politicianWithConviction} showConvictionBadge />);
     expect(screen.getByText("2 affaires")).toBeInTheDocument();
   });
 
@@ -95,12 +90,7 @@ describe("PoliticianCard", () => {
       hasConviction: true,
       _count: { affairs: 2 },
     };
-    render(
-      <PoliticianCard
-        politician={politicianWithConviction}
-        showConvictionBadge={false}
-      />
-    );
+    render(<PoliticianCard politician={politicianWithConviction} showConvictionBadge={false} />);
     expect(screen.queryByText("2 affaires")).not.toBeInTheDocument();
   });
 

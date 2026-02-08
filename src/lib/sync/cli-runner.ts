@@ -48,7 +48,9 @@ function parseArgs(args: string[], customOptions?: SyncHandler["options"]): Sync
       const [key, value] = arg.split("=", 2);
       const optDef = allOptions.find((o) => o.name === key || o.alias === key);
       if (optDef) {
-        const optName = optDef.name.replace(/^--/, "").replace(/-([a-z])/g, (_, c) => c.toUpperCase());
+        const optName = optDef.name
+          .replace(/^--/, "")
+          .replace(/-([a-z])/g, (_, c) => c.toUpperCase());
         if (optDef.type === "number") {
           options[optName] = parseInt(value, 10);
         } else {
@@ -61,7 +63,9 @@ function parseArgs(args: string[], customOptions?: SyncHandler["options"]): Sync
     // Handle boolean flags
     const optDef = allOptions.find((o) => o.name === arg || o.alias === arg);
     if (optDef && optDef.type === "boolean") {
-      const optName = optDef.name.replace(/^--/, "").replace(/-([a-z])/g, (_, c) => c.toUpperCase());
+      const optName = optDef.name
+        .replace(/^--/, "")
+        .replace(/-([a-z])/g, (_, c) => c.toUpperCase());
       options[optName] = true;
     }
   }

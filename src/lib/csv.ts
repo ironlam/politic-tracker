@@ -36,7 +36,9 @@ export function toCSV<T extends Record<string, unknown>>(
 
   // Data rows
   const rows = data.map((item) =>
-    columns.map((c) => escapeCSV(item[c.key] as string | number | boolean | null | undefined)).join(",")
+    columns
+      .map((c) => escapeCSV(item[c.key] as string | number | boolean | null | undefined))
+      .join(",")
   );
 
   return [header, ...rows].join("\n");

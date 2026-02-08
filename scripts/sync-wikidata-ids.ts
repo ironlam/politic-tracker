@@ -96,7 +96,11 @@ Features:
   },
 
   async sync(options): Promise<SyncResult> {
-    const { dryRun = false, limit, resume = false } = options as {
+    const {
+      dryRun = false,
+      limit,
+      resume = false,
+    } = options as {
       dryRun?: boolean;
       limit?: number;
       resume?: boolean;

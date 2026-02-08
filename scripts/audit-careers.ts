@@ -249,8 +249,7 @@ function exportToCsv(issues: Issue[]) {
   const rows = [
     "Severity,Type,PoliticianName,PoliticianId,Details",
     ...issues.map(
-      (i) =>
-        `${i.severity},"${i.politicianName}","${i.type}","${i.politicianId}","${i.details}"`
+      (i) => `${i.severity},"${i.politicianName}","${i.type}","${i.politicianId}","${i.details}"`
     ),
   ];
 

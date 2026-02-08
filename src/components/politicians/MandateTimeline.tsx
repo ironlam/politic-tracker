@@ -14,7 +14,13 @@ const MANDATE_CATEGORIES: Record<string, { label: string; icon: string; types: M
   executif: {
     label: "Exécutif national",
     icon: "🏛️",
-    types: ["PRESIDENT_REPUBLIQUE", "PREMIER_MINISTRE", "MINISTRE", "MINISTRE_DELEGUE", "SECRETAIRE_ETAT"],
+    types: [
+      "PRESIDENT_REPUBLIQUE",
+      "PREMIER_MINISTRE",
+      "MINISTRE",
+      "MINISTRE_DELEGUE",
+      "SECRETAIRE_ETAT",
+    ],
   },
   parlementaire: {
     label: "Parlementaire",
@@ -24,7 +30,15 @@ const MANDATE_CATEGORIES: Record<string, { label: string; icon: string; types: M
   local: {
     label: "Mandats locaux",
     icon: "🏘️",
-    types: ["PRESIDENT_REGION", "PRESIDENT_DEPARTEMENT", "MAIRE", "ADJOINT_MAIRE", "CONSEILLER_REGIONAL", "CONSEILLER_DEPARTEMENTAL", "CONSEILLER_MUNICIPAL"],
+    types: [
+      "PRESIDENT_REGION",
+      "PRESIDENT_DEPARTEMENT",
+      "MAIRE",
+      "ADJOINT_MAIRE",
+      "CONSEILLER_REGIONAL",
+      "CONSEILLER_DEPARTEMENTAL",
+      "CONSEILLER_MUNICIPAL",
+    ],
   },
 };
 
@@ -40,7 +54,9 @@ function formatDuration(startDate: Date, endDate?: Date | null): string {
   const end = endDate ? new Date(endDate) : new Date();
 
   const years = Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24 * 365));
-  const months = Math.floor(((end.getTime() - start.getTime()) % (1000 * 60 * 60 * 24 * 365)) / (1000 * 60 * 60 * 24 * 30));
+  const months = Math.floor(
+    ((end.getTime() - start.getTime()) % (1000 * 60 * 60 * 24 * 365)) / (1000 * 60 * 60 * 24 * 30)
+  );
 
   if (years === 0) {
     return months <= 1 ? "1 mois" : `${months} mois`;
@@ -67,12 +83,15 @@ export function MandateTimeline({ mandates, civility }: MandateTimelineProps) {
   }, 0);
 
   // Group past mandates by category
-  const pastByCategory = pastMandates.reduce((acc, m) => {
-    const cat = getMandateCategory(m.type);
-    if (!acc[cat]) acc[cat] = [];
-    acc[cat].push(m);
-    return acc;
-  }, {} as Record<string, SerializedMandate[]>);
+  const pastByCategory = pastMandates.reduce(
+    (acc, m) => {
+      const cat = getMandateCategory(m.type);
+      if (!acc[cat]) acc[cat] = [];
+      acc[cat].push(m);
+      return acc;
+    },
+    {} as Record<string, SerializedMandate[]>
+  );
 
   return (
     <div className="space-y-6">
@@ -82,7 +101,9 @@ export function MandateTimeline({ mandates, civility }: MandateTimelineProps) {
           {Math.round(totalYears)} ans de vie politique
         </Badge>
         <span>·</span>
-        <span>{mandates.length} mandat{mandates.length > 1 ? "s" : ""}</span>
+        <span>
+          {mandates.length} mandat{mandates.length > 1 ? "s" : ""}
+        </span>
       </div>
 
       {/* Current mandates */}
@@ -90,16 +111,14 @@ export function MandateTimeline({ mandates, civility }: MandateTimelineProps) {
         <div>
           <h3 className="text-sm font-semibold text-primary mb-3 flex items-center gap-2">
             <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-            Mandat{currentMandates.length > 1 ? "s" : ""} actuel{currentMandates.length > 1 ? "s" : ""}
+            Mandat{currentMandates.length > 1 ? "s" : ""} actuel
+            {currentMandates.length > 1 ? "s" : ""}
           </h3>
           <div className="space-y-3">
             {currentMandates.map((mandate) => {
               const displayRole = mandate.role ? feminizeRole(mandate.role, civility) : null;
               return (
-                <div
-                  key={mandate.id}
-                  className="relative pl-6 pb-3 border-l-2 border-primary"
-                >
+                <div key={mandate.id} className="relative pl-6 pb-3 border-l-2 border-primary">
                   <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-primary border-2 border-background" />
                   <div className="bg-primary/5 rounded-lg p-4">
                     <div className="flex items-start justify-between gap-2">
@@ -115,9 +134,11 @@ export function MandateTimeline({ mandates, civility }: MandateTimelineProps) {
                         {mandate.constituency && (
                           <p className="text-muted-foreground">{mandate.constituency}</p>
                         )}
-                        {mandate.title && mandate.title !== MANDATE_TYPE_LABELS[mandate.type] && !displayRole && (
-                          <p className="text-sm text-muted-foreground mt-1">{mandate.title}</p>
-                        )}
+                        {mandate.title &&
+                          mandate.title !== MANDATE_TYPE_LABELS[mandate.type] &&
+                          !displayRole && (
+                            <p className="text-sm text-muted-foreground mt-1">{mandate.title}</p>
+                          )}
                       </div>
                       <Badge variant="secondary" className="shrink-0">
                         Depuis {formatYear(mandate.startDate)}
@@ -147,9 +168,7 @@ export function MandateTimeline({ mandates, civility }: MandateTimelineProps) {
       {/* Past mandates by category */}
       {pastMandates.length > 0 && (
         <div>
-          <h3 className="text-sm font-semibold text-muted-foreground mb-3">
-            Mandats précédents
-          </h3>
+          <h3 className="text-sm font-semibold text-muted-foreground mb-3">Mandats précédents</h3>
           <div className="space-y-4">
             {Object.entries(MANDATE_CATEGORIES).map(([key, category]) => {
               const categoryMandates = pastByCategory[key];
@@ -163,7 +182,9 @@ export function MandateTimeline({ mandates, civility }: MandateTimelineProps) {
                   </p>
                   <div className="space-y-2">
                     {categoryMandates.map((mandate) => {
-                      const displayRole = mandate.role ? feminizeRole(mandate.role, civility) : null;
+                      const displayRole = mandate.role
+                        ? feminizeRole(mandate.role, civility)
+                        : null;
                       return (
                         <div
                           key={mandate.id}
@@ -207,9 +228,7 @@ export function MandateTimeline({ mandates, civility }: MandateTimelineProps) {
             {/* Other mandates not in categories */}
             {pastByCategory.other?.length > 0 && (
               <div>
-                <p className="text-xs font-medium text-muted-foreground mb-2">
-                  Autres mandats
-                </p>
+                <p className="text-xs font-medium text-muted-foreground mb-2">Autres mandats</p>
                 <div className="space-y-2">
                   {pastByCategory.other.map((mandate) => (
                     <div
@@ -238,9 +257,7 @@ export function MandateTimeline({ mandates, civility }: MandateTimelineProps) {
       )}
 
       {mandates.length === 0 && (
-        <p className="text-muted-foreground text-sm">
-          Aucun mandat enregistré
-        </p>
+        <p className="text-muted-foreground text-sm">Aucun mandat enregistré</p>
       )}
     </div>
   );

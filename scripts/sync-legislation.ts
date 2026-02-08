@@ -6,6 +6,7 @@
  *   npm run sync:legislation -- --leg=17  # Sync specific legislature
  *   npm run sync:legislation -- --stats   # Show current stats
  *   npm run sync:legislation -- --active  # Only sync active dossiers
+ *   npm run sync:legislation -- --today   # Only process dossiers modified today
  *
  * Data source: data.assemblee-nationale.fr (official Open Data)
  */
@@ -330,9 +331,10 @@ async function syncLegislation(
     dryRun?: boolean;
     limit?: number;
     activeOnly?: boolean;
+    todayOnly?: boolean;
   } = {}
 ) {
-  const { dryRun = false, limit, activeOnly = false } = options;
+  const { dryRun = false, limit, activeOnly = false, todayOnly = false } = options;
   const stats = {
     dossiersProcessed: 0,
     dossiersCreated: 0,
@@ -439,10 +441,20 @@ async function syncLegislation(
           continue;
         }
 
-        // Find dates
+        // Find dates (needed for todayOnly filter and filingDate/adoptionDate)
         const allDates = findAllDates(dp.actesLegislatifs?.acteLegislatif).sort(
           (a, b) => a.getTime() - b.getTime()
         );
+        // Filter by today: only process dossiers whose most recent date is today
+        if (todayOnly && allDates.length > 0) {
+          const today = new Date().toISOString().split("T")[0];
+          const mostRecent = allDates[allDates.length - 1].toISOString().split("T")[0];
+          if (mostRecent !== today) {
+            stats.dossiersSkipped++;
+            continue;
+          }
+        }
+
         const filingDate = allDates.length > 0 ? allDates[0] : null;
         const adoptionDate =
           status === "ADOPTE" && allDates.length > 0 ? allDates[allDates.length - 1] : null;
@@ -529,6 +541,11 @@ const handler: SyncHandler = {
       type: "boolean",
       description: "Only sync active (EN_COURS) dossiers",
     },
+    {
+      name: "--today",
+      type: "boolean",
+      description: "Only process dossiers modified today",
+    },
   ],
 
   showHelp() {
@@ -596,11 +613,12 @@ Features:
   },
 
   async sync(options): Promise<SyncResult> {
-    const { dryRun = false, limit, leg, active = false } = options as {
+    const { dryRun = false, limit, leg, active = false, today = false } = options as {
       dryRun?: boolean;
       limit?: number;
       leg?: string;
       active?: boolean;
+      today?: boolean;
     };
 
     const legislature = leg ? parseInt(leg, 10) : DEFAULT_LEGISLATURE;
@@ -615,11 +633,13 @@ Features:
 
     console.log(`Legislature: ${legislature}e`);
     if (active) console.log("Filter: Active dossiers only");
+    if (today) console.log("Filter: Dossiers modified today only");
 
     const result = await syncLegislation(legislature, {
       dryRun,
       limit,
       activeOnly: active,
+      todayOnly: today,
     });
 
     return {

@@ -4,6 +4,7 @@
  * Usage:
  *   npm run sync:votes-an              # Full sync (17th legislature)
  *   npm run sync:votes-an -- --leg=17  # Sync specific legislature
+ *   npm run sync:votes-an -- --today   # Only process today's scrutins
  *   npm run sync:votes-an -- --stats   # Show current stats
  *
  * Data source: data.assemblee-nationale.fr (official Open Data)
@@ -223,11 +224,12 @@ async function generateUniqueScrutinSlug(date: Date, title: string): Promise<str
 /**
  * Main sync function
  */
-async function syncVotesAN(legislature: number = LEGISLATURE, dryRun: boolean = false) {
+async function syncVotesAN(legislature: number = LEGISLATURE, dryRun: boolean = false, todayOnly: boolean = false) {
   const stats = {
     scrutinsProcessed: 0,
     scrutinsCreated: 0,
     scrutinsUpdated: 0,
+    scrutinsSkipped: 0,
     votesCreated: 0,
     errors: [] as string[],
     politiciansNotFound: new Set<string>(),
@@ -258,7 +260,7 @@ async function syncVotesAN(legislature: number = LEGISLATURE, dryRun: boolean = 
     // Step 3: List JSON files
     const jsonFiles = readdirSync(jsonDir).filter(f => f.endsWith(".json"));
     const total = jsonFiles.length;
-    console.log(`Found ${total} scrutins to process\n`);
+    console.log(`Found ${total} scrutins to process${todayOnly ? " (filtering for today only)" : ""}\n`);
 
     // Step 4: Build acteur map
     updateLine("Building acteur ID to politician map...");
@@ -279,6 +281,15 @@ async function syncVotesAN(legislature: number = LEGISLATURE, dryRun: boolean = 
         const content = readFileSync(filePath, "utf-8");
         const data: ANScrutin = JSON.parse(content);
         const s = data.scrutin;
+
+        // Filter by today's date if --today flag is set
+        if (todayOnly) {
+          const today = new Date().toISOString().split("T")[0];
+          if (s.dateScrutin !== today) {
+            stats.scrutinsSkipped++;
+            continue;
+          }
+        }
 
         const externalId = s.uid;
         const votingDate = new Date(s.dateScrutin);
@@ -404,6 +415,11 @@ const handler: SyncHandler = {
       type: "string",
       description: `Legislature number (default: ${LEGISLATURE})`,
     },
+    {
+      name: "--today",
+      type: "boolean",
+      description: "Only process scrutins from today's date",
+    },
   ],
 
   showHelp() {
@@ -448,9 +464,10 @@ Features:
   },
 
   async sync(options): Promise<SyncResult> {
-    const { dryRun = false, leg } = options as {
+    const { dryRun = false, leg, today = false } = options as {
       dryRun?: boolean;
       leg?: string;
+      today?: boolean;
     };
 
     const legislature = leg ? parseInt(leg, 10) : LEGISLATURE;
@@ -464,8 +481,9 @@ Features:
     }
 
     console.log(`Legislature: ${legislature}e`);
+    if (today) console.log("Filter: Today's scrutins only");
 
-    const result = await syncVotesAN(legislature, dryRun);
+    const result = await syncVotesAN(legislature, dryRun, today);
 
     return {
       success: result.errors.length === 0,
@@ -474,6 +492,7 @@ Features:
         processed: result.scrutinsProcessed,
         created: result.scrutinsCreated,
         updated: result.scrutinsUpdated,
+        skipped: result.scrutinsSkipped,
         votesCreated: result.votesCreated,
         politiciansNotFound: result.politiciansNotFound.size,
       },

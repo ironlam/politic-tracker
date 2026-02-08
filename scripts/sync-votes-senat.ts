@@ -5,6 +5,7 @@
  *   npm run sync:votes-senat              # Sync current session
  *   npm run sync:votes-senat -- --all     # Sync all sessions
  *   npm run sync:votes-senat -- --session=2024  # Specific session
+ *   npm run sync:votes-senat -- --today   # Only process today's scrutins
  *   npm run sync:votes-senat -- --stats   # Show current stats
  *
  * Data source: senat.fr (official Senate website)
@@ -330,7 +331,7 @@ function sessionToLegislature(session: number): number {
 /**
  * Main sync function
  */
-async function syncVotesSenat(session: number | null = null, dryRun: boolean = false) {
+async function syncVotesSenat(session: number | null = null, dryRun: boolean = false, todayOnly: boolean = false) {
   const stats = {
     scrutinsProcessed: 0,
     scrutinsCreated: 0,
@@ -388,6 +389,18 @@ async function syncVotesSenat(session: number | null = null, dryRun: boolean = f
           if (!metadata) {
             stats.scrutinsSkipped++;
             continue;
+          }
+
+          // Filter by today's date if --today flag is set
+          // Scrutins are in descending order, so we can break once we pass today
+          if (todayOnly) {
+            const today = new Date().toISOString().split("T")[0];
+            const scrutinDate = metadata.date.toISOString().split("T")[0];
+            if (scrutinDate < today) break;
+            if (scrutinDate !== today) {
+              stats.scrutinsSkipped++;
+              continue;
+            }
           }
 
           // Fetch votes JSON
@@ -514,6 +527,11 @@ const handler: SyncHandler = {
       type: "boolean",
       description: "Sync all sessions (2006-present)",
     },
+    {
+      name: "--today",
+      type: "boolean",
+      description: "Only process scrutins from today's date",
+    },
   ],
 
   showHelp() {
@@ -559,10 +577,11 @@ Features:
   },
 
   async sync(options): Promise<SyncResult> {
-    const { dryRun = false, session: sessionStr, all = false } = options as {
+    const { dryRun = false, session: sessionStr, all = false, today = false } = options as {
       dryRun?: boolean;
       session?: string;
       all?: boolean;
+      today?: boolean;
     };
 
     let session: number | null = DEFAULT_SESSION;
@@ -587,7 +606,9 @@ Features:
       console.log(`Session: ${session}`);
     }
 
-    const result = await syncVotesSenat(session, dryRun);
+    if (today) console.log("Filter: Today's scrutins only");
+
+    const result = await syncVotesSenat(session, dryRun, today);
 
     return {
       success: result.errors.length === 0,

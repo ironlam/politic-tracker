@@ -294,7 +294,12 @@ export default async function AffairesPage({ searchParams }: PageProps) {
                         >
                           {affair.politician.fullName}
                           {(affair.partyAtTime || affair.politician.currentParty) && (
-                            <span className="text-muted-foreground">
+                            <span
+                              className="text-muted-foreground"
+                              title={
+                                affair.partyAtTime?.name || affair.politician.currentParty?.name
+                              }
+                            >
                               {" "}
                               (
                               {affair.partyAtTime?.shortName ||

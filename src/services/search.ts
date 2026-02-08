@@ -31,6 +31,7 @@ export interface SearchResult {
   photoUrl: string | null;
   currentParty: {
     id: string;
+    name: string;
     shortName: string;
     color: string | null;
   } | null;
@@ -158,7 +159,7 @@ async function searchWithFTS(
       lastName: true,
       photoUrl: true,
       currentParty: {
-        select: { id: true, shortName: true, color: true },
+        select: { id: true, name: true, shortName: true, color: true },
       },
       mandates: {
         where: { isCurrent: true },
@@ -283,6 +284,7 @@ export async function searchPoliticians(
         currentParty: {
           select: {
             id: true,
+            name: true,
             shortName: true,
             color: true,
           },
@@ -405,7 +407,7 @@ export async function getAutocompleteSuggestions(
       lastName: true,
       photoUrl: true,
       currentParty: {
-        select: { id: true, shortName: true, color: true },
+        select: { id: true, name: true, shortName: true, color: true },
       },
       mandates: {
         where: { isCurrent: true },

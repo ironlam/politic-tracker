@@ -77,6 +77,7 @@ export function PoliticianCard({ politician, showConvictionBadge = false }: Poli
                   <Badge
                     variant="secondary"
                     className="font-medium transition-colors"
+                    title={politician.currentParty.name}
                     style={{
                       backgroundColor: politician.currentParty.color
                         ? `${politician.currentParty.color}15`

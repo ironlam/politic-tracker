@@ -432,6 +432,7 @@ export default async function PoliticianPage({ params }: PageProps) {
                               <Badge
                                 variant="outline"
                                 className="text-xs"
+                                title={affair.partyAtTime.name}
                                 style={{
                                   borderColor: affair.partyAtTime.color || undefined,
                                   color: affair.partyAtTime.color || undefined,

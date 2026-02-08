@@ -45,7 +45,7 @@ interface PoliticianStats {
   id: string;
   slug: string;
   fullName: string;
-  currentParty: { shortName: string | null; color: string | null } | null;
+  currentParty: { name: string; shortName: string | null; color: string | null } | null;
   _count: { affairs: number };
   condamnations: number;
 }
@@ -253,6 +253,7 @@ export function AffairsTab({
                       <Badge
                         variant="outline"
                         className="text-xs shrink-0"
+                        title={politician.currentParty.name}
                         style={{
                           borderColor: politician.currentParty.color || undefined,
                           color: politician.currentParty.color || undefined,

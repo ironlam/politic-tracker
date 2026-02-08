@@ -58,7 +58,9 @@ export function MapSidebar({ department, onClose }: MapSidebarProps) {
                 className="w-4 h-4 rounded-full"
                 style={{ backgroundColor: department.dominantParty.color || "#888" }}
               />
-              <span className="font-medium">{department.dominantParty.shortName}</span>
+              <span className="font-medium" title={department.dominantParty.name}>
+                {department.dominantParty.shortName}
+              </span>
               <span className="text-muted-foreground text-sm">
                 ({department.dominantParty.count} élu{department.dominantParty.count > 1 ? "s" : ""}
                 )
@@ -77,6 +79,7 @@ export function MapSidebar({ department, onClose }: MapSidebarProps) {
                   key={party.id}
                   variant="outline"
                   className="text-xs"
+                  title={party.name}
                   style={{
                     borderColor: party.color || undefined,
                     backgroundColor: party.color ? `${party.color}20` : undefined,

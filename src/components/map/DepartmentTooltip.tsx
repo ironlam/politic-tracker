@@ -44,7 +44,9 @@ export function DepartmentTooltip({ department, position }: DepartmentTooltipPro
               className="inline-block w-3 h-3 rounded-full"
               style={{ backgroundColor: department.dominantParty.color || "#888" }}
             />
-            <span className="font-medium">{department.dominantParty.shortName}</span>
+            <span className="font-medium" title={department.dominantParty.name}>
+              {department.dominantParty.shortName}
+            </span>
           </div>
         )}
       </div>

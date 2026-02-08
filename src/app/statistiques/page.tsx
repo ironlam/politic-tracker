@@ -144,7 +144,7 @@ async function getTopPoliticiansWithAffairs() {
       slug: true,
       fullName: true,
       currentParty: {
-        select: { shortName: true, color: true },
+        select: { name: true, shortName: true, color: true },
       },
       _count: { select: { affairs: true } },
       affairs: {
@@ -216,7 +216,7 @@ async function getTopPoliticiansMentioned() {
       id: true,
       slug: true,
       fullName: true,
-      currentParty: { select: { shortName: true, color: true } },
+      currentParty: { select: { name: true, shortName: true, color: true } },
     },
   });
 
@@ -236,7 +236,7 @@ async function getTopPoliticiansMentioned() {
     id: string;
     slug: string;
     fullName: string;
-    party: { shortName: string | null; color: string | null } | null;
+    party: { name: string; shortName: string | null; color: string | null } | null;
     mentionCount: number;
   }[];
 }

@@ -82,6 +82,7 @@ export default async function AdminPoliticianPage({ params }: PageProps) {
                   : undefined,
                 color: politician.currentParty.color || undefined,
               }}
+              title={politician.currentParty.name}
             >
               {politician.currentParty.shortName}
             </Badge>

@@ -112,7 +112,7 @@ export function MobileMapView({ departments }: MobileMapViewProps) {
                   <div
                     className="w-3 h-3 rounded-full"
                     style={{ backgroundColor: dept.dominantParty.color || "#888" }}
-                    title={dept.dominantParty.shortName}
+                    title={dept.dominantParty.name}
                   />
                 )}
               </div>

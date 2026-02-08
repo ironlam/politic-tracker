@@ -70,7 +70,7 @@ async function getPoliticianPreview(slug: string) {
       fullName: true,
       photoUrl: true,
       currentParty: {
-        select: { shortName: true, color: true },
+        select: { name: true, shortName: true, color: true },
       },
       mandates: {
         where: { isCurrent: true },

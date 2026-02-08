@@ -67,7 +67,7 @@ export default async function PartiesPage() {
                       <div className="min-w-0 flex-1">
                         <h3 className="font-semibold truncate">{party.name}</h3>
                         <div className="flex items-center gap-2 mt-1 flex-wrap">
-                          <Badge variant="outline" className="text-xs">
+                          <Badge variant="outline" className="text-xs" title={party.name}>
                             {party.shortName}
                           </Badge>
                           {party.politicalPosition && (
@@ -121,7 +121,7 @@ export default async function PartiesPage() {
                         <div className="min-w-0 flex-1">
                           <h3 className="font-medium truncate">{party.name}</h3>
                           <div className="flex items-center gap-2 mt-1">
-                            <Badge variant="outline" className="text-xs">
+                            <Badge variant="outline" className="text-xs" title={party.name}>
                               {party.shortName}
                             </Badge>
                             {party.dissolvedDate && (

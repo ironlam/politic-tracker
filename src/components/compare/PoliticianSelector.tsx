@@ -11,6 +11,7 @@ interface Politician {
   fullName: string;
   photoUrl: string | null;
   currentParty: {
+    name: string;
     shortName: string;
     color: string | null;
   } | null;
@@ -63,6 +64,7 @@ export function PoliticianSelector({
               fullName: string;
               photoUrl: string | null;
               party: string | null;
+              partyName: string | null;
               partyColor: string | null;
               mandate: string | null;
             }) => ({
@@ -70,7 +72,9 @@ export function PoliticianSelector({
               slug: p.slug,
               fullName: p.fullName,
               photoUrl: p.photoUrl,
-              currentParty: p.party ? { shortName: p.party, color: p.partyColor } : null,
+              currentParty: p.party
+                ? { name: p.partyName || p.party, shortName: p.party, color: p.partyColor }
+                : null,
               currentMandate: p.mandate,
             })
           );
@@ -139,6 +143,7 @@ export function PoliticianSelector({
             {selectedPolitician.currentParty && (
               <span
                 className="inline-block px-2 py-0.5 rounded text-xs font-medium text-white"
+                title={selectedPolitician.currentParty.name}
                 style={{ backgroundColor: selectedPolitician.currentParty.color || "#888" }}
               >
                 {selectedPolitician.currentParty.shortName}
@@ -210,7 +215,10 @@ export function PoliticianSelector({
               <div className="flex-1 min-w-0">
                 <p className="font-medium truncate">{politician.fullName}</p>
                 {politician.currentParty && (
-                  <span className="text-xs text-muted-foreground">
+                  <span
+                    className="text-xs text-muted-foreground"
+                    title={politician.currentParty.name}
+                  >
                     {politician.currentParty.shortName}
                   </span>
                 )}

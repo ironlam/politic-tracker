@@ -64,7 +64,7 @@ async function getArticles(params: {
         partyMentions: {
           include: {
             party: {
-              select: { slug: true, shortName: true, color: true },
+              select: { slug: true, name: true, shortName: true, color: true },
             },
           },
         },
@@ -114,6 +114,7 @@ async function getPartiesWithMentions() {
     },
     select: {
       id: true,
+      name: true,
       shortName: true,
       color: true,
       _count: {
@@ -280,6 +281,7 @@ export default async function PressePage({ searchParams }: PageProps) {
             <Badge
               variant="secondary"
               className="gap-1"
+              title={currentParty.name}
               style={{
                 borderColor: currentParty.color || undefined,
                 color: currentParty.color || undefined,

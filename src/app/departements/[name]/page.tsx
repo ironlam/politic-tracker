@@ -163,6 +163,7 @@ export default async function DepartmentPage({ params }: PageProps) {
                       <Badge
                         variant="secondary"
                         className="shrink-0 text-xs"
+                        title={deputy.currentParty.name}
                         style={{
                           backgroundColor: deputy.currentParty.color
                             ? `${deputy.currentParty.color}15`
@@ -217,6 +218,7 @@ export default async function DepartmentPage({ params }: PageProps) {
                       <Badge
                         variant="secondary"
                         className="shrink-0 text-xs"
+                        title={senator.currentParty.name}
                         style={{
                           backgroundColor: senator.currentParty.color
                             ? `${senator.currentParty.color}15`

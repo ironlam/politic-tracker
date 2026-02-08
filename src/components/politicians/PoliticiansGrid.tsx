@@ -123,6 +123,7 @@ export function PoliticiansGrid({
                   role="button"
                   tabIndex={0}
                   onKeyDown={(e) => e.key === "Enter" && navigateTo(buildUrl({ party: party.id }))}
+                  title={party.name}
                   style={{
                     backgroundColor:
                       partyFilter === party.id ? party.color || undefined : undefined,

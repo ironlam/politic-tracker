@@ -18,6 +18,7 @@ interface SearchResult {
   photoUrl: string | null;
   currentParty: {
     id: string;
+    name: string;
     shortName: string;
     color: string | null;
   } | null;
@@ -320,6 +321,7 @@ export function AdvancedSearchClient() {
                               <Badge
                                 variant="outline"
                                 className="mt-1"
+                                title={politician.currentParty.name}
                                 style={{
                                   borderColor: politician.currentParty.color || undefined,
                                   color: politician.currentParty.color || undefined,

@@ -41,7 +41,10 @@ export function MapLegend({ mode, departments, isDarkMode }: MapLegendProps) {
   }
 
   // Party mode - show dominant parties
-  const partyColors = new Map<string, { shortName: string; color: string; count: number }>();
+  const partyColors = new Map<
+    string,
+    { name: string; shortName: string; color: string; count: number }
+  >();
   let noDominantCount = 0;
 
   for (const dept of departments) {
@@ -52,6 +55,7 @@ export function MapLegend({ mode, departments, isDarkMode }: MapLegendProps) {
         existing.count++;
       } else {
         partyColors.set(key, {
+          name: dept.dominantParty.name,
           shortName: dept.dominantParty.shortName,
           color: dept.dominantParty.color || "#888888",
           count: 1,
@@ -72,7 +76,7 @@ export function MapLegend({ mode, departments, isDarkMode }: MapLegendProps) {
         {sortedParties.slice(0, 8).map((party) => (
           <div key={party.shortName} className="flex items-center gap-1">
             <div className="w-3 h-3 rounded-full" style={{ backgroundColor: party.color }} />
-            <span className="text-xs">
+            <span className="text-xs" title={party.name}>
               {party.shortName} ({party.count})
             </span>
           </div>

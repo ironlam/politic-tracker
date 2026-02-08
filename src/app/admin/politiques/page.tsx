@@ -28,7 +28,7 @@ async function getPoliticians(search: string, page: number) {
         id: true,
         fullName: true,
         slug: true,
-        currentParty: { select: { shortName: true, color: true } },
+        currentParty: { select: { name: true, shortName: true, color: true } },
         _count: { select: { affairs: true } },
       },
       orderBy: { lastName: "asc" },
@@ -101,6 +101,7 @@ export default async function AdminPoliticiansPage({ searchParams }: PageProps) 
                       {politician.currentParty ? (
                         <Badge
                           variant="secondary"
+                          title={politician.currentParty.name}
                           style={{
                             backgroundColor: politician.currentParty.color
                               ? `${politician.currentParty.color}20`
@@ -111,7 +112,7 @@ export default async function AdminPoliticiansPage({ searchParams }: PageProps) 
                           {politician.currentParty.shortName}
                         </Badge>
                       ) : (
-                        <span className="text-muted-foreground">—</span>
+                        <span className="text-muted-foreground">&mdash;</span>
                       )}
                     </td>
                     <td className="py-3 pr-4 text-center">

@@ -21,6 +21,7 @@ interface Deputy {
   photoUrl: string | null;
   constituency: string | null;
   party: {
+    name: string;
     shortName: string;
     color: string | null;
   } | null;
@@ -236,6 +237,7 @@ export function PostalCodeSearch() {
                           <Badge
                             variant="secondary"
                             className="mt-2"
+                            title={deputy.party.name}
                             style={{
                               backgroundColor: deputy.party.color
                                 ? `${deputy.party.color}15`

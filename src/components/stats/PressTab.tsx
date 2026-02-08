@@ -15,7 +15,7 @@ interface PoliticianMention {
   id: string;
   slug: string;
   fullName: string;
-  party: { shortName: string | null; color: string | null } | null;
+  party: { name: string; shortName: string | null; color: string | null } | null;
   mentionCount: number;
 }
 
@@ -135,6 +135,7 @@ export function PressTab({ stats, topPoliticians, topParties }: PressTabProps) {
                         <Badge
                           variant="outline"
                           className="text-xs shrink-0"
+                          title={politician.party.name}
                           style={{
                             borderColor: politician.party.color || undefined,
                             color: politician.party.color || undefined,

@@ -19,6 +19,7 @@ interface PressCardProps {
   partyMentions: Array<{
     party: {
       slug: string | null;
+      name: string;
       shortName: string;
       color: string | null;
     };
@@ -133,6 +134,7 @@ export function PressCard({
                 <Badge
                   variant="outline"
                   className="text-xs hover:bg-muted"
+                  title={mention.party.name}
                   style={{
                     borderColor: mention.party.color || undefined,
                     color: mention.party.color || undefined,

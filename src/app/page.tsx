@@ -237,7 +237,10 @@ export default async function HomePage() {
                               <p className="text-sm text-muted-foreground">
                                 {affair.politician.fullName}
                                 {affair.politician.currentParty && (
-                                  <span className="text-primary">
+                                  <span
+                                    className="text-primary"
+                                    title={affair.politician.currentParty.name}
+                                  >
                                     {" "}
                                     ({affair.politician.currentParty.shortName})
                                   </span>

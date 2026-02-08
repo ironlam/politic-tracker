@@ -299,7 +299,10 @@ export default async function ScrutinPage({ params }: PageProps) {
                               {vote.politician.fullName}
                             </p>
                             {vote.politician.currentParty && (
-                              <p className="text-xs text-muted-foreground truncate">
+                              <p
+                                className="text-xs text-muted-foreground truncate"
+                                title={vote.politician.currentParty.name}
+                              >
                                 {vote.politician.currentParty.shortName}
                               </p>
                             )}

@@ -72,6 +72,7 @@ export async function GET(request: NextRequest) {
       include: {
         currentParty: {
           select: {
+            name: true,
             shortName: true,
             color: true,
           },
@@ -102,6 +103,7 @@ export async function GET(request: NextRequest) {
       constituency: deputy.mandates[0]?.constituency || null,
       party: deputy.currentParty
         ? {
+            name: deputy.currentParty.name,
             shortName: deputy.currentParty.shortName,
             color: deputy.currentParty.color,
           }

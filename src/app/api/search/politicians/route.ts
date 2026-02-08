@@ -51,6 +51,7 @@ export async function GET(request: NextRequest) {
       photoUrl: true,
       currentParty: {
         select: {
+          name: true,
           shortName: true,
           color: true,
         },
@@ -71,6 +72,7 @@ export async function GET(request: NextRequest) {
     slug: p.slug,
     photoUrl: p.photoUrl,
     party: p.currentParty?.shortName || null,
+    partyName: p.currentParty?.name || null,
     partyColor: p.currentParty?.color || null,
     mandate: p.mandates[0]?.type || null,
   }));

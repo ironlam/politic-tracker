@@ -59,6 +59,8 @@
     "sync:legislation:content:stats": "tsx scripts/sync-legislation-content.ts --stats",
     "generate:summaries": "tsx scripts/generate-summaries.ts",
     "generate:summaries:stats": "tsx scripts/generate-summaries.ts --stats",
+    "generate:scrutin-summaries": "tsx scripts/generate-scrutin-summaries.ts",
+    "generate:scrutin-summaries:stats": "tsx scripts/generate-scrutin-summaries.ts --stats",
     "index:embeddings": "tsx scripts/index-embeddings.ts",
     "index:embeddings:stats": "tsx scripts/index-embeddings.ts --stats",
     "migrate:slugs": "tsx scripts/migrate-slugs.ts",

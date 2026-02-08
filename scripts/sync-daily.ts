@@ -41,8 +41,12 @@ const steps: SyncStep[] = [
     command: `npx tsx scripts/sync-legislation-content.ts --limit=20${dryRunFlag}`,
   },
   {
-    name: "Résumés IA (limit 10)",
+    name: "Résumés IA dossiers (limit 10)",
     command: `npx tsx scripts/generate-summaries.ts --limit=10${dryRunFlag}`,
+  },
+  {
+    name: "Résumés IA scrutins (limit 20)",
+    command: `npx tsx scripts/generate-scrutin-summaries.ts --limit=20${dryRunFlag}`,
   },
 ];
 

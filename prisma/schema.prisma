@@ -502,6 +502,10 @@ model Scrutin {
   result        VotingResult  // ADOPTED, REJECTED
   sourceUrl     String?
 
+  // AI-generated summary
+  summary       String?      @db.Text
+  summaryDate   DateTime?
+
   // Relations
   votes         Vote[]
 

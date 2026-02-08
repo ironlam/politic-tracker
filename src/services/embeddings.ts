@@ -326,6 +326,10 @@ export async function indexScrutin(scrutinId: string): Promise<void> {
     parts.push(scrutin.description);
   }
 
+  if (scrutin.summary) {
+    parts.push(scrutin.summary);
+  }
+
   const content = parts.join(". ");
 
   await indexDocument({

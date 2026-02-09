@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { DashboardStats, ActivityTabs, QuickTools } from "@/components/home";
+import { DashboardStats, ActivityTabs, QuickTools, UpcomingElections } from "@/components/home";
 import { formatDate } from "@/lib/utils";
 import { WebSiteJsonLd } from "@/components/seo/JsonLd";
 import { Heart } from "lucide-react";
@@ -124,6 +124,18 @@ async function getRecentArticles() {
   }));
 }
 
+async function getUpcomingElections() {
+  const now = new Date();
+  return db.election.findMany({
+    where: {
+      status: { not: "COMPLETED" },
+      round1Date: { gte: now },
+    },
+    orderBy: { round1Date: "asc" },
+    take: 4,
+  });
+}
+
 async function getRecentAffairs() {
   return db.affair.findMany({
     take: 4,
@@ -140,13 +152,15 @@ async function getRecentAffairs() {
 }
 
 export default async function HomePage() {
-  const [stats, recentVotes, activeDossiers, recentArticles, recentAffairs] = await Promise.all([
-    getStats(),
-    getRecentVotes(),
-    getActiveDossiers(),
-    getRecentArticles(),
-    getRecentAffairs(),
-  ]);
+  const [stats, recentVotes, activeDossiers, recentArticles, recentAffairs, upcomingElections] =
+    await Promise.all([
+      getStats(),
+      getRecentVotes(),
+      getActiveDossiers(),
+      getRecentArticles(),
+      getRecentAffairs(),
+      getUpcomingElections(),
+    ]);
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://transparence-politique.fr";
 
@@ -200,6 +214,9 @@ export default async function HomePage() {
 
         {/* Quick Tools */}
         <QuickTools />
+
+        {/* Upcoming Elections */}
+        <UpcomingElections elections={upcomingElections} />
 
         {/* Recent Affairs */}
         {recentAffairs.length > 0 && (

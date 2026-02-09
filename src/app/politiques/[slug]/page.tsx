@@ -15,6 +15,8 @@ import {
   FACTCHECK_RATING_LABELS,
   FACTCHECK_RATING_COLORS,
   isDirectPoliticianClaim,
+  PARTY_ROLE_LABELS,
+  feminizePartyRole,
 } from "@/config/labels";
 import { PoliticianAvatar } from "@/components/politicians/PoliticianAvatar";
 import { MandateTimeline } from "@/components/politicians/MandateTimeline";
@@ -65,6 +67,17 @@ async function getPolitician(slug: string) {
         },
         orderBy: { factCheck: { publishedAt: "desc" } },
         take: 20,
+      },
+      partyHistory: {
+        where: {
+          role: { not: "MEMBER" },
+        },
+        include: {
+          party: {
+            select: { name: true, shortName: true, slug: true, color: true },
+          },
+        },
+        orderBy: { startDate: "desc" },
       },
     },
   });
@@ -251,27 +264,38 @@ export default async function PoliticianPage({ params }: PageProps) {
           />
           <div>
             <h1 className="text-3xl font-bold mb-2">{politician.fullName}</h1>
-            {politician.currentParty && (
-              <Link
-                href={
-                  politician.currentParty.slug
-                    ? `/partis/${politician.currentParty.slug}`
-                    : "/partis"
-                }
-              >
-                <Badge
-                  className="text-sm hover:opacity-80 transition-opacity cursor-pointer"
-                  style={{
-                    backgroundColor: politician.currentParty.color
-                      ? `${politician.currentParty.color}20`
-                      : undefined,
-                    color: politician.currentParty.color || undefined,
-                  }}
+            <div className="flex flex-wrap items-center gap-2">
+              {politician.currentParty && (
+                <Link
+                  href={
+                    politician.currentParty.slug
+                      ? `/partis/${politician.currentParty.slug}`
+                      : "/partis"
+                  }
                 >
-                  {politician.currentParty.name}
-                </Badge>
-              </Link>
-            )}
+                  <Badge
+                    className="text-sm hover:opacity-80 transition-opacity cursor-pointer"
+                    style={{
+                      backgroundColor: politician.currentParty.color
+                        ? `${politician.currentParty.color}20`
+                        : undefined,
+                      color: politician.currentParty.color || undefined,
+                    }}
+                  >
+                    {politician.currentParty.name}
+                  </Badge>
+                </Link>
+              )}
+              {politician.partyHistory
+                .filter((ph) => !ph.endDate)
+                .map((ph) => (
+                  <Badge key={ph.id} variant="outline" className="text-sm">
+                    {feminizePartyRole(PARTY_ROLE_LABELS[ph.role], politician.civility)}
+                    {ph.party.shortName !== politician.currentParty?.shortName &&
+                      ` · ${ph.party.shortName}`}
+                  </Badge>
+                ))}
+            </div>
             {politician.birthDate && (
               <p className="text-muted-foreground mt-2">
                 {politician.civility === "Mme" ? "Née" : "Né"} le {formatDate(politician.birthDate)}

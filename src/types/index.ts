@@ -21,6 +21,7 @@ import type {
   VotingResult,
   Chamber,
   FactCheckRating,
+  PartyRole,
 } from "@/generated/prisma";
 
 // Re-export Prisma types
@@ -47,6 +48,7 @@ export type {
   VotingResult,
   Chamber,
   FactCheckRating,
+  PartyRole,
 };
 
 // Serialized types (with Decimal converted to number for client components)
@@ -81,6 +83,12 @@ export type PoliticianWithPartyAndCounts = Politician & {
     type: MandateType;
     title: string;
     constituency: string | null;
+  } | null;
+  // Significant party role (for display when no current mandate)
+  significantPartyRole?: {
+    role: PartyRole;
+    partyName: string;
+    partyShortName: string;
   } | null;
 };
 

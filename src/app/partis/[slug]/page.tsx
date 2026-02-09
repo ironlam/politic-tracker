@@ -5,7 +5,12 @@ import { db } from "@/lib/db";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/utils";
-import { POLITICAL_POSITION_LABELS, POLITICAL_POSITION_COLORS } from "@/config/labels";
+import {
+  POLITICAL_POSITION_LABELS,
+  POLITICAL_POSITION_COLORS,
+  PARTY_ROLE_LABELS,
+  feminizePartyRole,
+} from "@/config/labels";
 import { PoliticianAvatar } from "@/components/politicians/PoliticianAvatar";
 import { OrganizationJsonLd, BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 
@@ -118,6 +123,19 @@ async function getPartyLeadership(partyName: string) {
   });
 }
 
+async function getPartyRoles(partyId: string) {
+  return db.partyMembership.findMany({
+    where: {
+      partyId,
+      role: { not: "MEMBER" },
+    },
+    include: {
+      politician: true,
+    },
+    orderBy: { startDate: "desc" },
+  });
+}
+
 export default async function PartyPage({ params }: PageProps) {
   const { slug } = await params;
   const party = await getParty(slug);
@@ -126,9 +144,18 @@ export default async function PartyPage({ params }: PageProps) {
     notFound();
   }
 
-  const leadershipMandates = await getPartyLeadership(party.name);
+  const [leadershipMandates, partyRoles] = await Promise.all([
+    getPartyLeadership(party.name),
+    getPartyRoles(party.id),
+  ]);
   const currentLeaders = leadershipMandates.filter((m) => m.isCurrent);
   const pastLeaders = leadershipMandates.filter((m) => !m.isCurrent);
+
+  // Group party roles by type (current = no endDate)
+  const currentRoles = partyRoles.filter((r) => !r.endDate);
+  // Deduplicate: exclude leaders already shown in currentLeaders
+  const currentLeaderIds = new Set(currentLeaders.map((m) => m.politician.id));
+  const filteredCurrentRoles = currentRoles.filter((r) => !currentLeaderIds.has(r.politician.id));
 
   // Get all politicians who were ever in this party (current + historical)
   const currentMemberIds = new Set(party.politicians.map((p) => p.id));
@@ -223,8 +250,8 @@ export default async function PartyPage({ params }: PageProps) {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main content */}
           <div className="lg:col-span-2 space-y-8">
-            {/* Party leadership */}
-            {leadershipMandates.length > 0 && (
+            {/* Party leadership & roles */}
+            {(leadershipMandates.length > 0 || currentRoles.length > 0) && (
               <Card>
                 <CardHeader>
                   <CardTitle>Direction</CardTitle>
@@ -261,6 +288,40 @@ export default async function PartyPage({ params }: PageProps) {
                       </div>
                     </div>
                   )}
+                  {/* Significant party roles (founders, spokespersons, etc.) */}
+                  {filteredCurrentRoles.length > 0 && (
+                    <div className="mb-4">
+                      <p className="text-xs font-medium text-muted-foreground mb-3">
+                        Figures du parti
+                      </p>
+                      <div className="space-y-2">
+                        {filteredCurrentRoles.map((membership) => (
+                          <Link
+                            key={membership.id}
+                            href={`/politiques/${membership.politician.slug}`}
+                            className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted transition-colors"
+                          >
+                            <PoliticianAvatar
+                              photoUrl={membership.politician.photoUrl}
+                              firstName={membership.politician.firstName}
+                              lastName={membership.politician.lastName}
+                              size="sm"
+                            />
+                            <div className="min-w-0 flex-1">
+                              <p className="font-medium">{membership.politician.fullName}</p>
+                              <Badge variant="outline" className="text-xs mt-0.5">
+                                {feminizePartyRole(
+                                  PARTY_ROLE_LABELS[membership.role],
+                                  membership.politician.civility
+                                )}
+                              </Badge>
+                            </div>
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   {pastLeaders.length > 0 && (
                     <div>
                       <p className="text-xs font-medium text-muted-foreground mb-2">

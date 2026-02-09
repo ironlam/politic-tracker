@@ -33,6 +33,7 @@ export const WD_PROPS = {
   POLITICAL_PARTY: "P102",
   PARLIAMENTARY_GROUP: "P4100",
   CHAIRPERSON: "P488",
+  FOUNDED_BY: "P112",
 
   // Qualifiers
   START_TIME: "P580",

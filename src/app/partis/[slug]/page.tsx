@@ -105,6 +105,19 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
+async function getPartyLeadership(partyName: string) {
+  return db.mandate.findMany({
+    where: {
+      type: "PRESIDENT_PARTI",
+      institution: partyName,
+    },
+    include: {
+      politician: true,
+    },
+    orderBy: { startDate: "desc" },
+  });
+}
+
 export default async function PartyPage({ params }: PageProps) {
   const { slug } = await params;
   const party = await getParty(slug);
@@ -112,6 +125,10 @@ export default async function PartyPage({ params }: PageProps) {
   if (!party) {
     notFound();
   }
+
+  const leadershipMandates = await getPartyLeadership(party.name);
+  const currentLeaders = leadershipMandates.filter((m) => m.isCurrent);
+  const pastLeaders = leadershipMandates.filter((m) => !m.isCurrent);
 
   // Get all politicians who were ever in this party (current + historical)
   const currentMemberIds = new Set(party.politicians.map((p) => p.id));
@@ -206,6 +223,81 @@ export default async function PartyPage({ params }: PageProps) {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main content */}
           <div className="lg:col-span-2 space-y-8">
+            {/* Party leadership */}
+            {leadershipMandates.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Direction</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {currentLeaders.length > 0 && (
+                    <div className="mb-4">
+                      <p className="text-xs font-medium text-muted-foreground mb-3 flex items-center gap-1">
+                        <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                        En fonction
+                      </p>
+                      <div className="space-y-3">
+                        {currentLeaders.map((mandate) => (
+                          <Link
+                            key={mandate.id}
+                            href={`/politiques/${mandate.politician.slug}`}
+                            className="flex items-center gap-3 p-3 rounded-lg bg-primary/5 hover:bg-primary/10 transition-colors"
+                          >
+                            <PoliticianAvatar
+                              photoUrl={mandate.politician.photoUrl}
+                              firstName={mandate.politician.firstName}
+                              lastName={mandate.politician.lastName}
+                              size="sm"
+                            />
+                            <div className="min-w-0 flex-1">
+                              <p className="font-semibold">{mandate.politician.fullName}</p>
+                              <p className="text-sm text-muted-foreground">{mandate.title}</p>
+                            </div>
+                            <Badge variant="secondary" className="shrink-0">
+                              Depuis {mandate.startDate.getFullYear()}
+                            </Badge>
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {pastLeaders.length > 0 && (
+                    <div>
+                      <p className="text-xs font-medium text-muted-foreground mb-2">
+                        Anciens dirigeants
+                      </p>
+                      <div className="space-y-2">
+                        {pastLeaders.map((mandate) => (
+                          <Link
+                            key={mandate.id}
+                            href={`/politiques/${mandate.politician.slug}`}
+                            className="flex items-center justify-between p-2 rounded-lg hover:bg-muted transition-colors"
+                          >
+                            <div className="flex items-center gap-3">
+                              <PoliticianAvatar
+                                photoUrl={mandate.politician.photoUrl}
+                                firstName={mandate.politician.firstName}
+                                lastName={mandate.politician.lastName}
+                                size="sm"
+                              />
+                              <div>
+                                <span className="font-medium">{mandate.politician.fullName}</span>
+                                <p className="text-xs text-muted-foreground">{mandate.title}</p>
+                              </div>
+                            </div>
+                            <span className="text-xs text-muted-foreground">
+                              {mandate.startDate.getFullYear()}
+                              {mandate.endDate && ` - ${mandate.endDate.getFullYear()}`}
+                            </span>
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
             {/* Current members */}
             <Card>
               <CardHeader>

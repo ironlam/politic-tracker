@@ -17,6 +17,7 @@ export const MANDATE_TYPE_COLORS: Record<MandateType, string> = {
   CONSEILLER_REGIONAL: "#84cc16", // Lime-500
   CONSEILLER_DEPARTEMENTAL: "#a3e635", // Lime-400
   CONSEILLER_MUNICIPAL: "#bef264", // Lime-300
+  PRESIDENT_PARTI: "#ec4899", // Pink-500
   OTHER: "#9ca3af", // Gray-400
 };
 
@@ -36,6 +37,8 @@ export const MANDATE_CATEGORY_ORDER: MandateType[][] = [
     "CONSEILLER_DEPARTEMENTAL",
     "CONSEILLER_MUNICIPAL",
   ],
+  // Parti (ligne 3)
+  ["PRESIDENT_PARTI"],
 ];
 
 export function getMandateRow(type: MandateType): number {
@@ -47,7 +50,7 @@ export function getMandateRow(type: MandateType): number {
   return MANDATE_CATEGORY_ORDER.length; // Other
 }
 
-export const MANDATE_ROW_LABELS = ["Exécutif", "Parlement", "Local", "Autre"];
+export const MANDATE_ROW_LABELS = ["Exécutif", "Parlement", "Local", "Parti", "Autre"];
 
 // Couleurs pour les marqueurs d'affaires selon le statut
 export const AFFAIR_STATUS_MARKER_COLORS: Record<AffairStatus, string> = {

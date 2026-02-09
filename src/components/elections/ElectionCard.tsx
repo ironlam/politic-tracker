@@ -9,6 +9,7 @@ import {
   ELECTION_SCOPE_LABELS,
   SUFFRAGE_TYPE_LABELS,
 } from "@/config/labels";
+import { AddToCalendar } from "./AddToCalendar";
 import type { ElectionType, ElectionStatus, ElectionScope, SuffrageType } from "@/types";
 
 interface ElectionCardProps {
@@ -115,6 +116,15 @@ export function ElectionCard({
               </svg>
               {totalSeats} sièges
             </span>
+          )}
+          {round1Date && (
+            <AddToCalendar
+              title={title}
+              round1Date={round1Date}
+              round2Date={round2Date}
+              slug={slug}
+              dateConfirmed={dateConfirmed}
+            />
           )}
         </div>
       </CardContent>

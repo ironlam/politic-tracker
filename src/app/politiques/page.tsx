@@ -42,6 +42,7 @@ const MANDATE_GROUPS: Record<string, MandateType[]> = {
   senateur: ["SENATEUR"],
   gouvernement: ["MINISTRE", "PREMIER_MINISTRE", "MINISTRE_DELEGUE", "SECRETAIRE_ETAT"],
   president_parti: ["PRESIDENT_PARTI"],
+  dirigeants: ["PRESIDENT_PARTI"], // Also includes significant party roles (handled separately)
 };
 
 // Sort configurations - using 'any' to handle complex Prisma orderBy types
@@ -64,51 +65,72 @@ async function getPoliticians(
   const limit = 24;
   const skip = (page - 1) * limit;
 
-  // Build where clause
-  const where: Record<string, unknown> = {};
+  // Build where clause using AND array for composability
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const conditions: any[] = [];
 
   if (search) {
-    where.OR = [
-      { fullName: { contains: search, mode: "insensitive" } },
-      { lastName: { contains: search, mode: "insensitive" } },
-      { firstName: { contains: search, mode: "insensitive" } },
-    ];
+    conditions.push({
+      OR: [
+        { fullName: { contains: search, mode: "insensitive" } },
+        { lastName: { contains: search, mode: "insensitive" } },
+        { firstName: { contains: search, mode: "insensitive" } },
+      ],
+    });
   }
 
   if (partyId) {
-    where.currentPartyId = partyId;
+    conditions.push({ currentPartyId: partyId });
   }
 
   if (withConviction) {
-    where.affairs = {
-      some: {
-        status: { in: CONVICTION_STATUSES },
+    conditions.push({
+      affairs: {
+        some: {
+          status: { in: CONVICTION_STATUSES },
+        },
       },
-    };
+    });
   }
 
   // Build mandate filter conditions
   // Note: mandate filter implies isCurrent: true (filtering by current role)
-  // Status filter: active = has any current mandate, former = no current mandate
-  if (mandateFilter && MANDATE_GROUPS[mandateFilter]) {
+  // Status filter: active = has any current mandate OR significant party role
+  if (mandateFilter === "dirigeants") {
+    // Filter: party presidents + significant party roles
+    conditions.push({
+      OR: [
+        { mandates: { some: { type: "PRESIDENT_PARTI", isCurrent: true } } },
+        { partyHistory: { some: { endDate: null, role: { not: "MEMBER" } } } },
+      ],
+    });
+  } else if (mandateFilter && MANDATE_GROUPS[mandateFilter]) {
     // Filter by specific mandate type (always current)
-    where.mandates = {
-      some: {
-        type: { in: MANDATE_GROUPS[mandateFilter] },
-        isCurrent: true,
+    conditions.push({
+      mandates: {
+        some: {
+          type: { in: MANDATE_GROUPS[mandateFilter] },
+          isCurrent: true,
+        },
       },
-    };
+    });
   } else if (statusFilter === "active") {
-    // Has any current mandate
-    where.mandates = {
-      some: { isCurrent: true },
-    };
+    // Has any current mandate OR significant party role
+    conditions.push({
+      OR: [
+        { mandates: { some: { isCurrent: true } } },
+        { partyHistory: { some: { endDate: null, role: { not: "MEMBER" } } } },
+      ],
+    });
   } else if (statusFilter === "former") {
-    // No current mandate (former representatives)
-    where.mandates = {
-      none: { isCurrent: true },
-    };
+    // No current mandate AND no significant party role
+    conditions.push({
+      mandates: { none: { isCurrent: true } },
+      partyHistory: { none: { endDate: null, role: { not: "MEMBER" } } },
+    });
   }
+
+  const where = conditions.length > 0 ? { AND: conditions } : {};
 
   // Get order by config
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -137,6 +159,18 @@ async function getPoliticians(
             constituency: true,
           },
         },
+        partyHistory: {
+          where: {
+            endDate: null,
+            role: { not: "MEMBER" },
+          },
+          take: 1,
+          include: {
+            party: {
+              select: { name: true, shortName: true },
+            },
+          },
+        },
       },
       orderBy,
       skip,
@@ -145,14 +179,25 @@ async function getPoliticians(
     db.politician.count({ where }),
   ]);
 
-  // Transform to add hasConviction flag and current mandate
-  const politiciansWithConviction = politicians.map((p) => ({
-    ...p,
-    hasConviction: p.affairs.length > 0,
-    affairs: undefined, // Remove the affairs array, keep only the flag
-    currentMandate: p.mandates[0] || null,
-    mandates: undefined, // Remove the mandates array
-  }));
+  // Transform to add hasConviction flag, current mandate, and significant party role
+  const politiciansWithConviction = politicians.map((p) => {
+    const significantRole = p.partyHistory[0] || null;
+    return {
+      ...p,
+      hasConviction: p.affairs.length > 0,
+      affairs: undefined,
+      currentMandate: p.mandates[0] || null,
+      mandates: undefined,
+      partyHistory: undefined,
+      significantPartyRole: significantRole
+        ? {
+            role: significantRole.role,
+            partyName: significantRole.party.name,
+            partyShortName: significantRole.party.shortName,
+          }
+        : null,
+    };
+  });
 
   return {
     politicians: politiciansWithConviction,
@@ -185,6 +230,7 @@ async function getFilterCounts() {
     senateurs,
     gouvernement,
     presidentParti,
+    dirigeants,
     active,
     former,
   ] = await Promise.all([
@@ -231,15 +277,30 @@ async function getFilterCounts() {
         },
       },
     }),
-    // Status counts (active = has current mandate, former = no current mandate)
+    // Dirigeants: PRESIDENT_PARTI + significant party roles
     db.politician.count({
       where: {
-        mandates: { some: { isCurrent: true } },
+        OR: [
+          { mandates: { some: { type: "PRESIDENT_PARTI", isCurrent: true } } },
+          { partyHistory: { some: { endDate: null, role: { not: "MEMBER" } } } },
+        ],
+      },
+    }),
+    // Status counts (active = has current mandate OR significant party role)
+    db.politician.count({
+      where: {
+        OR: [
+          { mandates: { some: { isCurrent: true } } },
+          { partyHistory: { some: { endDate: null, role: { not: "MEMBER" } } } },
+        ],
       },
     }),
     db.politician.count({
       where: {
-        mandates: { none: { isCurrent: true } },
+        AND: [
+          { mandates: { none: { isCurrent: true } } },
+          { partyHistory: { none: { endDate: null, role: { not: "MEMBER" } } } },
+        ],
       },
     }),
   ]);
@@ -251,6 +312,7 @@ async function getFilterCounts() {
     senateurs,
     gouvernement,
     presidentParti,
+    dirigeants,
     active,
     former,
   };

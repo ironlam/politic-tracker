@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { PoliticianAvatar } from "./PoliticianAvatar";
-import { MANDATE_TYPE_LABELS } from "@/config/labels";
+import { MANDATE_TYPE_LABELS, PARTY_ROLE_LABELS, feminizePartyRole } from "@/config/labels";
 import type { PoliticianWithParty, PoliticianWithPartyAndCounts } from "@/types";
 
 interface PoliticianCardProps {
@@ -34,7 +34,15 @@ export function PoliticianCard({ politician, showConvictionBadge = false }: Poli
   const affairCount = "_count" in politician ? politician._count.affairs : 0;
   const isDeceased = politician.deathDate !== null;
   const currentMandate = "currentMandate" in politician ? politician.currentMandate : null;
+  const significantPartyRole =
+    "significantPartyRole" in politician ? politician.significantPartyRole : null;
   const mandateDisplay = formatMandateShort(currentMandate);
+
+  // Fallback display: party role when no current mandate
+  const roleDisplay =
+    !mandateDisplay && significantPartyRole
+      ? `${feminizePartyRole(PARTY_ROLE_LABELS[significantPartyRole.role], politician.civility)} · ${significantPartyRole.partyShortName}`
+      : null;
 
   return (
     <Link
@@ -69,8 +77,10 @@ export function PoliticianCard({ politician, showConvictionBadge = false }: Poli
               <p className="font-semibold text-lg truncate group-hover:text-primary transition-colors duration-200">
                 {politician.fullName}
               </p>
-              {mandateDisplay && (
-                <p className="text-sm text-muted-foreground truncate mt-0.5">{mandateDisplay}</p>
+              {(mandateDisplay || roleDisplay) && (
+                <p className="text-sm text-muted-foreground truncate mt-0.5">
+                  {mandateDisplay || roleDisplay}
+                </p>
               )}
               <div className="flex items-center gap-2 mt-3 flex-wrap">
                 {politician.currentParty && (

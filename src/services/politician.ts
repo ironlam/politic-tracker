@@ -9,12 +9,15 @@
  */
 
 import { db } from "@/lib/db";
+import type { PartyRole } from "@/generated/prisma";
 
 export interface SetPartyOptions {
   /** Start date of the new affiliation (defaults to now) */
   startDate?: Date;
   /** End the previous membership (defaults to true) */
   endPreviousMembership?: boolean;
+  /** Role in the party (defaults to MEMBER) */
+  role?: PartyRole;
 }
 
 /**
@@ -34,7 +37,7 @@ export async function setCurrentParty(
   partyId: string | null,
   options: SetPartyOptions = {}
 ): Promise<void> {
-  const { startDate = new Date(), endPreviousMembership = true } = options;
+  const { startDate = new Date(), endPreviousMembership = true, role } = options;
 
   await db.$transaction(async (tx) => {
     // 1. Get current party membership
@@ -61,6 +64,7 @@ export async function setCurrentParty(
           politicianId,
           partyId,
           startDate,
+          ...(role && { role }),
         },
       });
     }
@@ -95,6 +99,59 @@ export async function removeParty(politicianId: string, endDate: Date = new Date
       data: { currentPartyId: null },
     });
   });
+}
+
+/**
+ * Set the role on an existing party membership, or create a new one.
+ *
+ * Use this to assign roles like FOUNDER, SPOKESPERSON, etc.
+ * If the politician has a current membership with this party, it updates the role.
+ * Otherwise, it creates a new membership with the given role and no end date.
+ */
+export async function setPartyRole(
+  politicianId: string,
+  partyId: string,
+  role: PartyRole
+): Promise<void> {
+  // Find existing membership for this party (current = no endDate)
+  const existing = await db.partyMembership.findFirst({
+    where: {
+      politicianId,
+      partyId,
+      endDate: null,
+      role,
+    },
+  });
+
+  if (existing) return; // Already has this role
+
+  // Check if there's a MEMBER membership we can upgrade
+  const memberMembership = await db.partyMembership.findFirst({
+    where: {
+      politicianId,
+      partyId,
+      endDate: null,
+      role: "MEMBER",
+    },
+  });
+
+  if (memberMembership) {
+    // Upgrade existing MEMBER to the new role
+    await db.partyMembership.update({
+      where: { id: memberMembership.id },
+      data: { role },
+    });
+  } else {
+    // Create a new membership with the role
+    await db.partyMembership.create({
+      data: {
+        politicianId,
+        partyId,
+        role,
+        startDate: new Date(),
+      },
+    });
+  }
 }
 
 /**
@@ -220,6 +277,7 @@ export async function getPartyHistory(politicianId: string) {
 export const politicianService = {
   setCurrentParty,
   removeParty,
+  setPartyRole,
   syncAllCurrentParties,
   auditPartyConsistency,
   getPartyHistory,

@@ -9,6 +9,7 @@ import type {
   VotingResult,
   Chamber,
   FactCheckRating,
+  PartyRole,
 } from "@/types";
 
 export const AFFAIR_STATUS_LABELS: Record<AffairStatus, string> = {
@@ -428,6 +429,36 @@ export const DOSSIER_CATEGORY_ICONS: Record<string, string> = {
   Contrôle: "🔍",
   Information: "📋",
 };
+
+// ============================================
+// PARTY ROLES
+// ============================================
+
+export const PARTY_ROLE_LABELS: Record<PartyRole, string> = {
+  MEMBER: "Membre",
+  FOUNDER: "Fondateur",
+  SPOKESPERSON: "Porte-parole",
+  COORDINATOR: "Coordinateur",
+  HONORARY_PRESIDENT: "Président d'honneur",
+  SECRETARY_GENERAL: "Secrétaire général",
+};
+
+export const SIGNIFICANT_PARTY_ROLES: PartyRole[] = [
+  "FOUNDER",
+  "SPOKESPERSON",
+  "COORDINATOR",
+  "HONORARY_PRESIDENT",
+  "SECRETARY_GENERAL",
+];
+
+export function feminizePartyRole(label: string, civility?: string | null): string {
+  if (civility !== "Mme") return label;
+  return label
+    .replace("Fondateur", "Fondatrice")
+    .replace("Coordinateur", "Coordinatrice")
+    .replace("Président d'honneur", "Présidente d'honneur")
+    .replace("Secrétaire général", "Secrétaire générale");
+}
 
 // ============================================
 // FACT-CHECKS

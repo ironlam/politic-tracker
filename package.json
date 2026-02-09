@@ -35,6 +35,7 @@
     "sync:history": "tsx scripts/sync-mandate-history.ts",
     "sync:careers": "tsx scripts/sync-careers.ts",
     "sync:careers:stats": "tsx scripts/sync-careers.ts --stats",
+    "sync:party-roles": "tsx scripts/sync-careers.ts --founders-only",
     "sync:history:stats": "tsx scripts/sync-mandate-history.ts --stats",
     "sync:daily": "tsx scripts/sync-daily.ts",
     "sync:votes-an": "tsx scripts/sync-votes-an.ts",

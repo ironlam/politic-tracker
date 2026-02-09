@@ -28,6 +28,7 @@ export const WIKIDATA_PROPS = {
   START_TIME: "P580",
   END_TIME: "P582",
   PARLIAMENTARY_GROUP: "P4100",
+  OF: "P642",
 } as const;
 
 /**
@@ -127,6 +128,7 @@ export interface WikidataPosition {
   startDate?: Date;
   endDate?: Date;
   partyId?: string;
+  ofEntityId?: string; // P642 "of" qualifier (e.g. which organization the position applies to)
 }
 
 export interface WikidataPartyAffiliation {
@@ -435,6 +437,15 @@ export class WikidataService {
           const partyValue = partyClaims[0].datavalue.value;
           if (typeof partyValue === "object" && "id" in partyValue) {
             position.partyId = partyValue.id;
+          }
+        }
+
+        // "Of" qualifier (P642) - indicates which organization the position applies to
+        const ofClaims = claim.qualifiers[WIKIDATA_PROPS.OF];
+        if (ofClaims?.[0]?.datavalue?.value) {
+          const ofValue = ofClaims[0].datavalue.value;
+          if (typeof ofValue === "object" && "id" in ofValue) {
+            position.ofEntityId = ofValue.id;
           }
         }
       }

@@ -41,6 +41,7 @@ const MANDATE_GROUPS: Record<string, MandateType[]> = {
   depute: ["DEPUTE"],
   senateur: ["SENATEUR"],
   gouvernement: ["MINISTRE", "PREMIER_MINISTRE", "MINISTRE_DELEGUE", "SECRETAIRE_ETAT"],
+  president_parti: ["PRESIDENT_PARTI"],
 };
 
 // Sort configurations - using 'any' to handle complex Prisma orderBy types
@@ -177,56 +178,71 @@ async function getParties() {
 }
 
 async function getFilterCounts() {
-  const [withConviction, totalAffairs, deputes, senateurs, gouvernement, active, former] =
-    await Promise.all([
-      // Conviction counts
-      db.politician.count({
-        where: {
-          affairs: {
-            some: { status: { in: CONVICTION_STATUSES } },
+  const [
+    withConviction,
+    totalAffairs,
+    deputes,
+    senateurs,
+    gouvernement,
+    presidentParti,
+    active,
+    former,
+  ] = await Promise.all([
+    // Conviction counts
+    db.politician.count({
+      where: {
+        affairs: {
+          some: { status: { in: CONVICTION_STATUSES } },
+        },
+      },
+    }),
+    db.affair.count({
+      where: { status: { in: CONVICTION_STATUSES } },
+    }),
+    // Mandate counts (current mandates only)
+    db.politician.count({
+      where: {
+        mandates: {
+          some: { type: "DEPUTE", isCurrent: true },
+        },
+      },
+    }),
+    db.politician.count({
+      where: {
+        mandates: {
+          some: { type: "SENATEUR", isCurrent: true },
+        },
+      },
+    }),
+    db.politician.count({
+      where: {
+        mandates: {
+          some: {
+            type: { in: MANDATE_GROUPS.gouvernement },
+            isCurrent: true,
           },
         },
-      }),
-      db.affair.count({
-        where: { status: { in: CONVICTION_STATUSES } },
-      }),
-      // Mandate counts (current mandates only)
-      db.politician.count({
-        where: {
-          mandates: {
-            some: { type: "DEPUTE", isCurrent: true },
-          },
+      },
+    }),
+    db.politician.count({
+      where: {
+        mandates: {
+          some: { type: "PRESIDENT_PARTI", isCurrent: true },
         },
-      }),
-      db.politician.count({
-        where: {
-          mandates: {
-            some: { type: "SENATEUR", isCurrent: true },
-          },
-        },
-      }),
-      db.politician.count({
-        where: {
-          mandates: {
-            some: {
-              type: { in: MANDATE_GROUPS.gouvernement },
-              isCurrent: true,
-            },
-          },
-        },
-      }),
-      // Status counts (active = has current mandate, former = no current mandate)
-      db.politician.count({
-        where: {
-          mandates: { some: { isCurrent: true } },
-        },
-      }),
-      db.politician.count({
-        where: {
-          mandates: { none: { isCurrent: true } },
-        },
-      }),
-    ]);
+      },
+    }),
+    // Status counts (active = has current mandate, former = no current mandate)
+    db.politician.count({
+      where: {
+        mandates: { some: { isCurrent: true } },
+      },
+    }),
+    db.politician.count({
+      where: {
+        mandates: { none: { isCurrent: true } },
+      },
+    }),
+  ]);
 
   return {
     withConviction,
@@ -234,6 +250,7 @@ async function getFilterCounts() {
     deputes,
     senateurs,
     gouvernement,
+    presidentParti,
     active,
     former,
   };

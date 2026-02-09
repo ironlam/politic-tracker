@@ -166,6 +166,7 @@ export const MANDATE_TYPE_LABELS: Record<MandateType, string> = {
   CONSEILLER_REGIONAL: "Conseiller régional",
   CONSEILLER_DEPARTEMENTAL: "Conseiller départemental",
   CONSEILLER_MUNICIPAL: "Conseiller municipal",
+  PRESIDENT_PARTI: "Président(e) de parti",
   OTHER: "Autre mandat",
 };
 

@@ -58,6 +58,10 @@ const POSITION_MAPPING: Record<string, { type: MandateType; institution: string 
   Q17519573: { type: MandateType.CONSEILLER_MUNICIPAL, institution: "Conseil municipal" },
 };
 
+// ============================================================================
+// Role positions
+// ============================================================================
+
 // Positions that represent ROLES within an existing mandate (not separate mandates)
 // When matched, we update the `role` field on an overlapping mandate instead of creating a new one.
 const ROLE_POSITIONS: Record<string, { mandateType: MandateType; role: string }> = {
@@ -144,6 +148,7 @@ Features:
       processed: 0,
       mandatesCreated: 0,
       mandatesSkipped: 0,
+      partyPresidentsCreated: 0,
     };
     const errors: string[] = [];
 
@@ -359,6 +364,146 @@ Features:
 
     progress.finish();
     checkpoint.complete();
+
+    // ====================================================================
+    // Phase 2: Party leaders via P488 (chairperson) on party entities
+    // More reliable than P39 — fetches current leader from party entity
+    // ====================================================================
+
+    console.log("\n--- Phase 2: Party leaders (P488) ---");
+
+    const partyExternalIds = await db.externalId.findMany({
+      where: {
+        source: DataSource.WIKIDATA,
+        partyId: { not: null },
+      },
+      include: {
+        party: true,
+      },
+    });
+
+    if (partyExternalIds.length > 0) {
+      const partyWikidataIds = partyExternalIds.map((e) => e.externalId).filter(Boolean);
+      console.log(`Fetching P488 for ${partyWikidataIds.length} parties...`);
+
+      const partyEntities = await wikidata.getEntities(partyWikidataIds, ["claims"]);
+
+      // Collect chairperson Q-IDs for label resolution
+      const chairpersonIds: string[] = [];
+      const chairpersonData: Array<{
+        partyName: string;
+        partyWikidataId: string;
+        chairpersonWikidataId: string;
+      }> = [];
+
+      for (const ext of partyExternalIds) {
+        if (!ext.party) continue;
+        const entity = partyEntities.get(ext.externalId);
+        if (!entity) continue;
+
+        // P488 = chairperson
+        const chairClaims = entity.claims["P488"];
+        if (!chairClaims) continue;
+
+        for (const claim of chairClaims) {
+          const val = claim.mainsnak?.datavalue?.value;
+          if (!val || typeof val !== "object" || !("id" in val)) continue;
+
+          // Only current chairperson (no end date qualifier)
+          const endQual = claim.qualifiers?.["P582"];
+          if (endQual && endQual.length > 0) continue; // Has end date = past leader
+
+          chairpersonIds.push(val.id as string);
+          chairpersonData.push({
+            partyName: ext.party.name,
+            partyWikidataId: ext.externalId,
+            chairpersonWikidataId: val.id as string,
+          });
+        }
+      }
+
+      if (chairpersonData.length > 0) {
+        // Resolve chairperson labels
+        const chairLabels = await wikidata.getEntities(chairpersonIds, ["labels"]);
+
+        for (const data of chairpersonData) {
+          const chairLabel =
+            chairLabels.get(data.chairpersonWikidataId)?.labels?.fr ||
+            chairLabels.get(data.chairpersonWikidataId)?.labels?.en ||
+            data.chairpersonWikidataId;
+
+          // Find this politician in our database by Wikidata ID
+          const politicianExt = await db.externalId.findFirst({
+            where: {
+              source: DataSource.WIKIDATA,
+              externalId: data.chairpersonWikidataId,
+              politicianId: { not: null },
+            },
+          });
+
+          if (!politicianExt?.politicianId) {
+            if (dryRun) {
+              console.log(
+                `[DRY-RUN] ${chairLabel} - PRESIDENT_PARTI @ ${data.partyName} (politician not in DB)`
+              );
+            }
+            continue;
+          }
+
+          // Check if mandate already exists
+          const existing = await db.mandate.findFirst({
+            where: {
+              politicianId: politicianExt.politicianId,
+              type: MandateType.PRESIDENT_PARTI,
+              institution: data.partyName,
+              isCurrent: true,
+            },
+          });
+
+          if (existing) {
+            stats.mandatesSkipped++;
+            continue;
+          }
+
+          const externalMandateId = `wikidata-p488-${data.partyWikidataId}-${data.chairpersonWikidataId}`;
+
+          if (dryRun) {
+            console.log(`[DRY-RUN] ${chairLabel} - PRESIDENT_PARTI @ ${data.partyName}`);
+            stats.mandatesCreated++;
+            stats.partyPresidentsCreated++;
+          } else {
+            try {
+              // Check by externalId to avoid duplicates on re-run
+              const existingByExtId = await db.mandate.findFirst({
+                where: { externalId: externalMandateId },
+              });
+              if (existingByExtId) {
+                stats.mandatesSkipped++;
+                continue;
+              }
+              await db.mandate.create({
+                data: {
+                  politicianId: politicianExt.politicianId,
+                  type: MandateType.PRESIDENT_PARTI,
+                  title: `Dirigeant(e) - ${data.partyName}`,
+                  institution: data.partyName,
+                  startDate: new Date(),
+                  isCurrent: true,
+                  sourceUrl: `https://www.wikidata.org/wiki/${data.partyWikidataId}`,
+                  externalId: externalMandateId,
+                },
+              });
+              stats.mandatesCreated++;
+              stats.partyPresidentsCreated++;
+            } catch (error) {
+              errors.push(`Party leader ${chairLabel} @ ${data.partyName}: ${error}`);
+            }
+          }
+        }
+      }
+
+      console.log(`Party leaders: ${stats.partyPresidentsCreated} created`);
+    }
 
     return {
       success: errors.length === 0,

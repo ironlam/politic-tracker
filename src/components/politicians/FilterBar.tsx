@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 
 export type SortOption = "alpha" | "alpha-desc" | "recent" | "affairs";
-export type MandateFilter = "" | "depute" | "senateur" | "gouvernement";
+export type MandateFilter = "" | "depute" | "senateur" | "gouvernement" | "president_parti";
 export type StatusFilter = "" | "active" | "former";
 
 const SORT_OPTIONS: Record<SortOption, string> = {
@@ -20,6 +20,7 @@ const MANDATE_OPTIONS: Record<MandateFilter, string> = {
   depute: "Députés",
   senateur: "Sénateurs",
   gouvernement: "Gouvernement",
+  president_parti: "Présidents de parti",
 };
 
 interface FilterBarProps {
@@ -30,6 +31,7 @@ interface FilterBarProps {
     deputes: number;
     senateurs: number;
     gouvernement: number;
+    presidentParti: number;
     active: number;
     former: number;
   };
@@ -130,7 +132,9 @@ export function FilterBar({
                   ? counts.senateurs
                   : value === "gouvernement"
                     ? counts.gouvernement
-                    : null;
+                    : value === "president_parti"
+                      ? counts.presidentParti
+                      : null;
             return (
               <option key={value} value={value}>
                 {label}

@@ -40,6 +40,11 @@ const MANDATE_CATEGORIES: Record<string, { label: string; icon: string; types: M
       "CONSEILLER_MUNICIPAL",
     ],
   },
+  parti: {
+    label: "Direction de parti",
+    icon: "🏳️",
+    types: ["PRESIDENT_PARTI"],
+  },
 };
 
 function getMandateCategory(type: MandateType): string {

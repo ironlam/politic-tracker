@@ -19,6 +19,7 @@ interface PoliticiansGridProps {
     deputes: number;
     senateurs: number;
     gouvernement: number;
+    presidentParti: number;
     active: number;
     former: number;
   };
@@ -94,6 +95,7 @@ export function PoliticiansGrid({
             deputes: counts.deputes,
             senateurs: counts.senateurs,
             gouvernement: counts.gouvernement,
+            presidentParti: counts.presidentParti,
             active: counts.active,
             former: counts.former,
           }}

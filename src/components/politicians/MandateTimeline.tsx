@@ -110,7 +110,9 @@ export function MandateTimeline({ mandates, civility }: MandateTimelineProps) {
       {/* Summary badge */}
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
         <Badge variant="outline" className="bg-primary/5">
-          {Math.round(totalYears)} ans de vie politique
+          {totalYears < 1
+            ? "Moins d\u2019un an de vie politique"
+            : `${Math.round(totalYears)} ans de vie politique`}
         </Badge>
         <span>·</span>
         <span>

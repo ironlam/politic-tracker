@@ -7,10 +7,11 @@ import { DossierCard, StatusBadge, CategoryBadge } from "@/components/legislatio
 import {
   DOSSIER_STATUS_LABELS,
   DOSSIER_STATUS_COLORS,
-  DOSSIER_CATEGORY_COLORS,
-  DOSSIER_CATEGORY_ICONS,
+  THEME_CATEGORY_LABELS,
+  THEME_CATEGORY_ICONS,
+  THEME_CATEGORY_COLORS,
 } from "@/config/labels";
-import type { DossierStatus } from "@/generated/prisma";
+import type { DossierStatus, ThemeCategory } from "@/generated/prisma";
 import { ExternalLink } from "lucide-react";
 
 export const metadata: Metadata = {
@@ -22,22 +23,22 @@ export const metadata: Metadata = {
 interface PageProps {
   searchParams: Promise<{
     status?: string;
-    category?: string;
+    theme?: string;
     page?: string;
   }>;
 }
 
 const ITEMS_PER_PAGE = 15;
 
-async function getDossiers(status?: string, category?: string, page = 1) {
+async function getDossiers(status?: string, theme?: string, page = 1) {
   const skip = (page - 1) * ITEMS_PER_PAGE;
 
   const where: Record<string, unknown> = {};
   if (status) {
     where.status = status as DossierStatus;
   }
-  if (category) {
-    where.category = category;
+  if (theme) {
+    where.theme = theme as ThemeCategory;
   }
 
   const [dossiers, total] = await Promise.all([
@@ -75,15 +76,16 @@ async function getStatusCounts() {
   return Object.fromEntries(counts.map((c) => [c.status, c._count.status]));
 }
 
-async function getCategoryCounts() {
+async function getThemeCounts() {
   const counts = await db.legislativeDossier.groupBy({
-    by: ["category"],
-    _count: { category: true },
+    by: ["theme"],
+    _count: { theme: true },
+    orderBy: { _count: { theme: "desc" } },
   });
 
-  return Object.fromEntries(
-    counts.filter((c) => c.category).map((c) => [c.category!, c._count.category])
-  );
+  return counts
+    .filter((c) => c.theme !== null)
+    .map((c) => ({ theme: c.theme as ThemeCategory, count: c._count.theme }));
 }
 
 function buildUrl(params: Record<string, string>) {
@@ -95,22 +97,17 @@ function buildUrl(params: Record<string, string>) {
 export default async function AssembleePage({ searchParams }: PageProps) {
   const params = await searchParams;
   const statusFilter = params.status || "";
-  const categoryFilter = params.category || "";
+  const themeFilter = params.theme || "";
   const page = parseInt(params.page || "1", 10);
 
-  const [{ dossiers, total, totalPages }, statusCounts, categoryCounts] = await Promise.all([
-    getDossiers(statusFilter, categoryFilter, page),
+  const [{ dossiers, total, totalPages }, statusCounts, themeCounts] = await Promise.all([
+    getDossiers(statusFilter, themeFilter, page),
     getStatusCounts(),
-    getCategoryCounts(),
+    getThemeCounts(),
   ]);
 
   const totalDossiers = Object.values(statusCounts).reduce((a, b) => a + b, 0);
   const enCoursCount = statusCounts["EN_COURS"] || 0;
-
-  // Get unique categories sorted by count
-  const categories = Object.entries(categoryCounts)
-    .sort((a, b) => b[1] - a[1])
-    .map(([cat]) => cat);
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -154,8 +151,8 @@ export default async function AssembleePage({ searchParams }: PageProps) {
               key={status}
               href={
                 isActive
-                  ? buildUrl({ category: categoryFilter })
-                  : buildUrl({ status, category: categoryFilter })
+                  ? buildUrl({ theme: themeFilter })
+                  : buildUrl({ status, theme: themeFilter })
               }
             >
               <Card
@@ -173,51 +170,53 @@ export default async function AssembleePage({ searchParams }: PageProps) {
         })}
       </div>
 
-      {/* Category filter */}
-      <div className="mb-6">
-        <p className="text-sm font-medium mb-2">Filtrer par thème</p>
-        <div className="flex flex-wrap gap-2">
-          <Link href={buildUrl({ status: statusFilter })}>
-            <Badge
-              variant={categoryFilter === "" ? "default" : "outline"}
-              className="cursor-pointer"
-            >
-              Tous
-            </Badge>
-          </Link>
-          {categories.map((cat) => {
-            const count = categoryCounts[cat] || 0;
-            const isActive = categoryFilter === cat;
-            const colorClass = DOSSIER_CATEGORY_COLORS[cat] || "";
-            const icon = DOSSIER_CATEGORY_ICONS[cat] || "";
-
-            return (
-              <Link
-                key={cat}
-                href={
-                  isActive
-                    ? buildUrl({ status: statusFilter })
-                    : buildUrl({ status: statusFilter, category: cat })
-                }
+      {/* Theme filter */}
+      {themeCounts.length > 0 && (
+        <div className="mb-6">
+          <p className="text-sm font-medium mb-2">Filtrer par thème</p>
+          <div className="flex flex-wrap gap-2">
+            <Link href={buildUrl({ status: statusFilter })}>
+              <Badge
+                variant={themeFilter === "" ? "default" : "outline"}
+                className="cursor-pointer"
               >
-                <Badge
-                  variant={isActive ? "default" : "outline"}
-                  className={`cursor-pointer ${isActive ? colorClass : ""}`}
+                Tous
+              </Badge>
+            </Link>
+            {themeCounts.map(({ theme: t, count }) => {
+              const isActive = themeFilter === t;
+              const colorClass = THEME_CATEGORY_COLORS[t];
+              const icon = THEME_CATEGORY_ICONS[t];
+              const label = THEME_CATEGORY_LABELS[t];
+
+              return (
+                <Link
+                  key={t}
+                  href={
+                    isActive
+                      ? buildUrl({ status: statusFilter })
+                      : buildUrl({ status: statusFilter, theme: t })
+                  }
                 >
-                  {icon} {cat} ({count})
-                </Badge>
-              </Link>
-            );
-          })}
+                  <Badge
+                    variant={isActive ? "default" : "outline"}
+                    className={`cursor-pointer ${isActive ? colorClass : ""}`}
+                  >
+                    {icon} {label} ({count})
+                  </Badge>
+                </Link>
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Active filters */}
-      {(statusFilter || categoryFilter) && (
+      {(statusFilter || themeFilter) && (
         <div className="mb-6 flex items-center gap-2 text-sm">
           <span className="text-muted-foreground">Filtres actifs :</span>
           {statusFilter && <StatusBadge status={statusFilter as DossierStatus} />}
-          {categoryFilter && <CategoryBadge category={categoryFilter} />}
+          {themeFilter && <CategoryBadge theme={themeFilter as ThemeCategory} />}
           <Link href="/assemblee" className="text-blue-600 hover:underline ml-2">
             Effacer les filtres
           </Link>
@@ -244,6 +243,7 @@ export default async function AssembleePage({ searchParams }: PageProps) {
                 number={dossier.number}
                 status={dossier.status}
                 category={dossier.category}
+                theme={dossier.theme}
                 summary={dossier.summary}
                 filingDate={dossier.filingDate}
                 adoptionDate={dossier.adoptionDate}
@@ -261,7 +261,7 @@ export default async function AssembleePage({ searchParams }: PageProps) {
                   href={buildUrl({
                     page: String(page - 1),
                     status: statusFilter,
-                    category: categoryFilter,
+                    theme: themeFilter,
                   })}
                   className="px-4 py-2 border rounded-md hover:bg-muted"
                 >
@@ -276,7 +276,7 @@ export default async function AssembleePage({ searchParams }: PageProps) {
                   href={buildUrl({
                     page: String(page + 1),
                     status: statusFilter,
-                    category: categoryFilter,
+                    theme: themeFilter,
                   })}
                   className="px-4 py-2 border rounded-md hover:bg-muted"
                 >
@@ -291,7 +291,7 @@ export default async function AssembleePage({ searchParams }: PageProps) {
           <CardContent className="py-12 text-center">
             <p className="text-muted-foreground mb-2">
               Aucun dossier trouvé
-              {statusFilter || categoryFilter ? " avec ces filtres" : ""}
+              {statusFilter || themeFilter ? " avec ces filtres" : ""}
             </p>
           </CardContent>
         </Card>

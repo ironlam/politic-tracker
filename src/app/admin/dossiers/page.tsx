@@ -6,15 +6,18 @@ import {
   DOSSIER_STATUS_LABELS,
   DOSSIER_STATUS_COLORS,
   DOSSIER_CATEGORY_COLORS,
+  THEME_CATEGORY_LABELS,
+  THEME_CATEGORY_COLORS,
 } from "@/config/labels";
 import { formatDate } from "@/lib/utils";
 import { DossierFilters } from "@/components/admin/DossierFilters";
-import type { DossierStatus, Prisma } from "@/generated/prisma";
+import type { DossierStatus, ThemeCategory, Prisma } from "@/generated/prisma";
 
 interface PageProps {
   searchParams: Promise<{
     status?: string;
     category?: string;
+    theme?: string;
     search?: string;
     page?: string;
     hasSummary?: string;
@@ -26,6 +29,7 @@ const ITEMS_PER_PAGE = 20;
 async function getDossiers(params: {
   status?: DossierStatus;
   category?: string;
+  theme?: ThemeCategory;
   search?: string;
   page: number;
   hasSummary?: boolean;
@@ -38,6 +42,10 @@ async function getDossiers(params: {
 
   if (params.category) {
     where.category = params.category;
+  }
+
+  if (params.theme) {
+    where.theme = params.theme;
   }
 
   if (params.search) {
@@ -68,6 +76,7 @@ async function getDossiers(params: {
         number: true,
         status: true,
         category: true,
+        theme: true,
         filingDate: true,
         summary: true,
         summaryDate: true,
@@ -114,10 +123,13 @@ export default async function AdminDossiersPage({ searchParams }: PageProps) {
   const hasSummary =
     params.hasSummary === "true" ? true : params.hasSummary === "false" ? false : undefined;
 
+  const themeParam = params.theme as ThemeCategory | undefined;
+
   const [{ dossiers, total, totalPages }, categories, stats] = await Promise.all([
     getDossiers({
       status,
       category: params.category,
+      theme: themeParam,
       search: params.search,
       page,
       hasSummary,
@@ -189,7 +201,7 @@ export default async function AdminDossiersPage({ searchParams }: PageProps) {
                       Dossier
                     </th>
                     <th scope="col" className="pb-3 font-medium">
-                      Catégorie
+                      Thème
                     </th>
                     <th scope="col" className="pb-3 font-medium">
                       Statut
@@ -222,7 +234,11 @@ export default async function AdminDossiersPage({ searchParams }: PageProps) {
                         )}
                       </td>
                       <td className="py-3 pr-4">
-                        {dossier.category && (
+                        {dossier.theme ? (
+                          <Badge className={THEME_CATEGORY_COLORS[dossier.theme]}>
+                            {THEME_CATEGORY_LABELS[dossier.theme]}
+                          </Badge>
+                        ) : dossier.category ? (
                           <Badge
                             className={
                               DOSSIER_CATEGORY_COLORS[dossier.category] ||
@@ -231,7 +247,7 @@ export default async function AdminDossiersPage({ searchParams }: PageProps) {
                           >
                             {dossier.category}
                           </Badge>
-                        )}
+                        ) : null}
                       </td>
                       <td className="py-3 pr-4">
                         <Badge className={DOSSIER_STATUS_COLORS[dossier.status]}>

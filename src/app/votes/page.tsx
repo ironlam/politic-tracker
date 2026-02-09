@@ -4,8 +4,14 @@ import { db } from "@/lib/db";
 import { VoteCard } from "@/components/votes";
 import { Badge } from "@/components/ui/badge";
 import { ExportButton } from "@/components/ui/ExportButton";
-import { VOTING_RESULT_LABELS, CHAMBER_LABELS } from "@/config/labels";
-import type { VotingResult, Chamber } from "@/types";
+import {
+  VOTING_RESULT_LABELS,
+  CHAMBER_LABELS,
+  THEME_CATEGORY_LABELS,
+  THEME_CATEGORY_ICONS,
+  THEME_CATEGORY_COLORS,
+} from "@/config/labels";
+import type { VotingResult, Chamber, ThemeCategory } from "@/types";
 
 export const metadata: Metadata = {
   title: "Votes parlementaires",
@@ -19,6 +25,7 @@ interface PageProps {
     result?: string;
     legislature?: string;
     chamber?: string;
+    theme?: string;
     search?: string;
   }>;
 }
@@ -29,15 +36,17 @@ async function getScrutins(params: {
   result?: VotingResult;
   legislature?: number;
   chamber?: Chamber;
+  theme?: ThemeCategory;
   search?: string;
 }) {
-  const { page, limit, result, legislature, chamber, search } = params;
+  const { page, limit, result, legislature, chamber, theme, search } = params;
   const skip = (page - 1) * limit;
 
   const where = {
     ...(result && { result }),
     ...(legislature && { legislature }),
     ...(chamber && { chamber }),
+    ...(theme && { theme }),
     ...(search && {
       title: { contains: search, mode: "insensitive" as const },
     }),
@@ -86,6 +95,15 @@ async function getChambers() {
   });
 }
 
+async function getThemeCounts() {
+  const counts = await db.scrutin.groupBy({
+    by: ["theme"],
+    _count: true,
+    orderBy: { _count: { theme: "desc" } },
+  });
+  return counts.filter((c) => c.theme !== null) as { theme: ThemeCategory; _count: number }[];
+}
+
 export default async function VotesPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const page = Math.max(1, parseInt(params.page || "1", 10));
@@ -93,13 +111,16 @@ export default async function VotesPage({ searchParams }: PageProps) {
   const result = params.result as VotingResult | undefined;
   const legislature = params.legislature ? parseInt(params.legislature, 10) : undefined;
   const chamber = params.chamber as Chamber | undefined;
+  const theme = params.theme as ThemeCategory | undefined;
   const search = params.search;
 
-  const [{ scrutins, total, totalPages, stats }, legislatures, chambers] = await Promise.all([
-    getScrutins({ page, limit, result, legislature, chamber, search }),
-    getLegislatures(),
-    getChambers(),
-  ]);
+  const [{ scrutins, total, totalPages, stats }, legislatures, chambers, themeCounts] =
+    await Promise.all([
+      getScrutins({ page, limit, result, legislature, chamber, theme, search }),
+      getLegislatures(),
+      getChambers(),
+      getThemeCounts(),
+    ]);
 
   // Build filter URL helper
   const buildUrl = (newParams: Record<string, string | undefined>) => {
@@ -108,6 +129,7 @@ export default async function VotesPage({ searchParams }: PageProps) {
     if (params.result) current.set("result", params.result);
     if (params.legislature) current.set("legislature", params.legislature);
     if (params.chamber) current.set("chamber", params.chamber);
+    if (params.theme) current.set("theme", params.theme);
 
     for (const [key, value] of Object.entries(newParams)) {
       if (value) {
@@ -281,8 +303,44 @@ export default async function VotesPage({ searchParams }: PageProps) {
         )}
       </div>
 
+      {/* Theme filter */}
+      {themeCounts.length > 0 && (
+        <div className="mb-6">
+          <p className="text-sm font-medium mb-2">Filtrer par thème</p>
+          <div className="flex flex-wrap gap-2">
+            <Link href={buildUrl({ theme: undefined })}>
+              <Badge variant={!theme ? "default" : "outline"} className="cursor-pointer">
+                Tous
+              </Badge>
+            </Link>
+            {themeCounts.map((t) => {
+              const isActive = theme === t.theme;
+              const colorClass = THEME_CATEGORY_COLORS[t.theme];
+              const icon = THEME_CATEGORY_ICONS[t.theme];
+              const label = THEME_CATEGORY_LABELS[t.theme];
+
+              return (
+                <Link
+                  key={t.theme}
+                  href={buildUrl({
+                    theme: isActive ? undefined : t.theme,
+                  })}
+                >
+                  <Badge
+                    variant={isActive ? "default" : "outline"}
+                    className={`cursor-pointer ${isActive ? colorClass : ""}`}
+                  >
+                    {icon} {label} ({t._count})
+                  </Badge>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Active filters */}
-      {(result || legislature || chamber || search) && (
+      {(result || legislature || chamber || theme || search) && (
         <div className="flex flex-wrap gap-2 mb-6">
           {search && (
             <Badge variant="secondary" className="gap-1">
@@ -304,6 +362,14 @@ export default async function VotesPage({ searchParams }: PageProps) {
             <Badge variant="secondary" className="gap-1">
               {VOTING_RESULT_LABELS[result]}
               <Link href={buildUrl({ result: undefined })} className="ml-1 hover:text-destructive">
+                ×
+              </Link>
+            </Badge>
+          )}
+          {theme && (
+            <Badge variant="secondary" className="gap-1">
+              {THEME_CATEGORY_ICONS[theme]} {THEME_CATEGORY_LABELS[theme]}
+              <Link href={buildUrl({ theme: undefined })} className="ml-1 hover:text-destructive">
                 ×
               </Link>
             </Badge>
@@ -343,13 +409,14 @@ export default async function VotesPage({ searchParams }: PageProps) {
               votesAbstain={scrutin.votesAbstain}
               result={scrutin.result}
               sourceUrl={scrutin.sourceUrl}
+              theme={scrutin.theme}
             />
           ))}
         </div>
       ) : (
         <div className="text-center py-12 text-muted-foreground">
           <p>Aucun scrutin trouvé</p>
-          {(result || legislature || search) && (
+          {(result || legislature || search || theme) && (
             <Link href="/votes" className="text-primary hover:underline mt-2 inline-block">
               Effacer les filtres
             </Link>

@@ -56,6 +56,10 @@ const steps: SyncStep[] = [
     name: "Fact-checks (Google API)",
     command: `npx tsx scripts/sync-factchecks.ts --limit=50${dryRunFlag}`,
   },
+  {
+    name: "Classification thématique (limit 30)",
+    command: `npx tsx scripts/classify-themes.ts --limit=30${dryRunFlag}`,
+  },
 ];
 
 async function main() {

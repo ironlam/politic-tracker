@@ -22,6 +22,7 @@ import type {
   Chamber,
   FactCheckRating,
   PartyRole,
+  ThemeCategory,
 } from "@/generated/prisma";
 
 // Re-export Prisma types
@@ -49,6 +50,7 @@ export type {
   Chamber,
   FactCheckRating,
   PartyRole,
+  ThemeCategory,
 };
 
 // Serialized types (with Decimal converted to number for client components)
@@ -187,6 +189,7 @@ export type ScrutinFilters = {
   result?: VotingResult;
   legislature?: number;
   chamber?: Chamber;
+  theme?: ThemeCategory;
   dateFrom?: Date;
   dateTo?: Date;
   page?: number;

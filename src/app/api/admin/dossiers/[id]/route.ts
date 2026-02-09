@@ -50,7 +50,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
   try {
     const body = await request.json();
-    const { summary, shortTitle, category, status } = body;
+    const { summary, shortTitle, category, status, theme } = body;
 
     // Check dossier exists
     const existing = await db.legislativeDossier.findUnique({
@@ -79,6 +79,10 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
     if (status !== undefined) {
       updateData.status = status;
+    }
+
+    if (theme !== undefined) {
+      updateData.theme = theme;
     }
 
     const updated = await db.legislativeDossier.update({

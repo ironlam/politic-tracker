@@ -349,6 +349,121 @@ CONSIGNES STRICTES :
   return textContent.text.trim();
 }
 
+// ============================================
+// THEME CLASSIFICATION
+// ============================================
+
+const THEME_VALUES = [
+  "ECONOMIE_BUDGET",
+  "SOCIAL_TRAVAIL",
+  "SECURITE_JUSTICE",
+  "ENVIRONNEMENT_ENERGIE",
+  "SANTE",
+  "EDUCATION_CULTURE",
+  "INSTITUTIONS",
+  "AFFAIRES_ETRANGERES_DEFENSE",
+  "NUMERIQUE_TECH",
+  "IMMIGRATION",
+  "AGRICULTURE_ALIMENTATION",
+  "LOGEMENT_URBANISME",
+  "TRANSPORTS",
+] as const;
+
+export type ThemeCategoryValue = (typeof THEME_VALUES)[number];
+
+/**
+ * Classify a legislative text or scrutin into a theme category using AI
+ */
+export async function classifyTheme(
+  title: string,
+  summary?: string | null,
+  context?: string | null
+): Promise<ThemeCategoryValue | null> {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+
+  if (!apiKey) {
+    throw new Error("ANTHROPIC_API_KEY environment variable is not set");
+  }
+
+  let input = `Titre : ${title}`;
+  if (summary) input += `\nRésumé : ${summary}`;
+  if (context) input += `\nContexte : ${context}`;
+
+  const prompt = `Tu es un classificateur thématique pour des textes législatifs français. Classe le texte suivant dans UNE des 13 catégories ci-dessous.
+
+${input}
+
+Catégories possibles :
+- ECONOMIE_BUDGET : fiscalité, budget de l'État, finances publiques, commerce, entreprises
+- SOCIAL_TRAVAIL : emploi, droit du travail, retraites, protection sociale, handicap
+- SECURITE_JUSTICE : police, justice, pénal, prisons, terrorisme, ordre public
+- ENVIRONNEMENT_ENERGIE : écologie, climat, énergie, biodiversité, pollution
+- SANTE : santé publique, hôpitaux, médicaments, bioéthique, pandémies
+- EDUCATION_CULTURE : éducation, université, recherche, culture, sport, médias
+- INSTITUTIONS : Constitution, élections, collectivités, réforme de l'État, outre-mer
+- AFFAIRES_ETRANGERES_DEFENSE : diplomatie, défense, armée, coopération internationale, UE
+- NUMERIQUE_TECH : numérique, données, IA, télécommunications, cybersécurité
+- IMMIGRATION : immigration, asile, nationalité, intégration, frontières
+- AGRICULTURE_ALIMENTATION : agriculture, pêche, alimentation, ruralité
+- LOGEMENT_URBANISME : logement, urbanisme, construction, copropriété
+- TRANSPORTS : transports, mobilité, routes, ferroviaire, aérien, maritime
+
+Réponds UNIQUEMENT avec un JSON : {"theme": "NOM_DE_LA_CATEGORIE"}`;
+
+  const response = await fetch(ANTHROPIC_API_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01",
+    },
+    body: JSON.stringify({
+      model: MODEL,
+      max_tokens: 50,
+      messages: [
+        {
+          role: "user",
+          content: prompt,
+        },
+      ],
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`Anthropic API error: ${response.status} - ${error}`);
+  }
+
+  const data = await response.json();
+
+  const textContent = data.content?.find((c: { type: string }) => c.type === "text");
+  if (!textContent?.text) {
+    throw new Error("No text content in API response");
+  }
+
+  try {
+    let jsonStr = textContent.text;
+
+    const jsonMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (jsonMatch) {
+      jsonStr = jsonMatch[1];
+    }
+
+    const parsed = JSON.parse(jsonStr.trim());
+    const theme = parsed.theme;
+
+    if (theme && THEME_VALUES.includes(theme)) {
+      return theme;
+    }
+
+    console.warn(`Invalid theme value: ${theme}`);
+    return null;
+  } catch {
+    console.error("Failed to parse theme response:", textContent.text);
+    return null;
+  }
+}
+
 /**
  * Rate-limited batch summarization
  */

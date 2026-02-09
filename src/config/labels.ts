@@ -10,6 +10,7 @@ import type {
   Chamber,
   FactCheckRating,
   PartyRole,
+  ThemeCategory,
 } from "@/types";
 
 export const AFFAIR_STATUS_LABELS: Record<AffairStatus, string> = {
@@ -428,6 +429,58 @@ export const DOSSIER_CATEGORY_ICONS: Record<string, string> = {
   International: "🌍",
   Contrôle: "🔍",
   Information: "📋",
+};
+
+// ============================================
+// THEME CATEGORIES (legislative dossiers & scrutins)
+// ============================================
+
+export const THEME_CATEGORY_LABELS: Record<ThemeCategory, string> = {
+  ECONOMIE_BUDGET: "Économie & Budget",
+  SOCIAL_TRAVAIL: "Social & Travail",
+  SECURITE_JUSTICE: "Sécurité & Justice",
+  ENVIRONNEMENT_ENERGIE: "Environnement & Énergie",
+  SANTE: "Santé",
+  EDUCATION_CULTURE: "Éducation & Culture",
+  INSTITUTIONS: "Institutions",
+  AFFAIRES_ETRANGERES_DEFENSE: "Affaires étrangères & Défense",
+  NUMERIQUE_TECH: "Numérique & Tech",
+  IMMIGRATION: "Immigration",
+  AGRICULTURE_ALIMENTATION: "Agriculture & Alimentation",
+  LOGEMENT_URBANISME: "Logement & Urbanisme",
+  TRANSPORTS: "Transports",
+};
+
+export const THEME_CATEGORY_COLORS: Record<ThemeCategory, string> = {
+  ECONOMIE_BUDGET: "bg-emerald-100 text-emerald-800 border-emerald-300",
+  SOCIAL_TRAVAIL: "bg-violet-100 text-violet-800 border-violet-300",
+  SECURITE_JUSTICE: "bg-red-100 text-red-800 border-red-300",
+  ENVIRONNEMENT_ENERGIE: "bg-green-100 text-green-800 border-green-300",
+  SANTE: "bg-rose-100 text-rose-800 border-rose-300",
+  EDUCATION_CULTURE: "bg-indigo-100 text-indigo-800 border-indigo-300",
+  INSTITUTIONS: "bg-purple-100 text-purple-800 border-purple-300",
+  AFFAIRES_ETRANGERES_DEFENSE: "bg-cyan-100 text-cyan-800 border-cyan-300",
+  NUMERIQUE_TECH: "bg-sky-100 text-sky-800 border-sky-300",
+  IMMIGRATION: "bg-orange-100 text-orange-800 border-orange-300",
+  AGRICULTURE_ALIMENTATION: "bg-lime-100 text-lime-800 border-lime-300",
+  LOGEMENT_URBANISME: "bg-amber-100 text-amber-800 border-amber-300",
+  TRANSPORTS: "bg-teal-100 text-teal-800 border-teal-300",
+};
+
+export const THEME_CATEGORY_ICONS: Record<ThemeCategory, string> = {
+  ECONOMIE_BUDGET: "💰",
+  SOCIAL_TRAVAIL: "👥",
+  SECURITE_JUSTICE: "🔒",
+  ENVIRONNEMENT_ENERGIE: "🌿",
+  SANTE: "🏥",
+  EDUCATION_CULTURE: "📚",
+  INSTITUTIONS: "🏛️",
+  AFFAIRES_ETRANGERES_DEFENSE: "🌍",
+  NUMERIQUE_TECH: "💻",
+  IMMIGRATION: "🛂",
+  AGRICULTURE_ALIMENTATION: "🌾",
+  LOGEMENT_URBANISME: "🏠",
+  TRANSPORTS: "🚆",
 };
 
 // ============================================

@@ -2,8 +2,13 @@ import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { VotingResultBadge } from "./VoteBadge";
 import { formatDate } from "@/lib/utils";
-import type { VotingResult, Chamber } from "@/types";
-import { CHAMBER_SHORT_LABELS } from "@/config/labels";
+import type { VotingResult, Chamber, ThemeCategory } from "@/types";
+import {
+  CHAMBER_SHORT_LABELS,
+  THEME_CATEGORY_LABELS,
+  THEME_CATEGORY_ICONS,
+  THEME_CATEGORY_COLORS,
+} from "@/config/labels";
 import { Calendar, Users, ExternalLink, Building2 } from "lucide-react";
 
 interface VoteCardProps {
@@ -20,6 +25,7 @@ interface VoteCardProps {
   result: VotingResult;
   sourceUrl?: string | null;
   totalVotes?: number;
+  theme?: ThemeCategory | null;
 }
 
 export function VoteCard({
@@ -36,6 +42,7 @@ export function VoteCard({
   result,
   sourceUrl,
   totalVotes: _totalVotes,
+  theme,
 }: VoteCardProps) {
   // Use slug for URL if available, fallback to id
   const href = `/votes/${slug || id}`;
@@ -61,6 +68,13 @@ export function VoteCard({
                 >
                   <Building2 className="h-3 w-3" />
                   {CHAMBER_SHORT_LABELS[chamber]}
+                </span>
+              )}
+              {theme && (
+                <span
+                  className={`px-1.5 py-0.5 rounded text-xs font-medium ${THEME_CATEGORY_COLORS[theme]}`}
+                >
+                  {THEME_CATEGORY_ICONS[theme]} {THEME_CATEGORY_LABELS[theme]}
                 </span>
               )}
               <span className="flex items-center gap-1">

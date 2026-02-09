@@ -134,7 +134,7 @@ export default async function DossierDetailPage({ params }: PageProps) {
             </Badge>
           )}
           <StatusBadge status={dossier.status} showIcon />
-          <CategoryBadge category={dossier.category} />
+          <CategoryBadge category={dossier.category} theme={dossier.theme} />
         </div>
 
         <h1 className="text-2xl md:text-3xl font-bold mb-4">

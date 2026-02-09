@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { MarkdownText } from "@/components/ui/markdown";
 import { StatusBadge } from "./StatusBadge";
 import { CategoryBadge } from "./CategoryBadge";
-import type { DossierStatus } from "@/generated/prisma";
+import type { DossierStatus, ThemeCategory } from "@/generated/prisma";
 import { ExternalLink, FileText } from "lucide-react";
 
 interface DossierCardProps {
@@ -16,6 +16,7 @@ interface DossierCardProps {
   number?: string | null;
   status: DossierStatus;
   category?: string | null;
+  theme?: ThemeCategory | null;
   summary?: string | null;
   filingDate?: Date | null;
   adoptionDate?: Date | null;
@@ -32,6 +33,7 @@ export function DossierCard({
   number,
   status,
   category,
+  theme,
   summary,
   filingDate,
   adoptionDate,
@@ -54,7 +56,7 @@ export function DossierCard({
                 {number}
               </Badge>
             )}
-            <CategoryBadge category={category} showIcon={false} />
+            <CategoryBadge category={category} theme={theme} showIcon={false} />
           </div>
           <Link href={href} className="text-sm font-medium hover:text-blue-600 line-clamp-1">
             {displayTitle}
@@ -87,7 +89,7 @@ export function DossierCard({
               </Badge>
             )}
             <StatusBadge status={status} showIcon />
-            <CategoryBadge category={category} />
+            <CategoryBadge category={category} theme={theme} />
           </div>
 
           {/* Title */}

@@ -523,6 +523,9 @@ model Scrutin {
   summary       String?      @db.Text
   summaryDate   DateTime?
 
+  // Thematic classification (AI-generated)
+  theme         ThemeCategory?
+
   // Incremental sync: hash of vote data to detect changes
   votesHash     String?
 
@@ -535,6 +538,7 @@ model Scrutin {
   @@index([votingDate])
   @@index([legislature])
   @@index([chamber])
+  @@index([theme])
 }
 
 model Vote {
@@ -570,6 +574,22 @@ enum Chamber {
   SENAT   // Sénat
 }
 
+enum ThemeCategory {
+  ECONOMIE_BUDGET
+  SOCIAL_TRAVAIL
+  SECURITE_JUSTICE
+  ENVIRONNEMENT_ENERGIE
+  SANTE
+  EDUCATION_CULTURE
+  INSTITUTIONS
+  AFFAIRES_ETRANGERES_DEFENSE
+  NUMERIQUE_TECH
+  IMMIGRATION
+  AGRICULTURE_ALIMENTATION
+  LOGEMENT_URBANISME
+  TRANSPORTS
+}
+
 // ============================================
 // LEGISLATIVE DOSSIERS (Assemblée Nationale)
 // ============================================
@@ -582,7 +602,8 @@ model LegislativeDossier {
   shortTitle      String?                // Titre court pour affichage
   number          String?                // PJL 1234, PPL 5678
   status          DossierStatus
-  category        String?                // Budget, Santé, Économie...
+  category        String?                // Budget, Santé, Économie... (procedure type)
+  theme           ThemeCategory?         // Subject theme (AI-classified)
 
   filingDate      DateTime?
   examinationDate DateTime?
@@ -604,6 +625,7 @@ model LegislativeDossier {
 
   @@index([status])
   @@index([category])
+  @@index([theme])
   @@index([filingDate])
 }
 

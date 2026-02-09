@@ -5,8 +5,8 @@ import { useState, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
-import { DOSSIER_STATUS_LABELS } from "@/config/labels";
-import type { DossierStatus } from "@/generated/prisma";
+import { DOSSIER_STATUS_LABELS, THEME_CATEGORY_LABELS } from "@/config/labels";
+import type { DossierStatus, ThemeCategory } from "@/generated/prisma";
 
 interface DossierFiltersProps {
   categories: { name: string; count: number }[];
@@ -45,6 +45,7 @@ export function DossierFilters({ categories }: DossierFiltersProps) {
   const hasFilters =
     searchParams.has("status") ||
     searchParams.has("category") ||
+    searchParams.has("theme") ||
     searchParams.has("search") ||
     searchParams.has("hasSummary");
 
@@ -89,6 +90,20 @@ export function DossierFilters({ categories }: DossierFiltersProps) {
           {categories.map((cat) => (
             <option key={cat.name} value={cat.name}>
               {cat.name} ({cat.count})
+            </option>
+          ))}
+        </Select>
+
+        {/* Theme filter */}
+        <Select
+          value={searchParams.get("theme") || ""}
+          onChange={(e) => updateParams("theme", e.target.value || null)}
+          className="w-[200px]"
+        >
+          <option value="">Tous les thèmes</option>
+          {(Object.keys(THEME_CATEGORY_LABELS) as ThemeCategory[]).map((theme) => (
+            <option key={theme} value={theme}>
+              {THEME_CATEGORY_LABELS[theme]}
             </option>
           ))}
         </Select>

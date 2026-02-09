@@ -36,6 +36,8 @@ async function getArticles(params: {
   const skip = (page - 1) * limit;
 
   const where = {
+    // Only show articles linked to at least one politician or party
+    OR: [{ mentions: { some: {} } }, { partyMentions: { some: {} } }],
     ...(source && { feedSource: source }),
     ...(partyId && {
       partyMentions: {
@@ -81,10 +83,16 @@ async function getArticles(params: {
 }
 
 async function getStats() {
+  // Only count articles linked to at least one politician or party
+  const linkedFilter = {
+    OR: [{ mentions: { some: {} } }, { partyMentions: { some: {} } }],
+  };
+
   const [totalArticles, bySource, totalMentions, totalPartyMentions] = await Promise.all([
-    db.pressArticle.count(),
+    db.pressArticle.count({ where: linkedFilter }),
     db.pressArticle.groupBy({
       by: ["feedSource"],
+      where: linkedFilter,
       _count: true,
     }),
     db.pressArticleMention.count(),

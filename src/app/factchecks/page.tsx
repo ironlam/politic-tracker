@@ -3,7 +3,11 @@ import Link from "next/link";
 import { db } from "@/lib/db";
 import { Badge } from "@/components/ui/badge";
 import { FactCheckCard } from "@/components/factchecks/FactCheckCard";
-import { FACTCHECK_RATING_LABELS, FACTCHECK_RATING_COLORS } from "@/config/labels";
+import {
+  FACTCHECK_RATING_LABELS,
+  FACTCHECK_RATING_COLORS,
+  FACTCHECK_RATING_DESCRIPTIONS,
+} from "@/config/labels";
 import type { FactCheckRating } from "@/types";
 
 export const metadata: Metadata = {
@@ -19,6 +23,7 @@ interface PageProps {
     verdict?: string;
     politician?: string;
     search?: string;
+    type?: string; // "direct" = propos de politicien only
   }>;
 }
 
@@ -33,6 +38,37 @@ const RATING_OPTIONS: FactCheckRating[] = [
   "UNVERIFIABLE",
 ];
 
+/** Generic claimant patterns — must match GENERIC_CLAIMANT_PATTERNS in labels.ts */
+const GENERIC_CLAIMANT_PATTERNS = [
+  "réseaux sociaux",
+  "sources multiples",
+  "sites internet",
+  "publications",
+  "utilisateurs",
+  "internautes",
+  "viral",
+  "facebook",
+  "twitter",
+  "tiktok",
+  "whatsapp",
+  "telegram",
+  "youtube",
+  "instagram",
+  "chaîne de mails",
+  "rumeur",
+  "blog",
+  "forum",
+];
+
+function buildDirectClaimFilter() {
+  return {
+    claimant: { not: null },
+    NOT: GENERIC_CLAIMANT_PATTERNS.map((pattern) => ({
+      claimant: { contains: pattern, mode: "insensitive" as const },
+    })),
+  };
+}
+
 async function getFactChecks(params: {
   page: number;
   limit: number;
@@ -40,8 +76,9 @@ async function getFactChecks(params: {
   verdict?: string;
   politicianSlug?: string;
   search?: string;
+  directOnly?: boolean;
 }) {
-  const { page, limit, source, verdict, politicianSlug, search } = params;
+  const { page, limit, source, verdict, politicianSlug, search, directOnly } = params;
   const skip = (page - 1) * limit;
 
   const where = {
@@ -60,6 +97,7 @@ async function getFactChecks(params: {
         { claimText: { contains: search, mode: "insensitive" as const } },
       ],
     }),
+    ...(directOnly && buildDirectClaimFilter()),
   };
 
   const [factChecks, total] = await Promise.all([
@@ -142,9 +180,11 @@ export default async function FactChecksPage({ searchParams }: PageProps) {
   const verdict = params.verdict;
   const politicianSlug = params.politician;
   const search = params.search;
+  const type = params.type; // "direct" or undefined
+  const directOnly = type === "direct";
 
   const [{ factChecks, total, totalPages }, stats, sources] = await Promise.all([
-    getFactChecks({ page, limit, source, verdict, politicianSlug, search }),
+    getFactChecks({ page, limit, source, verdict, politicianSlug, search, directOnly }),
     getStats(),
     getSources(),
   ]);
@@ -165,6 +205,7 @@ export default async function FactChecksPage({ searchParams }: PageProps) {
     if (params.source) current.set("source", params.source);
     if (params.verdict) current.set("verdict", params.verdict);
     if (params.politician) current.set("politician", params.politician);
+    if (params.type) current.set("type", params.type);
 
     for (const [key, value] of Object.entries(newParams)) {
       if (value) {
@@ -225,6 +266,25 @@ export default async function FactChecksPage({ searchParams }: PageProps) {
         </div>
       </div>
 
+      {/* Verdict legend */}
+      <details className="mb-8 bg-muted/50 rounded-lg border">
+        <summary className="px-4 py-3 cursor-pointer text-sm font-medium hover:bg-muted/80 rounded-lg transition-colors">
+          Comprendre les verdicts
+        </summary>
+        <div className="px-4 pb-4 pt-2 grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {RATING_OPTIONS.map((rating) => (
+            <div key={rating} className="flex items-start gap-2">
+              <Badge className={`shrink-0 text-xs ${FACTCHECK_RATING_COLORS[rating]}`}>
+                {FACTCHECK_RATING_LABELS[rating]}
+              </Badge>
+              <p className="text-xs text-muted-foreground">
+                {FACTCHECK_RATING_DESCRIPTIONS[rating]}
+              </p>
+            </div>
+          ))}
+        </div>
+      </details>
+
       {/* Filters */}
       <div className="flex flex-wrap gap-4 mb-6">
         {/* Search */}
@@ -239,8 +299,31 @@ export default async function FactChecksPage({ searchParams }: PageProps) {
           {source && <input type="hidden" name="source" value={source} />}
           {verdict && <input type="hidden" name="verdict" value={verdict} />}
           {politicianSlug && <input type="hidden" name="politician" value={politicianSlug} />}
+          {type && <input type="hidden" name="type" value={type} />}
         </form>
 
+        {/* Type filter: all vs direct claims */}
+        <div className="flex gap-1">
+          <Link
+            href={buildUrl({ type: undefined })}
+            className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${
+              !directOnly ? "bg-primary text-primary-foreground" : "bg-muted hover:bg-muted/80"
+            }`}
+          >
+            Tout
+          </Link>
+          <Link
+            href={buildUrl({ type: directOnly ? undefined : "direct" })}
+            className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${
+              directOnly ? "bg-primary text-primary-foreground" : "bg-muted hover:bg-muted/80"
+            }`}
+          >
+            Propos de politicien
+          </Link>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap gap-4 mb-6">
         {/* Source filter */}
         {sources.length > 0 && (
           <div className="flex flex-wrap gap-2">
@@ -250,7 +333,7 @@ export default async function FactChecksPage({ searchParams }: PageProps) {
                 !source ? "bg-primary text-primary-foreground" : "bg-muted hover:bg-muted/80"
               }`}
             >
-              Toutes
+              Toutes sources
             </Link>
             {sources.slice(0, 5).map((s) => (
               <Link
@@ -293,12 +376,20 @@ export default async function FactChecksPage({ searchParams }: PageProps) {
       </div>
 
       {/* Active filters */}
-      {(source || verdict || politicianSlug || search) && (
+      {(source || verdict || politicianSlug || search || directOnly) && (
         <div className="flex flex-wrap gap-2 mb-6">
           {search && (
             <Badge variant="secondary" className="gap-1">
               Recherche: {search}
               <Link href={buildUrl({ search: undefined })} className="ml-1 hover:text-destructive">
+                ×
+              </Link>
+            </Badge>
+          )}
+          {directOnly && (
+            <Badge variant="secondary" className="gap-1">
+              Propos de politicien
+              <Link href={buildUrl({ type: undefined })} className="ml-1 hover:text-destructive">
                 ×
               </Link>
             </Badge>
@@ -378,7 +469,7 @@ export default async function FactChecksPage({ searchParams }: PageProps) {
       ) : (
         <div className="text-center py-12 text-muted-foreground">
           <p>Aucun fact-check trouvé</p>
-          {(source || verdict || politicianSlug || search) && (
+          {(source || verdict || politicianSlug || search || directOnly) && (
             <Link href="/factchecks" className="text-primary hover:underline mt-2 inline-block">
               Effacer les filtres
             </Link>

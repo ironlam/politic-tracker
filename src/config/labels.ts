@@ -454,3 +454,45 @@ export const FACTCHECK_RATING_COLORS: Record<FactCheckRating, string> = {
   FALSE: "bg-red-100 text-red-800",
   UNVERIFIABLE: "bg-gray-100 text-gray-800",
 };
+
+export const FACTCHECK_RATING_DESCRIPTIONS: Record<FactCheckRating, string> = {
+  TRUE: "L'affirmation est exacte et vérifiable par des sources fiables.",
+  MOSTLY_TRUE: "L'affirmation est globalement exacte, avec des nuances mineures.",
+  HALF_TRUE: "L'affirmation contient une part de vérité mais omet des éléments importants.",
+  MISLEADING: "L'affirmation utilise des faits réels de manière trompeuse.",
+  OUT_OF_CONTEXT: "L'affirmation sort des éléments de leur contexte d'origine.",
+  MOSTLY_FALSE: "L'affirmation est en grande partie inexacte.",
+  FALSE: "L'affirmation est contraire aux faits établis.",
+  UNVERIFIABLE: "L'affirmation ne peut être vérifiée par les sources disponibles.",
+};
+
+/**
+ * Detect if a fact-check claimant is a specific person (politician)
+ * vs a generic source (social media, multiple sources, etc.)
+ */
+const GENERIC_CLAIMANT_PATTERNS = [
+  "réseaux sociaux",
+  "sources multiples",
+  "sites internet",
+  "publications",
+  "utilisateurs",
+  "internautes",
+  "viral",
+  "facebook",
+  "twitter",
+  "tiktok",
+  "whatsapp",
+  "telegram",
+  "youtube",
+  "instagram",
+  "chaîne de mails",
+  "rumeur",
+  "blog",
+  "forum",
+];
+
+export function isDirectPoliticianClaim(claimant: string | null): boolean {
+  if (!claimant) return false;
+  const lower = claimant.toLowerCase();
+  return !GENERIC_CLAIMANT_PATTERNS.some((pattern) => lower.includes(pattern));
+}

@@ -4,6 +4,7 @@ import {
   AFFAIR_STATUS_LABELS,
   FACTCHECK_RATING_LABELS,
   FACTCHECK_RATING_COLORS,
+  isDirectPoliticianClaim,
 } from "@/config/labels";
 import { Badge } from "@/components/ui/badge";
 import type {
@@ -40,6 +41,7 @@ interface PoliticianData {
     factCheck: {
       id: string;
       title: string;
+      claimant: string | null;
       verdictRating: FactCheckRating;
       source: string;
       sourceUrl: string;
@@ -215,31 +217,72 @@ export function ComparisonTable({ left, right }: ComparisonTableProps) {
       {/* Fact-checks */}
       <section>
         <h2 className="text-xl font-semibold mb-4">Fact-checks</h2>
-        <div className="bg-muted rounded-lg overflow-hidden">
-          <table className="w-full">
-            <tbody>
-              <Row
-                label="Nombre de fact-checks"
-                left={left._count.factCheckMentions.toString()}
-                right={right._count.factCheckMentions.toString()}
-              />
-            </tbody>
-          </table>
-        </div>
-        {(left.factCheckMentions.length > 0 || right.factCheckMentions.length > 0) && (
-          <div className="grid md:grid-cols-2 gap-4 mt-4">
-            <FactCheckList
-              mentions={left.factCheckMentions}
-              totalCount={left._count.factCheckMentions}
-              politicianSlug={left.slug}
-            />
-            <FactCheckList
-              mentions={right.factCheckMentions}
-              totalCount={right._count.factCheckMentions}
-              politicianSlug={right.slug}
-            />
-          </div>
-        )}
+        {(() => {
+          const leftDirect = left.factCheckMentions.filter((m) =>
+            isDirectPoliticianClaim(m.factCheck.claimant)
+          );
+          const rightDirect = right.factCheckMentions.filter((m) =>
+            isDirectPoliticianClaim(m.factCheck.claimant)
+          );
+          const leftOther = left.factCheckMentions.filter(
+            (m) => !isDirectPoliticianClaim(m.factCheck.claimant)
+          );
+          const rightOther = right.factCheckMentions.filter(
+            (m) => !isDirectPoliticianClaim(m.factCheck.claimant)
+          );
+
+          return (
+            <>
+              <div className="bg-muted rounded-lg overflow-hidden">
+                <table className="w-full">
+                  <tbody>
+                    <Row
+                      label="Total fact-checks"
+                      left={left._count.factCheckMentions.toString()}
+                      right={right._count.factCheckMentions.toString()}
+                    />
+                    <Row
+                      label="Ses déclarations"
+                      left={leftDirect.length.toString()}
+                      right={rightDirect.length.toString()}
+                    />
+                    <Row
+                      label="Mentionné dans"
+                      left={leftOther.length.toString()}
+                      right={rightOther.length.toString()}
+                    />
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Verdict bars */}
+              {(leftDirect.length > 0 || rightDirect.length > 0) && (
+                <div className="grid md:grid-cols-2 gap-4 mt-4">
+                  <VerdictBar mentions={leftDirect} />
+                  <VerdictBar mentions={rightDirect} />
+                </div>
+              )}
+
+              {/* Recent fact-checks */}
+              {(left.factCheckMentions.length > 0 || right.factCheckMentions.length > 0) && (
+                <div className="grid md:grid-cols-2 gap-4 mt-4">
+                  <FactCheckList
+                    mentions={leftDirect}
+                    totalCount={left._count.factCheckMentions}
+                    politicianSlug={left.slug}
+                    label="Ses déclarations"
+                  />
+                  <FactCheckList
+                    mentions={rightDirect}
+                    totalCount={right._count.factCheckMentions}
+                    politicianSlug={right.slug}
+                    label="Ses déclarations"
+                  />
+                </div>
+              )}
+            </>
+          );
+        })()}
       </section>
 
       {/* Affairs */}
@@ -344,19 +387,87 @@ function MandateList({ mandates }: { mandates: Mandate[] }) {
   );
 }
 
+function VerdictBar({ mentions }: { mentions: PoliticianData["factCheckMentions"] }) {
+  if (mentions.length === 0) {
+    return (
+      <div className="bg-muted rounded-lg p-4">
+        <p className="text-muted-foreground text-center text-sm">Aucune déclaration vérifiée</p>
+      </div>
+    );
+  }
+
+  const counts = mentions.reduce(
+    (acc, m) => {
+      const r = m.factCheck.verdictRating;
+      if (r === "TRUE" || r === "MOSTLY_TRUE") acc.vrai++;
+      else if (r === "HALF_TRUE" || r === "MISLEADING" || r === "OUT_OF_CONTEXT") acc.mitige++;
+      else if (r === "FALSE" || r === "MOSTLY_FALSE") acc.faux++;
+      else acc.autre++;
+      return acc;
+    },
+    { vrai: 0, mitige: 0, faux: 0, autre: 0 }
+  );
+  const total = counts.vrai + counts.mitige + counts.faux + counts.autre;
+
+  return (
+    <div className="bg-muted rounded-lg p-4">
+      <p className="text-xs font-medium mb-2">Fiabilité des déclarations</p>
+      <div className="flex h-3 rounded-full overflow-hidden">
+        {counts.faux > 0 && (
+          <div
+            className="bg-red-400"
+            style={{ width: `${(counts.faux / total) * 100}%` }}
+            title={`Faux : ${counts.faux}`}
+          />
+        )}
+        {counts.mitige > 0 && (
+          <div
+            className="bg-yellow-400"
+            style={{ width: `${(counts.mitige / total) * 100}%` }}
+            title={`Mitigé : ${counts.mitige}`}
+          />
+        )}
+        {counts.vrai > 0 && (
+          <div
+            className="bg-green-400"
+            style={{ width: `${(counts.vrai / total) * 100}%` }}
+            title={`Vrai : ${counts.vrai}`}
+          />
+        )}
+        {counts.autre > 0 && (
+          <div
+            className="bg-gray-300"
+            style={{ width: `${(counts.autre / total) * 100}%` }}
+            title={`Autre : ${counts.autre}`}
+          />
+        )}
+      </div>
+      <div className="flex justify-between text-xs text-muted-foreground mt-1">
+        {counts.faux > 0 && <span className="text-red-600">Faux : {counts.faux}</span>}
+        {counts.mitige > 0 && <span className="text-yellow-600">Mitigé : {counts.mitige}</span>}
+        {counts.vrai > 0 && <span className="text-green-600">Vrai : {counts.vrai}</span>}
+        {counts.autre > 0 && <span className="text-gray-500">Autre : {counts.autre}</span>}
+      </div>
+    </div>
+  );
+}
+
 function FactCheckList({
   mentions,
   totalCount,
   politicianSlug,
+  label,
 }: {
   mentions: PoliticianData["factCheckMentions"];
   totalCount: number;
   politicianSlug: string;
+  label?: string;
 }) {
   return (
     <div className="bg-muted rounded-lg p-4">
+      {label && <p className="text-xs font-medium mb-2">{label}</p>}
       {mentions.length === 0 ? (
-        <p className="text-muted-foreground text-center">Aucun fact-check</p>
+        <p className="text-muted-foreground text-center text-sm">Aucune déclaration vérifiée</p>
       ) : (
         <ul className="space-y-2">
           {mentions.slice(0, 3).map((m) => (

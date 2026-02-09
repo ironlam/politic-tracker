@@ -15,6 +15,8 @@ const mockPolitician = {
   photoUrl: null,
   photoSource: null,
   officialId: null,
+  biography: null,
+  biographyGeneratedAt: null,
   currentPartyId: "party-1",
   createdAt: new Date(),
   updatedAt: new Date(),

@@ -22,6 +22,9 @@ async function getPoliticianBySlug(slug: string) {
     where: { slug },
     include: {
       currentParty: true,
+      _count: {
+        select: { factCheckMentions: true },
+      },
       mandates: {
         orderBy: { startDate: "desc" },
       },
@@ -39,6 +42,22 @@ async function getPoliticianBySlug(slug: string) {
           scrutin: { votingDate: "desc" },
         },
         take: 500, // Limit for performance
+      },
+      factCheckMentions: {
+        include: {
+          factCheck: {
+            select: {
+              id: true,
+              title: true,
+              verdictRating: true,
+              source: true,
+              sourceUrl: true,
+              publishedAt: true,
+            },
+          },
+        },
+        orderBy: { factCheck: { publishedAt: "desc" } },
+        take: 10,
       },
     },
   });

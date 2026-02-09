@@ -1,5 +1,11 @@
 import Link from "next/link";
-import { MANDATE_TYPE_LABELS, AFFAIR_STATUS_LABELS } from "@/config/labels";
+import {
+  MANDATE_TYPE_LABELS,
+  AFFAIR_STATUS_LABELS,
+  FACTCHECK_RATING_LABELS,
+  FACTCHECK_RATING_COLORS,
+} from "@/config/labels";
+import { Badge } from "@/components/ui/badge";
 import type {
   Mandate,
   Affair,
@@ -8,6 +14,7 @@ import type {
   Scrutin,
   MandateType,
   AffairStatus,
+  FactCheckRating,
 } from "@/types";
 
 interface PoliticianData {
@@ -28,6 +35,19 @@ interface PoliticianData {
     abstention: number;
     nonVotant?: number;
     absent: number;
+  };
+  factCheckMentions: Array<{
+    factCheck: {
+      id: string;
+      title: string;
+      verdictRating: FactCheckRating;
+      source: string;
+      sourceUrl: string;
+      publishedAt: Date;
+    };
+  }>;
+  _count: {
+    factCheckMentions: number;
   };
 }
 
@@ -192,6 +212,36 @@ export function ComparisonTable({ left, right }: ComparisonTableProps) {
         </div>
       </section>
 
+      {/* Fact-checks */}
+      <section>
+        <h2 className="text-xl font-semibold mb-4">Fact-checks</h2>
+        <div className="bg-muted rounded-lg overflow-hidden">
+          <table className="w-full">
+            <tbody>
+              <Row
+                label="Nombre de fact-checks"
+                left={left._count.factCheckMentions.toString()}
+                right={right._count.factCheckMentions.toString()}
+              />
+            </tbody>
+          </table>
+        </div>
+        {(left.factCheckMentions.length > 0 || right.factCheckMentions.length > 0) && (
+          <div className="grid md:grid-cols-2 gap-4 mt-4">
+            <FactCheckList
+              mentions={left.factCheckMentions}
+              totalCount={left._count.factCheckMentions}
+              politicianSlug={left.slug}
+            />
+            <FactCheckList
+              mentions={right.factCheckMentions}
+              totalCount={right._count.factCheckMentions}
+              politicianSlug={right.slug}
+            />
+          </div>
+        )}
+      </section>
+
       {/* Affairs */}
       <section>
         <h2 className="text-xl font-semibold mb-4">Affaires judiciaires</h2>
@@ -286,6 +336,59 @@ function MandateList({ mandates }: { mandates: Mandate[] }) {
             <li className="text-xs text-muted-foreground">
               + {sorted.length - 5} autre{sorted.length - 5 > 1 ? "s" : ""} mandat
               {sorted.length - 5 > 1 ? "s" : ""}
+            </li>
+          )}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function FactCheckList({
+  mentions,
+  totalCount,
+  politicianSlug,
+}: {
+  mentions: PoliticianData["factCheckMentions"];
+  totalCount: number;
+  politicianSlug: string;
+}) {
+  return (
+    <div className="bg-muted rounded-lg p-4">
+      {mentions.length === 0 ? (
+        <p className="text-muted-foreground text-center">Aucun fact-check</p>
+      ) : (
+        <ul className="space-y-2">
+          {mentions.slice(0, 3).map((m) => (
+            <li key={m.factCheck.id} className="text-sm">
+              <div className="flex items-start gap-2">
+                <Badge
+                  className={`shrink-0 text-xs ${FACTCHECK_RATING_COLORS[m.factCheck.verdictRating]}`}
+                >
+                  {FACTCHECK_RATING_LABELS[m.factCheck.verdictRating]}
+                </Badge>
+                <a
+                  href={m.factCheck.sourceUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:underline text-primary line-clamp-1"
+                >
+                  {m.factCheck.title}
+                </a>
+              </div>
+              <span className="text-xs text-muted-foreground block ml-0 mt-0.5">
+                {m.factCheck.source}
+              </span>
+            </li>
+          ))}
+          {totalCount > 3 && (
+            <li>
+              <Link
+                href={`/factchecks?politician=${politicianSlug}`}
+                className="text-xs text-primary hover:underline"
+              >
+                Voir les {totalCount} fact-checks
+              </Link>
             </li>
           )}
         </ul>

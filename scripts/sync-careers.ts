@@ -412,6 +412,7 @@ Features:
           partyName: string;
           partyWikidataId: string;
           chairpersonWikidataId: string;
+          startDate: Date | null;
         }> = [];
 
         for (const ext of partyExternalIds) {
@@ -431,11 +432,23 @@ Features:
             const endQual = claim.qualifiers?.["P582"];
             if (endQual && endQual.length > 0) continue; // Has end date = past leader
 
+            // Extract start date from P580 qualifier
+            let startDate: Date | null = null;
+            const startQual = claim.qualifiers?.["P580"];
+            if (startQual?.[0]?.datavalue?.value) {
+              const timeValue = startQual[0].datavalue.value;
+              if (typeof timeValue === "object" && "time" in timeValue) {
+                const parsed = parseDate((timeValue as { time: string }).time);
+                if (parsed) startDate = parsed;
+              }
+            }
+
             chairpersonIds.push(val.id as string);
             chairpersonData.push({
               partyName: ext.party.name,
               partyWikidataId: ext.externalId,
               chairpersonWikidataId: val.id as string,
+              startDate,
             });
           }
         }
@@ -505,7 +518,7 @@ Features:
                     type: MandateType.PRESIDENT_PARTI,
                     title: `Dirigeant(e) - ${data.partyName}`,
                     institution: data.partyName,
-                    startDate: new Date(),
+                    startDate: data.startDate ?? new Date(),
                     isCurrent: true,
                     sourceUrl: `https://www.wikidata.org/wiki/${data.partyWikidataId}`,
                     externalId: externalMandateId,

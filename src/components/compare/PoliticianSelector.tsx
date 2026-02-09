@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Search, X, User } from "lucide-react";
-import Image from "next/image";
+import { Search, X } from "lucide-react";
+import { PoliticianAvatar } from "@/components/politicians/PoliticianAvatar";
 
 interface Politician {
   id: string;
@@ -35,13 +35,16 @@ export function PoliticianSelector({
   const [results, setResults] = useState<Politician[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(-1);
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
 
-  // Search politicians
+  // Search politicians with debounce
   useEffect(() => {
     if (query.length < 2) {
       setResults([]);
+      setActiveIndex(-1);
       return;
     }
 
@@ -79,6 +82,7 @@ export function PoliticianSelector({
             })
           );
         setResults(mapped);
+        setActiveIndex(-1);
       } catch (error) {
         if ((error as Error).name !== "AbortError") {
           console.error("Search error:", error);
@@ -88,7 +92,7 @@ export function PoliticianSelector({
       }
     };
 
-    const timeout = setTimeout(fetchResults, 200);
+    const timeout = setTimeout(fetchResults, 400);
     return () => {
       clearTimeout(timeout);
       controller.abort();
@@ -106,13 +110,17 @@ export function PoliticianSelector({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const selectPolitician = (politician: Politician) => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set(position, politician.slug);
-    router.push(`/comparer?${params.toString()}`);
-    setQuery("");
-    setIsOpen(false);
-  };
+  const selectPolitician = useCallback(
+    (politician: Politician) => {
+      const params = new URLSearchParams(searchParams.toString());
+      params.set(position, politician.slug);
+      router.push(`/comparer?${params.toString()}`);
+      setQuery("");
+      setIsOpen(false);
+      setActiveIndex(-1);
+    },
+    [position, router, searchParams]
+  );
 
   const clearSelection = () => {
     const params = new URLSearchParams(searchParams.toString());
@@ -120,24 +128,52 @@ export function PoliticianSelector({
     router.push(`/comparer?${params.toString()}`);
   };
 
+  // Keyboard navigation
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (!isOpen || results.length === 0) return;
+
+      switch (e.key) {
+        case "ArrowDown":
+          e.preventDefault();
+          setActiveIndex((prev) => (prev < results.length - 1 ? prev + 1 : 0));
+          break;
+        case "ArrowUp":
+          e.preventDefault();
+          setActiveIndex((prev) => (prev > 0 ? prev - 1 : results.length - 1));
+          break;
+        case "Enter":
+          e.preventDefault();
+          if (activeIndex >= 0 && activeIndex < results.length) {
+            selectPolitician(results[activeIndex]);
+          }
+          break;
+        case "Escape":
+          setIsOpen(false);
+          setActiveIndex(-1);
+          break;
+      }
+    },
+    [isOpen, results, activeIndex, selectPolitician]
+  );
+
+  // Scroll active item into view
+  useEffect(() => {
+    if (activeIndex >= 0 && listRef.current) {
+      const items = listRef.current.querySelectorAll("[data-result-item]");
+      items[activeIndex]?.scrollIntoView({ block: "nearest" });
+    }
+  }, [activeIndex]);
+
   if (selectedPolitician) {
     return (
       <div className="bg-muted rounded-lg p-4">
         <div className="flex items-center gap-4">
-          <div className="relative h-16 w-16 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
-            {selectedPolitician.photoUrl ? (
-              <Image
-                src={selectedPolitician.photoUrl}
-                alt={selectedPolitician.fullName}
-                fill
-                className="object-cover"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                <User className="h-8 w-8 text-gray-400" />
-              </div>
-            )}
-          </div>
+          <PoliticianAvatar
+            photoUrl={selectedPolitician.photoUrl}
+            fullName={selectedPolitician.fullName}
+            size="lg"
+          />
           <div className="flex-1 min-w-0">
             <h3 className="font-semibold text-lg truncate">{selectedPolitician.fullName}</h3>
             {selectedPolitician.currentParty && (
@@ -180,8 +216,14 @@ export function PoliticianSelector({
             setIsOpen(true);
           }}
           onFocus={() => setIsOpen(true)}
+          onKeyDown={handleKeyDown}
           placeholder="Rechercher un politique..."
           className="w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+          role="combobox"
+          aria-expanded={isOpen && results.length > 0}
+          aria-controls="search-results"
+          aria-activedescendant={activeIndex >= 0 ? `result-${activeIndex}` : undefined}
+          aria-autocomplete="list"
         />
         {isLoading && (
           <div className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -191,27 +233,29 @@ export function PoliticianSelector({
       </div>
 
       {isOpen && results.length > 0 && (
-        <div className="absolute z-10 w-full mt-1 bg-background border rounded-lg shadow-lg max-h-80 overflow-auto">
-          {results.map((politician) => (
+        <div
+          ref={listRef}
+          id="search-results"
+          role="listbox"
+          className="absolute z-10 w-full mt-1 bg-background border rounded-lg shadow-lg max-h-80 overflow-auto"
+        >
+          {results.map((politician, index) => (
             <button
               key={politician.id}
+              id={`result-${index}`}
+              role="option"
+              aria-selected={index === activeIndex}
+              data-result-item
               onClick={() => selectPolitician(politician)}
-              className="w-full flex items-center gap-3 p-3 hover:bg-muted transition-colors text-left"
+              className={`w-full flex items-center gap-3 p-3 transition-colors text-left ${
+                index === activeIndex ? "bg-accent" : "hover:bg-muted"
+              }`}
             >
-              <div className="relative h-10 w-10 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
-                {politician.photoUrl ? (
-                  <Image
-                    src={politician.photoUrl}
-                    alt={politician.fullName}
-                    fill
-                    className="object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <User className="h-5 w-5 text-gray-400" />
-                  </div>
-                )}
-              </div>
+              <PoliticianAvatar
+                photoUrl={politician.photoUrl}
+                fullName={politician.fullName}
+                size="sm"
+              />
               <div className="flex-1 min-w-0">
                 <p className="font-medium truncate">{politician.fullName}</p>
                 {politician.currentParty && (

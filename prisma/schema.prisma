@@ -42,6 +42,7 @@ model Politician {
   votes         Vote[]            // Parliamentary votes
   pressMentions PressArticleMention[] // Mentions in press articles
   factCheckMentions FactCheckMention[] // Mentions in fact-checks
+  candidacies   Candidacy[]           // Election candidacies
 
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -115,6 +116,7 @@ model Party {
   affairsAtTime     Affair[]          // Affairs where this was the party at time of conviction
   externalIds       ExternalId[]      // IDs from all external sources (Wikidata, etc.)
   pressMentions     PressArticlePartyMention[]  // Mentions in press articles
+  candidacies       Candidacy[]                 // Election candidacies
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -850,6 +852,147 @@ enum FactCheckRating {
   MOSTLY_FALSE
   FALSE
   UNVERIFIABLE
+}
+
+// ============================================
+// ELECTIONS
+// ============================================
+
+enum ElectionType {
+  PRESIDENTIELLE
+  LEGISLATIVES
+  SENATORIALES
+  MUNICIPALES
+  DEPARTEMENTALES
+  REGIONALES
+  EUROPEENNES
+  REFERENDUM
+}
+
+enum ElectionScope {
+  NATIONAL
+  REGIONAL
+  DEPARTMENTAL
+  MUNICIPAL
+  EUROPEAN
+}
+
+enum SuffrageType {
+  DIRECT
+  INDIRECT
+}
+
+enum ElectionStatus {
+  UPCOMING
+  REGISTRATION
+  CANDIDACIES
+  CAMPAIGN
+  ROUND_1
+  BETWEEN_ROUNDS
+  ROUND_2
+  COMPLETED
+}
+
+model Election {
+  id            String         @id @default(cuid())
+  slug          String         @unique
+  type          ElectionType
+  title         String
+  shortTitle    String?
+  description   String?        @db.Text
+
+  // Dates
+  round1Date          DateTime?
+  round2Date          DateTime?
+  dateConfirmed       Boolean    @default(false)
+  registrationDeadline DateTime?
+  candidacyOpenDate   DateTime?
+  candidacyDeadline   DateTime?
+  campaignStartDate   DateTime?
+
+  // Scope & rules
+  scope         ElectionScope
+  totalSeats    Int?
+  suffrage      SuffrageType   @default(DIRECT)
+
+  // Status
+  status        ElectionStatus @default(UPCOMING)
+
+  // Sources
+  decreeUrl     String?
+  sourceUrl     String?
+
+  // Relations
+  candidacies   Candidacy[]
+  rounds        ElectionRound[]
+
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  @@index([type])
+  @@index([status])
+  @@index([round1Date])
+}
+
+model Candidacy {
+  id            String     @id @default(cuid())
+  election      Election   @relation(fields: [electionId], references: [id], onDelete: Cascade)
+  electionId    String
+
+  // Candidate (optional link to existing politician)
+  politician    Politician? @relation(fields: [politicianId], references: [id])
+  politicianId  String?
+  party         Party?      @relation(fields: [partyId], references: [id])
+  partyId       String?
+
+  // Denormalized candidate info (always filled, even if linked)
+  candidateName     String
+  partyLabel        String?
+
+  // List elections (municipales, européennes, régionales)
+  listName          String?
+  listPosition      Int?
+
+  // Constituency
+  constituencyCode  String?
+  constituencyName  String?
+
+  // Round 1 results
+  round1Votes       Int?
+  round1Pct         Decimal?   @db.Decimal(5, 2)
+  round1Qualified   Boolean?
+
+  // Round 2 results
+  round2Votes       Int?
+  round2Pct         Decimal?   @db.Decimal(5, 2)
+  isElected         Boolean    @default(false)
+
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+
+  @@index([electionId])
+  @@index([politicianId])
+  @@index([constituencyCode])
+}
+
+model ElectionRound {
+  id                String    @id @default(cuid())
+  election          Election  @relation(fields: [electionId], references: [id], onDelete: Cascade)
+  electionId        String
+  round             Int       // 1 or 2
+
+  date              DateTime
+
+  // Participation stats
+  registeredVoters  Int?
+  actualVoters      Int?
+  participationRate Decimal?  @db.Decimal(5, 2)
+  blankVotes        Int?
+  nullVotes         Int?
+
+  createdAt         DateTime  @default(now())
+
+  @@unique([electionId, round])
 }
 
 // ============================================

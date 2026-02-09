@@ -11,6 +11,9 @@ import type {
   Vote,
   FactCheck,
   FactCheckMention,
+  Election,
+  Candidacy,
+  ElectionRound,
   AffairStatus,
   AffairCategory,
   AffairEventType,
@@ -23,6 +26,10 @@ import type {
   FactCheckRating,
   PartyRole,
   ThemeCategory,
+  ElectionType,
+  ElectionScope,
+  SuffrageType,
+  ElectionStatus,
 } from "@/generated/prisma";
 
 // Re-export Prisma types
@@ -39,6 +46,9 @@ export type {
   Vote,
   FactCheck,
   FactCheckMention,
+  Election,
+  Candidacy,
+  ElectionRound,
   AffairStatus,
   AffairCategory,
   AffairEventType,
@@ -51,6 +61,10 @@ export type {
   FactCheckRating,
   PartyRole,
   ThemeCategory,
+  ElectionType,
+  ElectionScope,
+  SuffrageType,
+  ElectionStatus,
 };
 
 // Serialized types (with Decimal converted to number for client components)
@@ -192,6 +206,14 @@ export type ScrutinFilters = {
   theme?: ThemeCategory;
   dateFrom?: Date;
   dateTo?: Date;
+  page?: number;
+  limit?: number;
+};
+
+export type ElectionFilters = {
+  search?: string;
+  type?: ElectionType;
+  status?: ElectionStatus;
   page?: number;
   limit?: number;
 };

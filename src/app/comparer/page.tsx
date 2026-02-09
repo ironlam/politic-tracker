@@ -49,6 +49,7 @@ async function getPoliticianBySlug(slug: string) {
             select: {
               id: true,
               title: true,
+              claimant: true,
               verdictRating: true,
               source: true,
               sourceUrl: true,
@@ -57,7 +58,7 @@ async function getPoliticianBySlug(slug: string) {
           },
         },
         orderBy: { factCheck: { publishedAt: "desc" } },
-        take: 10,
+        take: 20,
       },
     },
   });

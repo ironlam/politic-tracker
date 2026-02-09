@@ -5,7 +5,21 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { NAV_GROUPS, CTA_COMPARER, CTA_MON_DEPUTE, CHAT_LINK } from "@/config/navigation";
-import { MapPin, GitCompare, MessageSquare } from "lucide-react";
+import {
+  MapPin,
+  GitCompare,
+  MessageSquare,
+  Map,
+  Radio,
+  Newspaper,
+  type LucideIcon,
+} from "lucide-react";
+
+const ICON_MAP: Record<string, LucideIcon> = {
+  map: Map,
+  live: Radio,
+  newspaper: Newspaper,
+};
 
 // Get all focusable elements within a container
 function getFocusableElements(container: HTMLElement): HTMLElement[] {
@@ -187,6 +201,12 @@ export function MobileMenu() {
                           }`}
                           aria-current={isActive ? "page" : undefined}
                         >
+                          {item.icon &&
+                            ICON_MAP[item.icon] &&
+                            (() => {
+                              const Icon = ICON_MAP[item.icon!];
+                              return <Icon className="h-5 w-5 shrink-0" />;
+                            })()}
                           <div>
                             <span>{item.label}</span>
                             {item.description && (

@@ -3,9 +3,15 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Map, Radio, Newspaper, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { NavGroup } from "@/config/navigation";
+
+const ICON_MAP: Record<string, LucideIcon> = {
+  map: Map,
+  live: Radio,
+  newspaper: Newspaper,
+};
 
 interface NavDropdownProps {
   group: NavGroup;
@@ -134,7 +140,12 @@ export function NavDropdown({ group }: NavDropdownProps) {
                 onClick={() => setIsOpen(false)}
               >
                 <div className="flex items-center gap-2">
-                  {item.icon && <span>{item.icon}</span>}
+                  {item.icon &&
+                    ICON_MAP[item.icon] &&
+                    (() => {
+                      const Icon = ICON_MAP[item.icon!];
+                      return <Icon className="h-4 w-4 text-muted-foreground" />;
+                    })()}
                   <span className={cn("font-medium", isActive && "text-primary")}>
                     {item.label}
                   </span>

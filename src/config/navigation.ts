@@ -66,6 +66,11 @@ export const NAV_GROUPS: NavGroup[] = [
         label: "Statistiques",
         description: "Tableaux de bord et analyses",
       },
+      {
+        href: "/elections",
+        label: "Calendrier électoral",
+        description: "Dates et compte à rebours des prochaines élections",
+      },
     ],
   },
   {
@@ -124,6 +129,7 @@ export const FOOTER_SECTIONS = [
       { href: "/votes", label: "Votes" },
       { href: "/affaires", label: "Affaires" },
       { href: "/factchecks", label: "Fact-checks" },
+      { href: "/elections", label: "Élections" },
     ],
   },
   {

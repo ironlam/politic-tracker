@@ -25,6 +25,10 @@ model Politician {
   photoSource   String?   // Source: "assemblee-nationale", "senat", "gouvernement", "hatvp", "manual"
   officialId    String?   @unique // DEPRECATED: use externalIds instead
 
+  // AI-generated biography
+  biography             String?   @db.Text
+  biographyGeneratedAt  DateTime?
+
   // Current party (nullable if independent)
   currentParty   Party?   @relation(fields: [currentPartyId], references: [id])
   currentPartyId String?

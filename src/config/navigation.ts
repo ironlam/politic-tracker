@@ -1,5 +1,5 @@
 // Navigation configuration
-// Simplified structure with 3 dropdowns + 2 CTAs + 1 icon
+// 3 thematic dropdowns + 2 standalone actions
 
 export interface NavItem {
   href: string;
@@ -13,7 +13,7 @@ export interface NavGroup {
   items: NavItem[];
 }
 
-// Main navigation groups (3 dropdowns)
+// Main navigation groups (3 thematic dropdowns)
 export const NAV_GROUPS: NavGroup[] = [
   {
     label: "Élus",
@@ -22,6 +22,12 @@ export const NAV_GROUPS: NavGroup[] = [
         href: "/politiques",
         label: "Tous les représentants",
         description: "Députés, sénateurs, ministres, eurodéputés",
+      },
+      {
+        href: "/mon-depute",
+        label: "Mon député",
+        icon: "mapPin",
+        description: "Trouvez votre député par code postal",
       },
       {
         href: "/carte",
@@ -42,7 +48,7 @@ export const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
-    label: "Activité",
+    label: "Parlement",
     items: [
       {
         href: "/assemblee",
@@ -54,6 +60,22 @@ export const NAV_GROUPS: NavGroup[] = [
         href: "/votes",
         label: "Votes parlementaires",
         description: "Scrutins et positions des élus",
+      },
+      {
+        href: "/statistiques",
+        label: "Statistiques",
+        description: "Tableaux de bord et analyses",
+      },
+    ],
+  },
+  {
+    label: "Transparence",
+    items: [
+      {
+        href: "/factchecks",
+        label: "Fact-checks",
+        icon: "shieldCheck",
+        description: "Vérification des déclarations politiques",
       },
       {
         href: "/affaires",
@@ -68,57 +90,31 @@ export const NAV_GROUPS: NavGroup[] = [
       },
     ],
   },
-  {
-    label: "Ressources",
-    items: [
-      {
-        href: "/statistiques",
-        label: "Statistiques",
-        description: "Tableaux de bord et analyses",
-      },
-      {
-        href: "/institutions",
-        label: "Institutions",
-        description: "Comprendre le système politique",
-      },
-      {
-        href: "/sources",
-        label: "Sources et méthodologie",
-        description: "Transparence et crédibilité",
-      },
-      {
-        href: "/docs/api",
-        label: "Documentation API",
-        description: "Accès programmatique aux données",
-      },
-    ],
-  },
 ] as const;
 
-// CTA buttons (separate from dropdowns)
+// CTA buttons (standalone actions in header)
 export const CTA_COMPARER: NavItem = {
   href: "/comparer",
   label: "Comparer",
   description: "Comparez deux représentants",
 };
 
-export const CTA_MON_DEPUTE: NavItem = {
-  href: "/mon-depute",
-  label: "Mon député",
-  description: "Trouvez votre député par code postal",
-};
-
-// Chat link (icon in header)
-export const CHAT_LINK: NavItem = {
+export const CTA_ASSISTANT: NavItem = {
   href: "/chat",
   label: "Assistant IA",
   description: "Chatbot alimenté par nos données",
 };
 
-// Legacy export for backwards compatibility
+// Legacy exports for backwards compatibility
+export const CTA_MON_DEPUTE: NavItem = {
+  href: "/mon-depute",
+  label: "Mon député",
+  description: "Trouvez votre député par code postal",
+};
+export const CHAT_LINK = CTA_ASSISTANT;
 export const CTA_LINK = CTA_MON_DEPUTE;
 
-// Footer navigation (3 columns simplified)
+// Footer navigation (3 columns)
 export const FOOTER_SECTIONS = [
   {
     title: "Explorer",
@@ -127,7 +123,7 @@ export const FOOTER_SECTIONS = [
       { href: "/carte", label: "Carte" },
       { href: "/votes", label: "Votes" },
       { href: "/affaires", label: "Affaires" },
-      { href: "/presse", label: "Presse" },
+      { href: "/factchecks", label: "Fact-checks" },
     ],
   },
   {

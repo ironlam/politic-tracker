@@ -3,14 +3,24 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChevronDown, Map, Radio, Newspaper, type LucideIcon } from "lucide-react";
+import {
+  ChevronDown,
+  Map,
+  MapPin,
+  Radio,
+  Newspaper,
+  ShieldCheck,
+  type LucideIcon,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { NavGroup } from "@/config/navigation";
 
 const ICON_MAP: Record<string, LucideIcon> = {
   map: Map,
+  mapPin: MapPin,
   live: Radio,
   newspaper: Newspaper,
+  shieldCheck: ShieldCheck,
 };
 
 interface NavDropdownProps {

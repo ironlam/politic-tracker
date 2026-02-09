@@ -2,8 +2,8 @@ import Link from "next/link";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { MobileMenu } from "./MobileMenu";
 import { NavDropdown } from "./NavDropdown";
-import { NAV_GROUPS, CTA_COMPARER, CTA_MON_DEPUTE, CHAT_LINK } from "@/config/navigation";
-import { MapPin, GitCompare, MessageSquare } from "lucide-react";
+import { NAV_GROUPS, CTA_COMPARER, CTA_ASSISTANT } from "@/config/navigation";
+import { GitCompare, Bot } from "lucide-react";
 
 export function Header() {
   return (
@@ -45,24 +45,11 @@ export function Header() {
             </Link>
 
             <Link
-              href={CTA_MON_DEPUTE.href}
-              className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground font-medium text-sm rounded-lg hover:bg-primary/90 transition-colors shadow-sm"
+              href={CTA_ASSISTANT.href}
+              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted/50 transition-colors"
             >
-              <MapPin className="h-4 w-4" />
-              {CTA_MON_DEPUTE.label}
-            </Link>
-
-            {/* Separator */}
-            <div className="h-6 w-px bg-border mx-2" />
-
-            {/* Chat icon */}
-            <Link
-              href={CHAT_LINK.href}
-              className="p-2 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted/50 transition-colors"
-              title={CHAT_LINK.label}
-            >
-              <MessageSquare className="h-5 w-5" />
-              <span className="sr-only">{CHAT_LINK.label}</span>
+              <Bot className="h-4 w-4" />
+              {CTA_ASSISTANT.label}
             </Link>
 
             {/* Theme toggle */}

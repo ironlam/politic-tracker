@@ -80,12 +80,19 @@ export function MandateTimeline({ mandates, civility }: MandateTimelineProps) {
   const currentMandates = mandates.filter((m) => m.isCurrent);
   const pastMandates = mandates.filter((m) => !m.isCurrent);
 
-  // Calculate total years in politics
-  const totalYears = mandates.reduce((acc, m) => {
-    const start = new Date(m.startDate);
-    const end = m.endDate ? new Date(m.endDate) : new Date();
-    return acc + (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24 * 365);
-  }, 0);
+  // Calculate career span: first mandate start → last mandate end (or now)
+  const totalYears =
+    mandates.length > 0
+      ? (() => {
+          const starts = mandates.map((m) => new Date(m.startDate).getTime());
+          const ends = mandates.map((m) =>
+            m.endDate ? new Date(m.endDate).getTime() : Date.now()
+          );
+          const earliest = Math.min(...starts);
+          const latest = Math.max(...ends);
+          return (latest - earliest) / (1000 * 60 * 60 * 24 * 365);
+        })()
+      : 0;
 
   // Group past mandates by category
   const pastByCategory = pastMandates.reduce(

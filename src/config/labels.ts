@@ -11,6 +11,10 @@ import type {
   FactCheckRating,
   PartyRole,
   ThemeCategory,
+  ElectionType,
+  ElectionStatus,
+  ElectionScope,
+  SuffrageType,
 } from "@/types";
 
 export const AFFAIR_STATUS_LABELS: Record<AffairStatus, string> = {
@@ -481,6 +485,67 @@ export const THEME_CATEGORY_ICONS: Record<ThemeCategory, string> = {
   AGRICULTURE_ALIMENTATION: "🌾",
   LOGEMENT_URBANISME: "🏠",
   TRANSPORTS: "🚆",
+};
+
+// ============================================
+// ELECTIONS
+// ============================================
+
+export const ELECTION_TYPE_LABELS: Record<ElectionType, string> = {
+  PRESIDENTIELLE: "Présidentielle",
+  LEGISLATIVES: "Législatives",
+  SENATORIALES: "Sénatoriales",
+  MUNICIPALES: "Municipales",
+  DEPARTEMENTALES: "Départementales",
+  REGIONALES: "Régionales",
+  EUROPEENNES: "Européennes",
+  REFERENDUM: "Référendum",
+};
+
+export const ELECTION_TYPE_ICONS: Record<ElectionType, string> = {
+  PRESIDENTIELLE: "🏛️",
+  LEGISLATIVES: "🏛️",
+  SENATORIALES: "🏛️",
+  MUNICIPALES: "🏘️",
+  DEPARTEMENTALES: "🗺️",
+  REGIONALES: "🗺️",
+  EUROPEENNES: "🇪🇺",
+  REFERENDUM: "🗳️",
+};
+
+export const ELECTION_STATUS_LABELS: Record<ElectionStatus, string> = {
+  UPCOMING: "À venir",
+  REGISTRATION: "Inscriptions",
+  CANDIDACIES: "Candidatures",
+  CAMPAIGN: "Campagne",
+  ROUND_1: "1er tour",
+  BETWEEN_ROUNDS: "Entre-deux-tours",
+  ROUND_2: "2nd tour",
+  COMPLETED: "Terminée",
+};
+
+export const ELECTION_STATUS_COLORS: Record<ElectionStatus, string> = {
+  UPCOMING: "bg-gray-100 text-gray-800 border-gray-300",
+  REGISTRATION: "bg-blue-100 text-blue-800 border-blue-300",
+  CANDIDACIES: "bg-indigo-100 text-indigo-800 border-indigo-300",
+  CAMPAIGN: "bg-purple-100 text-purple-800 border-purple-300",
+  ROUND_1: "bg-orange-100 text-orange-800 border-orange-300",
+  BETWEEN_ROUNDS: "bg-amber-100 text-amber-800 border-amber-300",
+  ROUND_2: "bg-red-100 text-red-800 border-red-300",
+  COMPLETED: "bg-green-100 text-green-800 border-green-300",
+};
+
+export const ELECTION_SCOPE_LABELS: Record<ElectionScope, string> = {
+  NATIONAL: "National",
+  REGIONAL: "Régional",
+  DEPARTMENTAL: "Départemental",
+  MUNICIPAL: "Municipal",
+  EUROPEAN: "Européen",
+};
+
+export const SUFFRAGE_TYPE_LABELS: Record<SuffrageType, string> = {
+  DIRECT: "Suffrage universel direct",
+  INDIRECT: "Suffrage indirect",
 };
 
 // ============================================

@@ -577,113 +577,110 @@ AUTRES STATISTIQUES:
 
 /**
  * Batch index all entities of a type
+ *
+ * With `deltaOnly: true`, only entities that have been updated since their
+ * last embedding will be re-indexed (based on updatedAt comparison).
  */
 export async function indexAllOfType(
   entityType: EmbeddingType,
   options: {
     limit?: number;
+    deltaOnly?: boolean;
     onProgress?: (current: number, total: number) => void;
   } = {}
-): Promise<{ indexed: number; errors: number }> {
-  const { limit, onProgress } = options;
+): Promise<{ indexed: number; skipped: number; errors: number }> {
+  const { limit, deltaOnly = false, onProgress } = options;
   let indexed = 0;
+  let skipped = 0;
   let errors = 0;
+
+  // Build a map of existing embedding updatedAt times for delta comparison
+  let embeddingDates: Map<string, Date> | undefined;
+  if (deltaOnly) {
+    const existingEmbeddings = await db.chatEmbedding.findMany({
+      where: { entityType },
+      select: { entityId: true, updatedAt: true },
+    });
+    embeddingDates = new Map(existingEmbeddings.map((e) => [e.entityId, e.updatedAt]));
+  }
+
+  // Helper: check if entity needs re-indexing
+  const needsReindex = (entityId: string, entityUpdatedAt: Date): boolean => {
+    if (!deltaOnly || !embeddingDates) return true;
+    const embUpdated = embeddingDates.get(entityId);
+    if (!embUpdated) return true; // No embedding yet
+    return entityUpdatedAt > embUpdated;
+  };
+
+  // Helper: process a batch of entities
+  async function processBatch<T extends { id: string; updatedAt: Date }>(
+    entities: T[],
+    indexFn: (id: string) => Promise<void>,
+    typeName: string
+  ) {
+    for (let i = 0; i < entities.length; i++) {
+      const entity = entities[i];
+      if (!needsReindex(entity.id, entity.updatedAt)) {
+        skipped++;
+        onProgress?.(i + 1, entities.length);
+        continue;
+      }
+      try {
+        await indexFn(entity.id);
+        indexed++;
+      } catch (e) {
+        console.error(`Error indexing ${typeName} ${entity.id}:`, e);
+        errors++;
+      }
+      onProgress?.(i + 1, entities.length);
+      await new Promise((r) => setTimeout(r, 200));
+    }
+  }
 
   switch (entityType) {
     case "POLITICIAN": {
       const politicians = await db.politician.findMany({
-        select: { id: true },
+        select: { id: true, updatedAt: true },
         take: limit,
       });
-      for (let i = 0; i < politicians.length; i++) {
-        try {
-          await indexPolitician(politicians[i].id);
-          indexed++;
-        } catch (e) {
-          console.error(`Error indexing politician ${politicians[i].id}:`, e);
-          errors++;
-        }
-        onProgress?.(i + 1, politicians.length);
-        // Rate limit
-        await new Promise((r) => setTimeout(r, 200));
-      }
+      await processBatch(politicians, indexPolitician, "politician");
       break;
     }
     case "DOSSIER": {
       const dossiers = await db.legislativeDossier.findMany({
-        select: { id: true },
+        select: { id: true, updatedAt: true },
         take: limit,
       });
-      for (let i = 0; i < dossiers.length; i++) {
-        try {
-          await indexDossier(dossiers[i].id);
-          indexed++;
-        } catch (e) {
-          console.error(`Error indexing dossier ${dossiers[i].id}:`, e);
-          errors++;
-        }
-        onProgress?.(i + 1, dossiers.length);
-        await new Promise((r) => setTimeout(r, 200));
-      }
+      await processBatch(dossiers, indexDossier, "dossier");
       break;
     }
     case "SCRUTIN": {
       const scrutins = await db.scrutin.findMany({
-        select: { id: true },
+        select: { id: true, updatedAt: true },
         take: limit,
       });
-      for (let i = 0; i < scrutins.length; i++) {
-        try {
-          await indexScrutin(scrutins[i].id);
-          indexed++;
-        } catch (e) {
-          console.error(`Error indexing scrutin ${scrutins[i].id}:`, e);
-          errors++;
-        }
-        onProgress?.(i + 1, scrutins.length);
-        await new Promise((r) => setTimeout(r, 200));
-      }
+      await processBatch(scrutins, indexScrutin, "scrutin");
       break;
     }
     case "AFFAIR": {
       const affairs = await db.affair.findMany({
-        select: { id: true },
+        select: { id: true, updatedAt: true },
         take: limit,
       });
-      for (let i = 0; i < affairs.length; i++) {
-        try {
-          await indexAffair(affairs[i].id);
-          indexed++;
-        } catch (e) {
-          console.error(`Error indexing affair ${affairs[i].id}:`, e);
-          errors++;
-        }
-        onProgress?.(i + 1, affairs.length);
-        await new Promise((r) => setTimeout(r, 200));
-      }
+      await processBatch(affairs, indexAffair, "affair");
       break;
     }
     case "PARTY": {
       const parties = await db.party.findMany({
-        select: { id: true },
+        select: { id: true, updatedAt: true },
         take: limit,
       });
-      for (let i = 0; i < parties.length; i++) {
-        try {
-          await indexParty(parties[i].id);
-          indexed++;
-        } catch (e) {
-          console.error(`Error indexing party ${parties[i].id}:`, e);
-          errors++;
-        }
-        onProgress?.(i + 1, parties.length);
-        await new Promise((r) => setTimeout(r, 200));
-      }
+      await processBatch(parties, indexParty, "party");
       break;
     }
   }
 
-  return { indexed, errors };
+  return { indexed, skipped, errors };
 }
 
 /**

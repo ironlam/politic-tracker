@@ -12,7 +12,13 @@
  */
 
 import "dotenv/config";
-import { createCLI, type SyncHandler, type SyncResult } from "../src/lib/sync";
+import {
+  createCLI,
+  syncMetadata,
+  hashVotes,
+  type SyncHandler,
+  type SyncResult,
+} from "../src/lib/sync";
 import { decodeHtmlEntities } from "../src/lib/parsing";
 import { db } from "../src/lib/db";
 import { generateDateSlug } from "../src/lib/utils";
@@ -367,7 +373,8 @@ function sessionToLegislature(session: number): number {
 async function syncVotesSenat(
   session: number | null = null,
   dryRun: boolean = false,
-  todayOnly: boolean = false
+  todayOnly: boolean = false,
+  force: boolean = false
 ) {
   const stats = {
     scrutinsProcessed: 0,
@@ -375,6 +382,8 @@ async function syncVotesSenat(
     scrutinsUpdated: 0,
     scrutinsSkipped: 0,
     votesCreated: 0,
+    votesSkipped: 0,
+    cursorSkipped: 0,
     errors: [] as string[],
     senatorsNotFound: new Set<string>(),
   };
@@ -392,6 +401,8 @@ async function syncVotesSenat(
     for (const currentSession of sessionsToProcess) {
       console.log(`\n--- Session ${currentSession}-${currentSession + 1} ---`);
 
+      const sessionKey = `votes-senat:${currentSession}`;
+
       // Get list of scrutins for this session
       updateLine(`Fetching scrutin list for session ${currentSession}...`);
       let scrutinNumbers: string[];
@@ -407,13 +418,35 @@ async function syncVotesSenat(
 
       if (scrutinNumbers.length === 0) continue;
 
+      // Phase 5: Cursor-based incremental sync
+      // Scrutin numbers are monotonically increasing, so we can skip already-processed ones
+      let cursorNum = 0;
+      if (!force && !todayOnly) {
+        const prevState = await syncMetadata.get(sessionKey);
+        if (prevState?.cursor) {
+          cursorNum = parseInt(prevState.cursor, 10);
+          if (!isNaN(cursorNum) && cursorNum > 0) {
+            console.log(`Cursor: resuming from n°${cursorNum} (skipping already processed)`);
+          }
+        }
+      }
+
       // Process each scrutin
+      let maxProcessedNumber = cursorNum;
+
       for (let i = 0; i < scrutinNumbers.length; i++) {
         const number = scrutinNumbers[i];
+        const numInt = parseInt(number, 10);
         const progressMsg = `${renderProgressBar(i + 1, scrutinNumbers.length)} Processing ${i + 1}/${scrutinNumbers.length} (n°${number})`;
 
         if ((i + 1) % 20 === 0 || i === 0 || i === scrutinNumbers.length - 1) {
           updateLine(progressMsg);
+        }
+
+        // Skip scrutins already processed (cursor-based)
+        if (!force && !todayOnly && cursorNum > 0 && numInt <= cursorNum) {
+          stats.cursorSkipped++;
+          continue;
         }
 
         try {
@@ -502,22 +535,40 @@ async function syncVotesSenat(
               }
             }
 
-            // Delete existing votes and create new ones
+            // Check votes hash to skip unchanged scrutins
             if (votesToCreate.length > 0) {
-              await db.vote.deleteMany({
-                where: { scrutinId: scrutin.id },
-              });
+              const newHash = hashVotes(votesToCreate);
 
-              await db.vote.createMany({
-                data: votesToCreate.map((v) => ({
-                  scrutinId: scrutin.id,
-                  politicianId: v.politicianId,
-                  position: v.position,
-                })),
-                skipDuplicates: true,
-              });
+              if (scrutin.votesHash === newHash) {
+                stats.votesSkipped += votesToCreate.length;
+              } else {
+                // Delete existing votes and create new ones
+                await db.vote.deleteMany({
+                  where: { scrutinId: scrutin.id },
+                });
 
-              stats.votesCreated += votesToCreate.length;
+                await db.vote.createMany({
+                  data: votesToCreate.map((v) => ({
+                    scrutinId: scrutin.id,
+                    politicianId: v.politicianId,
+                    position: v.position,
+                  })),
+                  skipDuplicates: true,
+                });
+
+                // Update votes hash
+                await db.scrutin.update({
+                  where: { id: scrutin.id },
+                  data: { votesHash: newHash },
+                });
+
+                stats.votesCreated += votesToCreate.length;
+              }
+            }
+
+            // Track max processed number for cursor
+            if (numInt > maxProcessedNumber) {
+              maxProcessedNumber = numInt;
             }
           } else {
             // Dry run: just count
@@ -540,6 +591,14 @@ async function syncVotesSenat(
             `Session ${currentSession} n°${number}: ${err instanceof Error ? err.message : String(err)}`
           );
         }
+      }
+
+      // Update cursor for this session
+      if (!dryRun && maxProcessedNumber > cursorNum) {
+        await syncMetadata.markCompleted(sessionKey, {
+          cursor: String(maxProcessedNumber),
+          itemCount: stats.scrutinsProcessed,
+        });
       }
 
       console.log(""); // New line after progress bar
@@ -618,11 +677,13 @@ Features:
   async sync(options): Promise<SyncResult> {
     const {
       dryRun = false,
+      force = false,
       session: sessionStr,
       all = false,
       today = false,
     } = options as {
       dryRun?: boolean;
+      force?: boolean;
       session?: string;
       all?: boolean;
       today?: boolean;
@@ -651,8 +712,9 @@ Features:
     }
 
     if (today) console.log("Filter: Today's scrutins only");
+    if (force) console.log("Mode: Full sync (--force)");
 
-    const result = await syncVotesSenat(session, dryRun, today);
+    const result = await syncVotesSenat(session, dryRun, today, force);
 
     return {
       success: result.errors.length === 0,
@@ -662,7 +724,9 @@ Features:
         created: result.scrutinsCreated,
         updated: result.scrutinsUpdated,
         skipped: result.scrutinsSkipped,
+        cursorSkipped: result.cursorSkipped,
         votesCreated: result.votesCreated,
+        votesSkipped: result.votesSkipped,
         senatorsNotFound: result.senatorsNotFound.size,
       },
       errors: result.errors,

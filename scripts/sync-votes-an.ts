@@ -11,7 +11,14 @@
  */
 
 import "dotenv/config";
-import { createCLI, type SyncHandler, type SyncResult } from "../src/lib/sync";
+import {
+  createCLI,
+  syncMetadata,
+  hashFile,
+  hashVotes,
+  type SyncHandler,
+  type SyncResult,
+} from "../src/lib/sync";
 import { db } from "../src/lib/db";
 import { generateDateSlug } from "../src/lib/utils";
 import { VotePosition, VotingResult, DataSource } from "../src/generated/prisma";
@@ -50,18 +57,43 @@ function renderProgressBar(current: number, total: number, width: number = 30): 
 }
 
 /**
- * Download a file from URL
+ * Download result with HTTP metadata
  */
-async function downloadFile(url: string, dest: string): Promise<void> {
+interface DownloadResult {
+  notModified: boolean;
+  etag?: string;
+}
+
+/**
+ * Download a file from URL with optional ETag for conditional requests
+ */
+async function downloadFile(
+  url: string,
+  dest: string,
+  etag?: string | null
+): Promise<DownloadResult> {
   return new Promise((resolve, reject) => {
-    const file = createWriteStream(dest);
+    const urlObj = new URL(url);
+    const headers: Record<string, string> = {};
+    if (etag) {
+      headers["If-None-Match"] = etag;
+    }
+    const options: https.RequestOptions = {
+      hostname: urlObj.hostname,
+      path: urlObj.pathname + urlObj.search,
+      headers,
+    };
+
     https
-      .get(url, (response) => {
+      .get(options, (response) => {
+        if (response.statusCode === 304) {
+          resolve({ notModified: true, etag: etag || undefined });
+          return;
+        }
         if (response.statusCode === 302 || response.statusCode === 301) {
-          // Follow redirect
           const redirectUrl = response.headers.location;
           if (redirectUrl) {
-            downloadFile(redirectUrl, dest).then(resolve).catch(reject);
+            downloadFile(redirectUrl, dest, etag).then(resolve).catch(reject);
             return;
           }
         }
@@ -69,14 +101,18 @@ async function downloadFile(url: string, dest: string): Promise<void> {
           reject(new Error(`HTTP ${response.statusCode} for ${url}`));
           return;
         }
+        const file = createWriteStream(dest);
         response.pipe(file);
         file.on("finish", () => {
           file.close();
-          resolve();
+          resolve({
+            notModified: false,
+            etag: response.headers.etag || undefined,
+          });
         });
       })
       .on("error", (err) => {
-        fs.unlinkSync(dest);
+        if (fs.existsSync(dest)) fs.unlinkSync(dest);
         reject(err);
       });
   });
@@ -233,7 +269,8 @@ async function generateUniqueScrutinSlug(date: Date, title: string): Promise<str
 async function syncVotesAN(
   legislature: number = LEGISLATURE,
   dryRun: boolean = false,
-  todayOnly: boolean = false
+  todayOnly: boolean = false,
+  force: boolean = false
 ) {
   const stats = {
     scrutinsProcessed: 0,
@@ -241,12 +278,15 @@ async function syncVotesAN(
     scrutinsUpdated: 0,
     scrutinsSkipped: 0,
     votesCreated: 0,
+    votesSkipped: 0,
     errors: [] as string[],
     politiciansNotFound: new Set<string>(),
   };
 
+  const SOURCE_KEY = `votes-an-zip:${legislature}`;
+
   try {
-    // Step 1: Download ZIP
+    // Step 1: Download ZIP (with ETag for conditional download)
     updateLine("Downloading scrutins ZIP from data.assemblee-nationale.fr...");
     const zipUrl = ZIP_URL_TEMPLATE.replace("{leg}", String(legislature));
     const zipPath = path.join(TEMP_DIR, "scrutins.zip");
@@ -257,7 +297,30 @@ async function syncVotesAN(
     }
     mkdirSync(TEMP_DIR, { recursive: true });
 
-    await downloadFile(zipUrl, zipPath);
+    // Check ETag from previous sync
+    const prevState = force ? null : await syncMetadata.get(SOURCE_KEY);
+    const downloadResult = await downloadFile(zipUrl, zipPath, force ? null : prevState?.etag);
+
+    if (downloadResult.notModified) {
+      // Also check content hash as fallback
+      console.log("\n✓ ZIP not modified (HTTP 304), skipping sync");
+      await syncMetadata.markCompleted(SOURCE_KEY, { etag: downloadResult.etag });
+      return stats;
+    }
+
+    // Verify content hash (fallback if ETag not supported)
+    const zipHash = await hashFile(zipPath);
+    if (!force && prevState?.contentHash === zipHash) {
+      console.log("\n✓ ZIP content identical (hash match), skipping sync");
+      await syncMetadata.markCompleted(SOURCE_KEY, {
+        contentHash: zipHash,
+        etag: downloadResult.etag,
+      });
+      // Cleanup
+      rmSync(TEMP_DIR, { recursive: true });
+      return stats;
+    }
+
     console.log("\n✓ Downloaded ZIP file");
 
     // Step 2: Extract ZIP
@@ -371,22 +434,35 @@ async function syncVotesAN(
             }
           }
 
-          // Delete existing votes and create new ones
+          // Check votes hash to skip unchanged scrutins
           if (votesToCreate.length > 0) {
-            await db.vote.deleteMany({
-              where: { scrutinId: scrutin.id },
-            });
+            const newHash = hashVotes(votesToCreate);
 
-            await db.vote.createMany({
-              data: votesToCreate.map((v) => ({
-                scrutinId: scrutin.id,
-                politicianId: v.politicianId,
-                position: v.position,
-              })),
-              skipDuplicates: true,
-            });
+            if (scrutin.votesHash === newHash) {
+              stats.votesSkipped += votesToCreate.length;
+            } else {
+              // Delete existing votes and create new ones
+              await db.vote.deleteMany({
+                where: { scrutinId: scrutin.id },
+              });
 
-            stats.votesCreated += votesToCreate.length;
+              await db.vote.createMany({
+                data: votesToCreate.map((v) => ({
+                  scrutinId: scrutin.id,
+                  politicianId: v.politicianId,
+                  position: v.position,
+                })),
+                skipDuplicates: true,
+              });
+
+              // Update votes hash
+              await db.scrutin.update({
+                where: { id: scrutin.id },
+                data: { votesHash: newHash },
+              });
+
+              stats.votesCreated += votesToCreate.length;
+            }
           }
         } else {
           // Dry run: just count
@@ -409,6 +485,15 @@ async function syncVotesAN(
 
     // Cleanup
     rmSync(TEMP_DIR, { recursive: true });
+
+    // Track sync metadata
+    if (!dryRun) {
+      await syncMetadata.markCompleted(SOURCE_KEY, {
+        etag: downloadResult.etag,
+        contentHash: zipHash,
+        itemCount: stats.scrutinsProcessed,
+      });
+    }
   } catch (err) {
     stats.errors.push(`Fatal error: ${err instanceof Error ? err.message : String(err)}`);
   }
@@ -477,10 +562,12 @@ Features:
   async sync(options): Promise<SyncResult> {
     const {
       dryRun = false,
+      force = false,
       leg,
       today = false,
     } = options as {
       dryRun?: boolean;
+      force?: boolean;
       leg?: string;
       today?: boolean;
     };
@@ -497,8 +584,9 @@ Features:
 
     console.log(`Legislature: ${legislature}e`);
     if (today) console.log("Filter: Today's scrutins only");
+    if (force) console.log("Mode: Full sync (--force)");
 
-    const result = await syncVotesAN(legislature, dryRun, today);
+    const result = await syncVotesAN(legislature, dryRun, today, force);
 
     return {
       success: result.errors.length === 0,
@@ -509,6 +597,7 @@ Features:
         updated: result.scrutinsUpdated,
         skipped: result.scrutinsSkipped,
         votesCreated: result.votesCreated,
+        votesSkipped: result.votesSkipped,
         politiciansNotFound: result.politiciansNotFound.size,
       },
       errors: result.errors,

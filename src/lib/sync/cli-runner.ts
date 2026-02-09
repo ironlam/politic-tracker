@@ -31,6 +31,12 @@ const STANDARD_OPTIONS: CLIOptionDefinition[] = [
   { name: "--help", alias: "-h", type: "boolean", description: "Show help" },
   { name: "--stats", type: "boolean", description: "Show current statistics" },
   { name: "--dry-run", type: "boolean", description: "Preview without saving" },
+  {
+    name: "--force",
+    alias: "-f",
+    type: "boolean",
+    description: "Force full sync (bypass incremental)",
+  },
   { name: "--limit", alias: "-l", type: "number", description: "Limit items to process" },
   { name: "--verbose", alias: "-v", type: "boolean", description: "Verbose output" },
 ];

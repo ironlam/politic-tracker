@@ -507,6 +507,9 @@ model Scrutin {
   summary       String?      @db.Text
   summaryDate   DateTime?
 
+  // Incremental sync: hash of vote data to detect changes
+  votesHash     String?
+
   // Relations
   votes         Vote[]
 
@@ -759,4 +762,23 @@ model PressArticlePartyMention {
   @@unique([articleId, partyId])
   @@index([partyId])
   @@index([articleId])
+}
+
+// ============================================
+// SYNC METADATA (incremental sync tracking)
+// ============================================
+
+model SyncMetadata {
+  id            String    @id @default(cuid())
+  sourceKey     String    @unique  // e.g. "votes-an-zip", "votes-senat:2024", "embeddings:POLITICIAN"
+  lastSyncAt    DateTime?
+  etag          String?
+  lastModified  String?
+  cursor        String?
+  contentHash   String?
+  itemCount     Int?
+  lastDurationS Float?
+  extra         Json?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 }

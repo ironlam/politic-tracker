@@ -3,7 +3,8 @@
  * Index embeddings for RAG chatbot
  *
  * Usage:
- *   npm run index:embeddings          # Index all types
+ *   npm run index:embeddings                    # Delta index (only changed entities)
+ *   npm run index:embeddings -- --force         # Full re-index all entities
  *   npm run index:embeddings -- --type=POLITICIAN
  *   npm run index:embeddings -- --type=DOSSIER --limit=100
  *   npm run index:embeddings -- --stats
@@ -11,6 +12,7 @@
 
 import "dotenv/config";
 import { indexAllOfType, getEmbeddingStats, indexGlobalStats } from "../src/services/embeddings";
+import { syncMetadata } from "../src/lib/sync";
 import type { EmbeddingType } from "../src/generated/prisma";
 
 async function main() {
@@ -35,6 +37,7 @@ async function main() {
   // Parse arguments
   let entityType: EmbeddingType | undefined;
   let limit: number | undefined;
+  const force = args.includes("--force") || args.includes("-f");
 
   for (const arg of args) {
     if (arg.startsWith("--type=")) {
@@ -54,29 +57,42 @@ async function main() {
     ? [entityType]
     : ["POLITICIAN", "PARTY", "AFFAIR", "DOSSIER", "SCRUTIN"];
 
+  const mode = force ? "full re-index" : "delta (only changed entities)";
   console.log("\n🔄 Indexing embeddings for RAG chatbot\n");
+  console.log(`Mode: ${mode}`);
   console.log(`Types to index: ${types.join(", ")}`);
   if (limit) console.log(`Limit per type: ${limit}`);
   console.log("");
 
   let totalIndexed = 0;
+  let totalSkipped = 0;
   let totalErrors = 0;
 
   for (const type of types) {
     console.log(`\n📝 Indexing ${type}...`);
 
     const startTime = Date.now();
-    const { indexed, errors } = await indexAllOfType(type, {
+    const { indexed, skipped, errors } = await indexAllOfType(type, {
       limit,
+      deltaOnly: !force,
       onProgress: (current, total) => {
         process.stdout.write(`\r   Progress: ${current}/${total}`);
       },
     });
 
     const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-    console.log(`\n   ✅ Indexed: ${indexed}, Errors: ${errors} (${elapsed}s)`);
+    const skippedMsg = skipped > 0 ? `, Skipped: ${skipped}` : "";
+    console.log(`\n   ✅ Indexed: ${indexed}${skippedMsg}, Errors: ${errors} (${elapsed}s)`);
+
+    // Track sync metadata per type
+    const sourceKey = `embeddings:${type}`;
+    await syncMetadata.markCompleted(sourceKey, {
+      itemCount: indexed,
+      durationS: (Date.now() - startTime) / 1000,
+    });
 
     totalIndexed += indexed;
+    totalSkipped += skipped;
     totalErrors += errors;
   }
 
@@ -86,6 +102,9 @@ async function main() {
 
   console.log("\n" + "=".repeat(50));
   console.log(`✅ Total indexed: ${totalIndexed}`);
+  if (totalSkipped > 0) {
+    console.log(`⏭️  Total skipped (unchanged): ${totalSkipped}`);
+  }
   if (totalErrors > 0) {
     console.log(`❌ Total errors: ${totalErrors}`);
   }

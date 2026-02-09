@@ -7,6 +7,7 @@
  */
 export interface SyncOptions {
   dryRun?: boolean;
+  force?: boolean;
   limit?: number;
   verbose?: boolean;
   [key: string]: unknown;

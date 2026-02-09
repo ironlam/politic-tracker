@@ -14,7 +14,10 @@ export {
 } from "./result-formatter";
 export { ProgressTracker, createProgress } from "./progress-tracker";
 export { CheckpointManager, createCheckpoint } from "./checkpoint";
+export { syncMetadata } from "./sync-metadata";
+export { hashFile, hashContent, hashVotes } from "./hash";
 
 export type { SyncHandler, SyncOptions, SyncResult, CLIOptionDefinition } from "./types";
 export type { ProgressOptions, ProgressStats } from "./progress-tracker";
 export type { Checkpoint, CheckpointManagerOptions } from "./checkpoint";
+export type { SyncState, MarkCompletedOptions } from "./sync-metadata";

@@ -12,6 +12,8 @@ import {
   AFFAIR_CATEGORY_LABELS,
   MANDATE_TYPE_LABELS,
   VOTE_POSITION_DOT_COLORS,
+  FACTCHECK_RATING_LABELS,
+  FACTCHECK_RATING_COLORS,
 } from "@/config/labels";
 import { PoliticianAvatar } from "@/components/politicians/PoliticianAvatar";
 import { MandateTimeline } from "@/components/politicians/MandateTimeline";
@@ -45,6 +47,13 @@ async function getPolitician(slug: string) {
       },
       declarations: {
         orderBy: { year: "desc" },
+      },
+      factCheckMentions: {
+        include: {
+          factCheck: true,
+        },
+        orderBy: { factCheck: { publishedAt: "desc" } },
+        take: 5,
       },
     },
   });
@@ -390,6 +399,56 @@ export default async function PoliticianPage({ params }: PageProps) {
                       </div>
                     </div>
                   )}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Fact-checks */}
+            {politician.factCheckMentions.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <h2 className="leading-none font-semibold">Fact-checks</h2>
+                    <Link
+                      href={`/factchecks?politician=${politician.slug}`}
+                      className="text-sm text-primary hover:underline"
+                    >
+                      Voir tout →
+                    </Link>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Verdicts émis par les organismes de fact-checking cités.
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {politician.factCheckMentions.map((mention) => (
+                      <div
+                        key={mention.id}
+                        className="flex items-start gap-3 border-b last:border-0 pb-3 last:pb-0"
+                      >
+                        <Badge
+                          className={`shrink-0 ${FACTCHECK_RATING_COLORS[mention.factCheck.verdictRating]}`}
+                        >
+                          {FACTCHECK_RATING_LABELS[mention.factCheck.verdictRating]}
+                        </Badge>
+                        <div className="min-w-0 flex-1">
+                          <a
+                            href={mention.factCheck.sourceUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm font-medium hover:underline line-clamp-1"
+                          >
+                            {mention.factCheck.title}
+                          </a>
+                          <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
+                            {mention.factCheck.claimant && `${mention.factCheck.claimant} — `}
+                            {mention.factCheck.source} · {formatDate(mention.factCheck.publishedAt)}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </CardContent>
               </Card>
             )}

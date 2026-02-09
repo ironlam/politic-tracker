@@ -9,6 +9,8 @@ import type {
   ExternalId,
   Scrutin,
   Vote,
+  FactCheck,
+  FactCheckMention,
   AffairStatus,
   AffairCategory,
   AffairEventType,
@@ -18,6 +20,7 @@ import type {
   VotePosition,
   VotingResult,
   Chamber,
+  FactCheckRating,
 } from "@/generated/prisma";
 
 // Re-export Prisma types
@@ -32,6 +35,8 @@ export type {
   ExternalId,
   Scrutin,
   Vote,
+  FactCheck,
+  FactCheckMention,
   AffairStatus,
   AffairCategory,
   AffairEventType,
@@ -41,6 +46,7 @@ export type {
   VotePosition,
   VotingResult,
   Chamber,
+  FactCheckRating,
 };
 
 // Serialized types (with Decimal converted to number for client components)

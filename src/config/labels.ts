@@ -8,6 +8,7 @@ import type {
   VotePosition,
   VotingResult,
   Chamber,
+  FactCheckRating,
 } from "@/types";
 
 export const AFFAIR_STATUS_LABELS: Record<AffairStatus, string> = {
@@ -426,4 +427,30 @@ export const DOSSIER_CATEGORY_ICONS: Record<string, string> = {
   International: "🌍",
   Contrôle: "🔍",
   Information: "📋",
+};
+
+// ============================================
+// FACT-CHECKS
+// ============================================
+
+export const FACTCHECK_RATING_LABELS: Record<FactCheckRating, string> = {
+  TRUE: "Vrai",
+  MOSTLY_TRUE: "Plutôt vrai",
+  HALF_TRUE: "Partiellement vrai",
+  MISLEADING: "Trompeur",
+  OUT_OF_CONTEXT: "Hors contexte",
+  MOSTLY_FALSE: "Plutôt faux",
+  FALSE: "Faux",
+  UNVERIFIABLE: "Invérifiable",
+};
+
+export const FACTCHECK_RATING_COLORS: Record<FactCheckRating, string> = {
+  TRUE: "bg-green-100 text-green-800",
+  MOSTLY_TRUE: "bg-green-50 text-green-700",
+  HALF_TRUE: "bg-yellow-100 text-yellow-800",
+  MISLEADING: "bg-orange-100 text-orange-800",
+  OUT_OF_CONTEXT: "bg-amber-100 text-amber-800",
+  MOSTLY_FALSE: "bg-red-50 text-red-700",
+  FALSE: "bg-red-100 text-red-800",
+  UNVERIFIABLE: "bg-gray-100 text-gray-800",
 };

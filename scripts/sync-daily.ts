@@ -48,6 +48,14 @@ const steps: SyncStep[] = [
     name: "Résumés IA scrutins (limit 20)",
     command: `npx tsx scripts/generate-scrutin-summaries.ts --limit=20${dryRunFlag}`,
   },
+  {
+    name: "Presse (RSS)",
+    command: `npx tsx scripts/sync-press.ts${dryRunFlag}`,
+  },
+  {
+    name: "Fact-checks (Google API)",
+    command: `npx tsx scripts/sync-factchecks.ts --limit=50${dryRunFlag}`,
+  },
 ];
 
 async function main() {

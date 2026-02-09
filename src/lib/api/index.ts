@@ -24,3 +24,11 @@ export type {
 
 export { RSSClient, rssClient, RSS_FEEDS } from "./rss";
 export type { RSSFeedConfig, RSSItem, RSSFeed, RSSClientOptions } from "./rss";
+
+export { searchClaims, mapTextualRating } from "./factcheck";
+export type {
+  FactCheckClaim,
+  FactCheckClaimReview,
+  FactCheckSearchResponse,
+  SearchClaimsOptions,
+} from "./factcheck";

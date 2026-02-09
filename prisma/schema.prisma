@@ -41,6 +41,7 @@ model Politician {
   externalIds   ExternalId[]      // IDs from all external sources
   votes         Vote[]            // Parliamentary votes
   pressMentions PressArticleMention[] // Mentions in press articles
+  factCheckMentions FactCheckMention[] // Mentions in fact-checks
 
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -766,6 +767,56 @@ model PressArticlePartyMention {
   @@unique([articleId, partyId])
   @@index([partyId])
   @@index([articleId])
+}
+
+// ============================================
+// FACT-CHECKS (Google Fact Check Tools API)
+// ============================================
+
+model FactCheck {
+  id            String          @id @default(cuid())
+  claimText     String          @db.Text        // La déclaration vérifiée
+  claimant      String?                          // Qui a fait la déclaration
+  title         String          @db.Text        // Titre de l'article de fact-check
+  verdict       String                           // Verdict textuel original (ex: "Faux", "Mostly False")
+  verdictRating FactCheckRating                  // Rating normalisé
+  source        String                           // "AFP Factuel", "Les Décodeurs", etc.
+  sourceUrl     String          @unique          // URL de l'article original
+  publishedAt   DateTime                         // Date de publication du fact-check
+  claimDate     DateTime?                        // Date de la déclaration vérifiée
+  languageCode  String?                          // "fr", "en"
+
+  mentions      FactCheckMention[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([publishedAt])
+  @@index([source])
+  @@index([verdictRating])
+}
+
+model FactCheckMention {
+  id            String     @id @default(cuid())
+  factCheckId   String
+  factCheck     FactCheck  @relation(fields: [factCheckId], references: [id], onDelete: Cascade)
+  politicianId  String
+  politician    Politician @relation(fields: [politicianId], references: [id])
+  matchedName   String?
+
+  @@unique([factCheckId, politicianId])
+  @@index([politicianId])
+  @@index([factCheckId])
+}
+
+enum FactCheckRating {
+  TRUE
+  MOSTLY_TRUE
+  HALF_TRUE
+  MISLEADING
+  OUT_OF_CONTEXT
+  MOSTLY_FALSE
+  FALSE
+  UNVERIFIABLE
 }
 
 // ============================================

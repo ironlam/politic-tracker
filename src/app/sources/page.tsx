@@ -73,6 +73,26 @@ const DATA_SOURCES = [
     fields: ["Identité", "Groupe politique", "Commission", "Photo"],
     color: "#003399",
   },
+  {
+    name: "Presse (RSS)",
+    shortName: "Presse",
+    description:
+      "Articles politiques du Monde, Politico et Mediapart avec détection automatique des mentions",
+    url: "https://www.lemonde.fr/politique/",
+    frequency: "Quotidienne",
+    fields: ["Articles", "Mentions politiciens", "Mentions partis"],
+    color: "#E8A838",
+  },
+  {
+    name: "Google Fact Check Tools API",
+    shortName: "FC",
+    description:
+      "Fact-checks de sources reconnues (AFP Factuel, Les Décodeurs, etc.) via le standard ClaimReview",
+    url: "https://toolbox.google.com/factcheck/explorer",
+    frequency: "Quotidienne",
+    fields: ["Déclarations vérifiées", "Verdicts", "Sources de fact-checking"],
+    color: "#4285F4",
+  },
 ];
 
 const METHODOLOGY_POINTS = [
@@ -354,6 +374,48 @@ export default function SourcesPage() {
               </p>
             </CardContent>
           </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">Fact-checks</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Vérification des déclarations des politiciens par des organismes reconnus (AFP
+                Factuel, Les Décodeurs, etc.) via la Google Fact Check Tools API.
+                <Link href="/factchecks" className="text-blue-600 hover:underline ml-1">
+                  Voir les fact-checks
+                </Link>
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">Revue de presse</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Articles politiques agrégés depuis Le Monde, Politico et Mediapart, avec détection
+                automatique des politiciens et partis mentionnés.
+                <Link href="/presse" className="text-blue-600 hover:underline ml-1">
+                  Voir la revue de presse
+                </Link>
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">Chatbot IA</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Assistant conversationnel basé sur nos données (RAG), avec citations obligatoires et
+                rappel de la présomption d&apos;innocence.
+                <Link href="/chat" className="text-blue-600 hover:underline ml-1">
+                  Poser une question
+                </Link>
+              </p>
+            </CardContent>
+          </Card>
         </div>
       </section>
 
@@ -383,8 +445,8 @@ export default function SourcesPage() {
                 <strong>Traçabilité</strong> : Chaque donnée conserve sa source d&apos;origine
               </li>
               <li>
-                <strong>Synchronisation automatique</strong> : Mise à jour hebdomadaire via GitHub
-                Actions
+                <strong>Synchronisation automatique</strong> : Mise à jour quotidienne via GitHub
+                Actions (3x/jour)
               </li>
             </ul>
           </CardContent>

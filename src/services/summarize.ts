@@ -223,6 +223,132 @@ Consignes:
   }
 }
 
+// ============================================
+// BIOGRAPHY GENERATION
+// ============================================
+
+export interface BiographyRequest {
+  fullName: string;
+  civility: string | null;
+  birthDate: Date | null;
+  birthPlace: string | null;
+  deathDate: Date | null;
+  currentParty: string | null;
+  mandates: Array<{
+    type: string;
+    title: string;
+    isCurrent: boolean;
+    startDate: Date;
+    endDate: Date | null;
+  }>;
+  voteStats: {
+    total: number;
+    pour: number;
+    contre: number;
+    abstention: number;
+  } | null;
+  affairsCount: number;
+  declarationsCount: number;
+  latestDeclarationYear: number | null;
+}
+
+/**
+ * Generate a factual biography for a politician based on structured data
+ */
+export async function generateBiography(request: BiographyRequest): Promise<string> {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+
+  if (!apiKey) {
+    throw new Error("ANTHROPIC_API_KEY environment variable is not set");
+  }
+
+  const currentMandates = request.mandates.filter((m) => m.isCurrent);
+  const pastMandates = request.mandates.filter((m) => !m.isCurrent);
+
+  let dataSection = `Nom complet : ${request.fullName}`;
+  if (request.civility) dataSection += `\nCivilité : ${request.civility}`;
+  if (request.birthDate)
+    dataSection += `\nDate de naissance : ${request.birthDate.toISOString().split("T")[0]}`;
+  if (request.birthPlace) dataSection += `\nLieu de naissance : ${request.birthPlace}`;
+  if (request.deathDate)
+    dataSection += `\nDate de décès : ${request.deathDate.toISOString().split("T")[0]}`;
+  if (request.currentParty) dataSection += `\nParti actuel : ${request.currentParty}`;
+
+  if (currentMandates.length > 0) {
+    dataSection += `\n\nMandats actuels :`;
+    for (const m of currentMandates) {
+      dataSection += `\n- ${m.title} (depuis ${m.startDate.toISOString().split("T")[0]})`;
+    }
+  }
+
+  if (pastMandates.length > 0) {
+    dataSection += `\n\nMandats passés :`;
+    for (const m of pastMandates) {
+      const end = m.endDate ? m.endDate.toISOString().split("T")[0] : "?";
+      dataSection += `\n- ${m.title} (${m.startDate.toISOString().split("T")[0]} → ${end})`;
+    }
+  }
+
+  if (request.voteStats && request.voteStats.total > 0) {
+    const vs = request.voteStats;
+    dataSection += `\n\nVotes parlementaires : ${vs.total} scrutins (${vs.pour} pour, ${vs.contre} contre, ${vs.abstention} abstentions)`;
+  }
+
+  if (request.declarationsCount > 0) {
+    dataSection += `\n\nDéclarations HATVP : ${request.declarationsCount} déclaration(s)`;
+    if (request.latestDeclarationYear)
+      dataSection += ` (dernière en ${request.latestDeclarationYear})`;
+  }
+
+  const prompt = `Tu es un rédacteur encyclopédique pour le site Transparence Politique. Rédige une biographie factuelle et neutre de ce responsable politique à partir EXCLUSIVEMENT des données ci-dessous.
+
+DONNÉES :
+${dataSection}
+
+CONSIGNES STRICTES :
+- 100 à 200 mots maximum, en français
+- Commence par "${request.fullName} est${request.deathDate ? "/était" : ""}..."
+- Mentionne : mandat actuel, parti, parcours antérieur, statistiques de votes (si disponibles), déclarations HATVP (si disponibles)
+- Ne mentionne PAS les affaires judiciaires
+- N'invente RIEN au-delà des données fournies
+- Ton factuel, neutre, style encyclopédique
+- Pas de listes à puces, un paragraphe fluide
+- Pas de formule d'introduction ou de conclusion laudative`;
+
+  const response = await fetch(ANTHROPIC_API_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01",
+    },
+    body: JSON.stringify({
+      model: MODEL,
+      max_tokens: 500,
+      messages: [
+        {
+          role: "user",
+          content: prompt,
+        },
+      ],
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`Anthropic API error: ${response.status} - ${error}`);
+  }
+
+  const data = await response.json();
+
+  const textContent = data.content?.find((c: { type: string }) => c.type === "text");
+  if (!textContent?.text) {
+    throw new Error("No text content in API response");
+  }
+
+  return textContent.text.trim();
+}
+
 /**
  * Rate-limited batch summarization
  */

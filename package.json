@@ -62,6 +62,8 @@
     "generate:summaries:stats": "tsx scripts/generate-summaries.ts --stats",
     "generate:scrutin-summaries": "tsx scripts/generate-scrutin-summaries.ts",
     "generate:scrutin-summaries:stats": "tsx scripts/generate-scrutin-summaries.ts --stats",
+    "generate:biographies": "tsx scripts/generate-biographies.ts",
+    "generate:biographies:stats": "tsx scripts/generate-biographies.ts --stats",
     "index:embeddings": "tsx scripts/index-embeddings.ts",
     "index:embeddings:stats": "tsx scripts/index-embeddings.ts --stats",
     "migrate:slugs": "tsx scripts/migrate-slugs.ts",

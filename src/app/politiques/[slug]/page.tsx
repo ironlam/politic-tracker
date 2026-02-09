@@ -283,6 +283,20 @@ export default async function PoliticianPage({ params }: PageProps) {
               </div>
             )}
 
+            {/* Biography */}
+            {politician.biography && (
+              <Card>
+                <CardContent className="pt-6">
+                  <p className="text-muted-foreground leading-relaxed">{politician.biography}</p>
+                  <p className="text-xs text-muted-foreground/60 mt-3 italic">
+                    Résumé généré automatiquement à partir de données publiques
+                    {politician.biographyGeneratedAt &&
+                      ` — mis à jour le ${formatDate(politician.biographyGeneratedAt)}`}
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Career / Mandates */}
             {hasMandates && (
               <Card>

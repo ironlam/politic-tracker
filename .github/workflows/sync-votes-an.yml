@@ -18,6 +18,7 @@ jobs:
   sync-votes-an:
     runs-on: ubuntu-latest
     timeout-minutes: 90 # Long job, can take up to 60 min
+    environment: production
 
     steps:
       - name: Checkout repository

@@ -551,6 +551,49 @@ export const SUFFRAGE_TYPE_LABELS: Record<SuffrageType, string> = {
 };
 
 // ============================================
+// NUANCES POLITIQUES (candidatures municipales)
+// ============================================
+
+// Maps nuance codes (used in candidatures CSVs) to party shortName in our DB
+export const NUANCE_POLITIQUE_MAPPING: Record<string, string> = {
+  // Extrême gauche
+  LEXG: "LO", // Lutte Ouvrière
+  LCOM: "PCF", // Parti communiste
+  LRDG: "PCF", // Régionalistes de gauche / ancienne étiquette
+  LFI: "LFI", // La France Insoumise
+
+  // Gauche
+  LUG: "NUPES", // Union de gauche
+  LSOC: "PS", // Parti socialiste
+  LDVG: "DVG", // Divers gauche
+  LVEC: "EELV", // Écologistes
+  LECO: "EELV", // Écologistes (variante)
+  LRG: "PRG", // Parti radical de gauche
+
+  // Centre
+  LREM: "RE", // Renaissance (ex-LREM)
+  LMC: "RE", // Majorité présidentielle
+  LMDM: "MoDem", // MoDem
+  LUDI: "UDI", // UDI
+  LUC: "UC", // Union centriste
+  LDVC: "DVC", // Divers centre
+
+  // Droite
+  LLR: "LR", // Les Républicains
+  LDVD: "DVD", // Divers droite
+  LUD: "LR", // Union de la droite
+
+  // Extrême droite
+  LRN: "RN", // Rassemblement National
+  LREC: "REC", // Reconquête
+  LEXD: "RN", // Extrême droite (générique)
+
+  // Divers
+  LDIV: "DIV", // Divers
+  LAUT: "DIV", // Autres
+};
+
+// ============================================
 // PARTY ROLES
 // ============================================
 

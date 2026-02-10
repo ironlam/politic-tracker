@@ -5,6 +5,7 @@ export { syncHATVP, getHATVPStats } from "./hatvp";
 export { syncPhotos, getPhotoStats } from "./photos";
 export { syncEuroparl, getEuroparlStats } from "./europarl";
 export { syncRNEMaires, getRNEStats } from "./rne";
+export { syncCandidaturesMunicipales, getCandidaturesStats } from "./candidatures";
 export type {
   DeputeCSV,
   SyncResult,
@@ -18,4 +19,6 @@ export type {
   EuroparlSyncResult,
   MaireRNECSV,
   RNESyncResult,
+  CandidatureMunicipaleCSV,
+  CandidaturesSyncResult,
 } from "./types";

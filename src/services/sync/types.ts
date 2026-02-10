@@ -336,6 +336,37 @@ export const EU_POLITICAL_GROUP_MAPPINGS: Record<string, PartyMapping> = {
 };
 
 // ============================================
+// CANDIDATURES MUNICIPALES (data.gouv.fr) TYPES
+// ============================================
+
+// CSV columns (tab-delimited, ISO-8859-1, starts with comment line)
+export interface CandidatureMunicipaleCSV {
+  "Code du département": string;
+  "Libellé du département": string;
+  "Code commune": string;
+  "Libellé commune": string;
+  "N° Panneau Liste": string;
+  "Libellé abrégé liste": string;
+  "Libellé Etendu Liste": string;
+  "Nuance Liste": string;
+  "N° candidat": string;
+  "Sexe candidat": string;
+  "Nom candidat": string;
+  "Prénom candidat": string;
+  Nationalité: string;
+  "Candidat au conseil communautaire": string;
+}
+
+export interface CandidaturesSyncResult {
+  success: boolean;
+  candidaciesCreated: number;
+  candidaciesUpdated: number;
+  politiciansMatched: number;
+  politiciansNotFound: number;
+  errors: string[];
+}
+
+// ============================================
 // RNE (Répertoire National des Élus) TYPES
 // ============================================
 

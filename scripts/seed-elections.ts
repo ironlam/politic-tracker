@@ -16,12 +16,17 @@ interface ElectionSeed {
   type: ElectionType;
   title: string;
   shortTitle: string;
+  description?: string;
   scope: ElectionScope;
   round1Date: Date | null;
   round2Date: Date | null;
   dateConfirmed: boolean;
   totalSeats: number | null;
   suffrage: SuffrageType;
+  registrationDeadline?: Date;
+  candidacyDeadline?: Date;
+  campaignStartDate?: Date;
+  sourceUrl?: string;
 }
 
 const ELECTIONS: ElectionSeed[] = [
@@ -30,12 +35,21 @@ const ELECTIONS: ElectionSeed[] = [
     type: "MUNICIPALES",
     title: "Élections municipales de 2026",
     shortTitle: "Municipales 2026",
+    description:
+      "Les élections municipales de 2026 permettront de renouveler l'ensemble des " +
+      "conseils municipaux et intercommunaux en France. Avec la réforme de 2025, toutes les " +
+      "communes passeront au scrutin de liste paritaire, une première historique. " +
+      "Environ 460 000 conseillers municipaux seront élus les 15 et 22 mars 2026.",
     scope: "MUNICIPAL",
     round1Date: new Date("2026-03-15"),
     round2Date: new Date("2026-03-22"),
     dateConfirmed: true,
     totalSeats: 460000,
     suffrage: "DIRECT",
+    registrationDeadline: new Date("2026-02-07"),
+    candidacyDeadline: new Date("2026-02-26"),
+    campaignStartDate: new Date("2026-03-02"),
+    sourceUrl: "https://www.service-public.fr/particuliers/vosdroits/N47",
   },
   {
     slug: "senatoriales-2026",
@@ -118,31 +132,27 @@ async function main() {
   let updated = 0;
 
   for (const election of ELECTIONS) {
+    const data = {
+      type: election.type,
+      title: election.title,
+      shortTitle: election.shortTitle,
+      ...(election.description && { description: election.description }),
+      scope: election.scope,
+      round1Date: election.round1Date,
+      round2Date: election.round2Date,
+      dateConfirmed: election.dateConfirmed,
+      totalSeats: election.totalSeats,
+      suffrage: election.suffrage,
+      ...(election.registrationDeadline && { registrationDeadline: election.registrationDeadline }),
+      ...(election.candidacyDeadline && { candidacyDeadline: election.candidacyDeadline }),
+      ...(election.campaignStartDate && { campaignStartDate: election.campaignStartDate }),
+      ...(election.sourceUrl && { sourceUrl: election.sourceUrl }),
+    };
+
     const result = await db.election.upsert({
       where: { slug: election.slug },
-      create: {
-        slug: election.slug,
-        type: election.type,
-        title: election.title,
-        shortTitle: election.shortTitle,
-        scope: election.scope,
-        round1Date: election.round1Date,
-        round2Date: election.round2Date,
-        dateConfirmed: election.dateConfirmed,
-        totalSeats: election.totalSeats,
-        suffrage: election.suffrage,
-      },
-      update: {
-        type: election.type,
-        title: election.title,
-        shortTitle: election.shortTitle,
-        scope: election.scope,
-        round1Date: election.round1Date,
-        round2Date: election.round2Date,
-        dateConfirmed: election.dateConfirmed,
-        totalSeats: election.totalSeats,
-        suffrage: election.suffrage,
-      },
+      create: { slug: election.slug, ...data },
+      update: data,
     });
 
     // Check if it was newly created (createdAt === updatedAt means just created)

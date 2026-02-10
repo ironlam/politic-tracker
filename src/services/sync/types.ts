@@ -336,3 +336,34 @@ export const EU_POLITICAL_GROUP_MAPPINGS: Record<string, PartyMapping> = {
 };
 
 // ============================================
+// RNE (Répertoire National des Élus) TYPES
+// ============================================
+
+// CSV columns (semicolon-delimited, ~35k rows)
+export interface MaireRNECSV {
+  "Code du département": string;
+  "Libellé du département": string;
+  "Code de la collectivité à statut particulier": string;
+  "Libellé de la collectivité à statut particulier": string;
+  "Code de la commune": string;
+  "Libellé de la commune": string;
+  "Nom de l'élu": string;
+  "Prénom de l'élu": string;
+  "Code sexe": string; // M or F
+  "Date de naissance": string; // DD/MM/YYYY
+  "Code de la catégorie socio-professionnelle": string;
+  "Libellé de la catégorie socio-professionnelle": string;
+  "Date de début du mandat": string; // DD/MM/YYYY
+  "Date de début de la fonction": string; // DD/MM/YYYY
+}
+
+export interface RNESyncResult {
+  success: boolean;
+  mandatesCreated: number;
+  mandatesUpdated: number;
+  politiciansMatched: number;
+  politiciansNotFound: number;
+  errors: string[];
+}
+
+// ============================================

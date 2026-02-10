@@ -508,9 +508,14 @@ Options:
         stats.articlesTotal++;
 
         try {
-          // Check if article already exists
+          // Check if article already exists (by feed+guid, matching the unique constraint)
           const existing = await db.pressArticle.findUnique({
-            where: { url: item.link },
+            where: {
+              feedSource_externalId: {
+                feedSource: sourceId,
+                externalId: item.guid,
+              },
+            },
           });
 
           if (existing) {

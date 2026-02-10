@@ -101,6 +101,8 @@
     "sync:factchecks:stats": "tsx scripts/sync-factchecks.ts --stats",
     "classify:themes": "tsx scripts/classify-themes.ts",
     "classify:themes:stats": "tsx scripts/classify-themes.ts --stats",
+    "sync:rne:maires": "tsx scripts/sync-rne.ts",
+    "sync:rne:maires:stats": "tsx scripts/sync-rne.ts --stats",
     "seed:elections": "tsx scripts/seed-elections.ts",
     "prepare": "husky"
   },

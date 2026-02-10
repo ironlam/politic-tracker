@@ -86,6 +86,7 @@ enum DataSource {
   NOSDEPUTES
   WIKIPEDIA
   MANUAL
+  RNE
 }
 
 model Party {

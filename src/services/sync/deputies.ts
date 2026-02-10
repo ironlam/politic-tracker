@@ -165,6 +165,7 @@ async function syncDeputy(
       startDate: mandateStart,
       isCurrent: true,
       sourceUrl: `https://www.assemblee-nationale.fr/dyn/deputes/${dep.id}`,
+      officialUrl: `https://www.assemblee-nationale.fr/dyn/deputes/${dep.id}`,
       externalId: `${dep.id}-leg${dep.legislature}`,
     };
 

@@ -389,11 +389,11 @@ export async function classifyTheme(
   if (summary) input += `\nRésumé : ${summary}`;
   if (context) input += `\nContexte : ${context}`;
 
-  const prompt = `Tu es un classificateur thématique pour des textes législatifs français. Classe le texte suivant dans UNE des 13 catégories ci-dessous.
+  const prompt = `Tu es un classificateur thématique pour des textes législatifs français. Classe le texte suivant dans une catégorie en utilisant l'outil classify_theme.
 
 ${input}
 
-Catégories possibles :
+Guide des catégories :
 - ECONOMIE_BUDGET : fiscalité, budget de l'État, finances publiques, commerce, entreprises
 - SOCIAL_TRAVAIL : emploi, droit du travail, retraites, protection sociale, handicap
 - SECURITE_JUSTICE : police, justice, pénal, prisons, terrorisme, ordre public
@@ -406,9 +406,25 @@ Catégories possibles :
 - IMMIGRATION : immigration, asile, nationalité, intégration, frontières
 - AGRICULTURE_ALIMENTATION : agriculture, pêche, alimentation, ruralité
 - LOGEMENT_URBANISME : logement, urbanisme, construction, copropriété
-- TRANSPORTS : transports, mobilité, routes, ferroviaire, aérien, maritime
+- TRANSPORTS : transports, mobilité, routes, ferroviaire, aérien, maritime`;
 
-Réponds UNIQUEMENT avec un JSON : {"theme": "NOM_DE_LA_CATEGORIE"}`;
+  const tools = [
+    {
+      name: "classify_theme",
+      description: "Classifie un texte législatif dans une catégorie thématique.",
+      input_schema: {
+        type: "object" as const,
+        properties: {
+          theme: {
+            type: "string",
+            enum: [...THEME_VALUES],
+            description: "La catégorie thématique du texte législatif",
+          },
+        },
+        required: ["theme"],
+      },
+    },
+  ];
 
   const response = await fetch(ANTHROPIC_API_URL, {
     method: "POST",
@@ -419,7 +435,9 @@ Réponds UNIQUEMENT avec un JSON : {"theme": "NOM_DE_LA_CATEGORIE"}`;
     },
     body: JSON.stringify({
       model: MODEL,
-      max_tokens: 50,
+      max_tokens: 100,
+      tools,
+      tool_choice: { type: "tool", name: "classify_theme" },
       messages: [
         {
           role: "user",
@@ -436,32 +454,19 @@ Réponds UNIQUEMENT avec un JSON : {"theme": "NOM_DE_LA_CATEGORIE"}`;
 
   const data = await response.json();
 
-  const textContent = data.content?.find((c: { type: string }) => c.type === "text");
-  if (!textContent?.text) {
-    throw new Error("No text content in API response");
+  const toolUse = data.content?.find((c: { type: string }) => c.type === "tool_use");
+  if (!toolUse?.input?.theme) {
+    throw new Error("No tool_use content in API response");
   }
 
-  try {
-    let jsonStr = textContent.text;
+  const theme = toolUse.input.theme;
 
-    const jsonMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/);
-    if (jsonMatch) {
-      jsonStr = jsonMatch[1];
-    }
-
-    const parsed = JSON.parse(jsonStr.trim());
-    const theme = parsed.theme;
-
-    if (theme && THEME_VALUES.includes(theme)) {
-      return theme;
-    }
-
-    console.warn(`Invalid theme value: ${theme}`);
-    return null;
-  } catch {
-    console.error("Failed to parse theme response:", textContent.text);
-    return null;
+  if (THEME_VALUES.includes(theme)) {
+    return theme;
   }
+
+  console.warn(`Invalid theme value: ${theme}`);
+  return null;
 }
 
 /**

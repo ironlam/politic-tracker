@@ -215,6 +215,7 @@ async function syncGovernmentMember(
       endDate,
       isCurrent,
       sourceUrl: "https://www.info.gouv.fr/composition-du-gouvernement",
+      officialUrl: "https://www.info.gouv.fr/composition-du-gouvernement",
       externalId,
     };
 
@@ -463,6 +464,7 @@ async function applyLocalCorrections(): Promise<{ applied: number; errors: strin
               startDate,
               isCurrent: true,
               sourceUrl: "https://www.info.gouv.fr/composition-du-gouvernement",
+              officialUrl: "https://www.info.gouv.fr/composition-du-gouvernement",
             },
           });
           console.log(`   ✓ Created mandate: ${newMember.fullName} - ${newMember.mandate.title}`);

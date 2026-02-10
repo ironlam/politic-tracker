@@ -358,6 +358,7 @@ async function syncSenator(
       startDate: mandateStart || new Date(),
       isCurrent: true,
       sourceUrl: sen.url || `https://www.senat.fr/senateur/${sen.matricule}/`,
+      officialUrl: sen.url || `https://www.senat.fr/senateur/${sen.matricule}/`,
       externalId: `senat-${sen.matricule}`,
     };
 

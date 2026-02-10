@@ -161,9 +161,9 @@ export function MandateTimeline({ mandates, civility }: MandateTimelineProps) {
                     <p className="text-xs text-muted-foreground mt-2">
                       {formatDuration(mandate.startDate)} en poste
                     </p>
-                    {mandate.sourceUrl && (
+                    {mandate.officialUrl && (
                       <a
-                        href={mandate.sourceUrl}
+                        href={mandate.officialUrl}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-xs text-blue-600 hover:underline mt-2 inline-block"

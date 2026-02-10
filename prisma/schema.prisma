@@ -191,7 +191,8 @@ model Mandate {
 
   // External reference
   externalId   String?     // ID from source API
-  sourceUrl    String?     // Link to official page
+  sourceUrl    String?     // Link to data source (for traceability)
+  officialUrl  String?     // Link to official page (for end users)
 
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt

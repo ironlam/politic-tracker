@@ -313,6 +313,7 @@ Features:
                       endDate,
                       isCurrent: !endDate,
                       sourceUrl: `https://www.wikidata.org/wiki/${extId.externalId}`,
+                      officialUrl: null,
                       externalId: externalMandateId,
                     },
                   });
@@ -364,6 +365,7 @@ Features:
                   endDate,
                   isCurrent: !endDate,
                   sourceUrl: `https://www.wikidata.org/wiki/${extId.externalId}`,
+                  officialUrl: null,
                   externalId: externalMandateId,
                 },
               });
@@ -413,6 +415,7 @@ Features:
           partyWikidataId: string;
           chairpersonWikidataId: string;
           startDate: Date | null;
+          partyWebsite: string | null;
         }> = [];
 
         for (const ext of partyExternalIds) {
@@ -449,6 +452,7 @@ Features:
               partyWikidataId: ext.externalId,
               chairpersonWikidataId: val.id as string,
               startDate,
+              partyWebsite: ext.party.website || null,
             });
           }
         }
@@ -521,6 +525,7 @@ Features:
                     startDate: data.startDate ?? new Date(),
                     isCurrent: true,
                     sourceUrl: `https://www.wikidata.org/wiki/${data.partyWikidataId}`,
+                    officialUrl: data.partyWebsite || null,
                     externalId: externalMandateId,
                   },
                 });

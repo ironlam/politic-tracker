@@ -2,9 +2,9 @@ name: Quality Tests
 
 on:
   push:
-    branches: [main]
+    branches: [main, staging]
   pull_request:
-    branches: [main]
+    branches: [main, staging]
   schedule:
     # Run daily at 6:00 AM UTC
     - cron: "0 6 * * *"
@@ -23,6 +23,7 @@ jobs:
     name: Data Quality
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    environment: ${{ (github.event_name == 'schedule' || github.ref == 'refs/heads/main') && 'production' || 'staging' }}
 
     steps:
       - name: Checkout repository

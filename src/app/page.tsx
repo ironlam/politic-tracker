@@ -3,10 +3,17 @@ import { db } from "@/lib/db";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { DashboardStats, ActivityTabs, QuickTools, UpcomingElections } from "@/components/home";
+import {
+  DashboardStats,
+  ActivityTabs,
+  QuickTools,
+  UpcomingElections,
+  ElectionBanner,
+} from "@/components/home";
 import { formatDate } from "@/lib/utils";
 import { WebSiteJsonLd } from "@/components/seo/JsonLd";
 import { Heart } from "lucide-react";
+import { FEATURES } from "@/config/features";
 
 async function getStats() {
   const [
@@ -136,6 +143,13 @@ async function getUpcomingElections() {
   });
 }
 
+async function getFeaturedElection() {
+  if (!FEATURES.ELECTION_BANNER) return null;
+  return db.election.findUnique({
+    where: { slug: FEATURES.FEATURED_ELECTION_SLUG },
+  });
+}
+
 async function getRecentAffairs() {
   return db.affair.findMany({
     take: 4,
@@ -152,16 +166,25 @@ async function getRecentAffairs() {
 }
 
 export default async function HomePage() {
-  const [stats, recentVotes, activeDossiers, recentArticles, recentAffairs, upcomingElections] =
-    await Promise.all([
-      getStats(),
-      getRecentVotes(),
-      getActiveDossiers(),
-      getRecentArticles(),
-      getRecentAffairs(),
-      getUpcomingElections(),
-    ]);
+  const [
+    stats,
+    recentVotes,
+    activeDossiers,
+    recentArticles,
+    recentAffairs,
+    upcomingElections,
+    featuredElection,
+  ] = await Promise.all([
+    getStats(),
+    getRecentVotes(),
+    getActiveDossiers(),
+    getRecentArticles(),
+    getRecentAffairs(),
+    getUpcomingElections(),
+    getFeaturedElection(),
+  ]);
 
+  const now = new Date();
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://transparence-politique.fr";
 
   return (
@@ -205,6 +228,20 @@ export default async function HomePage() {
           <div className="absolute top-0 left-0 w-72 h-72 bg-primary/10 rounded-full -translate-x-1/2 -translate-y-1/2 blur-3xl pointer-events-none" />
           <div className="absolute bottom-0 right-0 w-96 h-96 bg-accent/20 rounded-full translate-x-1/3 translate-y-1/3 blur-3xl pointer-events-none" />
         </section>
+
+        {/* Featured Election Banner */}
+        {featuredElection && (
+          <ElectionBanner
+            election={featuredElection}
+            daysUntil={
+              featuredElection.round1Date
+                ? Math.ceil(
+                    (featuredElection.round1Date.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+                  )
+                : null
+            }
+          />
+        )}
 
         {/* Dashboard Stats */}
         <DashboardStats stats={stats} />

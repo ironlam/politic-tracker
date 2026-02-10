@@ -17,6 +17,8 @@ import { ElectionCountdown } from "@/components/elections/ElectionCountdown";
 import { ElectionKeyDates } from "@/components/elections/ElectionKeyDates";
 import { ElectionScrutinInfo } from "@/components/elections/ElectionScrutinInfo";
 import { AddToCalendar } from "@/components/elections/AddToCalendar";
+import { FEATURES } from "@/config/features";
+import { ELECTION_GUIDES } from "@/config/election-guides";
 import type { ElectionStatus } from "@/types";
 
 interface PageProps {
@@ -169,6 +171,32 @@ export default async function ElectionDetailPage({ params }: PageProps) {
             <section>
               <h2 className="text-lg font-semibold mb-2">À propos</h2>
               <p className="text-muted-foreground leading-relaxed">{election.description}</p>
+            </section>
+          )}
+
+          {/* Practical guide */}
+          {FEATURES.ELECTION_GUIDE_SECTION && ELECTION_GUIDES[election.type] && (
+            <section>
+              <h2 className="text-lg font-semibold mb-4">Guide pratique</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {ELECTION_GUIDES[election.type]!.map((guide) => (
+                  <Card key={guide.title}>
+                    <CardContent className="pt-5">
+                      <div className="flex items-start gap-3">
+                        <span className="text-2xl shrink-0" aria-hidden="true">
+                          {guide.icon}
+                        </span>
+                        <div>
+                          <h3 className="font-semibold mb-1">{guide.title}</h3>
+                          <p className="text-sm text-muted-foreground leading-relaxed">
+                            {guide.content}
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
             </section>
           )}
 

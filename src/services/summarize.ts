@@ -459,7 +459,25 @@ Guide des catégories :
     throw new Error("No tool_use content in API response");
   }
 
-  const theme = toolUse.input.theme;
+  let theme = toolUse.input.theme;
+
+  // Fallback: AI may still rarely return inverted names despite enum constraint
+  const THEME_ALIASES: Record<string, ThemeCategoryValue> = {
+    CULTURE_EDUCATION: "EDUCATION_CULTURE",
+    JUSTICE_SECURITE: "SECURITE_JUSTICE",
+    CULTURE_PATRIMOINE: "EDUCATION_CULTURE",
+    BUDGET_ECONOMIE: "ECONOMIE_BUDGET",
+    TRAVAIL_SOCIAL: "SOCIAL_TRAVAIL",
+    ENERGIE_ENVIRONNEMENT: "ENVIRONNEMENT_ENERGIE",
+    DEFENSE_AFFAIRES_ETRANGERES: "AFFAIRES_ETRANGERES_DEFENSE",
+    TECH_NUMERIQUE: "NUMERIQUE_TECH",
+    ALIMENTATION_AGRICULTURE: "AGRICULTURE_ALIMENTATION",
+    URBANISME_LOGEMENT: "LOGEMENT_URBANISME",
+  };
+
+  if (theme && THEME_ALIASES[theme]) {
+    theme = THEME_ALIASES[theme];
+  }
 
   if (THEME_VALUES.includes(theme)) {
     return theme;

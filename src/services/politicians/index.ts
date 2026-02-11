@@ -73,6 +73,9 @@ export async function getPoliticianBySlug(slug: string): Promise<PoliticianFull 
       declarations: {
         orderBy: { year: "desc" },
       },
+      _count: {
+        select: { factCheckMentions: true },
+      },
     },
   });
 }

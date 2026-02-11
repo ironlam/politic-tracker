@@ -1,0 +1,145 @@
+import { NextRequest, NextResponse } from "next/server";
+import { db } from "@/lib/db";
+import { FactCheckRating } from "@/generated/prisma";
+
+/**
+ * @openapi
+ * /api/factchecks:
+ *   get:
+ *     summary: Liste des fact-checks
+ *     description: Retourne la liste paginée des fact-checks avec filtres
+ *     tags: [FactChecks]
+ *     parameters:
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Recherche dans le titre ou la déclaration vérifiée
+ *       - in: query
+ *         name: politician
+ *         schema:
+ *           type: string
+ *         description: Filtrer par slug du politicien
+ *       - in: query
+ *         name: source
+ *         schema:
+ *           type: string
+ *         description: "Filtrer par source (ex: AFP Factuel, Les Décodeurs)"
+ *       - in: query
+ *         name: verdict
+ *         schema:
+ *           type: string
+ *           enum: [TRUE, MOSTLY_TRUE, HALF_TRUE, MISLEADING, OUT_OF_CONTEXT, MOSTLY_FALSE, FALSE, UNVERIFIABLE]
+ *         description: Filtrer par verdict normalisé
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *           minimum: 1
+ *         description: Numéro de page
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *           minimum: 1
+ *           maximum: 100
+ *         description: Nombre d'éléments par page
+ *     responses:
+ *       200:
+ *         description: Liste des fact-checks avec pagination
+ *       500:
+ *         description: Erreur serveur
+ */
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+
+  const search = searchParams.get("search");
+  const politician = searchParams.get("politician");
+  const source = searchParams.get("source");
+  const verdict = searchParams.get("verdict");
+  const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
+  const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") || "20", 10)));
+  const skip = (page - 1) * limit;
+
+  const where: Record<string, unknown> = {};
+
+  if (search) {
+    where.OR = [
+      { title: { contains: search, mode: "insensitive" } },
+      { claimText: { contains: search, mode: "insensitive" } },
+    ];
+  }
+
+  if (politician) {
+    where.mentions = {
+      some: {
+        politician: { slug: politician },
+      },
+    };
+  }
+
+  if (source) {
+    where.source = source;
+  }
+
+  if (verdict && Object.values(FactCheckRating).includes(verdict as FactCheckRating)) {
+    where.verdictRating = verdict as FactCheckRating;
+  }
+
+  try {
+    const [factchecks, total] = await Promise.all([
+      db.factCheck.findMany({
+        where,
+        select: {
+          id: true,
+          claimText: true,
+          claimant: true,
+          title: true,
+          verdict: true,
+          verdictRating: true,
+          source: true,
+          sourceUrl: true,
+          publishedAt: true,
+          claimDate: true,
+          mentions: {
+            select: {
+              politician: {
+                select: {
+                  id: true,
+                  slug: true,
+                  fullName: true,
+                  currentParty: {
+                    select: { shortName: true, name: true },
+                  },
+                },
+              },
+            },
+          },
+        },
+        orderBy: { publishedAt: "desc" },
+        skip,
+        take: limit,
+      }),
+      db.factCheck.count({ where }),
+    ]);
+
+    return NextResponse.json({
+      data: factchecks.map((fc) => ({
+        ...fc,
+        politicians: fc.mentions.map((m) => m.politician),
+        mentions: undefined,
+      })),
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    });
+  } catch (error) {
+    console.error("API error:", error);
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
+  }
+}

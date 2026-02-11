@@ -236,7 +236,7 @@ export default function AssembleeNationalePage() {
                 </p>
               </div>
               <div>
-                <h3 className="font-semibold mb-1">Sur Transparence Politique</h3>
+                <h3 className="font-semibold mb-1">Sur Poligraph</h3>
                 <p className="text-sm text-muted-foreground">
                   Lorsqu&apos;un scrutin affiche le président de l&apos;Assemblée comme
                   &quot;non-votant&quot;, ce n&apos;est pas de l&apos;absentéisme : c&apos;est

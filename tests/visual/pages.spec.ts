@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 
 /**
- * Visual Regression Tests for Transparence Politique
+ * Visual Regression Tests for Poligraph
  *
  * These tests capture screenshots of key pages and compare them
  * against baseline snapshots to detect visual regressions.

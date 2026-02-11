@@ -350,7 +350,7 @@ export function ArticleJsonLd({
     }),
     publisher: {
       "@type": "Organization",
-      name: "Transparence Politique",
+      name: "Poligraph",
     },
   };
 

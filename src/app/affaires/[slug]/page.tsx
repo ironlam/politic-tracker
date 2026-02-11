@@ -82,7 +82,7 @@ export default async function AffairDetailPage({ params }: PageProps) {
 
   const superCategory = CATEGORY_TO_SUPER[affair.category as AffairCategory];
   const partyToShow = affair.partyAtTime || affair.politician.currentParty;
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://transparence-politique.fr";
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://poligraph.fr";
 
   return (
     <>

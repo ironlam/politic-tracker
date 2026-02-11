@@ -17,17 +17,18 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://transparence-politique.fr";
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://poligraph.fr";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "Transparence Politique",
-    template: "%s | Transparence Politique",
+    default: "Poligraph",
+    template: "%s | Poligraph",
   },
   description:
     "Observatoire citoyen des représentants politiques français. Accédez aux informations publiques : mandats, patrimoine, affaires judiciaires.",
   keywords: [
+    "poligraph",
     "politique",
     "france",
     "députés",
@@ -39,21 +40,21 @@ export const metadata: Metadata = {
     "patrimoine",
     "HATVP",
   ],
-  authors: [{ name: "Transparence Politique" }],
-  creator: "Transparence Politique",
+  authors: [{ name: "Poligraph" }],
+  creator: "Poligraph",
   openGraph: {
     type: "website",
     locale: "fr_FR",
     url: siteUrl,
-    siteName: "Transparence Politique",
-    title: "Transparence Politique",
+    siteName: "Poligraph",
+    title: "Poligraph",
     description:
       "Observatoire citoyen des représentants politiques français. Mandats, patrimoine, affaires judiciaires.",
     // Image generated automatically by opengraph-image.tsx
   },
   twitter: {
     card: "summary_large_image",
-    title: "Transparence Politique",
+    title: "Poligraph",
     description: "Observatoire citoyen des représentants politiques français.",
     // Image generated automatically by opengraph-image.tsx
   },
@@ -79,7 +80,7 @@ export default function RootLayout({
     <html lang="fr" suppressHydrationWarning>
       <head>
         <WebSiteJsonLd
-          name="Transparence Politique"
+          name="Poligraph"
           description="Observatoire citoyen des représentants politiques français. Mandats, patrimoine, votes et affaires judiciaires."
           url={siteUrl}
         />

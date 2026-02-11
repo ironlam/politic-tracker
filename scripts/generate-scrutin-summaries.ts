@@ -67,7 +67,7 @@ async function generateScrutinSummaries(options: {
   const { force = false, limit, dryRun = false, chamber } = options;
 
   console.log("=".repeat(50));
-  console.log("Transparence Politique - Scrutin Summary Generator");
+  console.log("Poligraph - Scrutin Summary Generator");
   console.log("=".repeat(50));
   console.log(`Mode: ${dryRun ? "DRY RUN (no writes)" : "LIVE"}`);
   console.log(`Force regenerate: ${force ? "Yes" : "No"}`);
@@ -274,7 +274,7 @@ async function main() {
 
   if (args.includes("--help") || args.includes("-h")) {
     console.log(`
-Transparence Politique - Scrutin Summary Generator
+Poligraph - Scrutin Summary Generator
 
 Usage:
   npx tsx scripts/generate-scrutin-summaries.ts              Generate missing summaries

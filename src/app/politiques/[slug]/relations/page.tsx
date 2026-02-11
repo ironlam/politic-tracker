@@ -20,7 +20,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 
   return {
-    title: `Relations de ${politician.fullName} | Transparence Politique`,
+    title: `Relations de ${politician.fullName} | Poligraph`,
     description: `Découvrez les relations politiques de ${politician.fullName} : collègues de parti, de gouvernement, de législature.`,
   };
 }

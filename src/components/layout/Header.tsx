@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { MobileMenu } from "./MobileMenu";
 import { NavDropdown } from "./NavDropdown";
@@ -15,12 +16,16 @@ export function Header() {
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow">
-              <span className="text-white font-bold text-lg">TP</span>
-            </div>
+            <Image
+              src="/logo.png"
+              alt="Poligraph"
+              width={40}
+              height={40}
+              className="rounded-xl shadow-md group-hover:shadow-lg transition-shadow"
+            />
             <div className="hidden sm:block">
               <span className="text-xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-                Transparence Politique
+                Poligraph
               </span>
             </div>
           </Link>

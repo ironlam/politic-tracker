@@ -393,7 +393,7 @@ export async function searchDatabaseByKeywords(query: string): Promise<string | 
     ]);
 
     results.push(
-      `**Statistiques de Transparence Politique :**\n` +
+      `**Statistiques de Poligraph :**\n` +
         `• ${deputeCount} députés en exercice (577 sièges)\n` +
         `• ${senateurCount} sénateurs en exercice (348 sièges)\n` +
         `• ${mepCount} eurodéputés français (81 sièges)\n` +

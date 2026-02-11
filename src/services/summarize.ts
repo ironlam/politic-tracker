@@ -300,7 +300,7 @@ export async function generateBiography(request: BiographyRequest): Promise<stri
       dataSection += ` (dernière en ${request.latestDeclarationYear})`;
   }
 
-  const prompt = `Tu es un rédacteur encyclopédique pour le site Transparence Politique. Rédige une biographie factuelle et neutre de ce responsable politique à partir EXCLUSIVEMENT des données ci-dessous.
+  const prompt = `Tu es un rédacteur encyclopédique pour le site Poligraph. Rédige une biographie factuelle et neutre de ce responsable politique à partir EXCLUSIVEMENT des données ci-dessous.
 
 DONNÉES :
 ${dataSection}

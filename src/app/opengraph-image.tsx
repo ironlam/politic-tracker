@@ -2,8 +2,7 @@ import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
 
-export const alt =
-  "Transparence Politique - Observatoire citoyen des représentants politiques français";
+export const alt = "Poligraph - Observatoire citoyen des représentants politiques français";
 export const size = {
   width: 1200,
   height: 630,
@@ -45,7 +44,7 @@ export default async function Image() {
             color: "white",
           }}
         >
-          TP
+          PG
         </span>
       </div>
 
@@ -59,7 +58,7 @@ export default async function Image() {
           textAlign: "center",
         }}
       >
-        Transparence Politique
+        Poligraph
       </div>
 
       {/* Subtitle */}
@@ -96,6 +95,10 @@ export default async function Image() {
           <span style={{ fontSize: 28 }}>⚖️</span>
           <span>Affaires judiciaires</span>
         </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ fontSize: 28 }}>🔍</span>
+          <span>Fact-checks</span>
+        </div>
       </div>
 
       {/* Footer */}
@@ -107,7 +110,7 @@ export default async function Image() {
           color: "#475569",
         }}
       >
-        transparence-politique.fr
+        poligraph.fr
       </div>
     </div>,
     {

@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
 export const metadata: Metadata = {
-  title: "Soutenez Transparence Politique",
+  title: "Soutenez Poligraph",
   description:
     "Aidez-nous à maintenir et développer cette plateforme citoyenne d'information politique",
 };
@@ -60,7 +60,7 @@ export default function SoutenirPage() {
     <div className="container mx-auto px-4 py-8 max-w-3xl">
       {/* Header */}
       <div className="mb-12 text-center">
-        <h1 className="text-3xl font-bold mb-4">Soutenez Transparence Politique</h1>
+        <h1 className="text-3xl font-bold mb-4">Soutenez Poligraph</h1>
         <p className="text-lg text-muted-foreground">
           Un projet citoyen indépendant qui a besoin de votre soutien pour continuer à informer sur
           la vie politique française.
@@ -101,9 +101,9 @@ export default function SoutenirPage() {
         <Card>
           <CardContent className="pt-6 prose prose-sm max-w-none">
             <p className="text-base leading-relaxed">
-              <strong>Transparence Politique</strong> est un projet 100% indépendant. Nous ne
-              recevons aucune subvention publique, aucun financement partisan, et nous refusons la
-              publicité pour garantir notre neutralité.
+              <strong>Poligraph</strong> est un projet 100% indépendant. Nous ne recevons aucune
+              subvention publique, aucun financement partisan, et nous refusons la publicité pour
+              garantir notre neutralité.
             </p>
             <p className="text-base leading-relaxed mt-4">
               Notre mission : rendre accessible à tous les citoyens l&apos;information sur leurs
@@ -172,8 +172,8 @@ export default function SoutenirPage() {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
-                Parlez de Transparence Politique autour de vous, sur les réseaux sociaux, à vos
-                proches. Plus nous sommes nombreux, plus notre voix porte.
+                Parlez de Poligraph autour de vous, sur les réseaux sociaux, à vos proches. Plus
+                nous sommes nombreux, plus notre voix porte.
               </p>
             </CardContent>
           </Card>

@@ -81,7 +81,7 @@ const AUTOCOMPLETE_COMPLETIONS: Record<string, string> = {
   // Questions générales
   combien: "Combien de députés et sénateurs ?",
   "combien de": "Combien de députés et sénateurs ?",
-  statistique: "Statistiques de Transparence Politique",
+  statistique: "Statistiques de Poligraph",
 };
 
 interface Message {
@@ -312,7 +312,7 @@ export function ChatInterface() {
               <MessageSquare className="w-8 h-8 text-primary" />
             </div>
             <div>
-              <h2 className="text-xl font-semibold mb-2">Assistant Transparence Politique</h2>
+              <h2 className="text-xl font-semibold mb-2">Assistant Poligraph</h2>
               <p className="text-muted-foreground max-w-md">
                 Posez vos questions sur la politique française : élus, votes, affaires judiciaires,
                 patrimoine, institutions ou dossiers législatifs.

@@ -61,7 +61,7 @@ async function generateBiographies(options: { force?: boolean; limit?: number; d
   const { force = false, limit, dryRun = false } = options;
 
   console.log("=".repeat(50));
-  console.log("Transparence Politique - Biography Generator");
+  console.log("Poligraph - Biography Generator");
   console.log("=".repeat(50));
   console.log(`Mode: ${dryRun ? "DRY RUN (no writes)" : "LIVE"}`);
   console.log(`Force regenerate: ${force ? "Yes" : "No"}`);
@@ -331,7 +331,7 @@ async function main() {
 
   if (args.includes("--help") || args.includes("-h")) {
     console.log(`
-Transparence Politique - Biography Generator
+Poligraph - Biography Generator
 
 Usage:
   npx tsx scripts/generate-biographies.ts              Generate missing biographies

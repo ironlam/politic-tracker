@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { buildIcsCalendar, type IcsEvent } from "@/lib/ics";
 
-const BASE_URL = "https://transparence-politique.fr";
+const BASE_URL = "https://poligraph.fr";
 
 export async function GET() {
   try {
@@ -33,7 +33,7 @@ export async function GET() {
       const tentativeNote = election.dateConfirmed ? "" : " (date provisoire)";
 
       events.push({
-        uid: `election-${election.slug}-round1@transparence-politique.fr`,
+        uid: `election-${election.slug}-round1@poligraph.fr`,
         summary: `${election.title} — Tour 1${tentativeNote}`,
         description: election.description ? `${election.description}\n\n${url}` : url,
         start: election.round1Date,
@@ -43,7 +43,7 @@ export async function GET() {
 
       if (election.round2Date) {
         events.push({
-          uid: `election-${election.slug}-round2@transparence-politique.fr`,
+          uid: `election-${election.slug}-round2@poligraph.fr`,
           summary: `${election.title} — Tour 2${tentativeNote}`,
           description: election.description ? `${election.description}\n\n${url}` : url,
           start: election.round2Date,

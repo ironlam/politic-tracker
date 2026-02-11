@@ -185,12 +185,12 @@ export default async function HomePage() {
   ]);
 
   const now = new Date();
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://transparence-politique.fr";
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://poligraph.fr";
 
   return (
     <>
       <WebSiteJsonLd
-        name="Transparence Politique"
+        name="Poligraph"
         description="Observatoire citoyen des représentants politiques français. Accédez aux informations publiques : mandats, patrimoine, affaires judiciaires."
         url={siteUrl}
       />
@@ -200,11 +200,11 @@ export default async function HomePage() {
           <div className="container mx-auto px-4 py-20 md:py-28 relative z-10">
             <div className="max-w-3xl mx-auto text-center">
               <Badge variant="secondary" className="mb-6 text-sm font-medium">
-                Observatoire citoyen indépendant
+                Observatoire citoyen — Données publiques, regard indépendant
               </Badge>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6">
                 <span className="bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-                  Transparence Politique
+                  Poligraph
                 </span>
               </h1>
               <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed">
@@ -320,7 +320,9 @@ export default async function HomePage() {
         {/* CTA Section */}
         <section className="py-20 bg-gradient-to-br from-primary/5 to-accent/10">
           <div className="container mx-auto px-4 text-center">
-            <h2 className="text-2xl md:text-3xl font-bold mb-4">Un projet citoyen transparent</h2>
+            <h2 className="text-2xl md:text-3xl font-bold mb-4">
+              Un projet citoyen, ouvert et indépendant
+            </h2>
             <p className="text-muted-foreground max-w-2xl mx-auto mb-8">
               Toutes nos sources sont documentées. Notre méthodologie est publique. Nous respectons
               la présomption d&apos;innocence et le droit de réponse.

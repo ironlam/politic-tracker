@@ -490,6 +490,137 @@ export async function indexParty(partyId: string): Promise<void> {
 }
 
 /**
+ * Index a fact-check article
+ */
+export async function indexFactCheck(factCheckId: string): Promise<void> {
+  const factCheck = await db.factCheck.findUnique({
+    where: { id: factCheckId },
+    include: {
+      mentions: {
+        include: { politician: { select: { fullName: true, slug: true } } },
+      },
+    },
+  });
+
+  if (!factCheck) return;
+
+  const verdictLabels: Record<string, string> = {
+    TRUE: "Vrai",
+    MOSTLY_TRUE: "Plutôt vrai",
+    HALF_TRUE: "À moitié vrai",
+    MISLEADING: "Trompeur",
+    OUT_OF_CONTEXT: "Hors contexte",
+    MOSTLY_FALSE: "Plutôt faux",
+    FALSE: "Faux",
+    UNVERIFIABLE: "Invérifiable",
+  };
+
+  const parts: string[] = [
+    `Fact-check: ${factCheck.title}`,
+    `Verdict: ${verdictLabels[factCheck.verdictRating] || factCheck.verdict}`,
+    `Source: ${factCheck.source}`,
+  ];
+
+  if (factCheck.claimant) {
+    parts.push(`Déclaration de: ${factCheck.claimant}`);
+  }
+
+  if (factCheck.claimText) {
+    parts.push(`Déclaration vérifiée: ${factCheck.claimText.slice(0, 500)}`);
+  }
+
+  parts.push(`Publié le: ${factCheck.publishedAt.toISOString().split("T")[0]}`);
+
+  if (factCheck.mentions.length > 0) {
+    const names = factCheck.mentions.map((m) => m.politician.fullName);
+    parts.push(`Politiciens mentionnés: ${names.join(", ")}`);
+  }
+
+  const content = parts.join(". ");
+
+  await indexDocument({
+    entityType: "FACTCHECK",
+    entityId: factCheckId,
+    content,
+    metadata: {
+      title: factCheck.title,
+      verdict: verdictLabels[factCheck.verdictRating] || factCheck.verdict,
+      verdictRating: factCheck.verdictRating,
+      source: factCheck.source,
+      sourceUrl: factCheck.sourceUrl,
+      claimant: factCheck.claimant,
+      publishedAt: factCheck.publishedAt.toISOString(),
+      politicians: factCheck.mentions.map((m) => ({
+        name: m.politician.fullName,
+        slug: m.politician.slug,
+      })),
+    },
+  });
+}
+
+/**
+ * Index a press article
+ */
+export async function indexPressArticle(articleId: string): Promise<void> {
+  const article = await db.pressArticle.findUnique({
+    where: { id: articleId },
+    include: {
+      mentions: {
+        include: { politician: { select: { fullName: true, slug: true } } },
+      },
+      partyMentions: {
+        include: { party: { select: { name: true, shortName: true, slug: true } } },
+      },
+    },
+  });
+
+  if (!article) return;
+
+  const parts: string[] = [
+    article.title,
+    `Source: ${article.feedSource}`,
+    `Publié le: ${article.publishedAt.toISOString().split("T")[0]}`,
+  ];
+
+  if (article.description) {
+    parts.push(article.description.slice(0, 500));
+  }
+
+  if (article.mentions.length > 0) {
+    const names = article.mentions.map((m) => m.politician.fullName);
+    parts.push(`Politiciens mentionnés: ${names.join(", ")}`);
+  }
+
+  if (article.partyMentions.length > 0) {
+    const partyNames = article.partyMentions.map((m) => m.party.shortName || m.party.name);
+    parts.push(`Partis mentionnés: ${partyNames.join(", ")}`);
+  }
+
+  const content = parts.join(". ");
+
+  await indexDocument({
+    entityType: "PRESS_ARTICLE",
+    entityId: articleId,
+    content,
+    metadata: {
+      title: article.title,
+      feedSource: article.feedSource,
+      url: article.url,
+      publishedAt: article.publishedAt.toISOString(),
+      politicians: article.mentions.map((m) => ({
+        name: m.politician.fullName,
+        slug: m.politician.slug,
+      })),
+      parties: article.partyMentions.map((m) => ({
+        name: m.party.name,
+        shortName: m.party.shortName,
+        slug: m.party.slug,
+      })),
+    },
+  });
+}
+
+/**
  * Index global statistics (deputies, senators, parties, etc.)
  */
 export async function indexGlobalStats(): Promise<void> {
@@ -526,6 +657,10 @@ export async function indexGlobalStats(): Promise<void> {
   // Get dossier count
   const dossierCount = await db.legislativeDossier.count();
 
+  // Get fact-check and press article counts
+  const factCheckCount = await db.factCheck.count();
+  const pressArticleCount = await db.pressArticle.count();
+
   const content = `
 STATISTIQUES OFFICIELLES DU PARLEMENT FRANÇAIS - Données globales et totaux.
 
@@ -553,6 +688,8 @@ AUTRES STATISTIQUES:
 - Partis politiques référencés : ${partyCount}
 - Affaires judiciaires : ${affairCount} (dont ${condemnedCount} condamnations définitives)
 - Dossiers législatifs : ${dossierCount}
+- Fact-checks : ${factCheckCount} articles de vérification des faits
+- Articles de presse : ${pressArticleCount} articles de la revue de presse
   `.trim();
 
   await indexDocument({
@@ -569,6 +706,8 @@ AUTRES STATISTIQUES:
       affairCount,
       condemnedCount,
       dossierCount,
+      factCheckCount,
+      pressArticleCount,
     },
   });
 
@@ -678,6 +817,24 @@ export async function indexAllOfType(
       await processBatch(parties, indexParty, "party");
       break;
     }
+    case "FACTCHECK": {
+      const factChecks = await db.factCheck.findMany({
+        select: { id: true, updatedAt: true },
+        take: limit,
+      });
+      await processBatch(factChecks, indexFactCheck, "factcheck");
+      break;
+    }
+    case "PRESS_ARTICLE": {
+      const articles = await db.pressArticle.findMany({
+        select: { id: true, createdAt: true },
+        take: limit,
+      });
+      // PressArticle has no updatedAt — use createdAt (RSS articles are immutable)
+      const mapped = articles.map((a) => ({ id: a.id, updatedAt: a.createdAt }));
+      await processBatch(mapped, indexPressArticle, "press_article");
+      break;
+    }
   }
 
   return { indexed, skipped, errors };
@@ -698,6 +855,8 @@ export async function getEmbeddingStats(): Promise<Record<EmbeddingType, number>
     SCRUTIN: 0,
     AFFAIR: 0,
     PARTY: 0,
+    FACTCHECK: 0,
+    PRESS_ARTICLE: 0,
   };
 
   for (const r of results) {

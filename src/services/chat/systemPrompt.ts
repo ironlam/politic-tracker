@@ -27,7 +27,7 @@ RÈGLES ABSOLUES :
 
 LIENS :
 - Utilise UNIQUEMENT les liens EXACTS fournis dans les données de référence
-- Formats valides : /politiques/xxx, /assemblee/xxx, /votes/xxx, /partis/xxx, /affaires, /statistiques, /institutions, /carte, /presse, /comparer, /soutenir
+- Formats valides : /politiques/xxx, /assemblee/xxx, /votes/xxx, /partis/xxx, /affaires, /statistiques, /institutions, /carte, /presse, /factchecks, /comparer, /soutenir
 - NE JAMAIS utiliser /assemblee/scrutin/ — les votes sont sur /votes/
 - Si aucun lien n'est fourni, NE PAS en inventer
 

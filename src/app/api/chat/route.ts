@@ -68,19 +68,30 @@ async function getGlobalStats(): Promise<{
   totalSenators: number;
   totalMEPs: number;
   totalMinisters: number;
+  totalFactChecks: number;
+  totalPressArticles: number;
 }> {
-  const [totalAffairs, totalPoliticians, totalDossiers, totalVotes, mandateCounts] =
-    await Promise.all([
-      db.affair.count(),
-      db.politician.count(),
-      db.legislativeDossier.count(),
-      db.scrutin.count(),
-      db.mandate.groupBy({
-        by: ["type"],
-        where: { isCurrent: true },
-        _count: true,
-      }),
-    ]);
+  const [
+    totalAffairs,
+    totalPoliticians,
+    totalDossiers,
+    totalVotes,
+    totalFactChecks,
+    totalPressArticles,
+    mandateCounts,
+  ] = await Promise.all([
+    db.affair.count(),
+    db.politician.count(),
+    db.legislativeDossier.count(),
+    db.scrutin.count(),
+    db.factCheck.count(),
+    db.pressArticle.count(),
+    db.mandate.groupBy({
+      by: ["type"],
+      where: { isCurrent: true },
+      _count: true,
+    }),
+  ]);
 
   const countByType: Record<string, number> = {};
   for (const m of mandateCounts) {
@@ -92,6 +103,8 @@ async function getGlobalStats(): Promise<{
     totalPoliticians,
     totalDossiers,
     totalVotes,
+    totalFactChecks,
+    totalPressArticles,
     totalDeputies: countByType["DEPUTE"] || 0,
     totalSenators: countByType["SENATEUR"] || 0,
     totalMEPs: countByType["DEPUTE_EUROPEEN"] || 0,
@@ -120,7 +133,11 @@ async function buildContext(results: SearchResult[], query: string): Promise<str
     lowerQuery.includes("député") ||
     lowerQuery.includes("sénateur") ||
     lowerQuery.includes("dossier") ||
-    lowerQuery.includes("vote");
+    lowerQuery.includes("vote") ||
+    lowerQuery.includes("fact") ||
+    lowerQuery.includes("vérif") ||
+    lowerQuery.includes("presse") ||
+    lowerQuery.includes("article");
 
   if (isBroadQuery) {
     const stats = await getGlobalStats();
@@ -154,6 +171,14 @@ async function buildContext(results: SearchResult[], query: string): Promise<str
     }
     if (lowerQuery.includes("vote") || lowerQuery.includes("scrutin")) {
       statsInfo += `- Total votes enregistrés: ${stats.totalVotes}\n`;
+    }
+    if (lowerQuery.includes("fact") || lowerQuery.includes("vérif")) {
+      statsInfo += `- Fact-checks référencés: ${stats.totalFactChecks}\n`;
+      statsInfo += `- Rubrique: /factchecks\n`;
+    }
+    if (lowerQuery.includes("presse") || lowerQuery.includes("article")) {
+      statsInfo += `- Articles de presse référencés: ${stats.totalPressArticles}\n`;
+      statsInfo += `- Rubrique: /presse\n`;
     }
 
     sections.push(statsInfo);
@@ -215,6 +240,27 @@ async function buildContext(results: SearchResult[], query: string): Promise<str
         if (metadata.slug) {
           section += `\n→ Page parti: /partis/${metadata.slug}`;
         }
+        break;
+
+      case "FACTCHECK":
+        section += `**Fact-check: ${metadata.title || "Vérification"}**\n`;
+        section += result.content;
+        if (metadata.verdict) {
+          section += `\nVerdict: ${metadata.verdict}`;
+        }
+        if (metadata.sourceUrl) {
+          section += `\n→ Source: ${metadata.sourceUrl}`;
+        }
+        section += `\n→ Tous les fact-checks: /factchecks`;
+        break;
+
+      case "PRESS_ARTICLE":
+        section += `**Article: ${metadata.title || "Article de presse"}**\n`;
+        section += result.content;
+        if (metadata.url) {
+          section += `\n→ Lire l'article: ${metadata.url}`;
+        }
+        section += `\n→ Revue de presse: /presse`;
         break;
 
       default:

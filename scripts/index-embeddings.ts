@@ -55,7 +55,7 @@ async function main() {
 
   const types: EmbeddingType[] = entityType
     ? [entityType]
-    : ["POLITICIAN", "PARTY", "AFFAIR", "DOSSIER", "SCRUTIN"];
+    : ["POLITICIAN", "PARTY", "AFFAIR", "DOSSIER", "SCRUTIN", "FACTCHECK", "PRESS_ARTICLE"];
 
   const mode = force ? "full re-index" : "delta (only changed entities)";
   console.log("\n🔄 Indexing embeddings for RAG chatbot\n");

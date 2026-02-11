@@ -81,6 +81,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         url: d.pdfUrl,
       })),
       affairsCount: politician.affairs.length,
+      factchecksCount:
+        (politician as unknown as { _count: { factCheckMentions: number } })._count
+          ?.factCheckMentions ?? 0,
     });
   } catch (error) {
     console.error("API error:", error);

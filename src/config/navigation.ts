@@ -158,6 +158,9 @@ export const DATA_SOURCES = [
   { href: "https://data.assemblee-nationale.fr", label: "Assemblée nationale" },
   { href: "https://www.senat.fr/open-data", label: "Sénat" },
   { href: "https://www.hatvp.fr", label: "HATVP" },
+  { href: "https://www.wikidata.org", label: "Wikidata" },
+  { href: "https://www.europarl.europa.eu", label: "Parlement européen" },
+  { href: "https://toolbox.google.com/factcheck/explorer", label: "Google Fact Check" },
 ] as const;
 
 // Legacy exports for backwards compatibility

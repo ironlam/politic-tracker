@@ -90,16 +90,16 @@ export function VoteAgreement({
           <p className="text-2xl font-bold">{stats.total}</p>
           <p className="text-sm text-muted-foreground">Votes en commun</p>
         </div>
-        <div className="bg-green-50 rounded-lg p-4 text-center">
-          <p className="text-2xl font-bold text-green-600">{stats.agree}</p>
+        <div className="bg-green-500/10 dark:bg-green-500/20 rounded-lg p-4 text-center">
+          <p className="text-2xl font-bold text-green-600 dark:text-green-400">{stats.agree}</p>
           <p className="text-sm text-muted-foreground">D&apos;accord</p>
         </div>
-        <div className="bg-red-50 rounded-lg p-4 text-center">
-          <p className="text-2xl font-bold text-red-600">{stats.disagree}</p>
+        <div className="bg-red-500/10 dark:bg-red-500/20 rounded-lg p-4 text-center">
+          <p className="text-2xl font-bold text-red-600 dark:text-red-400">{stats.disagree}</p>
           <p className="text-sm text-muted-foreground">En désaccord</p>
         </div>
-        <div className="bg-yellow-50 rounded-lg p-4 text-center">
-          <p className="text-2xl font-bold text-yellow-600">{stats.partial}</p>
+        <div className="bg-yellow-500/10 dark:bg-yellow-500/20 rounded-lg p-4 text-center">
+          <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{stats.partial}</p>
           <p className="text-sm text-muted-foreground">Partiellement</p>
         </div>
       </div>
@@ -149,10 +149,10 @@ export function VoteAgreement({
               key={cv.scrutin.id}
               className={`p-3 rounded-lg border ${
                 cv.agreement === "agree"
-                  ? "bg-green-50 border-green-200"
+                  ? "bg-green-500/10 border-green-500/30 dark:bg-green-500/10 dark:border-green-500/20"
                   : cv.agreement === "disagree"
-                    ? "bg-red-50 border-red-200"
-                    : "bg-yellow-50 border-yellow-200"
+                    ? "bg-red-500/10 border-red-500/30 dark:bg-red-500/10 dark:border-red-500/20"
+                    : "bg-yellow-500/10 border-yellow-500/30 dark:bg-yellow-500/10 dark:border-yellow-500/20"
               }`}
             >
               <div className="flex justify-between items-start gap-4">

@@ -7,6 +7,7 @@ import {
   ComparisonTable,
   VoteAgreement,
   PartyComparisonTable,
+  SuggestedComparisons,
 } from "@/components/compare";
 import type { PartyComparisonData } from "@/components/compare/PartyComparisonTable";
 import { MANDATE_TYPE_LABELS } from "@/config/labels";
@@ -375,13 +376,11 @@ export default async function ComparerPage({ searchParams }: PageProps) {
             right={rightPartyData}
             voteComparison={voteComparison}
           />
+        ) : !leftPartyPreview && !rightPartyPreview ? (
+          <SuggestedComparisons mode="partis" />
         ) : (
           <div className="text-center py-12 text-muted-foreground">
-            <p className="text-lg">
-              {!leftPartyPreview && !rightPartyPreview
-                ? "Sélectionnez deux partis pour les comparer"
-                : "Sélectionnez un deuxième parti pour lancer la comparaison"}
-            </p>
+            <p className="text-lg">Sélectionnez un deuxième parti pour lancer la comparaison</p>
           </div>
         )}
       </div>
@@ -499,13 +498,11 @@ export default async function ComparerPage({ searchParams }: PageProps) {
             </section>
           )}
         </div>
+      ) : !leftPreview && !rightPreview ? (
+        <SuggestedComparisons mode="politiciens" />
       ) : (
         <div className="text-center py-12 text-muted-foreground">
-          <p className="text-lg">
-            {!leftPreview && !rightPreview
-              ? "Sélectionnez deux politiques pour les comparer"
-              : "Sélectionnez un deuxième politique pour lancer la comparaison"}
-          </p>
+          <p className="text-lg">Sélectionnez un deuxième politique pour lancer la comparaison</p>
         </div>
       )}
     </div>

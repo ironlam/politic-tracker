@@ -6,9 +6,11 @@ import {
   CompareMode,
   ComparisonTable,
   VoteAgreement,
+  PartyComparisonTable,
 } from "@/components/compare";
+import type { PartyComparisonData } from "@/components/compare/PartyComparisonTable";
 import { MANDATE_TYPE_LABELS } from "@/config/labels";
-import type { MandateType } from "@/types";
+import type { MandateType, AffairStatus, FactCheckRating } from "@/types";
 
 export const metadata: Metadata = {
   title: "Comparer des politiques",
@@ -143,6 +145,161 @@ async function getPartyPreview(slugOrId: string) {
   };
 }
 
+async function getPartyComparisonData(slugOrId: string): Promise<PartyComparisonData | null> {
+  const party = await db.party.findFirst({
+    where: {
+      OR: [{ slug: slugOrId }, { id: slugOrId }],
+    },
+    select: {
+      id: true,
+      slug: true,
+      name: true,
+      shortName: true,
+      color: true,
+      logoUrl: true,
+      foundedDate: true,
+      politicalPosition: true,
+      ideology: true,
+      _count: { select: { politicians: true } },
+    },
+  });
+
+  if (!party) return null;
+
+  // Current mandates by type
+  const mandateCounts = await db.mandate.groupBy({
+    by: ["type"],
+    where: {
+      isCurrent: true,
+      politician: { currentPartyId: party.id },
+    },
+    _count: true,
+  });
+
+  // Affairs
+  const affairs = await db.affair.findMany({
+    where: { politician: { currentPartyId: party.id } },
+    select: { id: true, status: true },
+  });
+
+  // Fact-check mentions
+  const factCheckMentions = await db.factCheckMention.findMany({
+    where: { politician: { currentPartyId: party.id } },
+    include: {
+      factCheck: { select: { verdictRating: true } },
+    },
+  });
+
+  return {
+    party: {
+      ...party,
+      memberCount: party._count.politicians,
+    },
+    mandateCounts: mandateCounts.map((m) => ({
+      type: m.type as MandateType,
+      count: m._count,
+    })),
+    affairs: affairs.map((a) => ({
+      id: a.id,
+      status: a.status as AffairStatus,
+    })),
+    factCheckMentions: factCheckMentions.map((m) => ({
+      factCheck: {
+        verdictRating: m.factCheck.verdictRating as FactCheckRating,
+      },
+    })),
+  };
+}
+
+interface PartyMajorityVoteRow {
+  scrutinId: string;
+  title: string;
+  slug: string | null;
+  votingDate: Date;
+  majorityPosition: string;
+  pour: bigint;
+  contre: bigint;
+  abstention: bigint;
+}
+
+async function getPartyVoteComparison(leftPartyId: string, rightPartyId: string) {
+  // Get majority position per scrutin for each party
+  const [leftRows, rightRows] = await Promise.all([
+    db.$queryRaw<PartyMajorityVoteRow[]>`
+      SELECT
+        v."scrutinId" as "scrutinId",
+        s.title,
+        s.slug,
+        s."votingDate" as "votingDate",
+        SUM(CASE WHEN v.position = 'POUR' THEN 1 ELSE 0 END)::bigint as "pour",
+        SUM(CASE WHEN v.position = 'CONTRE' THEN 1 ELSE 0 END)::bigint as "contre",
+        SUM(CASE WHEN v.position = 'ABSTENTION' THEN 1 ELSE 0 END)::bigint as "abstention",
+        CASE
+          WHEN SUM(CASE WHEN v.position = 'POUR' THEN 1 ELSE 0 END) >= SUM(CASE WHEN v.position = 'CONTRE' THEN 1 ELSE 0 END)
+           AND SUM(CASE WHEN v.position = 'POUR' THEN 1 ELSE 0 END) >= SUM(CASE WHEN v.position = 'ABSTENTION' THEN 1 ELSE 0 END)
+          THEN 'POUR'
+          WHEN SUM(CASE WHEN v.position = 'CONTRE' THEN 1 ELSE 0 END) >= SUM(CASE WHEN v.position = 'ABSTENTION' THEN 1 ELSE 0 END)
+          THEN 'CONTRE'
+          ELSE 'ABSTENTION'
+        END as "majorityPosition"
+      FROM "Vote" v
+      JOIN "Politician" pol ON v."politicianId" = pol.id
+      JOIN "Scrutin" s ON v."scrutinId" = s.id
+      WHERE pol."currentPartyId" = ${leftPartyId}
+        AND v.position IN ('POUR', 'CONTRE', 'ABSTENTION')
+      GROUP BY v."scrutinId", s.title, s.slug, s."votingDate"
+    `,
+    db.$queryRaw<PartyMajorityVoteRow[]>`
+      SELECT
+        v."scrutinId" as "scrutinId",
+        s.title,
+        s.slug,
+        s."votingDate" as "votingDate",
+        SUM(CASE WHEN v.position = 'POUR' THEN 1 ELSE 0 END)::bigint as "pour",
+        SUM(CASE WHEN v.position = 'CONTRE' THEN 1 ELSE 0 END)::bigint as "contre",
+        SUM(CASE WHEN v.position = 'ABSTENTION' THEN 1 ELSE 0 END)::bigint as "abstention",
+        CASE
+          WHEN SUM(CASE WHEN v.position = 'POUR' THEN 1 ELSE 0 END) >= SUM(CASE WHEN v.position = 'CONTRE' THEN 1 ELSE 0 END)
+           AND SUM(CASE WHEN v.position = 'POUR' THEN 1 ELSE 0 END) >= SUM(CASE WHEN v.position = 'ABSTENTION' THEN 1 ELSE 0 END)
+          THEN 'POUR'
+          WHEN SUM(CASE WHEN v.position = 'CONTRE' THEN 1 ELSE 0 END) >= SUM(CASE WHEN v.position = 'ABSTENTION' THEN 1 ELSE 0 END)
+          THEN 'CONTRE'
+          ELSE 'ABSTENTION'
+        END as "majorityPosition"
+      FROM "Vote" v
+      JOIN "Politician" pol ON v."politicianId" = pol.id
+      JOIN "Scrutin" s ON v."scrutinId" = s.id
+      WHERE pol."currentPartyId" = ${rightPartyId}
+        AND v.position IN ('POUR', 'CONTRE', 'ABSTENTION')
+      GROUP BY v."scrutinId", s.title, s.slug, s."votingDate"
+    `,
+  ]);
+
+  // Build map for right party
+  const rightMap = new Map(rightRows.map((r) => [r.scrutinId, r]));
+
+  // Find common scrutins and compare
+  return leftRows
+    .filter((l) => rightMap.has(l.scrutinId))
+    .map((l) => {
+      const r = rightMap.get(l.scrutinId)!;
+      return {
+        scrutinId: l.scrutinId,
+        title: l.title,
+        slug: l.slug,
+        votingDate: l.votingDate,
+        leftPosition: l.majorityPosition,
+        rightPosition: r.majorityPosition,
+        leftPour: Number(l.pour),
+        leftContre: Number(l.contre),
+        leftAbstention: Number(l.abstention),
+        rightPour: Number(r.pour),
+        rightContre: Number(r.contre),
+        rightAbstention: Number(r.abstention),
+      };
+    });
+}
+
 export default async function ComparerPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const leftSlug = params.left;
@@ -150,11 +307,24 @@ export default async function ComparerPage({ searchParams }: PageProps) {
   const isPartyMode = params.mode === "partis";
 
   if (isPartyMode) {
-    // Party mode
-    const [leftParty, rightParty] = await Promise.all([
+    // Party mode — load previews first, then full data if both selected
+    const [leftPartyPreview, rightPartyPreview] = await Promise.all([
       leftSlug ? getPartyPreview(leftSlug) : null,
       rightSlug ? getPartyPreview(rightSlug) : null,
     ]);
+
+    const bothPartiesSelected = leftPartyPreview && rightPartyPreview;
+
+    // Load full comparison data only if both parties are selected
+    const [leftPartyData, rightPartyData] = bothPartiesSelected
+      ? await Promise.all([getPartyComparisonData(leftSlug!), getPartyComparisonData(rightSlug!)])
+      : [null, null];
+
+    // Load vote comparison only if both parties have data
+    const voteComparison =
+      leftPartyData && rightPartyData
+        ? await getPartyVoteComparison(leftPartyData.party.id, rightPartyData.party.id)
+        : [];
 
     return (
       <div className="container mx-auto px-4 py-8">
@@ -175,22 +345,22 @@ export default async function ComparerPage({ searchParams }: PageProps) {
             <h2 className="text-sm font-medium mb-2 text-muted-foreground">Parti 1</h2>
             <PartySelector
               position="left"
-              selectedParty={leftParty}
-              otherPartyId={rightParty?.id}
+              selectedParty={leftPartyPreview}
+              otherPartyId={rightPartyPreview?.id}
             />
           </div>
           <div>
             <h2 className="text-sm font-medium mb-2 text-muted-foreground">Parti 2</h2>
             <PartySelector
               position="right"
-              selectedParty={rightParty}
-              otherPartyId={leftParty?.id}
+              selectedParty={rightPartyPreview}
+              otherPartyId={leftPartyPreview?.id}
             />
           </div>
         </div>
 
         {/* VS separator */}
-        {(leftParty || rightParty) && (
+        {(leftPartyPreview || rightPartyPreview) && (
           <div className="flex items-center justify-center mb-8">
             <div className="flex-1 h-px bg-border" />
             <span className="px-4 text-2xl font-bold text-muted-foreground">VS</span>
@@ -199,19 +369,16 @@ export default async function ComparerPage({ searchParams }: PageProps) {
         )}
 
         {/* Party comparison content */}
-        {leftParty && rightParty ? (
-          <div className="text-center py-12 border-2 border-dashed rounded-lg">
-            <div className="text-4xl mb-4">🏗</div>
-            <h2 className="text-xl font-semibold mb-2">Comparaison par parti</h2>
-            <p className="text-muted-foreground max-w-md mx-auto">
-              La comparaison détaillée entre partis (concordance de votes, scrutins divisifs,
-              répartition des affaires) arrive bientôt.
-            </p>
-          </div>
+        {leftPartyData && rightPartyData ? (
+          <PartyComparisonTable
+            left={leftPartyData}
+            right={rightPartyData}
+            voteComparison={voteComparison}
+          />
         ) : (
           <div className="text-center py-12 text-muted-foreground">
             <p className="text-lg">
-              {!leftParty && !rightParty
+              {!leftPartyPreview && !rightPartyPreview
                 ? "Sélectionnez deux partis pour les comparer"
                 : "Sélectionnez un deuxième parti pour lancer la comparaison"}
             </p>

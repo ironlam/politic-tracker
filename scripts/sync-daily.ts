@@ -60,6 +60,14 @@ const steps: SyncStep[] = [
     name: "Classification thématique (limit 30)",
     command: `npx tsx scripts/classify-themes.ts --limit=30${dryRunFlag}`,
   },
+  {
+    name: "Embeddings fact-checks (delta)",
+    command: `npx tsx scripts/index-embeddings.ts --type=FACTCHECK`,
+  },
+  {
+    name: "Embeddings presse (delta)",
+    command: `npx tsx scripts/index-embeddings.ts --type=PRESS_ARTICLE`,
+  },
 ];
 
 async function main() {

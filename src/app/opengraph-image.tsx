@@ -2,7 +2,7 @@ import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
 
-export const alt = "Poligraph - Observatoire citoyen des représentants politiques français";
+export const alt = "Poligraph - Observatoire citoyen de la vie politique";
 export const size = {
   width: 1200,
   height: 630,
@@ -71,7 +71,7 @@ export default async function Image() {
           maxWidth: 900,
         }}
       >
-        Observatoire citoyen des représentants politiques français
+        Observatoire citoyen de la vie politique
       </div>
 
       {/* Features */}

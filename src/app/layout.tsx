@@ -26,7 +26,7 @@ export const metadata: Metadata = {
     template: "%s | Poligraph",
   },
   description:
-    "Observatoire citoyen des représentants politiques français. Accédez aux informations publiques : mandats, patrimoine, affaires judiciaires.",
+    "Observatoire citoyen de la vie politique. Mandats, votes, patrimoine, affaires judiciaires et fact-checking.",
   keywords: [
     "poligraph",
     "politique",
@@ -39,6 +39,8 @@ export const metadata: Metadata = {
     "affaires judiciaires",
     "patrimoine",
     "HATVP",
+    "fact-checking",
+    "votes",
   ],
   authors: [{ name: "Poligraph" }],
   creator: "Poligraph",
@@ -49,13 +51,13 @@ export const metadata: Metadata = {
     siteName: "Poligraph",
     title: "Poligraph",
     description:
-      "Observatoire citoyen des représentants politiques français. Mandats, patrimoine, affaires judiciaires.",
+      "Observatoire citoyen de la vie politique. Mandats, votes, patrimoine, affaires judiciaires et fact-checking.",
     // Image generated automatically by opengraph-image.tsx
   },
   twitter: {
     card: "summary_large_image",
     title: "Poligraph",
-    description: "Observatoire citoyen des représentants politiques français.",
+    description: "Observatoire citoyen de la vie politique. Fact-checking et données publiques.",
     // Image generated automatically by opengraph-image.tsx
   },
   robots: {
@@ -81,7 +83,7 @@ export default function RootLayout({
       <head>
         <WebSiteJsonLd
           name="Poligraph"
-          description="Observatoire citoyen des représentants politiques français. Mandats, patrimoine, votes et affaires judiciaires."
+          description="Observatoire citoyen de la vie politique. Mandats, votes, patrimoine, affaires judiciaires et fact-checking."
           url={siteUrl}
         />
       </head>

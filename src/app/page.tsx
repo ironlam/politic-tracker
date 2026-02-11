@@ -191,7 +191,7 @@ export default async function HomePage() {
     <>
       <WebSiteJsonLd
         name="Poligraph"
-        description="Observatoire citoyen des représentants politiques français. Accédez aux informations publiques : mandats, patrimoine, affaires judiciaires."
+        description="Observatoire citoyen de la vie politique. Mandats, votes, patrimoine, affaires judiciaires et fact-checking."
         url={siteUrl}
       />
       <div className="min-h-screen">
@@ -199,8 +199,8 @@ export default async function HomePage() {
         <section className="relative overflow-hidden bg-gradient-to-br from-primary/5 via-background to-accent/10">
           <div className="container mx-auto px-4 py-20 md:py-28 relative z-10">
             <div className="max-w-3xl mx-auto text-center">
-              <Badge variant="secondary" className="mb-6 text-sm font-medium">
-                Observatoire citoyen — Données publiques, regard indépendant
+              <Badge variant="secondary" className="mb-6 text-xs sm:text-sm font-medium">
+                Observatoire citoyen de la vie politique
               </Badge>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6">
                 <span className="bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
@@ -208,8 +208,8 @@ export default async function HomePage() {
                 </span>
               </h1>
               <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed">
-                Accédez aux informations publiques sur vos représentants politiques. Mandats,
-                déclarations de patrimoine, votes, affaires judiciaires documentées.
+                Accédez aux informations publiques sur vos représentants politiques. Mandats, votes,
+                patrimoine, affaires judiciaires et fact-checking.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button asChild size="lg" className="text-base px-8 shadow-lg shadow-primary/20">

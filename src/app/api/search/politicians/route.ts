@@ -17,6 +17,13 @@ import { db } from "@/lib/db";
  *           minLength: 2
  *         description: Terme de recherche (minimum 2 caractères)
  *         example: "macron"
+ *       - in: query
+ *         name: active
+ *         schema:
+ *           type: string
+ *           enum: ["true", "false"]
+ *           default: "false"
+ *         description: Filtrer aux représentants avec mandat en cours et parti non dissous
  *     responses:
  *       200:
  *         description: Résultats de recherche
@@ -31,18 +38,30 @@ import { db } from "@/lib/db";
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const query = searchParams.get("q") || "";
+  const activeOnly = searchParams.get("active") === "true";
 
   if (query.length < 2) {
     return NextResponse.json([]);
   }
 
+  const nameConditions = [
+    { fullName: { contains: query, mode: "insensitive" as const } },
+    { lastName: { contains: query, mode: "insensitive" as const } },
+    { firstName: { contains: query, mode: "insensitive" as const } },
+  ];
+
+  const activeConditions = activeOnly
+    ? [
+        { mandates: { some: { isCurrent: true } } },
+        {
+          OR: [{ currentPartyId: null }, { currentParty: { dissolvedDate: null } }],
+        },
+      ]
+    : [];
+
   const politicians = await db.politician.findMany({
     where: {
-      OR: [
-        { fullName: { contains: query, mode: "insensitive" } },
-        { lastName: { contains: query, mode: "insensitive" } },
-        { firstName: { contains: query, mode: "insensitive" } },
-      ],
+      AND: [{ OR: nameConditions }, ...activeConditions],
     },
     select: {
       id: true,

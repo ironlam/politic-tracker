@@ -56,6 +56,10 @@ interface PoliticianData {
 interface ComparisonTableProps {
   left: PoliticianData;
   right: PoliticianData;
+  hideVotes?: boolean;
+  hideFactChecks?: boolean;
+  hideAffairs?: boolean;
+  hideDeclarations?: boolean;
 }
 
 function formatDate(date: Date | string | null): string {
@@ -98,7 +102,14 @@ function formatMoney(amount: number | null): string {
   }).format(amount);
 }
 
-export function ComparisonTable({ left, right }: ComparisonTableProps) {
+export function ComparisonTable({
+  left,
+  right,
+  hideVotes,
+  hideFactChecks,
+  hideAffairs,
+  hideDeclarations,
+}: ComparisonTableProps) {
   const leftAge = calculateAge(left.birthDate);
   const rightAge = calculateAge(right.birthDate);
   const leftMandate = getCurrentMandate(left.mandates);
@@ -158,156 +169,164 @@ export function ComparisonTable({ left, right }: ComparisonTableProps) {
       </section>
 
       {/* Vote Statistics */}
-      <section>
-        <h2 className="text-xl font-semibold mb-4">Statistiques de vote</h2>
-        <div className="bg-muted rounded-lg overflow-hidden">
-          <table className="w-full">
-            <tbody>
-              <Row
-                label="Total des votes"
-                left={left.voteStats.total.toString()}
-                right={right.voteStats.total.toString()}
-              />
-              <Row
-                label="Votes Pour"
-                left={left.voteStats.pour.toString()}
-                right={right.voteStats.pour.toString()}
-              />
-              <Row
-                label="Votes Contre"
-                left={left.voteStats.contre.toString()}
-                right={right.voteStats.contre.toString()}
-              />
-              <Row
-                label="Abstentions"
-                left={left.voteStats.abstention.toString()}
-                right={right.voteStats.abstention.toString()}
-              />
-              <Row
-                label="Taux de présence"
-                left={`${left.voteStats.total > 0 ? Math.round(((left.voteStats.total - left.voteStats.absent) / left.voteStats.total) * 100) : 0}%`}
-                right={`${right.voteStats.total > 0 ? Math.round(((right.voteStats.total - right.voteStats.absent) / right.voteStats.total) * 100) : 0}%`}
-              />
-            </tbody>
-          </table>
-        </div>
-      </section>
+      {!hideVotes && (
+        <section>
+          <h2 className="text-xl font-semibold mb-4">Statistiques de vote</h2>
+          <div className="bg-muted rounded-lg overflow-hidden">
+            <table className="w-full">
+              <tbody>
+                <Row
+                  label="Total des votes"
+                  left={left.voteStats.total.toString()}
+                  right={right.voteStats.total.toString()}
+                />
+                <Row
+                  label="Votes Pour"
+                  left={left.voteStats.pour.toString()}
+                  right={right.voteStats.pour.toString()}
+                />
+                <Row
+                  label="Votes Contre"
+                  left={left.voteStats.contre.toString()}
+                  right={right.voteStats.contre.toString()}
+                />
+                <Row
+                  label="Abstentions"
+                  left={left.voteStats.abstention.toString()}
+                  right={right.voteStats.abstention.toString()}
+                />
+                <Row
+                  label="Taux de présence"
+                  left={`${left.voteStats.total > 0 ? Math.round(((left.voteStats.total - left.voteStats.absent) / left.voteStats.total) * 100) : 0}%`}
+                  right={`${right.voteStats.total > 0 ? Math.round(((right.voteStats.total - right.voteStats.absent) / right.voteStats.total) * 100) : 0}%`}
+                />
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
 
       {/* Patrimony */}
-      <section>
-        <h2 className="text-xl font-semibold mb-4">Patrimoine déclaré (HATVP)</h2>
-        <div className="bg-muted rounded-lg overflow-hidden">
-          <table className="w-full">
-            <tbody>
-              <Row
-                label="Patrimoine net"
-                left={formatMoney(leftPatrimony)}
-                right={formatMoney(rightPatrimony)}
-              />
-              <Row
-                label="Déclarations"
-                left={`${left.declarations.length} déclaration${left.declarations.length > 1 ? "s" : ""}`}
-                right={`${right.declarations.length} déclaration${right.declarations.length > 1 ? "s" : ""}`}
-              />
-            </tbody>
-          </table>
-        </div>
-      </section>
+      {!hideDeclarations && (
+        <section>
+          <h2 className="text-xl font-semibold mb-4">Patrimoine déclaré (HATVP)</h2>
+          <div className="bg-muted rounded-lg overflow-hidden">
+            <table className="w-full">
+              <tbody>
+                <Row
+                  label="Patrimoine net"
+                  left={formatMoney(leftPatrimony)}
+                  right={formatMoney(rightPatrimony)}
+                />
+                <Row
+                  label="Déclarations"
+                  left={`${left.declarations.length} déclaration${left.declarations.length > 1 ? "s" : ""}`}
+                  right={`${right.declarations.length} déclaration${right.declarations.length > 1 ? "s" : ""}`}
+                />
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
 
       {/* Fact-checks */}
-      <section>
-        <h2 className="text-xl font-semibold mb-4">Fact-checks</h2>
-        {(() => {
-          const leftDirect = left.factCheckMentions.filter((m) =>
-            isDirectPoliticianClaim(m.factCheck.claimant)
-          );
-          const rightDirect = right.factCheckMentions.filter((m) =>
-            isDirectPoliticianClaim(m.factCheck.claimant)
-          );
-          const leftOther = left.factCheckMentions.filter(
-            (m) => !isDirectPoliticianClaim(m.factCheck.claimant)
-          );
-          const rightOther = right.factCheckMentions.filter(
-            (m) => !isDirectPoliticianClaim(m.factCheck.claimant)
-          );
+      {!hideFactChecks && (
+        <section>
+          <h2 className="text-xl font-semibold mb-4">Fact-checks</h2>
+          {(() => {
+            const leftDirect = left.factCheckMentions.filter((m) =>
+              isDirectPoliticianClaim(m.factCheck.claimant)
+            );
+            const rightDirect = right.factCheckMentions.filter((m) =>
+              isDirectPoliticianClaim(m.factCheck.claimant)
+            );
+            const leftOther = left.factCheckMentions.filter(
+              (m) => !isDirectPoliticianClaim(m.factCheck.claimant)
+            );
+            const rightOther = right.factCheckMentions.filter(
+              (m) => !isDirectPoliticianClaim(m.factCheck.claimant)
+            );
 
-          return (
-            <>
-              <div className="bg-muted rounded-lg overflow-hidden">
-                <table className="w-full">
-                  <tbody>
-                    <Row
-                      label="Total fact-checks"
-                      left={left._count.factCheckMentions.toString()}
-                      right={right._count.factCheckMentions.toString()}
-                    />
-                    <Row
+            return (
+              <>
+                <div className="bg-muted rounded-lg overflow-hidden">
+                  <table className="w-full">
+                    <tbody>
+                      <Row
+                        label="Total fact-checks"
+                        left={left._count.factCheckMentions.toString()}
+                        right={right._count.factCheckMentions.toString()}
+                      />
+                      <Row
+                        label="Ses déclarations"
+                        left={leftDirect.length.toString()}
+                        right={rightDirect.length.toString()}
+                      />
+                      <Row
+                        label="Mentionné dans"
+                        left={leftOther.length.toString()}
+                        right={rightOther.length.toString()}
+                      />
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Verdict bars */}
+                {(leftDirect.length > 0 || rightDirect.length > 0) && (
+                  <div className="grid md:grid-cols-2 gap-4 mt-4">
+                    <VerdictBar mentions={leftDirect} />
+                    <VerdictBar mentions={rightDirect} />
+                  </div>
+                )}
+
+                {/* Recent fact-checks */}
+                {(left.factCheckMentions.length > 0 || right.factCheckMentions.length > 0) && (
+                  <div className="grid md:grid-cols-2 gap-4 mt-4">
+                    <FactCheckList
+                      mentions={leftDirect}
+                      totalCount={left._count.factCheckMentions}
+                      politicianSlug={left.slug}
                       label="Ses déclarations"
-                      left={leftDirect.length.toString()}
-                      right={rightDirect.length.toString()}
                     />
-                    <Row
-                      label="Mentionné dans"
-                      left={leftOther.length.toString()}
-                      right={rightOther.length.toString()}
+                    <FactCheckList
+                      mentions={rightDirect}
+                      totalCount={right._count.factCheckMentions}
+                      politicianSlug={right.slug}
+                      label="Ses déclarations"
                     />
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Verdict bars */}
-              {(leftDirect.length > 0 || rightDirect.length > 0) && (
-                <div className="grid md:grid-cols-2 gap-4 mt-4">
-                  <VerdictBar mentions={leftDirect} />
-                  <VerdictBar mentions={rightDirect} />
-                </div>
-              )}
-
-              {/* Recent fact-checks */}
-              {(left.factCheckMentions.length > 0 || right.factCheckMentions.length > 0) && (
-                <div className="grid md:grid-cols-2 gap-4 mt-4">
-                  <FactCheckList
-                    mentions={leftDirect}
-                    totalCount={left._count.factCheckMentions}
-                    politicianSlug={left.slug}
-                    label="Ses déclarations"
-                  />
-                  <FactCheckList
-                    mentions={rightDirect}
-                    totalCount={right._count.factCheckMentions}
-                    politicianSlug={right.slug}
-                    label="Ses déclarations"
-                  />
-                </div>
-              )}
-            </>
-          );
-        })()}
-      </section>
+                  </div>
+                )}
+              </>
+            );
+          })()}
+        </section>
+      )}
 
       {/* Affairs */}
-      <section>
-        <h2 className="text-xl font-semibold mb-4">Affaires judiciaires</h2>
-        <div className="bg-muted rounded-lg overflow-hidden">
-          <table className="w-full">
-            <tbody>
-              <Row
-                label="Nombre d'affaires"
-                left={left.affairs.length.toString()}
-                right={right.affairs.length.toString()}
-                leftHighlight={left.affairs.length > 0}
-                rightHighlight={right.affairs.length > 0}
-              />
-            </tbody>
-          </table>
-        </div>
-        {(left.affairs.length > 0 || right.affairs.length > 0) && (
-          <div className="grid md:grid-cols-2 gap-4 mt-4">
-            <AffairList affairs={left.affairs} politicianSlug={left.slug} />
-            <AffairList affairs={right.affairs} politicianSlug={right.slug} />
+      {!hideAffairs && (
+        <section>
+          <h2 className="text-xl font-semibold mb-4">Affaires judiciaires</h2>
+          <div className="bg-muted rounded-lg overflow-hidden">
+            <table className="w-full">
+              <tbody>
+                <Row
+                  label="Nombre d'affaires"
+                  left={left.affairs.length.toString()}
+                  right={right.affairs.length.toString()}
+                  leftHighlight={left.affairs.length > 0}
+                  rightHighlight={right.affairs.length > 0}
+                />
+              </tbody>
+            </table>
           </div>
-        )}
-      </section>
+          {(left.affairs.length > 0 || right.affairs.length > 0) && (
+            <div className="grid md:grid-cols-2 gap-4 mt-4">
+              <AffairList affairs={left.affairs} politicianSlug={left.slug} />
+              <AffairList affairs={right.affairs} politicianSlug={right.slug} />
+            </div>
+          )}
+        </section>
+      )}
     </div>
   );
 }

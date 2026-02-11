@@ -4,3 +4,4 @@ export { CompareMode } from "./CompareMode";
 export { ComparisonTable } from "./ComparisonTable";
 export { VoteAgreement } from "./VoteAgreement";
 export { PartyComparisonTable } from "./PartyComparisonTable";
+export { SuggestedComparisons } from "./SuggestedComparisons";

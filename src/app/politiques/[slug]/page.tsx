@@ -79,6 +79,9 @@ async function getPolitician(slug: string) {
         },
         orderBy: { startDate: "desc" },
       },
+      externalIds: {
+        select: { url: true },
+      },
     },
   });
 
@@ -235,6 +238,9 @@ export default async function PoliticianPage({ params }: PageProps) {
         deathDate={politician.deathDate?.toISOString().split("T")[0]}
         birthPlace={politician.birthPlace || undefined}
         url={`${siteUrl}/politiques/${politician.slug}`}
+        sameAs={politician.externalIds
+          .map((e) => e.url)
+          .filter((url): url is string => url != null)}
       />
       <BreadcrumbJsonLd
         items={[

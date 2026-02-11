@@ -280,6 +280,88 @@ export function EventJsonLd({
   );
 }
 
+interface LegislationJsonLdProps {
+  name: string;
+  description?: string;
+  datePublished?: string;
+  legislationIdentifier?: string;
+  url: string;
+}
+
+export function LegislationJsonLd({
+  name,
+  description,
+  datePublished,
+  legislationIdentifier,
+  url,
+}: LegislationJsonLdProps) {
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Legislation",
+    name,
+    ...(description && { description }),
+    ...(datePublished && { datePublished }),
+    ...(legislationIdentifier && { legislationIdentifier }),
+    url,
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+    />
+  );
+}
+
+interface ArticleJsonLdProps {
+  headline: string;
+  description?: string;
+  datePublished?: string;
+  dateModified?: string;
+  url: string;
+  about?: {
+    name: string;
+    url: string;
+  };
+}
+
+export function ArticleJsonLd({
+  headline,
+  description,
+  datePublished,
+  dateModified,
+  url,
+  about,
+}: ArticleJsonLdProps) {
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline,
+    ...(description && { description }),
+    ...(datePublished && { datePublished }),
+    ...(dateModified && { dateModified }),
+    url,
+    ...(about && {
+      about: {
+        "@type": "Person",
+        name: about.name,
+        url: about.url,
+      },
+    }),
+    publisher: {
+      "@type": "Organization",
+      name: "Transparence Politique",
+    },
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+    />
+  );
+}
+
 interface GovernmentOrganizationJsonLdProps {
   name: string;
   alternateName?: string;

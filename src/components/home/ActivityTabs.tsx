@@ -5,7 +5,23 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatDate } from "@/lib/utils";
-import { Vote, FileText, Newspaper, ChevronRight } from "lucide-react";
+import { Vote, FileText, Newspaper, ChevronRight, ShieldCheck, Scale } from "lucide-react";
+import {
+  FACTCHECK_RATING_LABELS,
+  FACTCHECK_RATING_COLORS,
+  AFFAIR_STATUS_LABELS,
+} from "@/config/labels";
+import type { FactCheckRating, AffairStatus } from "@/types";
+
+interface FactCheckItem {
+  id: string;
+  title: string;
+  source: string;
+  sourceUrl: string;
+  verdictRating: string;
+  publishedAt: Date;
+  politician: { fullName: string; slug: string } | null;
+}
 
 interface VoteItem {
   id: string;
@@ -33,18 +49,37 @@ interface ArticleItem {
   url: string;
 }
 
+interface AffairItem {
+  id: string;
+  slug: string | null;
+  title: string;
+  status: string;
+  date: Date | null;
+  politician: { fullName: string; slug: string };
+}
+
 interface ActivityTabsProps {
+  factChecks: FactCheckItem[];
   votes: VoteItem[];
   dossiers: DossierItem[];
   articles: ArticleItem[];
+  affairs: AffairItem[];
 }
 
-type TabType = "votes" | "dossiers" | "presse";
+type TabType = "factchecks" | "votes" | "dossiers" | "presse" | "affaires";
 
-export function ActivityTabs({ votes, dossiers, articles }: ActivityTabsProps) {
-  const [activeTab, setActiveTab] = useState<TabType>("votes");
+export function ActivityTabs({
+  factChecks,
+  votes,
+  dossiers,
+  articles,
+  affairs,
+}: ActivityTabsProps) {
+  const [activeTab, setActiveTab] = useState<TabType>("factchecks");
 
   const tabs: { id: TabType; label: string; icon: typeof Vote; count: number }[] = [
+    { id: "factchecks", label: "Fact-checks", icon: ShieldCheck, count: factChecks.length },
+    { id: "affaires", label: "Affaires", icon: Scale, count: affairs.length },
     { id: "votes", label: "Votes", icon: Vote, count: votes.length },
     { id: "dossiers", label: "Dossiers", icon: FileText, count: dossiers.length },
     { id: "presse", label: "Presse", icon: Newspaper, count: articles.length },
@@ -61,21 +96,21 @@ export function ActivityTabs({ votes, dossiers, articles }: ActivityTabsProps) {
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 p-1 bg-muted/50 rounded-lg w-fit mb-6">
+        <div className="flex gap-1 p-1 bg-muted/50 rounded-lg w-fit mb-6 overflow-x-auto">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             return (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
                   activeTab === tab.id
                     ? "bg-background text-foreground shadow-sm"
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 <Icon className="h-4 w-4" />
-                {tab.label}
+                <span className="hidden sm:inline">{tab.label}</span>
                 {tab.count > 0 && (
                   <span className="text-xs text-muted-foreground">({tab.count})</span>
                 )}
@@ -86,12 +121,110 @@ export function ActivityTabs({ votes, dossiers, articles }: ActivityTabsProps) {
 
         {/* Tab content */}
         <div className="bg-card border rounded-xl overflow-hidden">
+          {activeTab === "factchecks" && <FactChecksContent factChecks={factChecks} />}
+          {activeTab === "affaires" && <AffairesContent affairs={affairs} />}
           {activeTab === "votes" && <VotesContent votes={votes} />}
           {activeTab === "dossiers" && <DossiersContent dossiers={dossiers} />}
           {activeTab === "presse" && <PresseContent articles={articles} />}
         </div>
       </div>
     </section>
+  );
+}
+
+function FactChecksContent({ factChecks }: { factChecks: FactCheckItem[] }) {
+  if (factChecks.length === 0) {
+    return <div className="p-8 text-center text-muted-foreground">Aucun fact-check récent</div>;
+  }
+
+  return (
+    <>
+      <ul className="divide-y divide-border">
+        {factChecks.map((fc) => (
+          <li key={fc.id}>
+            <a
+              href={fc.sourceUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors group"
+            >
+              <div className="flex-1 min-w-0 mr-4">
+                <p className="font-medium truncate group-hover:text-primary transition-colors">
+                  {fc.title}
+                </p>
+                <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
+                  <span>{formatDate(fc.publishedAt)}</span>
+                  <span>•</span>
+                  <span>{fc.source}</span>
+                  {fc.politician && (
+                    <>
+                      <span>•</span>
+                      <span>{fc.politician.fullName}</span>
+                    </>
+                  )}
+                </div>
+              </div>
+              <Badge
+                className={`shrink-0 ${FACTCHECK_RATING_COLORS[fc.verdictRating as FactCheckRating] || "bg-gray-100 text-gray-800"}`}
+              >
+                {FACTCHECK_RATING_LABELS[fc.verdictRating as FactCheckRating] || fc.verdictRating}
+              </Badge>
+            </a>
+          </li>
+        ))}
+      </ul>
+      <div className="p-4 border-t bg-muted/30">
+        <Button variant="ghost" asChild className="w-full sm:w-auto">
+          <Link href="/factchecks" className="flex items-center gap-2">
+            Voir tous les fact-checks
+            <ChevronRight className="h-4 w-4" />
+          </Link>
+        </Button>
+      </div>
+    </>
+  );
+}
+
+function AffairesContent({ affairs }: { affairs: AffairItem[] }) {
+  if (affairs.length === 0) {
+    return <div className="p-8 text-center text-muted-foreground">Aucune affaire récente</div>;
+  }
+
+  return (
+    <>
+      <ul className="divide-y divide-border">
+        {affairs.map((affair) => (
+          <li key={affair.id}>
+            <Link
+              href={`/affaires/${affair.slug || affair.id}`}
+              className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors group"
+            >
+              <div className="flex-1 min-w-0 mr-4">
+                <p className="font-medium truncate group-hover:text-primary transition-colors">
+                  {affair.title}
+                </p>
+                <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
+                  {affair.date && <span>{formatDate(affair.date)}</span>}
+                  {affair.date && <span>•</span>}
+                  <span>{affair.politician.fullName}</span>
+                </div>
+              </div>
+              <Badge variant="outline">
+                {AFFAIR_STATUS_LABELS[affair.status as AffairStatus] || affair.status}
+              </Badge>
+            </Link>
+          </li>
+        ))}
+      </ul>
+      <div className="p-4 border-t bg-muted/30">
+        <Button variant="ghost" asChild className="w-full sm:w-auto">
+          <Link href="/affaires" className="flex items-center gap-2">
+            Voir toutes les affaires
+            <ChevronRight className="h-4 w-4" />
+          </Link>
+        </Button>
+      </div>
+    </>
   );
 }
 

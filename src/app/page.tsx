@@ -1,66 +1,42 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  DashboardStats,
-  ActivityTabs,
-  QuickTools,
-  UpcomingElections,
-  ElectionBanner,
-} from "@/components/home";
-import { formatDate } from "@/lib/utils";
+import { ActivityTabs, QuickTools, UpcomingElections } from "@/components/home";
 import { WebSiteJsonLd } from "@/components/seo/JsonLd";
 import { Heart } from "lucide-react";
-import { FEATURES } from "@/config/features";
 
-async function getStats() {
-  const [
-    politicianCount,
-    affairCount,
-    deputeCount,
-    senateurCount,
-    gouvernementCount,
-    mepCount,
-    declarationCount,
-    voteCount,
-    articleCount,
-  ] = await Promise.all([
-    db.politician.count(),
-    db.affair.count(),
-    db.mandate.count({ where: { type: "DEPUTE", isCurrent: true } }),
-    db.mandate.count({ where: { type: "SENATEUR", isCurrent: true } }),
-    db.mandate.count({
-      where: {
-        type: {
-          in: ["MINISTRE", "PREMIER_MINISTRE", "MINISTRE_DELEGUE", "SECRETAIRE_ETAT"],
+async function getRecentFactChecks() {
+  const factChecks = await db.factCheck.findMany({
+    take: 5,
+    orderBy: { publishedAt: "desc" },
+    select: {
+      id: true,
+      title: true,
+      source: true,
+      sourceUrl: true,
+      verdictRating: true,
+      publishedAt: true,
+      mentions: {
+        take: 1,
+        select: {
+          politician: {
+            select: { fullName: true, slug: true },
+          },
         },
-        isCurrent: true,
       },
-    }),
-    db.mandate.count({ where: { type: "DEPUTE_EUROPEEN", isCurrent: true } }),
-    db.declaration.count(),
-    db.scrutin.count(),
-    // Only count articles with politician or party mentions (relevant to politics)
-    db.pressArticle.count({
-      where: {
-        OR: [{ mentions: { some: {} } }, { partyMentions: { some: {} } }],
-      },
-    }),
-  ]);
+    },
+  });
 
-  return {
-    politicianCount,
-    affairCount,
-    deputeCount,
-    senateurCount,
-    gouvernementCount,
-    mepCount,
-    declarationCount,
-    voteCount,
-    articleCount,
-  };
+  return factChecks.map((fc) => ({
+    id: fc.id,
+    title: fc.title,
+    source: fc.source,
+    sourceUrl: fc.sourceUrl,
+    verdictRating: fc.verdictRating,
+    publishedAt: fc.publishedAt,
+    politician: fc.mentions[0]?.politician || null,
+  }));
 }
 
 async function getRecentVotes() {
@@ -143,48 +119,52 @@ async function getUpcomingElections() {
   });
 }
 
-async function getFeaturedElection() {
-  if (!FEATURES.ELECTION_BANNER) return null;
-  return db.election.findUnique({
-    where: { slug: FEATURES.FEATURED_ELECTION_SLUG },
-  });
-}
-
 async function getRecentAffairs() {
-  return db.affair.findMany({
-    take: 4,
+  const affairs = await db.affair.findMany({
+    take: 5,
     orderBy: [
       { verdictDate: { sort: "desc", nulls: "last" } },
       { startDate: { sort: "desc", nulls: "last" } },
       { factsDate: { sort: "desc", nulls: "last" } },
       { createdAt: "desc" },
     ],
-    include: {
-      politician: { include: { currentParty: true } },
+    select: {
+      id: true,
+      slug: true,
+      title: true,
+      status: true,
+      verdictDate: true,
+      startDate: true,
+      factsDate: true,
+      politician: {
+        select: { fullName: true, slug: true },
+      },
     },
   });
+
+  return affairs.map((a) => ({
+    ...a,
+    date: a.verdictDate || a.startDate || a.factsDate,
+  }));
 }
 
 export default async function HomePage() {
   const [
-    stats,
+    recentFactChecks,
     recentVotes,
     activeDossiers,
     recentArticles,
     recentAffairs,
     upcomingElections,
-    featuredElection,
   ] = await Promise.all([
-    getStats(),
+    getRecentFactChecks(),
     getRecentVotes(),
     getActiveDossiers(),
     getRecentArticles(),
     getRecentAffairs(),
     getUpcomingElections(),
-    getFeaturedElection(),
   ]);
 
-  const now = new Date();
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://poligraph.fr";
 
   return (
@@ -229,93 +209,20 @@ export default async function HomePage() {
           <div className="absolute bottom-0 right-0 w-96 h-96 bg-accent/20 rounded-full translate-x-1/3 translate-y-1/3 blur-3xl pointer-events-none" />
         </section>
 
-        {/* Featured Election Banner */}
-        {featuredElection && (
-          <ElectionBanner
-            election={featuredElection}
-            daysUntil={
-              featuredElection.round1Date
-                ? Math.ceil(
-                    (featuredElection.round1Date.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
-                  )
-                : null
-            }
-          />
-        )}
-
-        {/* Dashboard Stats */}
-        <DashboardStats stats={stats} />
-
         {/* Activity Tabs */}
-        <ActivityTabs votes={recentVotes} dossiers={activeDossiers} articles={recentArticles} />
+        <ActivityTabs
+          factChecks={recentFactChecks}
+          votes={recentVotes}
+          dossiers={activeDossiers}
+          articles={recentArticles}
+          affairs={recentAffairs}
+        />
 
         {/* Quick Tools */}
         <QuickTools />
 
         {/* Upcoming Elections */}
         <UpcomingElections elections={upcomingElections} />
-
-        {/* Recent Affairs */}
-        {recentAffairs.length > 0 && (
-          <section className="py-16">
-            <div className="container mx-auto px-4">
-              <div className="flex justify-between items-end mb-8">
-                <div>
-                  <h2 className="text-2xl md:text-3xl font-bold mb-2">Affaires récentes</h2>
-                  <p className="text-muted-foreground">Dernières affaires documentées</p>
-                </div>
-                <Button variant="ghost" asChild className="text-primary">
-                  <Link href="/affaires">Voir toutes &rarr;</Link>
-                </Button>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {recentAffairs.map((affair) => {
-                  const relevantDate = affair.verdictDate || affair.startDate || affair.factsDate;
-                  return (
-                    <Link
-                      key={affair.id}
-                      href={`/politiques/${affair.politician.slug}`}
-                      className="block"
-                    >
-                      <Card className="h-full hover:shadow-lg transition-all hover:border-primary/20">
-                        <CardContent className="pt-6">
-                          <div className="flex items-start gap-4">
-                            <div className="w-12 h-12 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center shrink-0">
-                              <span className="text-amber-600 dark:text-amber-400 text-lg">!</span>
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-1">
-                                <p className="font-semibold truncate">{affair.title}</p>
-                              </div>
-                              <p className="text-sm text-muted-foreground">
-                                {affair.politician.fullName}
-                                {affair.politician.currentParty && (
-                                  <span
-                                    className="text-primary"
-                                    title={affair.politician.currentParty.name}
-                                  >
-                                    {" "}
-                                    ({affair.politician.currentParty.shortName})
-                                  </span>
-                                )}
-                              </p>
-                              {relevantDate && (
-                                <p className="text-xs text-muted-foreground mt-2 font-mono">
-                                  {formatDate(relevantDate)}
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
-          </section>
-        )}
 
         {/* CTA Section */}
         <section className="py-20 bg-gradient-to-br from-primary/5 to-accent/10">

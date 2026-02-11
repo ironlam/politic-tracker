@@ -170,23 +170,23 @@ export function ComparisonTable({ left, right }: ComparisonTableProps) {
               />
               <Row
                 label="Votes Pour"
-                left={`${left.voteStats.pour} (${left.voteStats.total > 0 ? Math.round((left.voteStats.pour / left.voteStats.total) * 100) : 0}%)`}
-                right={`${right.voteStats.pour} (${right.voteStats.total > 0 ? Math.round((right.voteStats.pour / right.voteStats.total) * 100) : 0}%)`}
+                left={left.voteStats.pour.toString()}
+                right={right.voteStats.pour.toString()}
               />
               <Row
                 label="Votes Contre"
-                left={`${left.voteStats.contre} (${left.voteStats.total > 0 ? Math.round((left.voteStats.contre / left.voteStats.total) * 100) : 0}%)`}
-                right={`${right.voteStats.contre} (${right.voteStats.total > 0 ? Math.round((right.voteStats.contre / right.voteStats.total) * 100) : 0}%)`}
+                left={left.voteStats.contre.toString()}
+                right={right.voteStats.contre.toString()}
               />
               <Row
                 label="Abstentions"
-                left={`${left.voteStats.abstention} (${left.voteStats.total > 0 ? Math.round((left.voteStats.abstention / left.voteStats.total) * 100) : 0}%)`}
-                right={`${right.voteStats.abstention} (${right.voteStats.total > 0 ? Math.round((right.voteStats.abstention / right.voteStats.total) * 100) : 0}%)`}
+                left={left.voteStats.abstention.toString()}
+                right={right.voteStats.abstention.toString()}
               />
               <Row
-                label="Taux de participation"
-                left={`${left.voteStats.total - (left.voteStats.nonVotant || 0) > 0 ? Math.round(((left.voteStats.total - left.voteStats.absent - (left.voteStats.nonVotant || 0)) / (left.voteStats.total - (left.voteStats.nonVotant || 0))) * 100) : 0}%`}
-                right={`${right.voteStats.total - (right.voteStats.nonVotant || 0) > 0 ? Math.round(((right.voteStats.total - right.voteStats.absent - (right.voteStats.nonVotant || 0)) / (right.voteStats.total - (right.voteStats.nonVotant || 0))) * 100) : 0}%`}
+                label="Taux de présence"
+                left={`${left.voteStats.total > 0 ? Math.round(((left.voteStats.total - left.voteStats.absent) / left.voteStats.total) * 100) : 0}%`}
+                right={`${right.voteStats.total > 0 ? Math.round(((right.voteStats.total - right.voteStats.absent) / right.voteStats.total) * 100) : 0}%`}
               />
             </tbody>
           </table>
@@ -333,13 +333,13 @@ function Row({
     <tr className="border-b border-background last:border-0">
       <td className="p-3 text-center font-medium bg-background/50 w-1/3">{label}</td>
       <td
-        className={`p-3 text-center w-1/3 ${leftHighlight ? "bg-red-50 text-red-700 font-medium" : ""}`}
+        className={`p-3 text-center w-1/3 ${leftHighlight ? "bg-red-500/10 text-red-700 dark:text-red-400 font-medium" : ""}`}
         style={leftColor ? { borderLeft: `4px solid ${leftColor}` } : undefined}
       >
         {left}
       </td>
       <td
-        className={`p-3 text-center w-1/3 ${rightHighlight ? "bg-red-50 text-red-700 font-medium" : ""}`}
+        className={`p-3 text-center w-1/3 ${rightHighlight ? "bg-red-500/10 text-red-700 dark:text-red-400 font-medium" : ""}`}
         style={rightColor ? { borderLeft: `4px solid ${rightColor}` } : undefined}
       >
         {right}
@@ -482,7 +482,7 @@ function FactCheckList({
                   href={m.factCheck.sourceUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="hover:underline text-primary line-clamp-1"
+                  className="hover:underline text-primary"
                 >
                   {m.factCheck.title}
                 </a>

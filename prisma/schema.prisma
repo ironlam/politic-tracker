@@ -707,6 +707,8 @@ enum EmbeddingType {
   SCRUTIN           // Voting records
   AFFAIR            // Judicial affairs
   PARTY             // Political parties
+  FACTCHECK         // Fact-check articles
+  PRESS_ARTICLE     // Press articles (RSS)
 }
 
 // Chat conversation history (optional, for context)

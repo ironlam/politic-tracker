@@ -20,6 +20,11 @@ API publique pour accéder aux données des représentants politiques français.
 | \`/api/politiques/{slug}/relations\` | Relations d'un représentant |
 | \`/api/affaires\` | Toutes les affaires judiciaires documentées |
 | \`/api/votes\` | Liste des scrutins parlementaires |
+| \`/api/partis\` | Liste des partis politiques |
+| \`/api/partis/{slug}\` | Détails d'un parti politique |
+| \`/api/mandats\` | Liste des mandats politiques |
+| \`/api/elections\` | Liste des élections |
+| \`/api/elections/{slug}\` | Détails d'une élection |
 
 ## Pagination
 
@@ -46,6 +51,18 @@ Merci de faire un usage raisonnable de l'API.
         description: "Représentants politiques français",
       },
       {
+        name: "Partis",
+        description: "Partis politiques français",
+      },
+      {
+        name: "Mandats",
+        description: "Mandats politiques (députés, sénateurs, ministres, etc.)",
+      },
+      {
+        name: "Élections",
+        description: "Élections et candidatures",
+      },
+      {
         name: "Affaires",
         description: "Affaires judiciaires documentées avec sources",
       },
@@ -68,6 +85,11 @@ Merci de faire un usage raisonnable de l'API.
     "./src/app/api/politiques/[slug]/relations/route.ts",
     "./src/app/api/affaires/route.ts",
     "./src/app/api/votes/route.ts",
+    "./src/app/api/partis/route.ts",
+    "./src/app/api/partis/[slug]/route.ts",
+    "./src/app/api/mandats/route.ts",
+    "./src/app/api/elections/route.ts",
+    "./src/app/api/elections/[slug]/route.ts",
   ],
 };
 

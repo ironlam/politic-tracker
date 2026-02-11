@@ -330,6 +330,382 @@
  *           type: string
  *           nullable: true
  *
+ *     Party:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           format: cuid
+ *         slug:
+ *           type: string
+ *           nullable: true
+ *           example: "les-republicains"
+ *         name:
+ *           type: string
+ *           example: "Les Républicains"
+ *         shortName:
+ *           type: string
+ *           example: "LR"
+ *         color:
+ *           type: string
+ *           nullable: true
+ *           example: "#0066CC"
+ *         politicalPosition:
+ *           type: string
+ *           enum: [FAR_LEFT, LEFT, CENTER_LEFT, CENTER, CENTER_RIGHT, RIGHT, FAR_RIGHT]
+ *           nullable: true
+ *         logoUrl:
+ *           type: string
+ *           nullable: true
+ *         foundedDate:
+ *           type: string
+ *           format: date
+ *           nullable: true
+ *         dissolvedDate:
+ *           type: string
+ *           format: date
+ *           nullable: true
+ *         website:
+ *           type: string
+ *           nullable: true
+ *         memberCount:
+ *           type: integer
+ *           description: Nombre de membres actuels
+ *
+ *     PartyDetails:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           format: cuid
+ *         slug:
+ *           type: string
+ *           nullable: true
+ *         name:
+ *           type: string
+ *         shortName:
+ *           type: string
+ *         color:
+ *           type: string
+ *           nullable: true
+ *         politicalPosition:
+ *           type: string
+ *           enum: [FAR_LEFT, LEFT, CENTER_LEFT, CENTER, CENTER_RIGHT, RIGHT, FAR_RIGHT]
+ *           nullable: true
+ *         logoUrl:
+ *           type: string
+ *           nullable: true
+ *         description:
+ *           type: string
+ *           nullable: true
+ *         foundedDate:
+ *           type: string
+ *           format: date
+ *           nullable: true
+ *         dissolvedDate:
+ *           type: string
+ *           format: date
+ *           nullable: true
+ *         ideology:
+ *           type: string
+ *           nullable: true
+ *         headquarters:
+ *           type: string
+ *           nullable: true
+ *         website:
+ *           type: string
+ *           nullable: true
+ *         memberCount:
+ *           type: integer
+ *         members:
+ *           type: array
+ *           items:
+ *             type: object
+ *             properties:
+ *               id:
+ *                 type: string
+ *               slug:
+ *                 type: string
+ *               fullName:
+ *                 type: string
+ *               photoUrl:
+ *                 type: string
+ *                 nullable: true
+ *               currentMandate:
+ *                 type: object
+ *                 nullable: true
+ *                 properties:
+ *                   type:
+ *                     type: string
+ *                   title:
+ *                     type: string
+ *               affairsCount:
+ *                 type: integer
+ *         externalIds:
+ *           type: array
+ *           items:
+ *             type: object
+ *             properties:
+ *               source:
+ *                 type: string
+ *               externalId:
+ *                 type: string
+ *               url:
+ *                 type: string
+ *                 nullable: true
+ *         predecessor:
+ *           type: object
+ *           nullable: true
+ *           properties:
+ *             id:
+ *               type: string
+ *             slug:
+ *               type: string
+ *             name:
+ *               type: string
+ *             shortName:
+ *               type: string
+ *         successors:
+ *           type: array
+ *           items:
+ *             type: object
+ *             properties:
+ *               id:
+ *                 type: string
+ *               slug:
+ *                 type: string
+ *               name:
+ *                 type: string
+ *               shortName:
+ *                 type: string
+ *
+ *     MandateSummary:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           format: cuid
+ *         type:
+ *           type: string
+ *           enum: [DEPUTE, SENATEUR, DEPUTE_EUROPEEN, PRESIDENT_REPUBLIQUE, PREMIER_MINISTRE, MINISTRE, SECRETAIRE_ETAT, MINISTRE_DELEGUE, PRESIDENT_REGION, PRESIDENT_DEPARTEMENT, MAIRE, ADJOINT_MAIRE, CONSEILLER_REGIONAL, CONSEILLER_DEPARTEMENTAL, CONSEILLER_MUNICIPAL, PRESIDENT_PARTI, OTHER]
+ *         title:
+ *           type: string
+ *         institution:
+ *           type: string
+ *         role:
+ *           type: string
+ *           nullable: true
+ *         constituency:
+ *           type: string
+ *           nullable: true
+ *         departmentCode:
+ *           type: string
+ *           nullable: true
+ *         startDate:
+ *           type: string
+ *           format: date
+ *         endDate:
+ *           type: string
+ *           format: date
+ *           nullable: true
+ *         isCurrent:
+ *           type: boolean
+ *         politician:
+ *           type: object
+ *           properties:
+ *             id:
+ *               type: string
+ *             slug:
+ *               type: string
+ *             fullName:
+ *               type: string
+ *             photoUrl:
+ *               type: string
+ *               nullable: true
+ *
+ *     ElectionSummary:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           format: cuid
+ *         slug:
+ *           type: string
+ *           example: "municipales-2026"
+ *         type:
+ *           type: string
+ *           enum: [PRESIDENTIELLE, LEGISLATIVES, SENATORIALES, MUNICIPALES, DEPARTEMENTALES, REGIONALES, EUROPEENNES, REFERENDUM]
+ *         title:
+ *           type: string
+ *         shortTitle:
+ *           type: string
+ *           nullable: true
+ *         status:
+ *           type: string
+ *           enum: [UPCOMING, REGISTRATION, CANDIDACIES, CAMPAIGN, ROUND_1, BETWEEN_ROUNDS, ROUND_2, COMPLETED]
+ *         scope:
+ *           type: string
+ *           enum: [NATIONAL, REGIONAL, DEPARTMENTAL, MUNICIPAL, EUROPEAN]
+ *         suffrage:
+ *           type: string
+ *           enum: [DIRECT, INDIRECT]
+ *         round1Date:
+ *           type: string
+ *           format: date
+ *           nullable: true
+ *         round2Date:
+ *           type: string
+ *           format: date
+ *           nullable: true
+ *         dateConfirmed:
+ *           type: boolean
+ *         totalSeats:
+ *           type: integer
+ *           nullable: true
+ *         candidacyCount:
+ *           type: integer
+ *           description: Nombre de candidatures enregistrées
+ *
+ *     ElectionDetails:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           format: cuid
+ *         slug:
+ *           type: string
+ *         type:
+ *           type: string
+ *           enum: [PRESIDENTIELLE, LEGISLATIVES, SENATORIALES, MUNICIPALES, DEPARTEMENTALES, REGIONALES, EUROPEENNES, REFERENDUM]
+ *         title:
+ *           type: string
+ *         shortTitle:
+ *           type: string
+ *           nullable: true
+ *         description:
+ *           type: string
+ *           nullable: true
+ *         status:
+ *           type: string
+ *           enum: [UPCOMING, REGISTRATION, CANDIDACIES, CAMPAIGN, ROUND_1, BETWEEN_ROUNDS, ROUND_2, COMPLETED]
+ *         scope:
+ *           type: string
+ *           enum: [NATIONAL, REGIONAL, DEPARTMENTAL, MUNICIPAL, EUROPEAN]
+ *         suffrage:
+ *           type: string
+ *           enum: [DIRECT, INDIRECT]
+ *         totalSeats:
+ *           type: integer
+ *           nullable: true
+ *         round1Date:
+ *           type: string
+ *           format: date
+ *           nullable: true
+ *         round2Date:
+ *           type: string
+ *           format: date
+ *           nullable: true
+ *         dateConfirmed:
+ *           type: boolean
+ *         registrationDeadline:
+ *           type: string
+ *           format: date
+ *           nullable: true
+ *         candidacyDeadline:
+ *           type: string
+ *           format: date
+ *           nullable: true
+ *         campaignStartDate:
+ *           type: string
+ *           format: date
+ *           nullable: true
+ *         decreeUrl:
+ *           type: string
+ *           nullable: true
+ *         sourceUrl:
+ *           type: string
+ *           nullable: true
+ *         candidacies:
+ *           type: array
+ *           items:
+ *             type: object
+ *             properties:
+ *               id:
+ *                 type: string
+ *               candidateName:
+ *                 type: string
+ *               partyLabel:
+ *                 type: string
+ *                 nullable: true
+ *               constituencyName:
+ *                 type: string
+ *                 nullable: true
+ *               isElected:
+ *                 type: boolean
+ *               round1Votes:
+ *                 type: integer
+ *                 nullable: true
+ *               round1Pct:
+ *                 type: number
+ *                 nullable: true
+ *               round2Votes:
+ *                 type: integer
+ *                 nullable: true
+ *               round2Pct:
+ *                 type: number
+ *                 nullable: true
+ *               politician:
+ *                 type: object
+ *                 nullable: true
+ *                 properties:
+ *                   id:
+ *                     type: string
+ *                   slug:
+ *                     type: string
+ *                   fullName:
+ *                     type: string
+ *                   photoUrl:
+ *                     type: string
+ *                     nullable: true
+ *               party:
+ *                 type: object
+ *                 nullable: true
+ *                 properties:
+ *                   id:
+ *                     type: string
+ *                   slug:
+ *                     type: string
+ *                   shortName:
+ *                     type: string
+ *                   color:
+ *                     type: string
+ *                     nullable: true
+ *         rounds:
+ *           type: array
+ *           items:
+ *             type: object
+ *             properties:
+ *               round:
+ *                 type: integer
+ *               date:
+ *                 type: string
+ *                 format: date
+ *               registeredVoters:
+ *                 type: integer
+ *                 nullable: true
+ *               actualVoters:
+ *                 type: integer
+ *                 nullable: true
+ *               participationRate:
+ *                 type: number
+ *                 nullable: true
+ *               blankVotes:
+ *                 type: integer
+ *                 nullable: true
+ *               nullVotes:
+ *                 type: integer
+ *                 nullable: true
+ *
  *     Error:
  *       type: object
  *       properties:

@@ -36,6 +36,7 @@ export function PoliticianSelector({
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
+  const [activeOnly, setActiveOnly] = useState(true);
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
@@ -52,9 +53,11 @@ export function PoliticianSelector({
     const fetchResults = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch(`/api/search/politicians?q=${encodeURIComponent(query)}`, {
-          signal: controller.signal,
-        });
+        const activeParam = activeOnly ? "&active=true" : "";
+        const response = await fetch(
+          `/api/search/politicians?q=${encodeURIComponent(query)}${activeParam}`,
+          { signal: controller.signal }
+        );
         if (!response.ok) throw new Error("Search failed");
         const data = await response.json();
         // Map API response to expected format and filter out the other selected politician
@@ -97,7 +100,7 @@ export function PoliticianSelector({
       clearTimeout(timeout);
       controller.abort();
     };
-  }, [query, otherPoliticianId]);
+  }, [query, otherPoliticianId, activeOnly]);
 
   // Close on click outside
   useEffect(() => {
@@ -269,12 +272,28 @@ export function PoliticianSelector({
               </div>
             </button>
           ))}
+          {activeOnly && (
+            <button
+              onClick={() => setActiveOnly(false)}
+              className="w-full p-3 text-sm text-primary hover:bg-muted transition-colors border-t text-center"
+            >
+              Rechercher parmi tous les représentants
+            </button>
+          )}
         </div>
       )}
 
       {isOpen && query.length >= 2 && results.length === 0 && !isLoading && (
         <div className="absolute z-10 w-full mt-1 bg-background border rounded-lg shadow-lg p-4 text-center text-muted-foreground">
-          Aucun résultat pour &quot;{query}&quot;
+          <p>Aucun résultat pour &quot;{query}&quot;</p>
+          {activeOnly && (
+            <button
+              onClick={() => setActiveOnly(false)}
+              className="mt-2 text-sm text-primary hover:underline"
+            >
+              Rechercher parmi tous les représentants
+            </button>
+          )}
         </div>
       )}
     </div>

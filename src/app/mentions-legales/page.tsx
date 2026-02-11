@@ -14,27 +14,27 @@ export default function MentionsLegalesPage() {
         <section>
           <h2 className="text-xl font-semibold mb-4">Éditeur du site</h2>
           <p className="text-muted-foreground">
-            {/* TODO: Compléter avec vos informations */}
-            <strong>Nom / Raison sociale :</strong> [À compléter]
+            <strong>Nom / Raison sociale :</strong> LD Engineering
             <br />
-            <strong>Adresse :</strong> [À compléter]
+            <strong>Adresse :</strong> 200 rue de la Croix Nivert, 75015 Paris, France
             <br />
-            <strong>Email :</strong> [À compléter]
+            <strong>Email :</strong> contact@poligraph.fr
             <br />
-            <strong>Directeur de la publication :</strong> [À compléter]
+            <strong>Directeur de la publication :</strong> LD Engineering
           </p>
         </section>
 
         <section>
           <h2 className="text-xl font-semibold mb-4">Hébergement</h2>
           <p className="text-muted-foreground">
-            Ce site est hébergé par Vercel Inc.
+            LD Engineering
             <br />
-            440 N Barranca Ave #4133
+            200 rue de la Croix Nivert
             <br />
-            Covina, CA 91723
+            75015 Paris, France
             <br />
-            États-Unis
+            <br />
+            Infrastructure technique : Vercel Inc., San Francisco, États-Unis
           </p>
         </section>
 
@@ -108,7 +108,7 @@ export default function MentionsLegalesPage() {
           </p>
           <p className="text-muted-foreground mt-2">
             Pour exercer ce droit ou signaler une erreur factuelle, veuillez nous contacter à
-            l&apos;adresse : <strong>[email à compléter]</strong>
+            l&apos;adresse : <strong>contact@poligraph.fr</strong>
           </p>
           <p className="text-muted-foreground mt-2">
             Nous nous engageons à traiter toute demande dans un délai de 72 heures ouvrées.
@@ -141,12 +141,12 @@ export default function MentionsLegalesPage() {
         <section>
           <h2 className="text-xl font-semibold mb-4">Contact</h2>
           <p className="text-muted-foreground">
-            Pour toute question concernant ce site : <strong>[email à compléter]</strong>
+            Pour toute question concernant ce site : <strong>contact@poligraph.fr</strong>
           </p>
         </section>
       </div>
 
-      <p className="text-sm text-muted-foreground mt-12">Dernière mise à jour : Janvier 2025</p>
+      <p className="text-sm text-muted-foreground mt-12">Dernière mise à jour : Février 2026</p>
     </main>
   );
 }

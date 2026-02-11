@@ -50,7 +50,7 @@ async function generateSummaries(options: {
   const { force = false, limit, dryRun = false, activeOnly = true } = options;
 
   console.log("=".repeat(50));
-  console.log("Transparence Politique - AI Summary Generator");
+  console.log("Poligraph - AI Summary Generator");
   console.log("=".repeat(50));
   console.log(`Mode: ${dryRun ? "DRY RUN (no writes)" : "LIVE"}`);
   console.log(`Force regenerate: ${force ? "Yes" : "No"}`);
@@ -256,7 +256,7 @@ async function main() {
 
   if (args.includes("--help") || args.includes("-h")) {
     console.log(`
-Transparence Politique - AI Summary Generator
+Poligraph - AI Summary Generator
 
 Usage:
   npx tsx scripts/generate-summaries.ts              Generate missing summaries

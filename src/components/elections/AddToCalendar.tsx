@@ -96,28 +96,28 @@ export function AddToCalendar({
   const round2Title = r2 ? `${title} — Tour 2${tentative}` : "";
 
   const description = r2
-    ? `Tour 1 : ${r1.toLocaleDateString("fr-FR")}\nTour 2 : ${r2.toLocaleDateString("fr-FR")}\n\nhttps://transparence-politique.fr/elections/${slug}`
-    : `https://transparence-politique.fr/elections/${slug}`;
+    ? `Tour 1 : ${r1.toLocaleDateString("fr-FR")}\nTour 2 : ${r2.toLocaleDateString("fr-FR")}\n\nhttps://poligraph.fr/elections/${slug}`
+    : `https://poligraph.fr/elections/${slug}`;
 
   function handleDownloadIcs(e: React.MouseEvent) {
     e.preventDefault();
     const events: IcsEvent[] = [
       {
-        uid: `election-${slug}-round1@transparence-politique.fr`,
+        uid: `election-${slug}-round1@poligraph.fr`,
         summary: round1Title,
         description,
         start: r1,
-        url: `https://transparence-politique.fr/elections/${slug}`,
+        url: `https://poligraph.fr/elections/${slug}`,
         status: dateConfirmed ? "CONFIRMED" : "TENTATIVE",
       },
     ];
     if (r2) {
       events.push({
-        uid: `election-${slug}-round2@transparence-politique.fr`,
+        uid: `election-${slug}-round2@poligraph.fr`,
         summary: round2Title,
         description,
         start: r2,
-        url: `https://transparence-politique.fr/elections/${slug}`,
+        url: `https://poligraph.fr/elections/${slug}`,
         status: dateConfirmed ? "CONFIRMED" : "TENTATIVE",
       });
     }

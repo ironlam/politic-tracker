@@ -4,11 +4,11 @@ import { ChatInterface } from "@/components/chat/ChatInterface";
 import { MessageSquare, ShieldCheck, Database, Sparkles } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Assistant IA - Transparence Politique",
+  title: "Assistant IA - Poligraph",
   description:
     "Posez vos questions sur les représentants politiques français, les votes parlementaires et les dossiers législatifs. Réponses basées sur des sources officielles.",
   openGraph: {
-    title: "Assistant IA - Transparence Politique",
+    title: "Assistant IA - Poligraph",
     description: "Posez vos questions sur la politique française. Réponses sourcées et factuelles.",
   },
 };
@@ -22,7 +22,7 @@ export default function ChatPage() {
           <Sparkles className="w-4 h-4" />
           Bêta
         </div>
-        <h1 className="text-3xl font-bold mb-3">Assistant Transparence Politique</h1>
+        <h1 className="text-3xl font-bold mb-3">Assistant Poligraph</h1>
         <p className="text-muted-foreground max-w-2xl mx-auto">
           Posez vos questions sur les représentants politiques français, leurs mandats, les votes
           parlementaires ou les dossiers législatifs en cours.

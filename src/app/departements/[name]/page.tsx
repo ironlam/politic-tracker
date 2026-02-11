@@ -79,7 +79,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     title: departmentName,
     description: `Députés et sénateurs du département ${departmentName}. Liste complète des représentants politiques.`,
     openGraph: {
-      title: `${departmentName} | Transparence Politique`,
+      title: `${departmentName} | Poligraph`,
       description: `Découvrez les députés et sénateurs du département ${departmentName}.`,
     },
   };

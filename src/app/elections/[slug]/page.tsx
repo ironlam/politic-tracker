@@ -83,7 +83,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 
   const typeLabel = ELECTION_TYPE_LABELS[election.type];
-  const title = `${election.title} | Transparence Politique`;
+  const title = `${election.title} | Poligraph`;
   const description =
     election.description ||
     `${typeLabel} - ${ELECTION_SCOPE_LABELS[election.scope]}. Dates, candidatures et résultats.`;
@@ -110,7 +110,7 @@ export default async function ElectionDetailPage({ params }: PageProps) {
   const statusLabel = ELECTION_STATUS_LABELS[election.status];
   const statusColor = ELECTION_STATUS_COLORS[election.status];
   const showCountdown = !isPhaseAtLeast(election.status, "ROUND_1") && election.round1Date;
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://transparence-politique.fr";
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://poligraph.fr";
   const typeLabel = ELECTION_TYPE_LABELS[election.type];
 
   return (

@@ -19,7 +19,7 @@ export default function ApiDocsPage() {
         <div className="mb-6">
           <h1 className="text-3xl font-bold">Documentation API</h1>
           <p className="text-muted-foreground mt-2">
-            Explorez et testez les endpoints de l&apos;API Transparence Politique
+            Explorez et testez les endpoints de l&apos;API Poligraph
           </p>
         </div>
         <div className="bg-white rounded-lg shadow-sm overflow-hidden">

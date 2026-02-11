@@ -128,7 +128,7 @@ export default async function ScrutinPage({ params }: PageProps) {
   const againstPercent = total > 0 ? (scrutin.votesAgainst / total) * 100 : 0;
   const abstainPercent = total > 0 ? (scrutin.votesAbstain / total) * 100 : 0;
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://transparence-politique.fr";
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://poligraph.fr";
 
   return (
     <>

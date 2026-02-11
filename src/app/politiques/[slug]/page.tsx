@@ -185,7 +185,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     title: politician.fullName,
     description,
     openGraph: {
-      title: `${politician.fullName} | Transparence Politique`,
+      title: `${politician.fullName} | Poligraph`,
       description,
       type: "profile",
       images: politician.photoUrl
@@ -218,7 +218,7 @@ export default async function PoliticianPage({ params }: PageProps) {
 
   const hasMandates = politician.mandates.length > 0;
   const currentMandate = politician.mandates.find((m) => m.isCurrent);
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://transparence-politique.fr";
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://poligraph.fr";
 
   // Get vote stats (only for deputies - they have votes tracked)
   const isDepute = currentMandate?.type === "DEPUTE";

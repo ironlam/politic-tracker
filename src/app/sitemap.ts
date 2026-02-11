@@ -1,7 +1,7 @@
 import { MetadataRoute } from "next";
 import { db } from "@/lib/db";
 
-const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://transparence-politique.fr";
+const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://poligraph.fr";
 
 // French departments
 const DEPARTMENTS = [

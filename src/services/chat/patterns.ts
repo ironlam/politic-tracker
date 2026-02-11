@@ -187,7 +187,7 @@ const PATTERNS: QueryPattern[] = [
       // Generic HATVP question
       return (
         `Les déclarations de patrimoine et d'intérêts des élus sont publiées par la Haute Autorité pour la Transparence de la Vie Publique (HATVP).\n\n` +
-        `Sur Transparence Politique, vous pouvez consulter ces déclarations sur la fiche de chaque élu qui en dispose.\n\n` +
+        `Sur Poligraph, vous pouvez consulter ces déclarations sur la fiche de chaque élu qui en dispose.\n\n` +
         `→ Chercher un élu : /politiques`
       );
     },
@@ -597,7 +597,7 @@ async function fetchPoliticianAffairs(searchName: string): Promise<string | null
 
   if (politician.affairs.length === 0) {
     return (
-      `**${politician.fullName}** n'a aucune affaire judiciaire référencée sur Transparence Politique.\n\n` +
+      `**${politician.fullName}** n'a aucune affaire judiciaire référencée sur Poligraph.\n\n` +
       `Si vous disposez d'informations sourcées, vous pouvez nous le signaler via /mentions-legales.\n\n` +
       `→ Fiche : /politiques/${politician.slug}`
     );

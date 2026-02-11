@@ -70,7 +70,7 @@ export function buildIcsCalendar(events: IcsEvent[], calendarName: string): stri
   const header = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//Transparence Politique//Elections//FR",
+    "PRODID:-//Poligraph//Elections//FR",
     `X-WR-CALNAME:${escapeIcsText(calendarName)}`,
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",

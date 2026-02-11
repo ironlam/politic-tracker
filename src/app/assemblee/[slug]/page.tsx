@@ -115,7 +115,7 @@ export default async function DossierDetailPage({ params }: PageProps) {
     });
   };
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://transparence-politique.fr";
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://poligraph.fr";
 
   return (
     <>

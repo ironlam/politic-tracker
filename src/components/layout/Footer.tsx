@@ -12,8 +12,8 @@ export function Footer() {
           <div className="col-span-2 md:col-span-1">
             <h3 className="font-semibold text-sm mb-3">À propos</h3>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Observatoire citoyen des représentants politiques français. Un projet indépendant et
-              transparent.
+              Observatoire citoyen des représentants politiques français. Données publiques, regard
+              indépendant.
             </p>
           </div>
 

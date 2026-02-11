@@ -4,7 +4,7 @@ const options: swaggerJsdoc.Options = {
   definition: {
     openapi: "3.0.0",
     info: {
-      title: "Transparence Politique API",
+      title: "Poligraph API",
       version: "1.1.0",
       description: `
 API publique pour accéder aux données des représentants politiques français.
@@ -37,7 +37,7 @@ Les endpoints de liste supportent la pagination :
 Merci de faire un usage raisonnable de l'API.
       `.trim(),
       contact: {
-        name: "Transparence Politique",
+        name: "Poligraph",
         url: "https://politic-tracker.vercel.app",
       },
       license: {

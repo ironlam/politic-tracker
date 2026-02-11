@@ -1,6 +1,6 @@
-# Transparence Politique
+# Poligraph
 
-Observatoire citoyen des représentants politiques français.
+Observatoire citoyen des représentants politiques français. Données publiques, regard indépendant.
 
 **Site** : [https://politic-tracker.vercel.app](https://politic-tracker.vercel.app)
 

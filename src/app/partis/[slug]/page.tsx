@@ -89,7 +89,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     title: `${party.name} (${party.shortName})`,
     description,
     openGraph: {
-      title: `${party.name} | Transparence Politique`,
+      title: `${party.name} | Poligraph`,
       description,
       type: "profile",
       images: party.logoUrl
@@ -172,7 +172,7 @@ export default async function PartyPage({ params }: PageProps) {
       [] as typeof party.partyMemberships
     );
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://transparence-politique.fr";
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://poligraph.fr";
   const sameAsUrls = party.externalIds
     .map((e) => e.url)
     .filter((url): url is string => url != null);

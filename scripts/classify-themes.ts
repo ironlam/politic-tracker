@@ -303,7 +303,7 @@ async function main() {
 
   if (args.includes("--help") || args.includes("-h")) {
     console.log(`
-Transparence Politique - Theme Classifier
+Poligraph - Theme Classifier
 
 Usage:
   npx tsx scripts/classify-themes.ts                     Classify all missing themes
@@ -356,7 +356,7 @@ Features:
   const startTime = Date.now();
 
   console.log("=".repeat(50));
-  console.log("Transparence Politique - Theme Classifier");
+  console.log("Poligraph - Theme Classifier");
   console.log("=".repeat(50));
   console.log(`Mode: ${dryRun ? "DRY RUN (no writes)" : "LIVE"}`);
   console.log(`Target: ${target}`);

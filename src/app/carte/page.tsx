@@ -4,11 +4,11 @@ import { db } from "@/lib/db";
 import { MandateType } from "@/generated/prisma";
 
 export const metadata: Metadata = {
-  title: "Carte des Élus | Transparence Politique",
+  title: "Carte des Élus | Poligraph",
   description:
     "Carte interactive des députés et sénateurs par département. Visualisez la répartition politique de vos représentants en France métropolitaine et outre-mer.",
   openGraph: {
-    title: "Carte des Élus | Transparence Politique",
+    title: "Carte des Élus | Poligraph",
     description:
       "Carte interactive des députés et sénateurs par département. Visualisez la répartition politique de vos représentants.",
     type: "website",

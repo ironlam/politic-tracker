@@ -170,8 +170,8 @@ export default function SourcesPage() {
         </CardHeader>
         <CardContent className="prose prose-sm max-w-none">
           <p className="text-base leading-relaxed">
-            <strong>Transparence Politique</strong> est un projet citoyen indépendant qui rassemble
-            les informations publiques sur les responsables politiques français : parcours, mandats,
+            <strong>Poligraph</strong> est un projet citoyen indépendant qui rassemble les
+            informations publiques sur les responsables politiques français : parcours, mandats,
             votes, déclarations et affaires judiciaires.
           </p>
           <p className="text-base leading-relaxed mt-4">

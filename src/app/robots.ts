@@ -1,7 +1,11 @@
 import { MetadataRoute } from "next";
 
 const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://transparence-politique.fr";
-const isProduction = baseUrl.includes("transparence-politique.fr") && !baseUrl.includes("staging");
+const isProduction =
+  process.env.VERCEL_ENV === "production" ||
+  (!process.env.VERCEL_ENV &&
+    baseUrl.includes("transparence-politique.fr") &&
+    !baseUrl.includes("staging"));
 
 export default function robots(): MetadataRoute.Robots {
   return {

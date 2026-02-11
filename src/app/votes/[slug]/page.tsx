@@ -8,6 +8,7 @@ import { VotingResultBadge, VotePositionBadge } from "@/components/votes";
 import { PoliticianAvatar } from "@/components/politicians/PoliticianAvatar";
 import { formatDate } from "@/lib/utils";
 import { ExternalLink, Calendar, Users, Sparkles } from "lucide-react";
+import { BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 import type { VotePosition } from "@/types";
 
 interface PageProps {
@@ -127,205 +128,216 @@ export default async function ScrutinPage({ params }: PageProps) {
   const againstPercent = total > 0 ? (scrutin.votesAgainst / total) * 100 : 0;
   const abstainPercent = total > 0 ? (scrutin.votesAbstain / total) * 100 : 0;
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://transparence-politique.fr";
+
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Breadcrumb */}
-      <nav className="text-sm text-muted-foreground mb-6">
-        <Link href="/votes" className="hover:text-foreground">
-          Votes
-        </Link>
-        <span className="mx-2">/</span>
-        <span className="truncate">Scrutin n°{scrutin.externalId}</span>
-      </nav>
+    <>
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Accueil", url: siteUrl },
+          { name: "Votes", url: `${siteUrl}/votes` },
+          { name: scrutin.title, url: `${siteUrl}/votes/${scrutin.slug || scrutin.externalId}` },
+        ]}
+      />
+      <div className="container mx-auto px-4 py-8">
+        {/* Breadcrumb */}
+        <nav className="text-sm text-muted-foreground mb-6">
+          <Link href="/votes" className="hover:text-foreground">
+            Votes
+          </Link>
+          <span className="mx-2">/</span>
+          <span className="truncate">Scrutin n°{scrutin.externalId}</span>
+        </nav>
 
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-start justify-between gap-4 mb-4">
-          <h1 className="text-2xl font-bold">{scrutin.title}</h1>
-          <VotingResultBadge result={scrutin.result} />
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex items-start justify-between gap-4 mb-4">
+            <h1 className="text-2xl font-bold">{scrutin.title}</h1>
+            <VotingResultBadge result={scrutin.result} />
+          </div>
+
+          <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+            <span className="flex items-center gap-1">
+              <Calendar className="h-4 w-4" />
+              {formatDate(scrutin.votingDate)}
+            </span>
+            <span className="flex items-center gap-1">
+              <Users className="h-4 w-4" />
+              {total} votants
+            </span>
+            <Badge variant="outline">{scrutin.legislature}e législature</Badge>
+            {scrutin.sourceUrl && (
+              <a
+                href={scrutin.sourceUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 text-primary hover:underline"
+              >
+                <ExternalLink className="h-4 w-4" />
+                {scrutin.sourceUrl.includes("assemblee-nationale.fr")
+                  ? "Voir sur Assemblée nationale"
+                  : scrutin.sourceUrl.includes("nosdeputes.fr")
+                    ? "Voir sur NosDéputés.fr"
+                    : "Voir la source"}
+              </a>
+            )}
+          </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-          <span className="flex items-center gap-1">
-            <Calendar className="h-4 w-4" />
-            {formatDate(scrutin.votingDate)}
-          </span>
-          <span className="flex items-center gap-1">
-            <Users className="h-4 w-4" />
-            {total} votants
-          </span>
-          <Badge variant="outline">{scrutin.legislature}e législature</Badge>
-          {scrutin.sourceUrl && (
-            <a
-              href={scrutin.sourceUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1 text-primary hover:underline"
-            >
-              <ExternalLink className="h-4 w-4" />
-              {scrutin.sourceUrl.includes("assemblee-nationale.fr")
-                ? "Voir sur Assemblée nationale"
-                : scrutin.sourceUrl.includes("nosdeputes.fr")
-                  ? "Voir sur NosDéputés.fr"
-                  : "Voir la source"}
-            </a>
-          )}
-        </div>
-      </div>
+        {/* AI Summary */}
+        {scrutin.summary && (
+          <Card className="mb-8 border-blue-200 bg-blue-50/50 dark:bg-blue-950/20 dark:border-blue-900">
+            <CardHeader className="pb-2">
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg font-semibold">En bref</h2>
+                <Badge variant="outline" className="gap-1 text-xs">
+                  <Sparkles className="h-3 w-3" />
+                  Résumé IA
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="prose prose-sm dark:prose-invert max-w-none">
+                {scrutin.summary.split("\n").map((line, i) => {
+                  if (line.startsWith("**") && line.endsWith("**")) {
+                    return (
+                      <p key={i} className="font-semibold mt-3 mb-1">
+                        {line.replace(/\*\*/g, "")}
+                      </p>
+                    );
+                  }
+                  if (line.startsWith("\u2022 ")) {
+                    return (
+                      <p key={i} className="ml-4 text-muted-foreground">
+                        {line}
+                      </p>
+                    );
+                  }
+                  if (line.trim() === "") return null;
+                  return <p key={i}>{line}</p>;
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
-      {/* AI Summary */}
-      {scrutin.summary && (
-        <Card className="mb-8 border-blue-200 bg-blue-50/50 dark:bg-blue-950/20 dark:border-blue-900">
-          <CardHeader className="pb-2">
-            <div className="flex items-center gap-2">
-              <h2 className="text-lg font-semibold">En bref</h2>
-              <Badge variant="outline" className="gap-1 text-xs">
-                <Sparkles className="h-3 w-3" />
-                Résumé IA
-              </Badge>
-            </div>
+        {/* Results summary */}
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>Résultat du vote</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="prose prose-sm dark:prose-invert max-w-none">
-              {scrutin.summary.split("\n").map((line, i) => {
-                if (line.startsWith("**") && line.endsWith("**")) {
-                  return (
-                    <p key={i} className="font-semibold mt-3 mb-1">
-                      {line.replace(/\*\*/g, "")}
-                    </p>
-                  );
-                }
-                if (line.startsWith("\u2022 ")) {
-                  return (
-                    <p key={i} className="ml-4 text-muted-foreground">
-                      {line}
-                    </p>
-                  );
-                }
-                if (line.trim() === "") return null;
-                return <p key={i}>{line}</p>;
-              })}
+            <div className="space-y-4">
+              {/* Vote bar */}
+              <div className="flex h-8 rounded-lg overflow-hidden">
+                <div
+                  className="bg-green-500 flex items-center justify-center text-white text-sm font-medium"
+                  style={{ width: `${forPercent}%` }}
+                >
+                  {scrutin.votesFor > 0 && scrutin.votesFor}
+                </div>
+                <div
+                  className="bg-red-500 flex items-center justify-center text-white text-sm font-medium"
+                  style={{ width: `${againstPercent}%` }}
+                >
+                  {scrutin.votesAgainst > 0 && scrutin.votesAgainst}
+                </div>
+                <div
+                  className="bg-yellow-500 flex items-center justify-center text-white text-sm font-medium"
+                  style={{ width: `${abstainPercent}%` }}
+                >
+                  {scrutin.votesAbstain > 0 && scrutin.votesAbstain}
+                </div>
+              </div>
+
+              {/* Legend */}
+              <div className="flex flex-wrap justify-center gap-6 text-sm">
+                <div className="flex items-center gap-2">
+                  <span className="w-3 h-3 rounded-full bg-green-500" />
+                  <span>
+                    Pour: {scrutin.votesFor} ({forPercent.toFixed(1)}%)
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-3 h-3 rounded-full bg-red-500" />
+                  <span>
+                    Contre: {scrutin.votesAgainst} ({againstPercent.toFixed(1)}%)
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-3 h-3 rounded-full bg-yellow-500" />
+                  <span>
+                    Abstention: {scrutin.votesAbstain} ({abstainPercent.toFixed(1)}%)
+                  </span>
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>
-      )}
 
-      {/* Results summary */}
-      <Card className="mb-8">
-        <CardHeader>
-          <CardTitle>Résultat du vote</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {/* Vote bar */}
-            <div className="flex h-8 rounded-lg overflow-hidden">
-              <div
-                className="bg-green-500 flex items-center justify-center text-white text-sm font-medium"
-                style={{ width: `${forPercent}%` }}
-              >
-                {scrutin.votesFor > 0 && scrutin.votesFor}
-              </div>
-              <div
-                className="bg-red-500 flex items-center justify-center text-white text-sm font-medium"
-                style={{ width: `${againstPercent}%` }}
-              >
-                {scrutin.votesAgainst > 0 && scrutin.votesAgainst}
-              </div>
-              <div
-                className="bg-yellow-500 flex items-center justify-center text-white text-sm font-medium"
-                style={{ width: `${abstainPercent}%` }}
-              >
-                {scrutin.votesAbstain > 0 && scrutin.votesAbstain}
-              </div>
-            </div>
-
-            {/* Legend */}
-            <div className="flex flex-wrap justify-center gap-6 text-sm">
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full bg-green-500" />
-                <span>
-                  Pour: {scrutin.votesFor} ({forPercent.toFixed(1)}%)
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full bg-red-500" />
-                <span>
-                  Contre: {scrutin.votesAgainst} ({againstPercent.toFixed(1)}%)
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full bg-yellow-500" />
-                <span>
-                  Abstention: {scrutin.votesAbstain} ({abstainPercent.toFixed(1)}%)
-                </span>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Votes by position */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-6">
-        {(["POUR", "CONTRE", "ABSTENTION", "NON_VOTANT", "ABSENT"] as VotePosition[]).map(
-          (position) => {
-            const votes = votesByPosition[position] || [];
-            return (
-              <Card key={position}>
-                <CardHeader className="pb-2">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-base">
-                      <VotePositionBadge position={position} />
-                    </CardTitle>
-                    <span className="text-sm text-muted-foreground">{votes.length}</span>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  {votes.length > 0 ? (
-                    <div className="space-y-2 max-h-[400px] overflow-y-auto">
-                      {votes.map((vote) => (
-                        <Link
-                          key={vote.id}
-                          href={`/politiques/${vote.politician.slug}`}
-                          className="flex items-center gap-2 p-2 rounded-lg hover:bg-muted transition-colors"
-                        >
-                          <PoliticianAvatar
-                            photoUrl={vote.politician.photoUrl}
-                            firstName={vote.politician.firstName}
-                            lastName={vote.politician.lastName}
-                            size="sm"
-                          />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium truncate">
-                              {vote.politician.fullName}
-                            </p>
-                            {vote.politician.currentParty && (
-                              <p
-                                className="text-xs text-muted-foreground truncate"
-                                title={vote.politician.currentParty.name}
-                              >
-                                {vote.politician.currentParty.shortName}
-                              </p>
-                            )}
-                          </div>
-                        </Link>
-                      ))}
+        {/* Votes by position */}
+        <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-6">
+          {(["POUR", "CONTRE", "ABSTENTION", "NON_VOTANT", "ABSENT"] as VotePosition[]).map(
+            (position) => {
+              const votes = votesByPosition[position] || [];
+              return (
+                <Card key={position}>
+                  <CardHeader className="pb-2">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-base">
+                        <VotePositionBadge position={position} />
+                      </CardTitle>
+                      <span className="text-sm text-muted-foreground">{votes.length}</span>
                     </div>
-                  ) : (
-                    <p className="text-sm text-muted-foreground text-center py-4">Aucun député</p>
-                  )}
-                </CardContent>
-              </Card>
-            );
-          }
-        )}
-      </div>
+                  </CardHeader>
+                  <CardContent>
+                    {votes.length > 0 ? (
+                      <div className="space-y-2 max-h-[400px] overflow-y-auto">
+                        {votes.map((vote) => (
+                          <Link
+                            key={vote.id}
+                            href={`/politiques/${vote.politician.slug}`}
+                            className="flex items-center gap-2 p-2 rounded-lg hover:bg-muted transition-colors"
+                          >
+                            <PoliticianAvatar
+                              photoUrl={vote.politician.photoUrl}
+                              firstName={vote.politician.firstName}
+                              lastName={vote.politician.lastName}
+                              size="sm"
+                            />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium truncate">
+                                {vote.politician.fullName}
+                              </p>
+                              {vote.politician.currentParty && (
+                                <p
+                                  className="text-xs text-muted-foreground truncate"
+                                  title={vote.politician.currentParty.name}
+                                >
+                                  {vote.politician.currentParty.shortName}
+                                </p>
+                              )}
+                            </div>
+                          </Link>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground text-center py-4">Aucun député</p>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            }
+          )}
+        </div>
 
-      {/* Back link */}
-      <div className="mt-8 text-center">
-        <Link href="/votes" className="text-primary hover:underline">
-          ← Retour aux scrutins
-        </Link>
+        {/* Back link */}
+        <div className="mt-8 text-center">
+          <Link href="/votes" className="text-primary hover:underline">
+            ← Retour aux scrutins
+          </Link>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

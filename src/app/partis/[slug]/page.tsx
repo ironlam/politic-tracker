@@ -173,7 +173,9 @@ export default async function PartyPage({ params }: PageProps) {
     );
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://transparence-politique.fr";
-  const wikidataId = party.externalIds.find((e) => e.source === "WIKIDATA")?.externalId;
+  const sameAsUrls = party.externalIds
+    .map((e) => e.url)
+    .filter((url): url is string => url != null);
 
   return (
     <>
@@ -186,7 +188,7 @@ export default async function PartyPage({ params }: PageProps) {
         url={`${siteUrl}/partis/${party.slug}`}
         foundingDate={party.foundedDate?.toISOString().split("T")[0]}
         dissolutionDate={party.dissolvedDate?.toISOString().split("T")[0]}
-        sameAs={wikidataId ? [`https://www.wikidata.org/wiki/${wikidataId}`] : undefined}
+        sameAs={sameAsUrls.length > 0 ? sameAsUrls : undefined}
       />
       <BreadcrumbJsonLd
         items={[

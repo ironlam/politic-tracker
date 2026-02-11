@@ -135,6 +135,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     orderBy: { filingDate: "desc" },
   });
 
+  // Get all elections
+  const elections = await db.election.findMany({
+    select: { slug: true, updatedAt: true },
+    orderBy: { round1Date: "desc" },
+  });
+
+  // Get all affairs with slugs
+  const affairs = await db.affair.findMany({
+    select: { slug: true, updatedAt: true },
+    orderBy: { updatedAt: "desc" },
+  });
+
   // Static pages
   const staticPages: MetadataRoute.Sitemap = [
     {
@@ -198,6 +210,60 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.5,
     },
     {
+      url: `${baseUrl}/elections`,
+      lastModified: new Date(),
+      changeFrequency: "weekly",
+      priority: 0.7,
+    },
+    {
+      url: `${baseUrl}/factchecks`,
+      lastModified: new Date(),
+      changeFrequency: "daily",
+      priority: 0.7,
+    },
+    {
+      url: `${baseUrl}/presse`,
+      lastModified: new Date(),
+      changeFrequency: "daily",
+      priority: 0.6,
+    },
+    {
+      url: `${baseUrl}/carte`,
+      lastModified: new Date(),
+      changeFrequency: "weekly",
+      priority: 0.6,
+    },
+    {
+      url: `${baseUrl}/comparer`,
+      lastModified: new Date(),
+      changeFrequency: "monthly",
+      priority: 0.5,
+    },
+    {
+      url: `${baseUrl}/institutions`,
+      lastModified: new Date(),
+      changeFrequency: "monthly",
+      priority: 0.5,
+    },
+    {
+      url: `${baseUrl}/institutions/assemblee-nationale`,
+      lastModified: new Date(),
+      changeFrequency: "monthly",
+      priority: 0.5,
+    },
+    {
+      url: `${baseUrl}/soutenir`,
+      lastModified: new Date(),
+      changeFrequency: "monthly",
+      priority: 0.3,
+    },
+    {
+      url: `${baseUrl}/chat`,
+      lastModified: new Date(),
+      changeFrequency: "monthly",
+      priority: 0.4,
+    },
+    {
       url: `${baseUrl}/mentions-legales`,
       lastModified: new Date(),
       changeFrequency: "yearly",
@@ -251,6 +317,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.6,
     }));
 
+  // Election pages
+  const electionPages: MetadataRoute.Sitemap = elections.map((e) => ({
+    url: `${baseUrl}/elections/${e.slug}`,
+    lastModified: e.updatedAt,
+    changeFrequency: "weekly" as const,
+    priority: 0.6,
+  }));
+
+  // Affair pages
+  const affairPages: MetadataRoute.Sitemap = affairs.map((a) => ({
+    url: `${baseUrl}/affaires/${a.slug}`,
+    lastModified: a.updatedAt,
+    changeFrequency: "monthly" as const,
+    priority: 0.5,
+  }));
+
   return [
     ...staticPages,
     ...politicianPages,
@@ -258,5 +340,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...departmentPages,
     ...scrutinPages,
     ...dossierPages,
+    ...electionPages,
+    ...affairPages,
   ];
 }

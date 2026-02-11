@@ -1,0 +1,20 @@
+name: MCP Contract Check
+
+# Trigger when API routes change
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/app/api/**"
+
+jobs:
+  notify-mcp:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger MCP contract tests
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.MCP_DISPATCH_TOKEN }}
+          repository: ironlam/transparence-politique-mcp
+          event-type: api-contract-check
+          client-payload: '{"ref": "${{ github.sha }}", "message": "${{ github.event.head_commit.message }}"}'

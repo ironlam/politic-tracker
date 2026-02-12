@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { isAuthenticated } from "@/lib/auth";
 import { PoliticalPosition } from "@/generated/prisma";
 
 interface RouteParams {
@@ -8,6 +9,10 @@ interface RouteParams {
 
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
+    if (!(await isAuthenticated())) {
+      return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+    }
+
     const { id } = await params;
 
     const party = await db.party.findUnique({
@@ -32,6 +37,10 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
 export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
+    if (!(await isAuthenticated())) {
+      return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+    }
+
     const { id } = await params;
     const body = await request.json();
 
@@ -118,6 +127,15 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       },
     });
 
+    await db.auditLog.create({
+      data: {
+        action: "UPDATE",
+        entityType: "Party",
+        entityId: id,
+        changes: { name: updatedParty.name, shortName: updatedParty.shortName },
+      },
+    });
+
     return NextResponse.json(updatedParty);
   } catch (error) {
     console.error("Error updating party:", error);
@@ -127,6 +145,10 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
+    if (!(await isAuthenticated())) {
+      return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+    }
+
     const { id } = await params;
 
     // Check if party has any references
@@ -187,6 +209,15 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     // Delete associated external IDs first, then the party
     await db.externalId.deleteMany({ where: { partyId: id } });
     await db.party.delete({ where: { id } });
+
+    await db.auditLog.create({
+      data: {
+        action: "DELETE",
+        entityType: "Party",
+        entityId: id,
+        changes: { name: party.name, shortName: party.shortName },
+      },
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {

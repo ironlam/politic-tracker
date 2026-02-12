@@ -32,7 +32,18 @@ export function proxy(request: NextRequest) {
     }
   }
 
-  // Protect admin routes - check session cookie
+  // Protect admin API routes (except auth endpoint)
+  if (
+    request.nextUrl.pathname.startsWith("/api/admin") &&
+    !request.nextUrl.pathname.startsWith("/api/admin/auth")
+  ) {
+    const session = request.cookies.get("admin_session");
+    if (!session?.value) {
+      return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+    }
+  }
+
+  // Protect admin pages - check session cookie
   if (
     request.nextUrl.pathname.startsWith("/admin") &&
     !request.nextUrl.pathname.startsWith("/admin/login")

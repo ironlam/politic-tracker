@@ -200,6 +200,7 @@ model Mandate {
   @@index([politicianId])
   @@index([type])
   @@index([isCurrent])
+  @@index([isCurrent, type])
   @@index([europeanGroupId])
   @@index([departmentCode])
 }
@@ -305,6 +306,7 @@ model Affair {
   updatedAt    DateTime       @updatedAt
 
   @@index([politicianId])
+  @@index([politicianId, status])
   @@index([status])
   @@index([category])
 }
@@ -556,7 +558,6 @@ model Vote {
 
   @@unique([scrutinId, politicianId])
   @@index([politicianId])
-  @@index([scrutinId])
   @@index([politicianId, position])
 }
 

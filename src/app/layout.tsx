@@ -6,6 +6,7 @@ import { Footer } from "@/components/layout/Footer";
 import { WebSiteJsonLd } from "@/components/seo/JsonLd";
 import { ChatWidget } from "@/components/chat/ChatWidget";
 import { GlobalSearchProvider, GlobalSearchDialog } from "@/components/search";
+import { UmamiAnalytics } from "@/components/analytics/UmamiAnalytics";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -87,6 +88,7 @@ export default function RootLayout({
           description="Observatoire citoyen de la vie politique. Mandats, votes, patrimoine, affaires judiciaires et fact-checking."
           url={siteUrl}
         />
+        <UmamiAnalytics />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}

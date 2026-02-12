@@ -118,9 +118,26 @@ export default function MentionsLegalesPage() {
         <section>
           <h2 className="text-xl font-semibold mb-4">Politique de confidentialité</h2>
           <p className="text-muted-foreground">
-            Ce site ne collecte aucune donnée personnelle des visiteurs. Aucun cookie de tracking
-            n&apos;est utilisé. Aucune donnée n&apos;est transmise à des tiers.
+            Ce site utilise{" "}
+            <a
+              href="https://umami.is"
+              className="underline"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Umami
+            </a>
+            , un outil de mesure d&apos;audience open source et respectueux de la vie privée.
           </p>
+          <ul className="list-disc list-inside text-muted-foreground space-y-1 mt-2">
+            <li>Aucun cookie n&apos;est déposé sur votre navigateur</li>
+            <li>
+              Aucune donnée personnelle n&apos;est collectée (pas d&apos;adresse IP, pas de
+              fingerprinting)
+            </li>
+            <li>Les données de fréquentation sont hébergées sur notre propre infrastructure</li>
+            <li>Aucune donnée n&apos;est transmise à des tiers</li>
+          </ul>
           <p className="text-muted-foreground mt-2">
             Les seules données traitées sont des informations publiques concernant des personnalités
             politiques dans le cadre de leur mandat.

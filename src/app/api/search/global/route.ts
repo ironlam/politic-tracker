@@ -1,0 +1,124 @@
+import { NextRequest, NextResponse } from "next/server";
+import { db } from "@/lib/db";
+
+export async function GET(request: NextRequest) {
+  const query = request.nextUrl.searchParams.get("q") || "";
+
+  if (query.length < 2) {
+    return NextResponse.json({
+      politicians: [],
+      parties: [],
+      scrutins: [],
+      dossiers: [],
+    });
+  }
+
+  const [politicians, parties, scrutins, dossiers] = await Promise.all([
+    // Politicians: ILIKE on fullName/lastName/firstName
+    db.politician.findMany({
+      where: {
+        OR: [
+          { fullName: { contains: query, mode: "insensitive" } },
+          { lastName: { contains: query, mode: "insensitive" } },
+          { firstName: { contains: query, mode: "insensitive" } },
+        ],
+      },
+      select: {
+        slug: true,
+        fullName: true,
+        photoUrl: true,
+        currentParty: {
+          select: { shortName: true, color: true },
+        },
+        mandates: {
+          where: { isCurrent: true },
+          select: { type: true },
+          take: 1,
+        },
+      },
+      orderBy: { lastName: "asc" },
+      take: 3,
+    }),
+
+    // Parties: ILIKE on name/shortName
+    db.party.findMany({
+      where: {
+        OR: [
+          { name: { contains: query, mode: "insensitive" } },
+          { shortName: { contains: query, mode: "insensitive" } },
+        ],
+      },
+      select: {
+        slug: true,
+        name: true,
+        shortName: true,
+        color: true,
+        _count: { select: { politicians: true } },
+      },
+      orderBy: { name: "asc" },
+      take: 3,
+    }),
+
+    // Scrutins: ILIKE on title
+    db.scrutin.findMany({
+      where: {
+        title: { contains: query, mode: "insensitive" },
+      },
+      select: {
+        id: true,
+        slug: true,
+        title: true,
+        votingDate: true,
+        chamber: true,
+      },
+      orderBy: { votingDate: "desc" },
+      take: 3,
+    }),
+
+    // Dossiers: ILIKE on title
+    db.legislativeDossier.findMany({
+      where: {
+        title: { contains: query, mode: "insensitive" },
+      },
+      select: {
+        id: true,
+        slug: true,
+        title: true,
+        status: true,
+      },
+      orderBy: { filingDate: "desc" },
+      take: 3,
+    }),
+  ]);
+
+  return NextResponse.json({
+    politicians: politicians.map((p) => ({
+      slug: p.slug,
+      fullName: p.fullName,
+      photoUrl: p.photoUrl,
+      party: p.currentParty?.shortName || null,
+      partyColor: p.currentParty?.color || null,
+      mandate: p.mandates[0]?.type || null,
+    })),
+    parties: parties.map((p) => ({
+      slug: p.slug,
+      name: p.name,
+      shortName: p.shortName,
+      color: p.color,
+      memberCount: p._count.politicians,
+    })),
+    scrutins: scrutins.map((s) => ({
+      slug: s.slug,
+      id: s.id,
+      title: s.title,
+      votingDate: s.votingDate.toISOString(),
+      chamber: s.chamber,
+    })),
+    dossiers: dossiers.map((d) => ({
+      slug: d.slug,
+      id: d.id,
+      title: d.title,
+      status: d.status,
+    })),
+  });
+}

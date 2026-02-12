@@ -24,7 +24,7 @@ import { WikidataService } from "../src/lib/api";
 import { parseDate } from "../src/lib/parsing";
 import { db } from "../src/lib/db";
 import { MandateType, DataSource, PartyRole } from "../src/generated/prisma";
-import { setPartyRole } from "../src/services/politician";
+import { setCurrentParty, setPartyRole } from "../src/services/politician";
 
 // Mapping from Wikidata position IDs to our MandateType
 const POSITION_MAPPING: Record<string, { type: MandateType; institution: string }> = {
@@ -412,6 +412,7 @@ Features:
         const chairpersonIds: string[] = [];
         const chairpersonData: Array<{
           partyName: string;
+          partyId: string;
           partyWikidataId: string;
           chairpersonWikidataId: string;
           startDate: Date | null;
@@ -449,6 +450,7 @@ Features:
             chairpersonIds.push(val.id as string);
             chairpersonData.push({
               partyName: ext.party.name,
+              partyId: ext.party.id,
               partyWikidataId: ext.externalId,
               chairpersonWikidataId: val.id as string,
               startDate,
@@ -528,6 +530,10 @@ Features:
                     officialUrl: data.partyWebsite || null,
                     externalId: externalMandateId,
                   },
+                });
+                // Also set current party affiliation (idempotent)
+                await setCurrentParty(politicianExt.politicianId, data.partyId, {
+                  startDate: data.startDate ?? new Date(),
                 });
                 stats.mandatesCreated++;
                 stats.partyPresidentsCreated++;

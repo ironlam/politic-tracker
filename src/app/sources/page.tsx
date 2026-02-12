@@ -292,6 +292,99 @@ export default function SourcesPage() {
         </div>
       </section>
 
+      {/* Couverture et limites */}
+      <section id="couverture" className="mb-12 scroll-mt-20">
+        <h2 className="text-2xl font-bold mb-6">Couverture et Limites</h2>
+        <div className="grid gap-4">
+          <Card className="border-blue-200 dark:border-blue-900">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">Ce que nous couvrons</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="text-sm text-muted-foreground space-y-1.5 list-disc list-inside">
+                <li>
+                  <strong>577 députés</strong> de l&apos;Assemblée nationale (16e et 17e
+                  législatures)
+                </li>
+                <li>
+                  <strong>348 sénateurs</strong> du Sénat
+                </li>
+                <li>
+                  <strong>81 eurodéputés</strong> français au Parlement européen
+                </li>
+                <li>
+                  <strong>Gouvernements de la Ve République</strong> : ministres, secrétaires
+                  d&apos;État, historique complet
+                </li>
+                <li>
+                  <strong>Présidents de parti</strong> : dirigeants actuels des formations
+                  politiques
+                </li>
+                <li>
+                  <strong>Affaires judiciaires</strong> documentées avec sources vérifiables
+                </li>
+                <li>
+                  <strong>Déclarations HATVP</strong> : patrimoine et intérêts des élus
+                </li>
+                <li>
+                  <strong>Votes parlementaires</strong> : scrutins publics de l&apos;AN et du Sénat
+                </li>
+              </ul>
+            </CardContent>
+          </Card>
+
+          <Card className="border-amber-200 dark:border-amber-900">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">Limites connues</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="text-sm text-muted-foreground space-y-1.5 list-disc list-inside">
+                <li>
+                  <strong>Élus locaux partiellement couverts</strong> : seuls les maires, présidents
+                  de région et de département ayant un mandat national sont systématiquement
+                  référencés
+                </li>
+                <li>
+                  <strong>Figures politiques sans mandat actuel</strong> : certaines personnalités
+                  (candidats, anciens élus) peuvent ne pas apparaître si elles n&apos;ont pas de
+                  mandat enregistré dans nos sources
+                </li>
+                <li>
+                  <strong>Candidats non élus</strong> : les candidats aux élections qui n&apos;ont
+                  jamais été élus ne sont généralement pas référencés
+                </li>
+                <li>
+                  <strong>Délai de mise à jour</strong> : les données sont synchronisées
+                  quotidiennement, un décalage de quelques heures est possible
+                </li>
+              </ul>
+            </CardContent>
+          </Card>
+
+          <Card className="border-green-200 dark:border-green-900">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">Enrichissement progressif</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground mb-2">
+                Notre base de données est enrichie en croisant <strong>9 sources</strong>{" "}
+                différentes (Assemblée nationale, Sénat, Gouvernement, Parlement européen, HATVP,
+                Wikidata, NosDéputés, presse, fact-checks). Chaque source apporte des informations
+                complémentaires.
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Ce projet est <strong>open source</strong> et contributif. Si vous constatez une
+                absence ou une erreur, n&apos;hésitez pas à{" "}
+                <Link href="/mentions-legales" className="text-blue-600 hover:underline">
+                  nous contacter
+                </Link>
+                .
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+
       {/* Legal Notice */}
       <section className="mb-12">
         <h2 className="text-2xl font-bold mb-6">Cadre Légal</h2>

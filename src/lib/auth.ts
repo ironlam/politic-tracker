@@ -1,11 +1,16 @@
 import { cookies } from "next/headers";
+import { timingSafeEqual } from "crypto";
 
 const ADMIN_COOKIE_NAME = "admin_session";
 const SESSION_DURATION = 60 * 60 * 24 * 7; // 7 days in seconds
 
+// In-memory session store
+// Note: in serverless (Vercel), this resets on cold start — admin must re-login. Acceptable for MVP.
+const activeSessions = new Map<string, { createdAt: number }>();
+
 /**
  * Simple admin authentication using ADMIN_PASSWORD env var
- * For MVP - can be replaced with NextAuth.js later
+ * Uses timing-safe comparison to prevent timing attacks
  */
 export async function verifyPassword(password: string): Promise<boolean> {
   const adminPassword = process.env.ADMIN_PASSWORD;
@@ -13,15 +18,21 @@ export async function verifyPassword(password: string): Promise<boolean> {
     console.error("ADMIN_PASSWORD not set in environment");
     return false;
   }
-  return password === adminPassword;
+
+  const a = Buffer.from(password);
+  const b = Buffer.from(adminPassword);
+  if (a.length !== b.length) return false;
+  return timingSafeEqual(a, b);
 }
 
 /**
- * Create admin session
+ * Create admin session with tracked token
  */
 export async function createSession(): Promise<void> {
   const cookieStore = await cookies();
   const sessionToken = generateSessionToken();
+
+  activeSessions.set(sessionToken, { createdAt: Date.now() });
 
   cookieStore.set(ADMIN_COOKIE_NAME, sessionToken, {
     httpOnly: true,
@@ -33,12 +44,13 @@ export async function createSession(): Promise<void> {
 }
 
 /**
- * Check if user is authenticated
+ * Check if user is authenticated (validates token against session store)
  */
 export async function isAuthenticated(): Promise<boolean> {
   const cookieStore = await cookies();
   const session = cookieStore.get(ADMIN_COOKIE_NAME);
-  return !!session?.value;
+  if (!session?.value) return false;
+  return activeSessions.has(session.value);
 }
 
 /**
@@ -46,6 +58,10 @@ export async function isAuthenticated(): Promise<boolean> {
  */
 export async function destroySession(): Promise<void> {
   const cookieStore = await cookies();
+  const session = cookieStore.get(ADMIN_COOKIE_NAME);
+  if (session?.value) {
+    activeSessions.delete(session.value);
+  }
   cookieStore.delete(ADMIN_COOKIE_NAME);
 }
 

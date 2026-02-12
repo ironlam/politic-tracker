@@ -18,7 +18,10 @@ export default function MentionsLegalesPage() {
             <br />
             <strong>Adresse :</strong> 200 rue de la Croix Nivert, 75015 Paris, France
             <br />
-            <strong>Email :</strong> contact@poligraph.fr
+            <strong>Email :</strong>{" "}
+            <a href="mailto:contact@poligraph.fr" className="underline">
+              contact@poligraph.fr
+            </a>
             <br />
             <strong>Directeur de la publication :</strong> LD Engineering
           </p>
@@ -108,7 +111,10 @@ export default function MentionsLegalesPage() {
           </p>
           <p className="text-muted-foreground mt-2">
             Pour exercer ce droit ou signaler une erreur factuelle, veuillez nous contacter à
-            l&apos;adresse : <strong>contact@poligraph.fr</strong>
+            l&apos;adresse :{" "}
+            <a href="mailto:contact@poligraph.fr" className="underline font-semibold">
+              contact@poligraph.fr
+            </a>
           </p>
           <p className="text-muted-foreground mt-2">
             Nous nous engageons à traiter toute demande dans un délai de 72 heures ouvrées.
@@ -158,7 +164,10 @@ export default function MentionsLegalesPage() {
         <section>
           <h2 className="text-xl font-semibold mb-4">Contact</h2>
           <p className="text-muted-foreground">
-            Pour toute question concernant ce site : <strong>contact@poligraph.fr</strong>
+            Pour toute question concernant ce site :{" "}
+            <a href="mailto:contact@poligraph.fr" className="underline font-semibold">
+              contact@poligraph.fr
+            </a>
           </p>
         </section>
       </div>

@@ -10,8 +10,10 @@ import {
   AFFAIR_STATUS_LABELS,
   AFFAIR_STATUS_COLORS,
   AFFAIR_CATEGORY_LABELS,
+  MANDATE_TYPE_LABELS,
 } from "@/config/labels";
-import type { AffairStatus, AffairCategory } from "@/types";
+import { MandateUrlEditor } from "@/components/admin/MandateUrlEditor";
+import type { AffairStatus, AffairCategory, MandateType } from "@/types";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -26,8 +28,18 @@ async function getPolitician(id: string) {
         orderBy: { source: "asc" },
       },
       mandates: {
-        where: { isCurrent: true },
-        take: 1,
+        orderBy: [{ isCurrent: "desc" }, { startDate: "desc" }],
+        select: {
+          id: true,
+          type: true,
+          title: true,
+          institution: true,
+          isCurrent: true,
+          startDate: true,
+          endDate: true,
+          officialUrl: true,
+          sourceUrl: true,
+        },
       },
       affairs: {
         orderBy: { verdictDate: "desc" },
@@ -87,8 +99,10 @@ export default async function AdminPoliticianPage({ params }: PageProps) {
               {politician.currentParty.shortName}
             </Badge>
           )}
-          {politician.mandates[0] && (
-            <p className="text-muted-foreground mt-1">{politician.mandates[0].title}</p>
+          {politician.mandates.find((m) => m.isCurrent) && (
+            <p className="text-muted-foreground mt-1">
+              {politician.mandates.find((m) => m.isCurrent)!.title}
+            </p>
           )}
         </div>
       </div>
@@ -216,6 +230,53 @@ export default async function AdminPoliticianPage({ params }: PageProps) {
           </CardContent>
         </Card>
       </div>
+
+      {/* Mandats */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Mandats ({politician.mandates.length})</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {politician.mandates.length > 0 ? (
+            <div className="space-y-4">
+              {politician.mandates.map((mandate) => {
+                const start = new Date(mandate.startDate).toLocaleDateString("fr-FR");
+                const end = mandate.endDate
+                  ? new Date(mandate.endDate).toLocaleDateString("fr-FR")
+                  : "en cours";
+                return (
+                  <div key={mandate.id} className="border p-4 rounded-lg space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        {mandate.isCurrent && (
+                          <Badge variant="default" className="text-xs">
+                            Actif
+                          </Badge>
+                        )}
+                        <Badge variant="outline">
+                          {MANDATE_TYPE_LABELS[mandate.type as MandateType] || mandate.type}
+                        </Badge>
+                      </div>
+                      <span className="text-xs text-muted-foreground">
+                        {start} — {end}
+                      </span>
+                    </div>
+                    <p className="text-sm font-medium">{mandate.title}</p>
+                    <p className="text-xs text-muted-foreground">{mandate.institution}</p>
+                    <MandateUrlEditor
+                      mandateId={mandate.id}
+                      officialUrl={mandate.officialUrl}
+                      sourceUrl={mandate.sourceUrl}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-muted-foreground text-center py-4">Aucun mandat enregistré.</p>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Affaires judiciaires */}
       <Card>

@@ -15,6 +15,7 @@ import {
   ShieldCheck,
   type LucideIcon,
 } from "lucide-react";
+import { GlobalSearchTrigger } from "@/components/search";
 
 const ICON_MAP: Record<string, LucideIcon> = {
   map: Map,
@@ -155,6 +156,11 @@ export function MobileMenu() {
           aria-label="Menu de navigation"
         >
           <nav className="container mx-auto px-4 py-4" aria-label="Navigation mobile">
+            {/* Global search */}
+            <div className="mb-4">
+              <GlobalSearchTrigger variant="mobile" onBeforeOpen={() => setIsOpen(false)} />
+            </div>
+
             {/* CTA Buttons */}
             <div className="flex gap-2 mb-4">
               <Link

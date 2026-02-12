@@ -5,6 +5,7 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { WebSiteJsonLd } from "@/components/seo/JsonLd";
 import { ChatWidget } from "@/components/chat/ChatWidget";
+import { GlobalSearchProvider, GlobalSearchDialog } from "@/components/search";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -91,16 +92,19 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
       >
         <ThemeProvider>
-          {/* Skip to main content link for keyboard navigation */}
-          <a href="#main-content" className="skip-link">
-            Aller au contenu principal
-          </a>
-          <Header />
-          <main id="main-content" role="main" className="flex-1" tabIndex={-1}>
-            {children}
-          </main>
-          <Footer />
-          <ChatWidget />
+          <GlobalSearchProvider>
+            {/* Skip to main content link for keyboard navigation */}
+            <a href="#main-content" className="skip-link">
+              Aller au contenu principal
+            </a>
+            <Header />
+            <main id="main-content" role="main" className="flex-1" tabIndex={-1}>
+              {children}
+            </main>
+            <Footer />
+            <ChatWidget />
+            <GlobalSearchDialog />
+          </GlobalSearchProvider>
         </ThemeProvider>
       </body>
     </html>

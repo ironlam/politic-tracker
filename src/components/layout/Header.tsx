@@ -5,6 +5,7 @@ import { MobileMenu } from "./MobileMenu";
 import { NavDropdown } from "./NavDropdown";
 import { NAV_GROUPS, CTA_COMPARER, CTA_ASSISTANT } from "@/config/navigation";
 import { GitCompare, Bot } from "lucide-react";
+import { GlobalSearchTrigger } from "@/components/search";
 
 export function Header() {
   return (
@@ -36,6 +37,9 @@ export function Header() {
             {NAV_GROUPS.map((group) => (
               <NavDropdown key={group.label} group={group} />
             ))}
+
+            {/* Global search */}
+            <GlobalSearchTrigger variant="desktop" />
 
             {/* Separator */}
             <div className="h-6 w-px bg-border mx-2" />

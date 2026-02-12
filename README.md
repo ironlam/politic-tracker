@@ -129,13 +129,11 @@ docs/                     # Documentation
 
 ## Documentation
 
-| Document                                    | Description                   |
-| ------------------------------------------- | ----------------------------- |
-| [SPECIFICATION.md](./docs/SPECIFICATION.md) | Spécifications fonctionnelles |
-| [ARCHITECTURE.md](./docs/ARCHITECTURE.md)   | Architecture technique        |
-| [DATASOURCES.md](./docs/DATASOURCES.md)     | Sources de données            |
-| [ROADMAP.md](./docs/ROADMAP.md)             | Évolutions prévues            |
-| [LEGAL.md](./docs/LEGAL.md)                 | Aspects juridiques            |
+| Document                                  | Description            |
+| ----------------------------------------- | ---------------------- |
+| [ARCHITECTURE.md](./docs/ARCHITECTURE.md) | Architecture technique |
+| [DATASOURCES.md](./docs/DATASOURCES.md)   | Sources de données     |
+| [LEGAL.md](./docs/LEGAL.md)               | Aspects juridiques     |
 
 ## Contribuer
 

@@ -13,7 +13,7 @@ export interface NavGroup {
   items: NavItem[];
 }
 
-// Main navigation groups (3 thematic dropdowns)
+// Main navigation groups (4 thematic dropdowns)
 export const NAV_GROUPS: NavGroup[] = [
   {
     label: "Élus",
@@ -24,10 +24,9 @@ export const NAV_GROUPS: NavGroup[] = [
         description: "Députés, sénateurs, ministres, eurodéputés",
       },
       {
-        href: "/mon-depute",
-        label: "Mon député",
-        icon: "mapPin",
-        description: "Trouvez votre député par code postal",
+        href: "/partis",
+        label: "Partis politiques",
+        description: "55+ partis avec leurs membres",
       },
       {
         href: "/carte",
@@ -36,31 +35,32 @@ export const NAV_GROUPS: NavGroup[] = [
         description: "Visualisez les élus par département",
       },
       {
-        href: "/departements",
-        label: "Par département",
-        description: "Trouvez les élus de votre territoire",
-      },
-      {
-        href: "/partis",
-        label: "Partis politiques",
-        description: "55+ partis avec leurs membres",
+        href: "/mon-depute",
+        label: "Mon député",
+        icon: "mapPin",
+        description: "Trouvez votre député par code postal",
       },
     ],
   },
   {
-    label: "Parlement",
+    label: "Travail législatif",
     items: [
       {
         href: "/assemblee",
-        label: "En direct de l'Assemblée",
+        label: "Dossiers législatifs",
         icon: "live",
-        description: "Textes en discussion",
+        description: "Textes en discussion à l'Assemblée",
       },
       {
         href: "/votes",
         label: "Votes parlementaires",
         description: "Scrutins et positions des élus",
       },
+    ],
+  },
+  {
+    label: "Données",
+    items: [
       {
         href: "/statistiques",
         label: "Statistiques",
@@ -71,27 +71,27 @@ export const NAV_GROUPS: NavGroup[] = [
         label: "Calendrier électoral",
         description: "Dates et compte à rebours des prochaines élections",
       },
+      {
+        href: "/presse",
+        label: "Revue de presse",
+        icon: "newspaper",
+        description: "Articles Le Monde, Politico, Mediapart",
+      },
     ],
   },
   {
     label: "Transparence",
     items: [
       {
-        href: "/factchecks",
-        label: "Fact-checks",
-        icon: "shieldCheck",
-        description: "Vérification des déclarations politiques",
-      },
-      {
         href: "/affaires",
         label: "Affaires judiciaires",
         description: "Dossiers documentés avec sources",
       },
       {
-        href: "/presse",
-        label: "Revue de presse",
-        icon: "newspaper",
-        description: "Articles Le Monde, Politico, Mediapart",
+        href: "/factchecks",
+        label: "Fact-checks",
+        icon: "shieldCheck",
+        description: "Vérification des déclarations politiques",
       },
     ],
   },

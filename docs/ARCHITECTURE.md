@@ -24,7 +24,6 @@
 ```
 politic-tracker/
 ├── docs/                          # Documentation
-│   ├── SPECIFICATION.md           # Spécifications fonctionnelles
 │   ├── ARCHITECTURE.md            # Ce document
 │   ├── DATASOURCES.md             # Sources de données
 │   └── LEGAL.md                   # Considérations juridiques

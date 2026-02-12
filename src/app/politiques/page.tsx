@@ -324,7 +324,7 @@ export default async function PolitiquesPage({ searchParams }: PageProps) {
   const partyFilter = params.party || "";
   const convictionFilter = params.conviction === "true";
   const mandateFilter = (params.mandate || "") as MandateFilter;
-  const statusFilter = (params.status || "") as StatusFilter;
+  const statusFilter = (params.status || "active") as StatusFilter;
   const sortOption = (params.sort || "alpha") as SortOption;
   const page = parseInt(params.page || "1", 10);
 

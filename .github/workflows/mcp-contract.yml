@@ -15,6 +15,6 @@ jobs:
         uses: peter-evans/repository-dispatch@v3
         with:
           token: ${{ secrets.MCP_DISPATCH_TOKEN }}
-          repository: ironlam/transparence-politique-mcp
+          repository: ironlam/poligraph-mcp
           event-type: api-contract-check
           client-payload: '{"ref": "${{ github.sha }}", "message": "${{ github.event.head_commit.message }}"}'

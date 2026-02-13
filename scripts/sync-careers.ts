@@ -334,6 +334,16 @@ Features:
           const positionLabel = labels.get(pos.positionId) || pos.positionId;
           const title = positionLabel;
 
+          // Guard: PRESIDENT_REPUBLIQUE and PREMIER_MINISTRE are unique positions
+          // Only accept if the Wikidata label explicitly mentions France/République
+          if (
+            mandateInfo.type === MandateType.PRESIDENT_REPUBLIQUE &&
+            !/r[ée]publique|france/i.test(positionLabel)
+          ) {
+            stats.mandatesSkipped++;
+            continue;
+          }
+
           // Check if mandate already exists (within 30 days of start date)
           const existingMandate = politician.mandates.find((m) => {
             if (m.type !== mandateInfo.type) return false;

@@ -111,11 +111,14 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
-async function getPartyLeadership(partyName: string) {
+async function getPartyLeadership(partyId: string, partyName: string) {
   return db.mandate.findMany({
     where: {
       type: "PRESIDENT_PARTI",
-      institution: partyName,
+      OR: [
+        { partyId },
+        { institution: partyName, partyId: null }, // Fallback for non-migrated data
+      ],
     },
     include: {
       politician: true,
@@ -146,7 +149,7 @@ export default async function PartyPage({ params }: PageProps) {
   }
 
   const [leadershipMandates, partyRoles] = await Promise.all([
-    getPartyLeadership(party.name),
+    getPartyLeadership(party.id, party.name),
     getPartyRoles(party.id),
   ]);
   const currentLeaders = leadershipMandates.filter((m) => m.isCurrent);

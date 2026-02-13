@@ -17,11 +17,40 @@ import { db } from "@/lib/db";
  *         description: Slug du parti (ex. "les-republicains")
  *     responses:
  *       200:
- *         description: Détail du parti
+ *         description: Détail du parti avec membres et historique de direction
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/PartyDetails'
+ *               allOf:
+ *                 - $ref: '#/components/schemas/PartyDetails'
+ *                 - type: object
+ *                   properties:
+ *                     leadership:
+ *                       type: array
+ *                       description: Historique des dirigeants du parti (actuel et passés)
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           politicianId:
+ *                             type: string
+ *                           politicianSlug:
+ *                             type: string
+ *                           politicianName:
+ *                             type: string
+ *                           politicianPhoto:
+ *                             type: string
+ *                             nullable: true
+ *                           title:
+ *                             type: string
+ *                           startDate:
+ *                             type: string
+ *                             format: date-time
+ *                           endDate:
+ *                             type: string
+ *                             format: date-time
+ *                             nullable: true
+ *                           isCurrent:
+ *                             type: boolean
  *       404:
  *         description: Parti non trouvé
  *         content:
@@ -75,6 +104,22 @@ export async function GET(
       return NextResponse.json({ error: "Parti non trouvé" }, { status: 404 });
     }
 
+    // Fetch leadership history
+    const leadership = await db.mandate.findMany({
+      where: { type: "PRESIDENT_PARTI", partyId: party.id },
+      select: {
+        id: true,
+        title: true,
+        startDate: true,
+        endDate: true,
+        isCurrent: true,
+        politician: {
+          select: { id: true, slug: true, fullName: true, photoUrl: true },
+        },
+      },
+      orderBy: { startDate: "desc" },
+    });
+
     const { politicians, ...rest } = party;
 
     const members = politicians.map(({ mandates, _count, ...p }) => ({
@@ -87,6 +132,16 @@ export async function GET(
       ...rest,
       memberCount: members.length,
       members,
+      leadership: leadership.map((m) => ({
+        politicianId: m.politician.id,
+        politicianSlug: m.politician.slug,
+        politicianName: m.politician.fullName,
+        politicianPhoto: m.politician.photoUrl,
+        title: m.title,
+        startDate: m.startDate,
+        endDate: m.endDate,
+        isCurrent: m.isCurrent,
+      })),
     });
   } catch (error) {
     console.error("API error:", error);

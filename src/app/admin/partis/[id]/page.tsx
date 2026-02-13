@@ -10,6 +10,7 @@ import {
   POLITICAL_POSITION_COLORS,
   DATA_SOURCE_LABELS,
 } from "@/config/labels";
+import { PartyLeadershipEditor } from "@/components/admin/PartyLeadershipEditor";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -166,6 +167,16 @@ export default async function AdminPartyPage({ params }: PageProps) {
                 <p className="text-sm text-muted-foreground">Affaires</p>
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Leadership card */}
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle>Direction du parti</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <PartyLeadershipEditor partyId={party.id} partyShortName={party.shortName} />
           </CardContent>
         </Card>
 

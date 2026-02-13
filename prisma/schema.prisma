@@ -635,6 +635,7 @@ model LegislativeDossier {
 }
 
 enum DossierStatus {
+  DEPOSE          // Déposé, pas encore examiné
   EN_COURS        // En discussion
   ADOPTE          // Adopté
   REJETE          // Rejeté

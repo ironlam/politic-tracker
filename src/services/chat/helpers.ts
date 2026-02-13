@@ -83,6 +83,7 @@ export function extractPersonName(raw: string): string {
  * Status labels for legislative dossiers.
  */
 export const DOSSIER_STATUS_LABELS: Record<string, string> = {
+  DEPOSE: "Déposé",
   EN_COURS: "En discussion",
   ADOPTE: "Adopté",
   REJETE: "Rejeté",

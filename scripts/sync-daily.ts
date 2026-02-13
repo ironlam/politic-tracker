@@ -23,7 +23,19 @@ interface SyncStep {
   command: string;
 }
 
+const dayOfWeek = new Date().getDay(); // 0=dim, 1=lun
+const isMonday = dayOfWeek === 1;
+
 const steps: SyncStep[] = [
+  // Weekly: re-sync all active dossiers on Mondays (catch missed status changes)
+  ...(isMonday
+    ? [
+        {
+          name: "Législation (weekly full active)",
+          command: `npx tsx scripts/sync-legislation.ts --active${dryRunFlag}`,
+        },
+      ]
+    : []),
   {
     name: "Votes AN (today)",
     command: `npx tsx scripts/sync-votes-an.ts --today${dryRunFlag}`,

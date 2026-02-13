@@ -10,6 +10,7 @@ interface StatusBadgeProps {
 }
 
 const STATUS_ICONS: Record<DossierStatus, string> = {
+  DEPOSE: "📋",
   EN_COURS: "🔴",
   ADOPTE: "✅",
   REJETE: "❌",

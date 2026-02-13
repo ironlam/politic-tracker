@@ -45,7 +45,7 @@ async function getDossiers(status?: string, theme?: string, page = 1) {
     db.legislativeDossier.findMany({
       where,
       orderBy: [
-        { status: "asc" }, // EN_COURS first
+        { status: "asc" }, // DEPOSE, EN_COURS first (active dossiers)
         { filingDate: "desc" },
       ],
       skip,

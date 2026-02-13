@@ -39,6 +39,7 @@ export interface RSSFeed {
 // ============================================
 
 export const RSS_FEEDS: RSSFeedConfig[] = [
+  // ── Priority 1: Major national outlets ──
   {
     id: "lemonde",
     name: "Le Monde Politique",
@@ -46,15 +47,47 @@ export const RSS_FEEDS: RSSFeedConfig[] = [
     priority: 1,
   },
   {
+    id: "lefigaro",
+    name: "Le Figaro Politique",
+    url: "https://www.lefigaro.fr/rss/figaro_politique.xml",
+    priority: 1,
+  },
+  {
+    id: "franceinfo",
+    name: "Franceinfo Politique",
+    url: "https://www.francetvinfo.fr/politique.rss",
+    priority: 1,
+  },
+  {
+    id: "liberation",
+    name: "Libération Politique",
+    url: "https://www.liberation.fr/arc/outboundfeeds/rss-all/category/politique/",
+    priority: 1,
+  },
+
+  // ── Priority 2: Specialized / EU ──
+  {
     id: "politico",
     name: "Politico.eu",
     url: "https://www.politico.eu/feed/",
-    priority: 1,
+    priority: 2,
   },
   {
     id: "mediapart",
     name: "Mediapart",
     url: "https://www.mediapart.fr/articles/feed",
+    priority: 2,
+  },
+  {
+    id: "publicsenat",
+    name: "Public Sénat",
+    url: "https://www.publicsenat.fr/rss.xml",
+    priority: 2,
+  },
+  {
+    id: "lcp",
+    name: "LCP Assemblée nationale",
+    url: "https://lcp.fr/rss.xml",
     priority: 2,
   },
 ];

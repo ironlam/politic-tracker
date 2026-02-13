@@ -9,7 +9,7 @@ import {
   AFFAIR_SUPER_CATEGORY_COLORS,
   type AffairSuperCategory,
 } from "@/config/labels";
-import { COLORS, getColor } from "@/config/colors";
+import { COLORS, TEXT_COLORS } from "@/config/colors";
 import { ensureContrast } from "@/lib/contrast";
 import type { AffairStatus } from "@/types";
 
@@ -104,10 +104,7 @@ export function AffairsTab({
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p
-              className="text-3xl font-bold"
-              style={{ color: getColor("affairStatus", "CONDAMNATION_DEFINITIVE", "light") }}
-            >
+            <p className={`text-3xl font-bold ${TEXT_COLORS.affairStatus.CONDAMNATION_DEFINITIVE}`}>
               {globalStats.condamnations}
             </p>
           </CardContent>
@@ -167,6 +164,7 @@ export function AffairsTab({
                     value={count}
                     max={maxByStatus}
                     hexColor={COLORS.affairStatus[colorKey]?.light}
+                    label={`${AFFAIR_STATUS_LABELS[status]} : ${count}`}
                   />
                 </div>
               );
@@ -191,7 +189,10 @@ export function AffairsTab({
                 <ProgressBar
                   value={count}
                   max={maxByCategory}
-                  hexColor={getColor("affairCategory", category, "light")}
+                  hexColor={
+                    COLORS.affairCategory[category as keyof typeof COLORS.affairCategory]?.light
+                  }
+                  label={`${AFFAIR_SUPER_CATEGORY_LABELS[category]} : ${count}`}
                 />
               </div>
             ))}
@@ -214,12 +215,14 @@ export function AffairsTab({
                 <div className="flex justify-between text-sm mb-1">
                   <Link
                     href={party.slug ? `/partis/${party.slug}` : "/partis"}
+                    title={party.name}
                     className="hover:underline flex items-center gap-2"
                   >
                     {party.color && (
                       <span
                         className="w-3 h-3 rounded-full inline-block shrink-0"
                         style={{ backgroundColor: party.color }}
+                        aria-label={`Couleur du parti ${party.name}`}
                       />
                     )}
                     <span>{party.shortName}</span>
@@ -229,7 +232,12 @@ export function AffairsTab({
                   </Link>
                   <span className="font-medium">{party.totalAffairs}</span>
                 </div>
-                <ProgressBar value={party.totalAffairs} max={maxByParty} color="bg-primary" />
+                <ProgressBar
+                  value={party.totalAffairs}
+                  max={maxByParty}
+                  color="bg-primary"
+                  label={`${party.name} : ${party.totalAffairs} affaires`}
+                />
               </div>
             ))}
           </CardContent>
@@ -269,12 +277,7 @@ export function AffairsTab({
                   <span className="font-medium shrink-0 ml-2">
                     {politician._count.affairs}
                     {politician.condamnations > 0 && (
-                      <span
-                        className="ml-1"
-                        style={{
-                          color: getColor("affairStatus", "CONDAMNATION_DEFINITIVE", "light"),
-                        }}
-                      >
+                      <span className={`ml-1 ${TEXT_COLORS.affairStatus.CONDAMNATION_DEFINITIVE}`}>
                         ({politician.condamnations} cond.)
                       </span>
                     )}
@@ -285,9 +288,10 @@ export function AffairsTab({
                   max={maxByPolitician}
                   hexColor={
                     politician.condamnations > 0
-                      ? getColor("affairStatus", "CONDAMNATION_DEFINITIVE", "light")
-                      : getColor("ui", "warning", "light")
+                      ? COLORS.affairStatus.CONDAMNATION_DEFINITIVE.light
+                      : COLORS.ui.warning.light
                   }
+                  label={`${politician.fullName} : ${politician._count.affairs} affaires`}
                 />
               </div>
             ))}

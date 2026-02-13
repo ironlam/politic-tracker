@@ -14,46 +14,10 @@
 
 import "dotenv/config";
 import { db } from "../src/lib/db";
-import { MandateType, DataSource } from "../src/generated/prisma";
+import { MandateType } from "../src/generated/prisma";
 import { politicianService } from "../src/services/politician";
-import { ASSEMBLY_GROUPS, SENATE_GROUPS } from "../src/config/parliamentaryGroups";
 
 const execute = process.argv.includes("--execute");
-
-// All known parliamentary group shortNames (what's stored in Party.shortName)
-// These are groups, not real parties
-const KNOWN_GROUP_SHORT_NAMES = new Set<string>();
-for (const config of Object.values(ASSEMBLY_GROUPS)) {
-  KNOWN_GROUP_SHORT_NAMES.add(config.code);
-  if (config.shortName) KNOWN_GROUP_SHORT_NAMES.add(config.shortName);
-}
-for (const config of Object.values(SENATE_GROUPS)) {
-  KNOWN_GROUP_SHORT_NAMES.add(config.code);
-  if (config.shortName) KNOWN_GROUP_SHORT_NAMES.add(config.shortName);
-}
-// Also add full group names that look like group entries in the Party table
-const KNOWN_GROUP_NAMES = new Set([
-  "Socialistes et apparentés",
-  "Ensemble pour la République",
-  "Droite Républicaine",
-  "Les Démocrates",
-  "Horizons & Indépendants",
-  "Libertés, Indépendants, Outre-mer et Territoires",
-  "Écologiste et Social",
-  "Gauche Démocrate et Républicaine",
-  "Union des Droites pour la République",
-  "La France Insoumise - Nouveau Front Populaire",
-  "Socialiste, Écologiste et Républicain",
-  "Communiste, Républicain, Citoyen et Écologiste - Kanaky",
-  "Communiste, Républicain, Citoyen et Écologiste",
-  "Écologiste - Solidarité et Territoires",
-  "Rassemblement des démocrates progressistes et indépendants",
-  "Union Centriste",
-  "Rassemblement Démocratique et Social Européen",
-  "Les Indépendants - République et Territoires",
-  "Sénateurs ne figurant sur la liste d'aucun groupe",
-  "Union pour un Mouvement Populaire",
-]);
 
 interface MigrationStats {
   reassigned: number;
@@ -76,60 +40,50 @@ const stats: MigrationStats = {
 };
 
 /**
- * Step 1: Find all Party records that are actually parliamentary groups.
- * A party is considered a group if its shortName matches a known group code
- * AND its name matches a known group name.
+ * Steps 1+2: Find Party records that are actually parliamentary groups and build
+ * the mapping to real parties.
+ *
+ * Strategy: use the seeded ParliamentaryGroup table as source of truth.
+ * For each ParliamentaryGroup code, find any Party with the same shortName.
+ * A Party is a "group entry" if the ParliamentaryGroup's defaultPartyId points
+ * to a DIFFERENT Party (or null for transpartisan). If defaultPartyId points to
+ * the Party itself, it's the real party — skip it.
  */
-async function findGroupParties(): Promise<
-  Map<string, { id: string; shortName: string; name: string }>
-> {
-  const allParties = await db.party.findMany({
-    select: { id: true, shortName: true, name: true },
-  });
-
+async function buildGroupToPartyMap(): Promise<{
+  groupParties: Map<string, { id: string; shortName: string; name: string }>;
+  groupToParty: Map<string, string | null>;
+}> {
   const groupParties = new Map<string, { id: string; shortName: string; name: string }>();
+  const groupToParty = new Map<string, string | null>();
 
-  for (const party of allParties) {
-    const isGroupByShortName = KNOWN_GROUP_SHORT_NAMES.has(party.shortName);
-    const isGroupByName = KNOWN_GROUP_NAMES.has(party.name);
-
-    // Must match by name to avoid false positives (e.g., "RN" is both a group code and party shortName)
-    // Real parties like "Rassemblement National" won't match group names like "Rassemblement National" at AN level
-    // because the group RN at AN has the same name — so we also check if the party has a wikidataId
-    // pointing to a GROUP (not a party)
-    if (isGroupByName || (isGroupByShortName && isGroupByName)) {
-      groupParties.set(party.id, party);
-    }
-  }
-
-  return groupParties;
-}
-
-/**
- * Step 2: Build a mapping from group Party ID → real Party ID
- */
-async function buildGroupToPartyMap(
-  groupParties: Map<string, { id: string; shortName: string; name: string }>
-): Promise<Map<string, string | null>> {
-  const map = new Map<string, string | null>();
-
-  // Load all parliamentary groups with their defaultPartyId
+  // Load all seeded parliamentary groups
   const parlGroups = await db.parliamentaryGroup.findMany({
     select: { code: true, defaultPartyId: true },
   });
 
-  const codeToDefaultParty = new Map<string, string | null>();
+  // Load all parties indexed by shortName
+  const allParties = await db.party.findMany({
+    select: { id: true, shortName: true, name: true },
+  });
+  const partiesByShortName = new Map<string, { id: string; shortName: string; name: string }[]>();
+  for (const p of allParties) {
+    const list = partiesByShortName.get(p.shortName) ?? [];
+    list.push(p);
+    partiesByShortName.set(p.shortName, list);
+  }
+
   for (const pg of parlGroups) {
-    codeToDefaultParty.set(pg.code, pg.defaultPartyId);
+    const candidates = partiesByShortName.get(pg.code) ?? [];
+    for (const party of candidates) {
+      // Skip if defaultPartyId points to this party itself (it IS the real party)
+      if (pg.defaultPartyId === party.id) continue;
+
+      groupParties.set(party.id, party);
+      groupToParty.set(party.id, pg.defaultPartyId);
+    }
   }
 
-  for (const [partyId, party] of groupParties) {
-    // Try to find the parliamentary group config by party shortName
-    const defaultPartyId = codeToDefaultParty.get(party.shortName) ?? null;
-    map.set(partyId, defaultPartyId);
-  }
-
-  return map;
+  return { groupParties, groupToParty };
 }
 
 /**
@@ -322,8 +276,8 @@ async function main() {
   console.log(execute ? "=== EXECUTING MIGRATION ===" : "=== DRY-RUN MODE ===");
   console.log("(Use --execute to apply changes)\n");
 
-  // Find group parties
-  const groupParties = await findGroupParties();
+  // Find group parties and build mapping
+  const { groupParties, groupToParty } = await buildGroupToPartyMap();
   console.log(`Found ${groupParties.size} parliamentary group entries in Party table`);
   for (const [, party] of groupParties) {
     const count = await db.politician.count({ where: { currentPartyId: party.id } });
@@ -331,9 +285,6 @@ async function main() {
       console.log(`  ${party.shortName} (${party.name}): ${count} members`);
     }
   }
-
-  // Build group → party mapping
-  const groupToParty = await buildGroupToPartyMap(groupParties);
 
   // Reassign politicians
   await reassignPoliticians(groupToParty);

@@ -1,19 +1,5 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
 # dependencies
 /node_modules
-/.pnp
-.pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
-
-# testing
-/coverage
-/tests/visual/test-results/
-/tests/visual/playwright-report/
 
 # next.js
 /.next/
@@ -22,39 +8,49 @@
 # production
 /build
 
-# misc
-.DS_Store
-*.pem
-
-# debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
-
-# env files (can opt-in for committing if needed)
+# env files
 .env*
 !.env.example
-
-# IDE - JetBrains (keep shared config only)
-.idea/workspace.xml
-.idea/copilot.data.migration.ask2agent.xml
-
-# Claude Code local settings (may contain permissions)
-.claude/settings.local.json
-
-# MCP config (contains API tokens)
-.mcp.json
-
-# vercel
-.vercel
 
 # typescript
 *.tsbuildinfo
 next-env.d.ts
 
+# prisma generated client
 /src/generated/prisma
 
-# Database backups (contain sensitive data)
+# testing
+/coverage
+/tests/visual/test-results/
+/tests/visual/playwright-report/
+
+# debug / logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# secrets / tokens
+*.pem
+.mcp.json
+
+# vercel
+.vercel
+
+# supabase local
+/supabase
+
+# claude code local settings
+.claude/settings.local.json
+
+# database backups (sensitive data)
 /backups
 job-logs.txt

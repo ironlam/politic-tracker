@@ -220,7 +220,7 @@ function findAllDates(actes: ANActe | ANActe[] | undefined | null): Date[] {
 /**
  * Determine dossier status from actes
  */
-function determineStatus(codes: string[]): DossierStatus {
+function determineStatus(codes: string[], legislature?: number): DossierStatus {
   // Check for promulgation (adopted)
   if (codes.some((c) => c === "PROM" || c === "PROM-PUB")) {
     return "ADOPTE";
@@ -236,16 +236,40 @@ function determineStatus(codes: string[]): DossierStatus {
     return "RETIRE";
   }
 
-  // Codes indicating effective examination (readings, committees, CMP)
-  const examinationPrefixes = ["AN1", "AN2", "SN1", "SN2", "CMP", "ANLUNI", "ANLDEF", "SNLDEF"];
-  const hasExamination = codes.some(
-    (c) =>
-      examinationPrefixes.some((p) => c.startsWith(p)) ||
-      c.includes("COM-FOND") ||
-      c.includes("COM-AVIS")
-  );
+  // Conseil constitutionnel (saisine without promulgation = pending CC review)
+  if (codes.some((c) => c.startsWith("CC-SAISIE"))) {
+    return "CONSEIL_CONSTITUTIONNEL";
+  }
 
-  return hasExamination ? "EN_COURS" : "DEPOSE";
+  // Caduque: previous legislature dossiers that were never adopted
+  if (legislature && legislature < DEFAULT_LEGISLATURE) {
+    return "CADUQUE";
+  }
+
+  // Debates/sessions or CMP = actively discussed in hemicycle
+  const hasDebates = codes.some(
+    (c) =>
+      c.includes("DEBATS-SEANCE") ||
+      c.includes("DEBATS-DEC") ||
+      c.startsWith("CMP") ||
+      c.startsWith("ANLUNI") ||
+      c.startsWith("ANLDEF") ||
+      c.startsWith("SNLDEF")
+  );
+  if (hasDebates) {
+    return "EN_COURS";
+  }
+
+  // Committee report exists but no hemicycle session yet
+  const hasCommitteeReport = codes.some(
+    (c) => c.includes("COM-FOND-RAPPORT") || c.includes("COM-AVIS-RAPPORT")
+  );
+  if (hasCommitteeReport) {
+    return "EN_COMMISSION";
+  }
+
+  // Default: filed but not yet examined
+  return "DEPOSE";
 }
 
 /**
@@ -352,10 +376,13 @@ async function syncLegislation(
     dossiersSkipped: 0,
     byStatus: {
       DEPOSE: 0,
+      EN_COMMISSION: 0,
       EN_COURS: 0,
+      CONSEIL_CONSTITUTIONNEL: 0,
       ADOPTE: 0,
       REJETE: 0,
       RETIRE: 0,
+      CADUQUE: 0,
     } as Record<string, number>,
     byCategory: {} as Record<string, number>,
     errors: [] as string[],
@@ -444,10 +471,17 @@ async function syncLegislation(
 
         // Find all codes to determine status
         const allCodes = findAllCodes(dp.actesLegislatifs?.acteLegislatif);
-        const status = determineStatus(allCodes);
+        const dossierLeg = parseInt(dp.legislature, 10) || legislature;
+        const status = determineStatus(allCodes, dossierLeg);
 
-        // Skip non-active if activeOnly (DEPOSE and EN_COURS are both active)
-        if (activeOnly && status !== "EN_COURS" && status !== "DEPOSE") {
+        // Skip non-active if activeOnly
+        const activeStatuses: DossierStatus[] = [
+          "DEPOSE",
+          "EN_COMMISSION",
+          "EN_COURS",
+          "CONSEIL_CONSTITUTIONNEL",
+        ];
+        if (activeOnly && !activeStatuses.includes(status)) {
           stats.dossiersSkipped++;
           continue;
         }
@@ -550,7 +584,7 @@ const handler: SyncHandler = {
     {
       name: "--active",
       type: "boolean",
-      description: "Only sync active (DEPOSE/EN_COURS) dossiers",
+      description: "Only sync active dossiers (excludes ADOPTE/REJETE/RETIRE/CADUQUE)",
     },
     {
       name: "--today",

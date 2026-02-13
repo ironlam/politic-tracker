@@ -11,10 +11,13 @@ interface StatusBadgeProps {
 
 const STATUS_ICONS: Record<DossierStatus, string> = {
   DEPOSE: "📋",
+  EN_COMMISSION: "🔍",
   EN_COURS: "🔴",
+  CONSEIL_CONSTITUTIONNEL: "⚖️",
   ADOPTE: "✅",
   REJETE: "❌",
   RETIRE: "⏸️",
+  CADUQUE: "🕐",
 };
 
 export function StatusBadge({ status, className, showIcon = false }: StatusBadgeProps) {

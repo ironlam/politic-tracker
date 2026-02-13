@@ -66,10 +66,13 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     if (dossier.status) {
       const statusLabels: Record<string, string> = {
         DEPOSE: "Déposé",
+        EN_COMMISSION: "En commission",
         EN_COURS: "En discussion",
+        CONSEIL_CONSTITUTIONNEL: "Conseil constitutionnel",
         ADOPTE: "Adopté",
         REJETE: "Rejeté",
         RETIRE: "Retiré",
+        CADUQUE: "Caduc",
       };
       content += `Statut: ${statusLabels[dossier.status] || dossier.status}\n`;
     }

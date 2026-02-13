@@ -265,12 +265,14 @@ export function getParliamentaryGroupConfig(
  */
 export function getAllGroupConfigs(chamber: "AN" | "SENAT"): ParliamentaryGroupConfig[] {
   const groups = chamber === "AN" ? ASSEMBLY_GROUPS : SENATE_GROUPS;
-  const seen = new Set<string>();
+  const seenCodes = new Set<string>();
+  const seenNames = new Set<string>();
   const result: ParliamentaryGroupConfig[] = [];
 
   for (const config of Object.values(groups)) {
-    if (!seen.has(config.code)) {
-      seen.add(config.code);
+    if (!seenCodes.has(config.code) && !seenNames.has(config.name)) {
+      seenCodes.add(config.code);
+      seenNames.add(config.name);
       result.push(config);
     }
   }

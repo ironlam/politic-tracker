@@ -38,6 +38,11 @@ async function getPolitician(slug: string) {
       currentParty: true,
       mandates: {
         orderBy: { startDate: "desc" },
+        include: {
+          parliamentaryGroup: {
+            select: { code: true, name: true, color: true },
+          },
+        },
       },
       affairs: {
         include: {
@@ -219,6 +224,11 @@ export default async function PoliticianPage({ params }: PageProps) {
 
   const hasMandates = politician.mandates.length > 0;
   const currentMandate = politician.mandates.find((m) => m.isCurrent);
+  const currentGroup = (
+    currentMandate as typeof currentMandate & {
+      parliamentaryGroup?: { code: string; name: string; color: string | null } | null;
+    }
+  )?.parliamentaryGroup;
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://poligraph.fr";
 
   // Get vote stats (only for deputies - they have votes tracked)
@@ -294,6 +304,20 @@ export default async function PoliticianPage({ params }: PageProps) {
                     {politician.currentParty.name}
                   </Badge>
                 </Link>
+              )}
+              {currentGroup && (
+                <Badge
+                  variant="outline"
+                  className="text-sm"
+                  style={{
+                    borderColor: currentGroup.color || undefined,
+                    color: currentGroup.color
+                      ? ensureContrast(currentGroup.color, "#ffffff")
+                      : undefined,
+                  }}
+                >
+                  Groupe {currentGroup.code}
+                </Badge>
               )}
               {politician.partyHistory
                 .filter((ph) => !ph.endDate)

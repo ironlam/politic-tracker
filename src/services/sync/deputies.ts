@@ -1,9 +1,10 @@
 import { db } from "@/lib/db";
 import { generateSlug } from "@/lib/utils";
-import { MandateType, DataSource } from "@/generated/prisma";
-import { DeputeCSV, PARTY_MAPPINGS, SyncResult } from "./types";
+import { MandateType, DataSource, Chamber } from "@/generated/prisma";
+import { DeputeCSV, SyncResult } from "./types";
 import { parse } from "csv-parse/sync";
 import { politicianService } from "@/services/politician";
+import { ASSEMBLY_GROUPS, type ParliamentaryGroupConfig } from "@/config/parliamentaryGroups";
 
 const DATA_GOUV_URL =
   "https://static.data.gouv.fr/resources/deputes-actifs-de-lassemblee-nationale-informations-et-statistiques/20260118-063755/deputes-active.csv";
@@ -59,12 +60,21 @@ async function fetchDeputiesCSV(): Promise<DeputeCSV[]> {
 }
 
 /**
- * Sync parties from deputies data
- * Returns a map from CSV groupeAbrev -> party ID for linking deputies
+ * Sync parliamentary groups from deputies data.
+ *
+ * Creates/updates ParliamentaryGroup records (not Party records).
+ * Resolves the real party via the config's partyWikidataId.
+ *
+ * Returns maps for:
+ * - csvToGroupId: CSV groupeAbrev → ParliamentaryGroup ID
+ * - csvToPartyId: CSV groupeAbrev → real Party ID (or null if transpartisan)
  */
-async function syncParties(
-  deputies: DeputeCSV[]
-): Promise<{ created: number; updated: number; csvToPartyId: Map<string, string> }> {
+async function syncGroups(deputies: DeputeCSV[]): Promise<{
+  groupsCreated: number;
+  groupsUpdated: number;
+  csvToGroupId: Map<string, string>;
+  csvToPartyId: Map<string, string | null>;
+}> {
   const uniqueGroups = new Map<string, string>();
 
   // Extract unique groups from CSV
@@ -74,47 +84,73 @@ async function syncParties(
     }
   }
 
-  let created = 0;
-  let updated = 0;
-  const csvToPartyId = new Map<string, string>();
+  let groupsCreated = 0;
+  let groupsUpdated = 0;
+  const csvToGroupId = new Map<string, string>();
+  const csvToPartyId = new Map<string, string | null>();
 
   for (const [csvAbrev, fullName] of uniqueGroups) {
-    const mapping = PARTY_MAPPINGS[csvAbrev];
-    const partyName = mapping?.fullName || fullName;
-    const partyData = {
-      name: partyName,
-      shortName: mapping?.shortName || csvAbrev,
-      slug: generateSlug(partyName),
-      color: mapping?.color || "#888888",
+    const config: ParliamentaryGroupConfig | undefined = ASSEMBLY_GROUPS[csvAbrev];
+    const groupCode = config?.code || csvAbrev;
+    const groupName = config?.name || fullName;
+
+    // 1. Upsert parliamentary group
+    const groupData = {
+      name: groupName,
+      shortName: config?.shortName || null,
+      color: config?.color || "#888888",
+      chamber: Chamber.AN,
+      politicalPosition: config?.politicalPosition || null,
+      wikidataId: config?.wikidataId || null,
     };
 
-    // Try to find by shortName first, then by name
-    let existing = await db.party.findUnique({
-      where: { shortName: partyData.shortName },
+    let group = await db.parliamentaryGroup.findUnique({
+      where: { code_chamber: { code: groupCode, chamber: Chamber.AN } },
     });
 
-    if (!existing) {
-      existing = await db.party.findUnique({
-        where: { name: partyData.name },
+    if (group) {
+      group = await db.parliamentaryGroup.update({
+        where: { id: group.id },
+        data: groupData,
       });
+      groupsUpdated++;
+    } else {
+      group = await db.parliamentaryGroup.create({
+        data: { code: groupCode, ...groupData },
+      });
+      groupsCreated++;
     }
 
-    if (existing) {
-      // Update existing party (only color, keep existing name/shortName if different)
-      await db.party.update({
-        where: { id: existing.id },
-        data: { color: partyData.color },
+    csvToGroupId.set(csvAbrev, group.id);
+
+    // 2. Resolve real party via defaultPartyId (set during seed)
+    //    or look up by Wikidata ID
+    let realPartyId: string | null = group.defaultPartyId;
+
+    if (!realPartyId && config?.partyWikidataId) {
+      const extId = await db.externalId.findFirst({
+        where: {
+          source: DataSource.WIKIDATA,
+          externalId: config.partyWikidataId,
+          partyId: { not: null },
+        },
+        select: { partyId: true },
       });
-      csvToPartyId.set(csvAbrev, existing.id);
-      updated++;
-    } else {
-      const newParty = await db.party.create({ data: partyData });
-      csvToPartyId.set(csvAbrev, newParty.id);
-      created++;
+      realPartyId = extId?.partyId ?? null;
+
+      // Update the group's defaultPartyId for future use
+      if (realPartyId) {
+        await db.parliamentaryGroup.update({
+          where: { id: group.id },
+          data: { defaultPartyId: realPartyId },
+        });
+      }
     }
+
+    csvToPartyId.set(csvAbrev, realPartyId);
   }
 
-  return { created, updated, csvToPartyId };
+  return { groupsCreated, groupsUpdated, csvToGroupId, csvToPartyId };
 }
 
 /**
@@ -122,12 +158,14 @@ async function syncParties(
  */
 async function syncDeputy(
   dep: DeputeCSV,
-  partyMap: Map<string, string>
+  groupMap: Map<string, string>,
+  partyMap: Map<string, string | null>
 ): Promise<"created" | "updated" | "error"> {
   try {
     const slug = generateSlug(`${dep.prenom}-${dep.nom}`);
     const fullName = `${dep.prenom} ${dep.nom}`;
-    const partyId = partyMap.get(dep.groupeAbrev) || null;
+    const partyId = partyMap.get(dep.groupeAbrev) ?? null;
+    const groupId = groupMap.get(dep.groupeAbrev) || null;
 
     const birthDate = dep.naissance ? new Date(dep.naissance) : null;
     const mandateStart = dep.datePriseFonction ? new Date(dep.datePriseFonction) : new Date();
@@ -168,6 +206,7 @@ async function syncDeputy(
       sourceUrl: `https://www.assemblee-nationale.fr/dyn/deputes/${dep.id}`,
       officialUrl: `https://www.assemblee-nationale.fr/dyn/deputes/${dep.id}`,
       externalId: `${dep.id}-leg${dep.legislature}`,
+      parliamentaryGroupId: groupId,
     };
 
     if (existing) {
@@ -177,7 +216,7 @@ async function syncDeputy(
         data: politicianData,
       });
 
-      // Update party affiliation via service (ensures PartyMembership consistency)
+      // Update party affiliation via service (real party, not group)
       await politicianService.setCurrentParty(existing.id, partyId);
 
       // Upsert external IDs
@@ -304,20 +343,16 @@ export async function syncDeputies(): Promise<SyncResult> {
     // 1. Fetch data
     const deputies = await fetchDeputiesCSV();
 
-    // 2. Sync parties first and get CSV abbreviation -> party ID mapping
-    console.log("Syncing parties...");
-    const { created, updated, csvToPartyId } = await syncParties(deputies);
-    result.partiesCreated = created;
-    result.partiesUpdated = updated;
+    // 2. Sync parliamentary groups and resolve real parties
+    console.log("Syncing parliamentary groups...");
+    const { groupsCreated, groupsUpdated, csvToGroupId, csvToPartyId } = await syncGroups(deputies);
+    result.partiesCreated = groupsCreated;
+    result.partiesUpdated = groupsUpdated;
 
-    // 3. Build party map (CSV groupeAbrev -> id)
-    // This ensures we can look up by the CSV abbreviation, not the mapped shortName
-    const partyMap = csvToPartyId;
-
-    // 4. Sync deputies
+    // 3. Sync deputies (with real party ID, not group ID)
     console.log("Syncing deputies...");
     for (const dep of deputies) {
-      const status = await syncDeputy(dep, partyMap);
+      const status = await syncDeputy(dep, csvToGroupId, csvToPartyId);
       if (status === "created") result.deputiesCreated++;
       else if (status === "updated") result.deputiesUpdated++;
       else result.errors.push(`${dep.prenom} ${dep.nom}`);

@@ -1,14 +1,9 @@
 import { db } from "@/lib/db";
 import { generateSlug } from "@/lib/utils";
-import { MandateType, DataSource } from "@/generated/prisma";
-import {
-  SenateurAPI,
-  NosSenateursAPI,
-  SENATE_GROUP_MAPPINGS,
-  SenatSyncResult,
-  PartyMapping,
-} from "./types";
+import { MandateType, DataSource, Chamber } from "@/generated/prisma";
+import { SenateurAPI, NosSenateursAPI, SenatSyncResult } from "./types";
 import { politicianService } from "@/services/politician";
+import { SENATE_GROUPS, type ParliamentaryGroupConfig } from "@/config/parliamentaryGroups";
 
 const SENAT_API_URL = "https://www.senat.fr/api-senat/senateurs.json";
 const NOSSENATEURS_API_URL = "https://archive.nossenateurs.fr/senateurs/json";
@@ -202,11 +197,17 @@ async function fetchNosSenateursAPI(): Promise<Map<string, NosSenateursAPI>> {
 }
 
 /**
- * Sync parties from senators data
+ * Sync parliamentary groups from senators data.
+ *
+ * Creates/updates ParliamentaryGroup records (not Party records).
+ * Resolves the real party via the config's partyWikidataId.
  */
-async function syncSenateGroups(
-  senators: SenateurAPI[]
-): Promise<{ created: number; updated: number; codeToPartyId: Map<string, string> }> {
+async function syncSenateParliamentaryGroups(senators: SenateurAPI[]): Promise<{
+  groupsCreated: number;
+  groupsUpdated: number;
+  codeToGroupId: Map<string, string>;
+  codeToPartyId: Map<string, string | null>;
+}> {
   const uniqueGroups = new Map<string, { code: string; libelle: string }>();
 
   // Extract unique groups
@@ -216,55 +217,71 @@ async function syncSenateGroups(
     }
   }
 
-  let created = 0;
-  let updated = 0;
-  const codeToPartyId = new Map<string, string>();
+  let groupsCreated = 0;
+  let groupsUpdated = 0;
+  const codeToGroupId = new Map<string, string>();
+  const codeToPartyId = new Map<string, string | null>();
 
   for (const [code, groupe] of uniqueGroups) {
-    const mapping: PartyMapping = SENATE_GROUP_MAPPINGS[code] || {
-      shortName: code,
-      fullName: groupe.libelle,
-      color: "#888888",
+    const config: ParliamentaryGroupConfig | undefined = SENATE_GROUPS[code];
+    const groupCode = config?.code || code;
+    const groupName = config?.name || groupe.libelle;
+
+    // 1. Upsert parliamentary group
+    const groupData = {
+      name: groupName,
+      shortName: config?.shortName || null,
+      color: config?.color || "#888888",
+      chamber: Chamber.SENAT,
+      politicalPosition: config?.politicalPosition || null,
+      wikidataId: config?.wikidataId || null,
     };
 
-    // Try to find existing party by shortName
-    let existing = await db.party.findUnique({
-      where: { shortName: mapping.shortName },
+    let group = await db.parliamentaryGroup.findUnique({
+      where: { code_chamber: { code: groupCode, chamber: Chamber.SENAT } },
     });
 
-    // Fallback: try to find by full name
-    if (!existing) {
-      existing = await db.party.findUnique({
-        where: { name: mapping.fullName },
+    if (group) {
+      group = await db.parliamentaryGroup.update({
+        where: { id: group.id },
+        data: groupData,
       });
+      groupsUpdated++;
+    } else {
+      group = await db.parliamentaryGroup.create({
+        data: { code: groupCode, ...groupData },
+      });
+      groupsCreated++;
     }
 
-    if (existing) {
-      // Update if needed
-      if (!existing.color) {
-        await db.party.update({
-          where: { id: existing.id },
-          data: { color: mapping.color },
+    codeToGroupId.set(code, group.id);
+
+    // 2. Resolve real party via defaultPartyId or Wikidata lookup
+    let realPartyId: string | null = group.defaultPartyId;
+
+    if (!realPartyId && config?.partyWikidataId) {
+      const extId = await db.externalId.findFirst({
+        where: {
+          source: DataSource.WIKIDATA,
+          externalId: config.partyWikidataId,
+          partyId: { not: null },
+        },
+        select: { partyId: true },
+      });
+      realPartyId = extId?.partyId ?? null;
+
+      if (realPartyId) {
+        await db.parliamentaryGroup.update({
+          where: { id: group.id },
+          data: { defaultPartyId: realPartyId },
         });
       }
-      codeToPartyId.set(code, existing.id);
-      updated++;
-    } else {
-      // Create new party
-      const newParty = await db.party.create({
-        data: {
-          name: mapping.fullName,
-          shortName: mapping.shortName,
-          slug: generateSlug(mapping.fullName),
-          color: mapping.color,
-        },
-      });
-      codeToPartyId.set(code, newParty.id);
-      created++;
     }
+
+    codeToPartyId.set(code, realPartyId);
   }
 
-  return { created, updated, codeToPartyId };
+  return { groupsCreated, groupsUpdated, codeToGroupId, codeToPartyId };
 }
 
 /**
@@ -272,13 +289,15 @@ async function syncSenateGroups(
  */
 async function syncSenator(
   sen: SenateurAPI,
-  partyMap: Map<string, string>,
+  groupMap: Map<string, string>,
+  partyMap: Map<string, string | null>,
   nosSenateursData: Map<string, NosSenateursAPI>
 ): Promise<"created" | "updated" | "error"> {
   try {
     const slug = generateSlug(`${sen.prenom}-${sen.nom}`);
     const fullName = `${sen.prenom} ${sen.nom}`;
     const partyId = sen.groupe?.code ? (partyMap.get(sen.groupe.code) ?? null) : null;
+    const groupId = sen.groupe?.code ? groupMap.get(sen.groupe.code) || null : null;
 
     // Try to get additional data from NosSenateurs
     const extraData = nosSenateursData.get(sen.matricule) || nosSenateursData.get(slug);
@@ -361,6 +380,7 @@ async function syncSenator(
       sourceUrl: sen.url || `https://www.senat.fr/senateur/${sen.matricule}/`,
       officialUrl: sen.url || `https://www.senat.fr/senateur/${sen.matricule}/`,
       externalId: `senat-${sen.matricule}`,
+      parliamentaryGroupId: groupId,
     };
 
     if (existing) {
@@ -379,7 +399,7 @@ async function syncSenator(
         },
       });
 
-      // Update party affiliation via service (ensures PartyMembership consistency)
+      // Update party affiliation via service (real party, not group)
       await politicianService.setCurrentParty(existing.id, partyId);
 
       // Upsert external ID
@@ -516,16 +536,17 @@ export async function syncSenators(): Promise<SenatSyncResult> {
       fetchNosSenateursAPI(),
     ]);
 
-    // 2. Sync parties/groups
-    console.log("Syncing senate groups...");
-    const { created, updated, codeToPartyId } = await syncSenateGroups(senators);
-    result.partiesCreated = created;
-    result.partiesUpdated = updated;
+    // 2. Sync parliamentary groups and resolve real parties
+    console.log("Syncing senate parliamentary groups...");
+    const { groupsCreated, groupsUpdated, codeToGroupId, codeToPartyId } =
+      await syncSenateParliamentaryGroups(senators);
+    result.partiesCreated = groupsCreated;
+    result.partiesUpdated = groupsUpdated;
 
-    // 3. Sync senators
+    // 3. Sync senators (with real party ID, not group ID)
     console.log("Syncing senators...");
     for (const sen of senators) {
-      const status = await syncSenator(sen, codeToPartyId, nosSenateursData);
+      const status = await syncSenator(sen, codeToGroupId, codeToPartyId, nosSenateursData);
       if (status === "created") result.senatorsCreated++;
       else if (status === "updated") result.senatorsUpdated++;
       else result.errors.push(`${sen.prenom} ${sen.nom}`);

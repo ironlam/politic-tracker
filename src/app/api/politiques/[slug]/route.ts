@@ -64,16 +64,28 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
             color: politician.currentParty.color,
           }
         : null,
-      mandates: politician.mandates.map((m) => ({
-        id: m.id,
-        type: m.type,
-        title: m.title,
-        institution: m.institution,
-        constituency: m.constituency,
-        startDate: m.startDate,
-        endDate: m.endDate,
-        isCurrent: m.isCurrent,
-      })),
+      mandates: politician.mandates.map((m) => {
+        const mandate = m as typeof m & {
+          parliamentaryGroup?: { code: string; name: string; color: string | null } | null;
+        };
+        return {
+          id: mandate.id,
+          type: mandate.type,
+          title: mandate.title,
+          institution: mandate.institution,
+          constituency: mandate.constituency,
+          startDate: mandate.startDate,
+          endDate: mandate.endDate,
+          isCurrent: mandate.isCurrent,
+          parliamentaryGroup: mandate.parliamentaryGroup
+            ? {
+                code: mandate.parliamentaryGroup.code,
+                name: mandate.parliamentaryGroup.name,
+                color: mandate.parliamentaryGroup.color,
+              }
+            : null,
+        };
+      }),
       declarations: politician.declarations.map((d) => ({
         id: d.id,
         type: d.type,

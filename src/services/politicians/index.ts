@@ -63,6 +63,11 @@ export async function getPoliticianBySlug(slug: string): Promise<PoliticianFull 
       currentParty: true,
       mandates: {
         orderBy: { startDate: "desc" },
+        include: {
+          parliamentaryGroup: {
+            select: { code: true, name: true, color: true },
+          },
+        },
       },
       affairs: {
         include: {

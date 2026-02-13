@@ -397,6 +397,7 @@ export const CHAMBER_COLORS: Record<Chamber, string> = {
 import type { DossierStatus, AmendmentStatus } from "@/generated/prisma";
 
 export const DOSSIER_STATUS_LABELS: Record<DossierStatus, string> = {
+  DEPOSE: "Déposé",
   EN_COURS: "En discussion",
   ADOPTE: "Adopté",
   REJETE: "Rejeté",
@@ -404,6 +405,8 @@ export const DOSSIER_STATUS_LABELS: Record<DossierStatus, string> = {
 };
 
 export const DOSSIER_STATUS_COLORS: Record<DossierStatus, string> = {
+  DEPOSE:
+    "bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-900/40 dark:text-amber-300 dark:border-amber-700",
   EN_COURS:
     "bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-900/40 dark:text-blue-300 dark:border-blue-700",
   ADOPTE:
@@ -415,6 +418,7 @@ export const DOSSIER_STATUS_COLORS: Record<DossierStatus, string> = {
 };
 
 export const DOSSIER_STATUS_ICONS: Record<DossierStatus, string> = {
+  DEPOSE: "📋",
   EN_COURS: "🔴",
   ADOPTE: "✅",
   REJETE: "❌",

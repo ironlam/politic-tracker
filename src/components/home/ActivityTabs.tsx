@@ -319,7 +319,13 @@ function DossiersContent({ dossiers }: { dossiers: DossierItem[] }) {
                   </p>
                 )}
               </div>
-              <Badge variant={dossier.status === "EN_COURS" ? "default" : "secondary"}>
+              <Badge
+                variant={
+                  dossier.status === "EN_COURS" || dossier.status === "DEPOSE"
+                    ? "default"
+                    : "secondary"
+                }
+              >
                 {statusLabels[dossier.status] || dossier.status}
               </Badge>
             </Link>

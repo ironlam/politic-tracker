@@ -236,8 +236,16 @@ function determineStatus(codes: string[]): DossierStatus {
     return "RETIRE";
   }
 
-  // Default: in progress
-  return "EN_COURS";
+  // Codes indicating effective examination (readings, committees, CMP)
+  const examinationPrefixes = ["AN1", "AN2", "SN1", "SN2", "CMP", "ANLUNI", "ANLDEF", "SNLDEF"];
+  const hasExamination = codes.some(
+    (c) =>
+      examinationPrefixes.some((p) => c.startsWith(p)) ||
+      c.includes("COM-FOND") ||
+      c.includes("COM-AVIS")
+  );
+
+  return hasExamination ? "EN_COURS" : "DEPOSE";
 }
 
 /**
@@ -343,6 +351,7 @@ async function syncLegislation(
     dossiersUpdated: 0,
     dossiersSkipped: 0,
     byStatus: {
+      DEPOSE: 0,
       EN_COURS: 0,
       ADOPTE: 0,
       REJETE: 0,
@@ -437,8 +446,8 @@ async function syncLegislation(
         const allCodes = findAllCodes(dp.actesLegislatifs?.acteLegislatif);
         const status = determineStatus(allCodes);
 
-        // Skip non-active if activeOnly
-        if (activeOnly && status !== "EN_COURS") {
+        // Skip non-active if activeOnly (DEPOSE and EN_COURS are both active)
+        if (activeOnly && status !== "EN_COURS" && status !== "DEPOSE") {
           stats.dossiersSkipped++;
           continue;
         }
@@ -541,7 +550,7 @@ const handler: SyncHandler = {
     {
       name: "--active",
       type: "boolean",
-      description: "Only sync active (EN_COURS) dossiers",
+      description: "Only sync active (DEPOSE/EN_COURS) dossiers",
     },
     {
       name: "--today",

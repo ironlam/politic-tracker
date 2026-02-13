@@ -65,6 +65,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     if (dossier.status) {
       const statusLabels: Record<string, string> = {
+        DEPOSE: "Déposé",
         EN_COURS: "En discussion",
         ADOPTE: "Adopté",
         REJETE: "Rejeté",

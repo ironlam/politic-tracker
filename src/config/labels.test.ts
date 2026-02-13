@@ -8,6 +8,9 @@ import {
   getCategoriesForSuper,
   MANDATE_TYPE_LABELS,
   AFFAIR_EVENT_TYPE_LABELS,
+  DOSSIER_STATUS_LABELS,
+  DOSSIER_STATUS_COLORS,
+  DOSSIER_STATUS_ICONS,
 } from "./labels";
 
 describe("AFFAIR_STATUS_LABELS", () => {
@@ -150,5 +153,33 @@ describe("AFFAIR_EVENT_TYPE_LABELS", () => {
   it("should have labels for all event types", () => {
     const eventCount = Object.keys(AFFAIR_EVENT_TYPE_LABELS).length;
     expect(eventCount).toBeGreaterThanOrEqual(20); // We defined 25 event types
+  });
+});
+
+describe("DOSSIER_STATUS_LABELS", () => {
+  it("should have labels for all dossier statuses including DEPOSE", () => {
+    const statuses = ["DEPOSE", "EN_COURS", "ADOPTE", "REJETE", "RETIRE"];
+    statuses.forEach((status) => {
+      expect(DOSSIER_STATUS_LABELS).toHaveProperty(status);
+      expect(typeof DOSSIER_STATUS_LABELS[status as keyof typeof DOSSIER_STATUS_LABELS]).toBe(
+        "string"
+      );
+    });
+  });
+
+  it("should have matching colors for all dossier statuses", () => {
+    Object.keys(DOSSIER_STATUS_LABELS).forEach((status) => {
+      expect(DOSSIER_STATUS_COLORS).toHaveProperty(status);
+    });
+  });
+
+  it("should have matching icons for all dossier statuses", () => {
+    Object.keys(DOSSIER_STATUS_LABELS).forEach((status) => {
+      expect(DOSSIER_STATUS_ICONS).toHaveProperty(status);
+    });
+  });
+
+  it("should label DEPOSE correctly", () => {
+    expect(DOSSIER_STATUS_LABELS.DEPOSE).toBe("Déposé");
   });
 });

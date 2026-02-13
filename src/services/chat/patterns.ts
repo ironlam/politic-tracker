@@ -320,7 +320,7 @@ const PATTERNS: QueryPattern[] = [
     handler: async (_q, match) => {
       const topic = match[1]?.trim();
 
-      const where: Record<string, unknown> = { status: "EN_COURS" };
+      const where: Record<string, unknown> = { status: { in: ["DEPOSE", "EN_COURS"] } };
       if (topic && topic.length > 2) {
         where.OR = [
           { title: { contains: topic, mode: "insensitive" } },

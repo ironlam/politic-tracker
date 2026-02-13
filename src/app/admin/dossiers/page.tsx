@@ -166,6 +166,12 @@ export default async function AdminDossiersPage({ searchParams }: PageProps) {
         </Card>
         <Card>
           <CardContent className="pt-4">
+            <div className="text-2xl font-bold text-amber-600">{stats.byStatus["DEPOSE"] || 0}</div>
+            <p className="text-sm text-muted-foreground">Déposés</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-4">
             <div className="text-2xl font-bold text-blue-600">
               {stats.byStatus["EN_COURS"] || 0}
             </div>

@@ -223,8 +223,14 @@ async function syncGovernmentMember(
     let mandateCreated = false;
 
     if (existing) {
-      // Check if this specific mandate already exists
-      const existingMandate = existing.mandates.find((m) => m.externalId === externalId);
+      // Check if this specific mandate already exists (by externalId OR by type+date proximity)
+      const existingMandate =
+        existing.mandates.find((m) => m.externalId === externalId) ||
+        existing.mandates.find((m) => {
+          if (m.type !== mandateType) return false;
+          const diff = Math.abs(m.startDate.getTime() - startDate.getTime());
+          return diff < 3 * 24 * 60 * 60 * 1000; // Within 3 days
+        });
 
       if (!existingMandate) {
         // Create new mandate for existing politician
@@ -312,7 +318,44 @@ export async function syncGovernment(
     // 2. Filter to current government if requested
     const records = currentOnly ? getCurrentGovernment(allRecords) : allRecords;
 
-    // 3. Sync members
+    // 3. Close stale government mandates not in current CSV
+    if (currentOnly && records.length > 0) {
+      const currentPoliticianSlugs = new Set(
+        records.map((r) => generateSlug(`${r.prenom}-${r.nom}`))
+      );
+
+      const ministerTypes = [
+        MandateType.PREMIER_MINISTRE,
+        MandateType.MINISTRE,
+        MandateType.MINISTRE_DELEGUE,
+        MandateType.SECRETAIRE_ETAT,
+      ];
+
+      const staleMandates = await db.mandate.findMany({
+        where: {
+          type: { in: ministerTypes },
+          isCurrent: true,
+        },
+        include: { politician: { select: { slug: true, fullName: true } } },
+      });
+
+      let closedCount = 0;
+      for (const mandate of staleMandates) {
+        if (!currentPoliticianSlugs.has(mandate.politician.slug)) {
+          await db.mandate.update({
+            where: { id: mandate.id },
+            data: { isCurrent: false, endDate: new Date() },
+          });
+          closedCount++;
+        }
+      }
+
+      if (closedCount > 0) {
+        console.log(`Closed ${closedCount} stale government mandates`);
+      }
+    }
+
+    // 4. Sync members
     console.log(`Syncing ${records.length} government members...`);
     for (const member of records) {
       const { status, mandateCreated } = await syncGovernmentMember(member);

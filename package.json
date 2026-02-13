@@ -108,6 +108,9 @@
     "sync:elections:municipales": "tsx scripts/sync-candidatures.ts",
     "sync:elections:municipales:stats": "tsx scripts/sync-candidatures.ts --stats",
     "seed:elections": "tsx scripts/seed-elections.ts",
+    "seed:parliamentary-groups": "tsx scripts/seed-parliamentary-groups.ts",
+    "migrate:groups-to-parties": "tsx scripts/migrate-groups-to-parties.ts",
+    "migrate:groups-to-parties:execute": "tsx scripts/migrate-groups-to-parties.ts --execute",
     "prepare": "husky"
   },
   "dependencies": {

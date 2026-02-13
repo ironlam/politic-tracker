@@ -118,6 +118,7 @@ model Party {
   externalIds       ExternalId[]      // IDs from all external sources (Wikidata, etc.)
   pressMentions     PressArticlePartyMention[]  // Mentions in press articles
   candidacies       Candidacy[]                 // Election candidacies
+  leadershipMandates Mandate[]                  // Leadership mandates (PRESIDENT_PARTI)
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -189,6 +190,13 @@ model Mandate {
   europeanGroup      EuropeanGroup? @relation(fields: [europeanGroupId], references: [id])
   europeanGroupId    String?
 
+  // Data origin tracking
+  source       DataSource?
+
+  // Party link (for PRESIDENT_PARTI mandates)
+  party        Party?    @relation(fields: [partyId], references: [id])
+  partyId      String?
+
   // External reference
   externalId   String?     // ID from source API
   sourceUrl    String?     // Link to data source (for traceability)
@@ -203,6 +211,7 @@ model Mandate {
   @@index([isCurrent, type])
   @@index([europeanGroupId])
   @@index([departmentCode])
+  @@index([partyId])
 }
 
 // European Parliament political groups

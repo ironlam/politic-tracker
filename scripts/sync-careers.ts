@@ -487,6 +487,20 @@ Features:
               continue;
             }
 
+            // Never overwrite manual entries
+            const manualEntry = await db.mandate.findFirst({
+              where: {
+                politicianId: politicianExt.politicianId,
+                type: MandateType.PRESIDENT_PARTI,
+                partyId: data.partyId,
+                source: "MANUAL",
+              },
+            });
+            if (manualEntry) {
+              stats.mandatesSkipped++;
+              continue;
+            }
+
             // Check if mandate already exists
             const existing = await db.mandate.findFirst({
               where: {
@@ -524,6 +538,8 @@ Features:
                     type: MandateType.PRESIDENT_PARTI,
                     title: `Dirigeant(e) - ${data.partyName}`,
                     institution: data.partyName,
+                    partyId: data.partyId,
+                    source: DataSource.WIKIDATA,
                     startDate: data.startDate ?? new Date(),
                     isCurrent: true,
                     sourceUrl: `https://www.wikidata.org/wiki/${data.partyWikidataId}`,

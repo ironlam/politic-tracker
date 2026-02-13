@@ -178,7 +178,7 @@ export const MANDATE_TYPE_LABELS: Record<MandateType, string> = {
   CONSEILLER_REGIONAL: "Conseiller régional",
   CONSEILLER_DEPARTEMENTAL: "Conseiller départemental",
   CONSEILLER_MUNICIPAL: "Conseiller municipal",
-  PRESIDENT_PARTI: "Président(e) de parti",
+  PRESIDENT_PARTI: "Dirigeant(e) de parti",
   OTHER: "Autre mandat",
 };
 
@@ -630,6 +630,22 @@ export const ELECTION_SCOPE_LABELS: Record<ElectionScope, string> = {
 export const SUFFRAGE_TYPE_LABELS: Record<SuffrageType, string> = {
   DIRECT: "Suffrage universel direct",
   INDIRECT: "Suffrage indirect",
+};
+
+// ============================================
+// PARTY LEADERSHIP TITLE SUGGESTIONS
+// ============================================
+
+export const PARTY_LEADERSHIP_TITLE_SUGGESTIONS: Record<string, string> = {
+  RN: "Président(e)",
+  LR: "Président(e)",
+  RE: "Secrétaire général(e)",
+  PS: "Premier(ère) secrétaire",
+  EELV: "Secrétaire national(e)",
+  PCF: "Secrétaire national(e)",
+  LFI: "Coordinateur(trice)",
+  MoDem: "Président(e)",
+  REC: "Président(e)",
 };
 
 // ============================================

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { getColor } from "@/config/colors";
+import { getColor, TEXT_COLORS } from "@/config/colors";
 import { CHAMBER_LABELS, CHAMBER_COLORS } from "@/config/labels";
 import type { VoteStatsResult } from "@/services/voteStats";
 
@@ -82,24 +82,22 @@ export function VotesTab({ data, chamberFilter }: VotesTabProps) {
           </CardHeader>
           <CardContent>
             <div className="flex items-baseline gap-2">
-              <span
-                className="text-2xl font-bold"
-                style={{ color: getColor("vote", "pour", "light") }}
-              >
+              <span className={`text-2xl font-bold ${TEXT_COLORS.vote.pour}`}>
                 {global.adoptes}
               </span>
               <span className="text-muted-foreground text-sm">adoptés</span>
               <span className="text-muted-foreground">·</span>
-              <span
-                className="text-2xl font-bold"
-                style={{ color: getColor("vote", "contre", "light") }}
-              >
+              <span className={`text-2xl font-bold ${TEXT_COLORS.vote.contre}`}>
                 {global.rejetes}
               </span>
               <span className="text-muted-foreground text-sm">rejetés</span>
             </div>
             {/* Mini bar */}
-            <div className="w-full h-2 rounded-full overflow-hidden flex bg-muted mt-2">
+            <div
+              className="w-full h-2 rounded-full overflow-hidden flex bg-muted mt-2"
+              role="img"
+              aria-label={`${global.adoptes} adoptés, ${global.rejetes} rejetés`}
+            >
               <div
                 className="h-full"
                 style={{
@@ -124,18 +122,12 @@ export function VotesTab({ data, chamberFilter }: VotesTabProps) {
           </CardHeader>
           <CardContent>
             <div className="flex items-baseline gap-2">
-              <span
-                className="text-2xl font-bold"
-                style={{ color: getColor("chamber", "AN", "light") }}
-              >
+              <span className={`text-2xl font-bold ${TEXT_COLORS.chamber.AN}`}>
                 {global.anScrutins}
               </span>
               <span className="text-xs text-muted-foreground">AN</span>
               <span className="text-muted-foreground">·</span>
-              <span
-                className="text-2xl font-bold"
-                style={{ color: getColor("chamber", "SENAT", "light") }}
-              >
+              <span className={`text-2xl font-bold ${TEXT_COLORS.chamber.SENAT}`}>
                 {global.senatScrutins}
               </span>
               <span className="text-xs text-muted-foreground">Sénat</span>
@@ -210,12 +202,14 @@ export function VotesTab({ data, chamberFilter }: VotesTabProps) {
                     <div className="flex justify-between text-sm mb-1">
                       <Link
                         href={party.partySlug ? `/partis/${party.partySlug}` : "/partis"}
+                        title={party.partyName}
                         className="hover:underline flex items-center gap-2"
                       >
                         {party.partyColor && (
                           <span
                             className="w-3 h-3 rounded-full inline-block shrink-0"
                             style={{ backgroundColor: party.partyColor }}
+                            aria-label={`Couleur du parti ${party.partyName}`}
                           />
                         )}
                         <span>{party.partyShortName || party.partyName}</span>
@@ -226,7 +220,11 @@ export function VotesTab({ data, chamberFilter }: VotesTabProps) {
                       </div>
                     </div>
                     {/* Stacked bar */}
-                    <div className="w-full h-4 rounded-full overflow-hidden flex bg-muted">
+                    <div
+                      className="w-full h-4 rounded-full overflow-hidden flex bg-muted"
+                      role="img"
+                      aria-label={`${party.partyShortName || party.partyName} : ${pourPct.toFixed(0)}% pour, ${contrePct.toFixed(0)}% contre, ${abstPct.toFixed(0)}% abstention`}
+                    >
                       <div
                         className="h-full"
                         style={{
@@ -252,14 +250,12 @@ export function VotesTab({ data, chamberFilter }: VotesTabProps) {
                         title={`Abstention: ${party.abstention.toLocaleString("fr-FR")}`}
                       />
                     </div>
-                    <div className="flex gap-4 text-xs text-muted-foreground mt-1">
-                      <span style={{ color: getColor("vote", "pour", "light") }}>
-                        {pourPct.toFixed(0)}% pour
-                      </span>
-                      <span style={{ color: getColor("vote", "contre", "light") }}>
+                    <div className="flex gap-4 text-xs mt-1">
+                      <span className={TEXT_COLORS.vote.pour}>{pourPct.toFixed(0)}% pour</span>
+                      <span className={TEXT_COLORS.vote.contre}>
                         {contrePct.toFixed(0)}% contre
                       </span>
-                      <span style={{ color: getColor("vote", "abstention", "light") }}>
+                      <span className={TEXT_COLORS.vote.abstention}>
                         {abstPct.toFixed(0)}% abst.
                       </span>
                     </div>
@@ -323,11 +319,11 @@ export function VotesTab({ data, chamberFilter }: VotesTabProps) {
                     </Badge>
                   </div>
                   <div className="flex gap-2 text-xs">
-                    <span style={{ color: getColor("vote", "pour", "light") }}>
+                    <span className={TEXT_COLORS.vote.pour}>
                       {scrutin.votesFor} pour ({pourPct.toFixed(0)}%)
                     </span>
                     <span className="text-muted-foreground">·</span>
-                    <span style={{ color: getColor("vote", "contre", "light") }}>
+                    <span className={TEXT_COLORS.vote.contre}>
                       {scrutin.votesAgainst} contre ({contrePct.toFixed(0)}%)
                     </span>
                   </div>
@@ -344,6 +340,7 @@ export function VotesTab({ data, chamberFilter }: VotesTabProps) {
           <span
             className="w-4 h-4 rounded"
             style={{ backgroundColor: getColor("vote", "pour", "light") }}
+            aria-hidden="true"
           />
           <span>Pour</span>
         </div>
@@ -351,6 +348,7 @@ export function VotesTab({ data, chamberFilter }: VotesTabProps) {
           <span
             className="w-4 h-4 rounded"
             style={{ backgroundColor: getColor("vote", "contre", "light") }}
+            aria-hidden="true"
           />
           <span>Contre</span>
         </div>
@@ -358,6 +356,7 @@ export function VotesTab({ data, chamberFilter }: VotesTabProps) {
           <span
             className="w-4 h-4 rounded"
             style={{ backgroundColor: getColor("vote", "abstention", "light") }}
+            aria-hidden="true"
           />
           <span>Abstention</span>
         </div>

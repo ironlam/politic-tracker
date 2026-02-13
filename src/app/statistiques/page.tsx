@@ -6,19 +6,20 @@ import {
   StatsTabs,
   AffairsTab,
   VotesTab,
-  PressTab,
+  FactChecksTab,
   GeoTab,
   type StatsTabType,
 } from "@/components/stats";
 import { CATEGORY_TO_SUPER, type AffairSuperCategory } from "@/config/labels";
-import type { AffairStatus, AffairCategory } from "@/types";
+import { DEPARTMENTS } from "@/config/departments";
+import type { AffairStatus, AffairCategory, FactCheckRating } from "@/types";
 import { voteStatsService } from "@/services/voteStats";
 import type { Chamber } from "@/generated/prisma";
 
 export const metadata: Metadata = {
   title: "Statistiques",
   description:
-    "Statistiques sur les représentants politiques français : affaires judiciaires, votes parlementaires, revue de presse, géographie",
+    "Statistiques sur les représentants politiques français : affaires judiciaires, votes parlementaires, fact-checks, géographie",
 };
 
 // Affairs data fetchers
@@ -172,113 +173,112 @@ async function getVotesData(chamber: "all" | "AN" | "SENAT") {
   return voteStatsService.getVoteStats(chamberParam);
 }
 
-// Press data fetchers
-async function getPressStats() {
-  const now = new Date();
-  const lastWeek = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-  const lastMonth = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+// Fact-checks data fetcher
+const FAUX_RATINGS: FactCheckRating[] = ["FALSE", "MOSTLY_FALSE", "MISLEADING", "OUT_OF_CONTEXT"];
+const MITIGE_RATINGS: FactCheckRating[] = ["HALF_TRUE"];
+const VRAI_RATINGS: FactCheckRating[] = ["TRUE", "MOSTLY_TRUE"];
 
-  const [totalArticles, bySource, lastWeekCount, lastMonthCount] = await Promise.all([
-    db.pressArticle.count(),
-    db.pressArticle.groupBy({
-      by: ["feedSource"],
-      _count: { feedSource: true },
-      orderBy: { _count: { feedSource: "desc" } },
+async function getFactCheckStats() {
+  const [total, byRating, bySource, topPoliticiansRaw] = await Promise.all([
+    db.factCheck.count(),
+    db.factCheck.groupBy({
+      by: ["verdictRating"],
+      _count: true,
+      orderBy: { _count: { verdictRating: "desc" } },
     }),
-    db.pressArticle.count({ where: { publishedAt: { gte: lastWeek } } }),
-    db.pressArticle.count({ where: { publishedAt: { gte: lastMonth } } }),
+    db.factCheck.groupBy({
+      by: ["source"],
+      _count: true,
+      orderBy: { _count: { source: "desc" } },
+    }),
+    db.$queryRaw<
+      Array<{
+        id: string;
+        slug: string;
+        fullName: string;
+        count: bigint;
+      }>
+    >`
+      SELECT p.id, p."fullName", p.slug, COUNT(*) as count
+      FROM "FactCheckMention" m
+      JOIN "Politician" p ON m."politicianId" = p.id
+      GROUP BY p.id, p."fullName", p.slug
+      ORDER BY count DESC
+      LIMIT 10
+    `,
   ]);
 
-  return {
-    totalArticles,
-    bySource: bySource.map((s) => ({
-      source: s.feedSource.toUpperCase(),
-      count: s._count.feedSource,
-    })),
-    lastWeek: lastWeekCount,
-    lastMonth: lastMonthCount,
+  // Build rating map
+  const ratingMap: Record<string, number> = {};
+  byRating.forEach((r) => {
+    ratingMap[r.verdictRating] = r._count;
+  });
+
+  // Group ratings
+  const groups = {
+    vrai: VRAI_RATINGS.reduce((sum, r) => sum + (ratingMap[r] || 0), 0),
+    mitige: MITIGE_RATINGS.reduce((sum, r) => sum + (ratingMap[r] || 0), 0),
+    faux: FAUX_RATINGS.reduce((sum, r) => sum + (ratingMap[r] || 0), 0),
+    inverifiable: ratingMap["UNVERIFIABLE"] || 0,
   };
-}
 
-async function getTopPoliticiansMentioned() {
-  const mentions = await db.pressArticleMention.groupBy({
-    by: ["politicianId"],
-    _count: { politicianId: true },
-    orderBy: { _count: { politicianId: "desc" } },
-    take: 10,
-  });
+  // Get party info for top politicians
+  const politicianIds = topPoliticiansRaw.map((p) => p.id);
+  let politicianParties: Record<
+    string,
+    { name: string; shortName: string | null; color: string | null } | null
+  > = {};
 
-  if (mentions.length === 0) return [];
+  if (politicianIds.length > 0) {
+    const politicians = await db.politician.findMany({
+      where: { id: { in: politicianIds } },
+      select: {
+        id: true,
+        currentParty: { select: { name: true, shortName: true, color: true } },
+      },
+    });
+    politicianParties = Object.fromEntries(politicians.map((p) => [p.id, p.currentParty]));
+  }
 
-  const politicians = await db.politician.findMany({
-    where: { id: { in: mentions.map((m) => m.politicianId).filter(Boolean) as string[] } },
-    select: {
-      id: true,
-      slug: true,
-      fullName: true,
-      currentParty: { select: { name: true, shortName: true, color: true } },
-    },
-  });
+  // Get per-politician verdict breakdown
+  const topPoliticians = await Promise.all(
+    topPoliticiansRaw.map(async (p) => {
+      const verdicts = await db.factCheck.groupBy({
+        by: ["verdictRating"],
+        where: {
+          mentions: { some: { politicianId: p.id } },
+        },
+        _count: true,
+      });
 
-  return mentions
-    .map((m) => {
-      const politician = politicians.find((p) => p.id === m.politicianId);
-      if (!politician) return null;
+      const verdictMap: Record<string, number> = {};
+      verdicts.forEach((v) => {
+        verdictMap[v.verdictRating] = v._count;
+      });
+
       return {
-        id: politician.id,
-        slug: politician.slug,
-        fullName: politician.fullName,
-        party: politician.currentParty,
-        mentionCount: m._count.politicianId,
+        id: p.id,
+        slug: p.slug,
+        fullName: p.fullName,
+        party: politicianParties[p.id] || null,
+        total: Number(p.count),
+        vrai: VRAI_RATINGS.reduce((sum, r) => sum + (verdictMap[r] || 0), 0),
+        mitige: MITIGE_RATINGS.reduce((sum, r) => sum + (verdictMap[r] || 0), 0),
+        faux: FAUX_RATINGS.reduce((sum, r) => sum + (verdictMap[r] || 0), 0),
       };
     })
-    .filter(Boolean) as {
-    id: string;
-    slug: string;
-    fullName: string;
-    party: { name: string; shortName: string | null; color: string | null } | null;
-    mentionCount: number;
-  }[];
-}
+  );
 
-async function getTopPartiesMentioned() {
-  const mentions = await db.pressArticlePartyMention.groupBy({
-    by: ["partyId"],
-    _count: { partyId: true },
-    orderBy: { _count: { partyId: "desc" } },
-    take: 5,
-  });
-
-  if (mentions.length === 0) return [];
-
-  const parties = await db.party.findMany({
-    where: { id: { in: mentions.map((m) => m.partyId) } },
-    select: {
-      id: true,
-      slug: true,
-      name: true,
-      shortName: true,
-      color: true,
-    },
-  });
-
-  return mentions
-    .map((m) => {
-      const party = parties.find((p) => p.id === m.partyId);
-      if (!party) return null;
-      return {
-        ...party,
-        mentionCount: m._count.partyId,
-      };
-    })
-    .filter(Boolean) as {
-    id: string;
-    slug: string;
-    name: string;
-    shortName: string | null;
-    color: string | null;
-    mentionCount: number;
-  }[];
+  return {
+    total,
+    groups,
+    byRating: byRating.map((r) => ({
+      rating: r.verdictRating as FactCheckRating,
+      count: r._count,
+    })),
+    bySource: bySource.map((s) => ({ source: s.source, count: s._count })),
+    topPoliticians,
+  };
 }
 
 // Geo data fetchers
@@ -310,61 +310,42 @@ async function getGeoStats() {
     take: 15,
   });
 
-  // Get counts by type for each department
-  const topDepartments = await Promise.all(
-    departments.map(async (d) => {
-      const [deputeCount, senateurCount] = await Promise.all([
-        db.mandate.count({
-          where: {
-            departmentCode: d.departmentCode,
-            type: "DEPUTE",
-            isCurrent: true,
-          },
-        }),
-        db.mandate.count({
-          where: {
-            departmentCode: d.departmentCode,
-            type: "SENATEUR",
-            isCurrent: true,
-          },
-        }),
-      ]);
+  const codes = departments.map((d) => d.departmentCode).filter(Boolean) as string[];
 
-      return {
-        code: d.departmentCode || "",
-        name: d.departmentCode || "",
-        deputes: deputeCount,
-        senateurs: senateurCount,
-        total: deputeCount + senateurCount,
-      };
-    })
-  );
+  // Fix N+1: 2 grouped queries instead of 15 × 2
+  const [deputeCounts, senateurCounts] = await Promise.all([
+    db.mandate.groupBy({
+      by: ["departmentCode"],
+      where: { type: "DEPUTE", isCurrent: true, departmentCode: { in: codes } },
+      _count: true,
+    }),
+    db.mandate.groupBy({
+      by: ["departmentCode"],
+      where: { type: "SENATEUR", isCurrent: true, departmentCode: { in: codes } },
+      _count: true,
+    }),
+  ]);
 
-  // Simple region mapping (simplified)
-  const regionMapping: Record<string, string> = {
-    "75": "Île-de-France",
-    "77": "Île-de-France",
-    "78": "Île-de-France",
-    "91": "Île-de-France",
-    "92": "Île-de-France",
-    "93": "Île-de-France",
-    "94": "Île-de-France",
-    "95": "Île-de-France",
-    "13": "Provence-Alpes-Côte d'Azur",
-    "69": "Auvergne-Rhône-Alpes",
-    "31": "Occitanie",
-    "33": "Nouvelle-Aquitaine",
-    "59": "Hauts-de-France",
-    "44": "Pays de la Loire",
-    "67": "Grand Est",
-    "35": "Bretagne",
-    "06": "Provence-Alpes-Côte d'Azur",
-  };
+  const deputeMap = Object.fromEntries(deputeCounts.map((d) => [d.departmentCode, d._count]));
+  const senateurMap = Object.fromEntries(senateurCounts.map((d) => [d.departmentCode, d._count]));
 
-  // Aggregate by region (simplified)
+  const topDepartments = departments.map((d) => {
+    const code = d.departmentCode || "";
+    const dep = deputeMap[code] || 0;
+    const sen = senateurMap[code] || 0;
+    return {
+      code,
+      name: DEPARTMENTS[code]?.name || code,
+      deputes: dep,
+      senateurs: sen,
+      total: dep + sen,
+    };
+  });
+
+  // Use complete DEPARTMENTS mapping for regions
   const byRegion: Record<string, { total: number; deputes: number; senateurs: number }> = {};
   topDepartments.forEach((d) => {
-    const region = regionMapping[d.code] || "Autre";
+    const region = DEPARTMENTS[d.code]?.region || "Autre";
     if (!byRegion[region]) {
       byRegion[region] = { total: 0, deputes: 0, senateurs: 0 };
     }
@@ -416,14 +397,18 @@ export default async function StatistiquesPage({ searchParams }: PageProps) {
     const voteStats = await getVotesData(chamber);
 
     content = <VotesTab data={voteStats} chamberFilter={chamber} />;
-  } else if (tab === "presse") {
-    const [stats, topPoliticians, topParties] = await Promise.all([
-      getPressStats(),
-      getTopPoliticiansMentioned(),
-      getTopPartiesMentioned(),
-    ]);
+  } else if (tab === "factchecks") {
+    const { total, groups, byRating, bySource, topPoliticians } = await getFactCheckStats();
 
-    content = <PressTab stats={stats} topPoliticians={topPoliticians} topParties={topParties} />;
+    content = (
+      <FactChecksTab
+        total={total}
+        groups={groups}
+        byRating={byRating}
+        bySource={bySource}
+        topPoliticians={topPoliticians}
+      />
+    );
   } else if (tab === "geo") {
     const stats = await getGeoStats();
     content = <GeoTab stats={stats} />;

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ProgressBar } from "./ProgressBar";
-import { getColor } from "@/config/colors";
+import { getColor, TEXT_COLORS } from "@/config/colors";
 
 interface DepartmentStats {
   code: string;
@@ -47,7 +47,7 @@ export function GeoTab({ stats }: GeoTabProps) {
             <CardTitle className="text-sm font-medium text-muted-foreground">Députés</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold" style={{ color: getColor("chamber", "AN", "light") }}>
+            <p className={`text-3xl font-bold ${TEXT_COLORS.chamber.AN}`}>
               {stats.totalByType.deputes}
             </p>
             <p className="text-sm text-muted-foreground">Assemblée nationale</p>
@@ -59,10 +59,7 @@ export function GeoTab({ stats }: GeoTabProps) {
             <CardTitle className="text-sm font-medium text-muted-foreground">Sénateurs</CardTitle>
           </CardHeader>
           <CardContent>
-            <p
-              className="text-3xl font-bold"
-              style={{ color: getColor("chamber", "SENAT", "light") }}
-            >
+            <p className={`text-3xl font-bold ${TEXT_COLORS.chamber.SENAT}`}>
               {stats.totalByType.senateurs}
             </p>
             <p className="text-sm text-muted-foreground">Sénat</p>
@@ -74,7 +71,7 @@ export function GeoTab({ stats }: GeoTabProps) {
             <CardTitle className="text-sm font-medium text-muted-foreground">Eurodéputés</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold" style={{ color: getColor("chamber", "PE", "light") }}>
+            <p className={`text-3xl font-bold ${TEXT_COLORS.chamber.PE}`}>
               {stats.totalByType.meps}
             </p>
             <p className="text-sm text-muted-foreground">Parlement européen</p>
@@ -88,10 +85,7 @@ export function GeoTab({ stats }: GeoTabProps) {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p
-              className="text-3xl font-bold"
-              style={{ color: getColor("chamber", "GOUVERNEMENT", "light") }}
-            >
+            <p className={`text-3xl font-bold ${TEXT_COLORS.chamber.GOUVERNEMENT}`}>
               {stats.totalByType.gouvernement}
             </p>
             <p className="text-sm text-muted-foreground">Membres actuels</p>
@@ -122,7 +116,11 @@ export function GeoTab({ stats }: GeoTabProps) {
                   <span className="font-medium shrink-0 ml-2">{dept.total}</span>
                 </div>
                 {/* Stacked bar: deputes + senateurs */}
-                <div className="w-full h-4 rounded-full overflow-hidden flex bg-muted">
+                <div
+                  className="w-full h-4 rounded-full overflow-hidden flex bg-muted"
+                  role="img"
+                  aria-label={`${dept.name} : ${dept.deputes} députés, ${dept.senateurs} sénateurs`}
+                >
                   <div
                     className="h-full"
                     style={{
@@ -140,13 +138,9 @@ export function GeoTab({ stats }: GeoTabProps) {
                     title={`Sénateurs: ${dept.senateurs}`}
                   />
                 </div>
-                <div className="flex gap-4 text-xs text-muted-foreground mt-1">
-                  <span style={{ color: getColor("chamber", "AN", "light") }}>
-                    {dept.deputes} députés
-                  </span>
-                  <span style={{ color: getColor("chamber", "SENAT", "light") }}>
-                    {dept.senateurs} sénateurs
-                  </span>
+                <div className="flex gap-4 text-xs mt-1">
+                  <span className={TEXT_COLORS.chamber.AN}>{dept.deputes} députés</span>
+                  <span className={TEXT_COLORS.chamber.SENAT}>{dept.senateurs} sénateurs</span>
                 </div>
               </div>
             ))}
@@ -166,7 +160,12 @@ export function GeoTab({ stats }: GeoTabProps) {
                   <span>{region.name}</span>
                   <span className="font-medium">{region.total}</span>
                 </div>
-                <ProgressBar value={region.total} max={maxByRegion} color="bg-primary" />
+                <ProgressBar
+                  value={region.total}
+                  max={maxByRegion}
+                  color="bg-primary"
+                  label={`${region.name} : ${region.total} élus`}
+                />
               </div>
             ))}
           </CardContent>
@@ -193,6 +192,7 @@ export function GeoTab({ stats }: GeoTabProps) {
           <span
             className="w-4 h-4 rounded"
             style={{ backgroundColor: getColor("chamber", "AN", "light") }}
+            aria-hidden="true"
           />
           <span>Assemblée nationale</span>
         </div>
@@ -200,6 +200,7 @@ export function GeoTab({ stats }: GeoTabProps) {
           <span
             className="w-4 h-4 rounded"
             style={{ backgroundColor: getColor("chamber", "SENAT", "light") }}
+            aria-hidden="true"
           />
           <span>Sénat</span>
         </div>
@@ -207,6 +208,7 @@ export function GeoTab({ stats }: GeoTabProps) {
           <span
             className="w-4 h-4 rounded"
             style={{ backgroundColor: getColor("chamber", "PE", "light") }}
+            aria-hidden="true"
           />
           <span>Parlement européen</span>
         </div>

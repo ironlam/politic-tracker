@@ -1,9 +1,9 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { Gavel, Vote, Newspaper, MapPin } from "lucide-react";
+import { Gavel, Vote, CheckCircle, MapPin } from "lucide-react";
 
-export type StatsTabType = "affaires" | "votes" | "presse" | "geo";
+export type StatsTabType = "affaires" | "votes" | "factchecks" | "geo";
 
 interface StatsTabsProps {
   activeTab: StatsTabType;
@@ -12,7 +12,7 @@ interface StatsTabsProps {
 const tabs: { id: StatsTabType; label: string; icon: typeof Gavel }[] = [
   { id: "affaires", label: "Affaires", icon: Gavel },
   { id: "votes", label: "Votes", icon: Vote },
-  { id: "presse", label: "Presse", icon: Newspaper },
+  { id: "factchecks", label: "Fact-checks", icon: CheckCircle },
   { id: "geo", label: "Géographie", icon: MapPin },
 ];
 
@@ -27,12 +27,18 @@ export function StatsTabs({ activeTab }: StatsTabsProps) {
   };
 
   return (
-    <div className="flex flex-wrap gap-1 p-1 bg-muted/50 rounded-lg w-fit mb-8">
+    <div
+      role="tablist"
+      aria-label="Catégories de statistiques"
+      className="flex flex-wrap gap-1 p-1 bg-muted/50 rounded-lg w-fit mb-8"
+    >
       {tabs.map((tab) => {
         const Icon = tab.icon;
         return (
           <button
             key={tab.id}
+            role="tab"
+            aria-selected={activeTab === tab.id}
             onClick={() => handleTabChange(tab.id)}
             className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
               activeTab === tab.id

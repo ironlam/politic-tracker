@@ -87,6 +87,27 @@ export const COLORS = {
   },
 } as const;
 
+// Tailwind text color classes (light + dark mode)
+export const TEXT_COLORS = {
+  vote: {
+    pour: "text-green-600 dark:text-green-400",
+    contre: "text-red-600 dark:text-red-400",
+    abstention: "text-yellow-600 dark:text-yellow-400",
+  },
+  chamber: {
+    AN: "text-blue-600 dark:text-blue-400",
+    SENAT: "text-pink-700 dark:text-pink-400",
+    PE: "text-violet-600 dark:text-violet-400",
+    GOUVERNEMENT: "text-emerald-600 dark:text-emerald-400",
+  },
+  affairStatus: {
+    CONDAMNATION_DEFINITIVE: "text-red-800 dark:text-red-400",
+  },
+  ui: {
+    warning: "text-amber-600 dark:text-amber-400",
+  },
+} as const;
+
 // Type helpers
 export type ColorCategory = keyof typeof COLORS;
 export type VoteColor = keyof typeof COLORS.vote;

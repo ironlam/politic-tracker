@@ -17,4 +17,5 @@ jobs:
           token: ${{ secrets.MCP_DISPATCH_TOKEN }}
           repository: ironlam/poligraph-mcp
           event-type: api-contract-check
-          client-payload: '{"ref": "${{ github.sha }}", "message": "${{ github.event.head_commit.message }}"}'
+          client-payload: >-
+            {"ref": "${{ github.sha }}", "message": ${{ toJSON(github.event.head_commit.message) }}}

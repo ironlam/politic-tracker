@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ProgressBar } from "./ProgressBar";
 import { getColor } from "@/config/colors";
+import { ensureContrast } from "@/lib/contrast";
 
 interface PressStats {
   totalArticles: number;
@@ -138,7 +139,9 @@ export function PressTab({ stats, topPoliticians, topParties }: PressTabProps) {
                           title={politician.party.name}
                           style={{
                             borderColor: politician.party.color || undefined,
-                            color: politician.party.color || undefined,
+                            color: politician.party.color
+                              ? ensureContrast(politician.party.color, "#ffffff")
+                              : undefined,
                           }}
                         >
                           {politician.party.shortName}

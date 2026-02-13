@@ -34,19 +34,19 @@ export const AFFAIR_STATUS_LABELS: Record<AffairStatus, string> = {
 };
 
 export const AFFAIR_STATUS_COLORS: Record<AffairStatus, string> = {
-  ENQUETE_PRELIMINAIRE: "bg-yellow-100 text-yellow-800",
-  INSTRUCTION: "bg-yellow-100 text-yellow-800",
-  MISE_EN_EXAMEN: "bg-orange-100 text-orange-800",
-  RENVOI_TRIBUNAL: "bg-orange-100 text-orange-800",
-  PROCES_EN_COURS: "bg-orange-100 text-orange-800",
-  CONDAMNATION_PREMIERE_INSTANCE: "bg-red-100 text-red-800",
-  APPEL_EN_COURS: "bg-orange-100 text-orange-800",
-  CONDAMNATION_DEFINITIVE: "bg-red-200 text-red-900",
-  RELAXE: "bg-green-100 text-green-800",
-  ACQUITTEMENT: "bg-green-100 text-green-800",
-  NON_LIEU: "bg-gray-100 text-gray-800",
-  PRESCRIPTION: "bg-gray-100 text-gray-800",
-  CLASSEMENT_SANS_SUITE: "bg-gray-100 text-gray-800",
+  ENQUETE_PRELIMINAIRE: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300",
+  INSTRUCTION: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300",
+  MISE_EN_EXAMEN: "bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300",
+  RENVOI_TRIBUNAL: "bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300",
+  PROCES_EN_COURS: "bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300",
+  CONDAMNATION_PREMIERE_INSTANCE: "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300",
+  APPEL_EN_COURS: "bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300",
+  CONDAMNATION_DEFINITIVE: "bg-red-200 text-red-900 dark:bg-red-900/50 dark:text-red-200",
+  RELAXE: "bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300",
+  ACQUITTEMENT: "bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300",
+  NON_LIEU: "bg-gray-100 text-gray-800 dark:bg-gray-800/40 dark:text-gray-300",
+  PRESCRIPTION: "bg-gray-100 text-gray-800 dark:bg-gray-800/40 dark:text-gray-300",
+  CLASSEMENT_SANS_SUITE: "bg-gray-100 text-gray-800 dark:bg-gray-800/40 dark:text-gray-300",
 };
 
 // Indicates if presumption of innocence reminder is needed
@@ -114,11 +114,16 @@ export const AFFAIR_SUPER_CATEGORY_DESCRIPTIONS: Record<AffairSuperCategory, str
 };
 
 export const AFFAIR_SUPER_CATEGORY_COLORS: Record<AffairSuperCategory, string> = {
-  PROBITE: "bg-purple-100 text-purple-800 border-purple-300",
-  FINANCES: "bg-blue-100 text-blue-800 border-blue-300",
-  PERSONNES: "bg-red-100 text-red-800 border-red-300",
-  EXPRESSION: "bg-amber-100 text-amber-800 border-amber-300",
-  AUTRE: "bg-gray-100 text-gray-800 border-gray-300",
+  PROBITE:
+    "bg-purple-100 text-purple-800 border-purple-300 dark:bg-purple-900/40 dark:text-purple-300 dark:border-purple-700",
+  FINANCES:
+    "bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-900/40 dark:text-blue-300 dark:border-blue-700",
+  PERSONNES:
+    "bg-red-100 text-red-800 border-red-300 dark:bg-red-900/40 dark:text-red-300 dark:border-red-700",
+  EXPRESSION:
+    "bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-900/40 dark:text-amber-300 dark:border-amber-700",
+  AUTRE:
+    "bg-gray-100 text-gray-800 border-gray-300 dark:bg-gray-800/40 dark:text-gray-300 dark:border-gray-700",
 };
 
 // Map categories to super-categories
@@ -234,13 +239,24 @@ export const POLITICAL_POSITION_LABELS: Record<PoliticalPosition, string> = {
 };
 
 export const POLITICAL_POSITION_COLORS: Record<PoliticalPosition, string> = {
-  FAR_LEFT: "#8B0000", // Dark red
-  LEFT: "#FF6B6B", // Light red
-  CENTER_LEFT: "#FFB6C1", // Pink
-  CENTER: "#FFEB3B", // Yellow
-  CENTER_RIGHT: "#87CEEB", // Light blue
-  RIGHT: "#1E90FF", // Blue
-  FAR_RIGHT: "#00008B", // Dark blue
+  FAR_LEFT: "bg-red-200 text-red-900 dark:bg-red-900/50 dark:text-red-200",
+  LEFT: "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300",
+  CENTER_LEFT: "bg-pink-100 text-pink-800 dark:bg-pink-900/40 dark:text-pink-300",
+  CENTER: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300",
+  CENTER_RIGHT: "bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-300",
+  RIGHT: "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300",
+  FAR_RIGHT: "bg-blue-200 text-blue-900 dark:bg-blue-900/50 dark:text-blue-200",
+};
+
+// Hex colors for graphical representations (spectrum charts, etc.)
+export const POLITICAL_POSITION_HEX_COLORS: Record<PoliticalPosition, string> = {
+  FAR_LEFT: "#991b1b",
+  LEFT: "#dc2626",
+  CENTER_LEFT: "#f472b6",
+  CENTER: "#eab308",
+  CENTER_RIGHT: "#38bdf8",
+  RIGHT: "#2563eb",
+  FAR_RIGHT: "#1e3a8a",
 };
 
 // Order for display (left to right)
@@ -325,11 +341,15 @@ export const VOTE_POSITION_LABELS: Record<VotePosition, string> = {
 };
 
 export const VOTE_POSITION_COLORS: Record<VotePosition, string> = {
-  POUR: "bg-green-100 text-green-800 border-green-300",
-  CONTRE: "bg-red-100 text-red-800 border-red-300",
-  ABSTENTION: "bg-yellow-100 text-yellow-800 border-yellow-300",
-  NON_VOTANT: "bg-slate-100 text-slate-700 border-slate-300",
-  ABSENT: "bg-gray-100 text-gray-700 border-gray-300",
+  POUR: "bg-green-100 text-green-800 border-green-300 dark:bg-green-900/40 dark:text-green-300 dark:border-green-700",
+  CONTRE:
+    "bg-red-100 text-red-800 border-red-300 dark:bg-red-900/40 dark:text-red-300 dark:border-red-700",
+  ABSTENTION:
+    "bg-yellow-100 text-yellow-800 border-yellow-300 dark:bg-yellow-900/40 dark:text-yellow-300 dark:border-yellow-700",
+  NON_VOTANT:
+    "bg-slate-100 text-slate-700 border-slate-300 dark:bg-slate-800/40 dark:text-slate-300 dark:border-slate-700",
+  ABSENT:
+    "bg-gray-100 text-gray-700 border-gray-300 dark:bg-gray-800/40 dark:text-gray-300 dark:border-gray-700",
 };
 
 export const VOTE_POSITION_DOT_COLORS: Record<VotePosition, string> = {
@@ -346,8 +366,8 @@ export const VOTING_RESULT_LABELS: Record<VotingResult, string> = {
 };
 
 export const VOTING_RESULT_COLORS: Record<VotingResult, string> = {
-  ADOPTED: "bg-green-100 text-green-800",
-  REJECTED: "bg-red-100 text-red-800",
+  ADOPTED: "bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300",
+  REJECTED: "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300",
 };
 
 // ============================================
@@ -365,8 +385,9 @@ export const CHAMBER_SHORT_LABELS: Record<Chamber, string> = {
 };
 
 export const CHAMBER_COLORS: Record<Chamber, string> = {
-  AN: "bg-blue-100 text-blue-800 border-blue-300",
-  SENAT: "bg-rose-100 text-rose-800 border-rose-300",
+  AN: "bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-900/40 dark:text-blue-300 dark:border-blue-700",
+  SENAT:
+    "bg-rose-100 text-rose-800 border-rose-300 dark:bg-rose-900/40 dark:text-rose-300 dark:border-rose-700",
 };
 
 // ============================================
@@ -383,10 +404,14 @@ export const DOSSIER_STATUS_LABELS: Record<DossierStatus, string> = {
 };
 
 export const DOSSIER_STATUS_COLORS: Record<DossierStatus, string> = {
-  EN_COURS: "bg-blue-100 text-blue-800 border-blue-300",
-  ADOPTE: "bg-green-100 text-green-800 border-green-300",
-  REJETE: "bg-red-100 text-red-800 border-red-300",
-  RETIRE: "bg-gray-100 text-gray-700 border-gray-300",
+  EN_COURS:
+    "bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-900/40 dark:text-blue-300 dark:border-blue-700",
+  ADOPTE:
+    "bg-green-100 text-green-800 border-green-300 dark:bg-green-900/40 dark:text-green-300 dark:border-green-700",
+  REJETE:
+    "bg-red-100 text-red-800 border-red-300 dark:bg-red-900/40 dark:text-red-300 dark:border-red-700",
+  RETIRE:
+    "bg-gray-100 text-gray-700 border-gray-300 dark:bg-gray-800/40 dark:text-gray-300 dark:border-gray-700",
 };
 
 export const DOSSIER_STATUS_ICONS: Record<DossierStatus, string> = {
@@ -405,24 +430,33 @@ export const AMENDMENT_STATUS_LABELS: Record<AmendmentStatus, string> = {
 };
 
 export const AMENDMENT_STATUS_COLORS: Record<AmendmentStatus, string> = {
-  DEPOSE: "bg-blue-100 text-blue-800",
-  ADOPTE: "bg-green-100 text-green-800",
-  REJETE: "bg-red-100 text-red-800",
-  RETIRE: "bg-gray-100 text-gray-700",
-  TOMBE: "bg-gray-100 text-gray-600",
+  DEPOSE: "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300",
+  ADOPTE: "bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300",
+  REJETE: "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300",
+  RETIRE: "bg-gray-100 text-gray-700 dark:bg-gray-800/40 dark:text-gray-300",
+  TOMBE: "bg-gray-100 text-gray-600 dark:bg-gray-800/40 dark:text-gray-400",
 };
 
 // Legislative categories with colors
 export const DOSSIER_CATEGORY_COLORS: Record<string, string> = {
-  Budget: "bg-emerald-100 text-emerald-800 border-emerald-300",
-  Santé: "bg-rose-100 text-rose-800 border-rose-300",
-  Économie: "bg-amber-100 text-amber-800 border-amber-300",
-  Législation: "bg-indigo-100 text-indigo-800 border-indigo-300",
-  Institutionnel: "bg-purple-100 text-purple-800 border-purple-300",
-  Constitution: "bg-violet-100 text-violet-800 border-violet-300",
-  International: "bg-cyan-100 text-cyan-800 border-cyan-300",
-  Contrôle: "bg-orange-100 text-orange-800 border-orange-300",
-  Information: "bg-sky-100 text-sky-800 border-sky-300",
+  Budget:
+    "bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-900/40 dark:text-emerald-300 dark:border-emerald-700",
+  Santé:
+    "bg-rose-100 text-rose-800 border-rose-300 dark:bg-rose-900/40 dark:text-rose-300 dark:border-rose-700",
+  Économie:
+    "bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-900/40 dark:text-amber-300 dark:border-amber-700",
+  Législation:
+    "bg-indigo-100 text-indigo-800 border-indigo-300 dark:bg-indigo-900/40 dark:text-indigo-300 dark:border-indigo-700",
+  Institutionnel:
+    "bg-purple-100 text-purple-800 border-purple-300 dark:bg-purple-900/40 dark:text-purple-300 dark:border-purple-700",
+  Constitution:
+    "bg-violet-100 text-violet-800 border-violet-300 dark:bg-violet-900/40 dark:text-violet-300 dark:border-violet-700",
+  International:
+    "bg-cyan-100 text-cyan-800 border-cyan-300 dark:bg-cyan-900/40 dark:text-cyan-300 dark:border-cyan-700",
+  Contrôle:
+    "bg-orange-100 text-orange-800 border-orange-300 dark:bg-orange-900/40 dark:text-orange-300 dark:border-orange-700",
+  Information:
+    "bg-sky-100 text-sky-800 border-sky-300 dark:bg-sky-900/40 dark:text-sky-300 dark:border-sky-700",
 };
 
 export const DOSSIER_CATEGORY_ICONS: Record<string, string> = {
@@ -458,19 +492,32 @@ export const THEME_CATEGORY_LABELS: Record<ThemeCategory, string> = {
 };
 
 export const THEME_CATEGORY_COLORS: Record<ThemeCategory, string> = {
-  ECONOMIE_BUDGET: "bg-emerald-100 text-emerald-800 border-emerald-300",
-  SOCIAL_TRAVAIL: "bg-violet-100 text-violet-800 border-violet-300",
-  SECURITE_JUSTICE: "bg-red-100 text-red-800 border-red-300",
-  ENVIRONNEMENT_ENERGIE: "bg-green-100 text-green-800 border-green-300",
-  SANTE: "bg-rose-100 text-rose-800 border-rose-300",
-  EDUCATION_CULTURE: "bg-indigo-100 text-indigo-800 border-indigo-300",
-  INSTITUTIONS: "bg-purple-100 text-purple-800 border-purple-300",
-  AFFAIRES_ETRANGERES_DEFENSE: "bg-cyan-100 text-cyan-800 border-cyan-300",
-  NUMERIQUE_TECH: "bg-sky-100 text-sky-800 border-sky-300",
-  IMMIGRATION: "bg-orange-100 text-orange-800 border-orange-300",
-  AGRICULTURE_ALIMENTATION: "bg-lime-100 text-lime-800 border-lime-300",
-  LOGEMENT_URBANISME: "bg-amber-100 text-amber-800 border-amber-300",
-  TRANSPORTS: "bg-teal-100 text-teal-800 border-teal-300",
+  ECONOMIE_BUDGET:
+    "bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-900/40 dark:text-emerald-300 dark:border-emerald-700",
+  SOCIAL_TRAVAIL:
+    "bg-violet-100 text-violet-800 border-violet-300 dark:bg-violet-900/40 dark:text-violet-300 dark:border-violet-700",
+  SECURITE_JUSTICE:
+    "bg-red-100 text-red-800 border-red-300 dark:bg-red-900/40 dark:text-red-300 dark:border-red-700",
+  ENVIRONNEMENT_ENERGIE:
+    "bg-green-100 text-green-800 border-green-300 dark:bg-green-900/40 dark:text-green-300 dark:border-green-700",
+  SANTE:
+    "bg-rose-100 text-rose-800 border-rose-300 dark:bg-rose-900/40 dark:text-rose-300 dark:border-rose-700",
+  EDUCATION_CULTURE:
+    "bg-indigo-100 text-indigo-800 border-indigo-300 dark:bg-indigo-900/40 dark:text-indigo-300 dark:border-indigo-700",
+  INSTITUTIONS:
+    "bg-purple-100 text-purple-800 border-purple-300 dark:bg-purple-900/40 dark:text-purple-300 dark:border-purple-700",
+  AFFAIRES_ETRANGERES_DEFENSE:
+    "bg-cyan-100 text-cyan-800 border-cyan-300 dark:bg-cyan-900/40 dark:text-cyan-300 dark:border-cyan-700",
+  NUMERIQUE_TECH:
+    "bg-sky-100 text-sky-800 border-sky-300 dark:bg-sky-900/40 dark:text-sky-300 dark:border-sky-700",
+  IMMIGRATION:
+    "bg-orange-100 text-orange-800 border-orange-300 dark:bg-orange-900/40 dark:text-orange-300 dark:border-orange-700",
+  AGRICULTURE_ALIMENTATION:
+    "bg-lime-100 text-lime-800 border-lime-300 dark:bg-lime-900/40 dark:text-lime-300 dark:border-lime-700",
+  LOGEMENT_URBANISME:
+    "bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-900/40 dark:text-amber-300 dark:border-amber-700",
+  TRANSPORTS:
+    "bg-teal-100 text-teal-800 border-teal-300 dark:bg-teal-900/40 dark:text-teal-300 dark:border-teal-700",
 };
 
 export const THEME_CATEGORY_ICONS: Record<ThemeCategory, string> = {
@@ -527,14 +574,22 @@ export const ELECTION_STATUS_LABELS: Record<ElectionStatus, string> = {
 };
 
 export const ELECTION_STATUS_COLORS: Record<ElectionStatus, string> = {
-  UPCOMING: "bg-gray-100 text-gray-800 border-gray-300",
-  REGISTRATION: "bg-blue-100 text-blue-800 border-blue-300",
-  CANDIDACIES: "bg-indigo-100 text-indigo-800 border-indigo-300",
-  CAMPAIGN: "bg-purple-100 text-purple-800 border-purple-300",
-  ROUND_1: "bg-orange-100 text-orange-800 border-orange-300",
-  BETWEEN_ROUNDS: "bg-amber-100 text-amber-800 border-amber-300",
-  ROUND_2: "bg-red-100 text-red-800 border-red-300",
-  COMPLETED: "bg-green-100 text-green-800 border-green-300",
+  UPCOMING:
+    "bg-gray-100 text-gray-800 border-gray-300 dark:bg-gray-800/40 dark:text-gray-300 dark:border-gray-700",
+  REGISTRATION:
+    "bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-900/40 dark:text-blue-300 dark:border-blue-700",
+  CANDIDACIES:
+    "bg-indigo-100 text-indigo-800 border-indigo-300 dark:bg-indigo-900/40 dark:text-indigo-300 dark:border-indigo-700",
+  CAMPAIGN:
+    "bg-purple-100 text-purple-800 border-purple-300 dark:bg-purple-900/40 dark:text-purple-300 dark:border-purple-700",
+  ROUND_1:
+    "bg-orange-100 text-orange-800 border-orange-300 dark:bg-orange-900/40 dark:text-orange-300 dark:border-orange-700",
+  BETWEEN_ROUNDS:
+    "bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-900/40 dark:text-amber-300 dark:border-amber-700",
+  ROUND_2:
+    "bg-red-100 text-red-800 border-red-300 dark:bg-red-900/40 dark:text-red-300 dark:border-red-700",
+  COMPLETED:
+    "bg-green-100 text-green-800 border-green-300 dark:bg-green-900/40 dark:text-green-300 dark:border-green-700",
 };
 
 export const ELECTION_SCOPE_LABELS: Record<ElectionScope, string> = {
@@ -639,14 +694,14 @@ export const FACTCHECK_RATING_LABELS: Record<FactCheckRating, string> = {
 };
 
 export const FACTCHECK_RATING_COLORS: Record<FactCheckRating, string> = {
-  TRUE: "bg-green-100 text-green-800",
-  MOSTLY_TRUE: "bg-green-50 text-green-700",
-  HALF_TRUE: "bg-yellow-100 text-yellow-800",
-  MISLEADING: "bg-orange-100 text-orange-800",
-  OUT_OF_CONTEXT: "bg-amber-100 text-amber-800",
-  MOSTLY_FALSE: "bg-red-50 text-red-700",
-  FALSE: "bg-red-100 text-red-800",
-  UNVERIFIABLE: "bg-gray-100 text-gray-800",
+  TRUE: "bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300",
+  MOSTLY_TRUE: "bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+  HALF_TRUE: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300",
+  MISLEADING: "bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300",
+  OUT_OF_CONTEXT: "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300",
+  MOSTLY_FALSE: "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+  FALSE: "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300",
+  UNVERIFIABLE: "bg-gray-100 text-gray-800 dark:bg-gray-800/40 dark:text-gray-300",
 };
 
 export const FACTCHECK_RATING_DESCRIPTIONS: Record<FactCheckRating, string> = {

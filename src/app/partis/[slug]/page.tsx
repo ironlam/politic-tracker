@@ -13,6 +13,7 @@ import {
 } from "@/config/labels";
 import { PoliticianAvatar } from "@/components/politicians/PoliticianAvatar";
 import { OrganizationJsonLd, BreadcrumbJsonLd } from "@/components/seo/JsonLd";
+import { ensureContrast } from "@/lib/contrast";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -227,7 +228,7 @@ export default async function PartyPage({ params }: PageProps) {
                 <Badge
                   style={{
                     backgroundColor: party.color ? `${party.color}20` : undefined,
-                    color: party.color || undefined,
+                    color: party.color ? ensureContrast(party.color, "#ffffff") : undefined,
                   }}
                 >
                   {party.shortName}

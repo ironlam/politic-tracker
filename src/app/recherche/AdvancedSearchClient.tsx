@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { PoliticianAvatar } from "@/components/politicians/PoliticianAvatar";
 import { MANDATE_TYPE_LABELS } from "@/config/labels";
+import { ensureContrast } from "@/lib/contrast";
 import { MandateType } from "@/generated/prisma";
 
 interface SearchResult {
@@ -324,7 +325,9 @@ export function AdvancedSearchClient() {
                                 title={politician.currentParty.name}
                                 style={{
                                   borderColor: politician.currentParty.color || undefined,
-                                  color: politician.currentParty.color || undefined,
+                                  color: politician.currentParty.color
+                                    ? ensureContrast(politician.currentParty.color, "#ffffff")
+                                    : undefined,
                                 }}
                               >
                                 {politician.currentParty.shortName}

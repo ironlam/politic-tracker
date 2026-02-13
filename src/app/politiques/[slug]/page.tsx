@@ -18,6 +18,7 @@ import {
   PARTY_ROLE_LABELS,
   feminizePartyRole,
 } from "@/config/labels";
+import { ensureContrast } from "@/lib/contrast";
 import { PoliticianAvatar } from "@/components/politicians/PoliticianAvatar";
 import { MandateTimeline } from "@/components/politicians/MandateTimeline";
 import { InteractiveTimeline } from "@/components/politicians/InteractiveTimeline";
@@ -285,7 +286,9 @@ export default async function PoliticianPage({ params }: PageProps) {
                       backgroundColor: politician.currentParty.color
                         ? `${politician.currentParty.color}20`
                         : undefined,
-                      color: politician.currentParty.color || undefined,
+                      color: politician.currentParty.color
+                        ? ensureContrast(politician.currentParty.color, "#ffffff")
+                        : undefined,
                     }}
                   >
                     {politician.currentParty.name}
@@ -690,7 +693,9 @@ export default async function PoliticianPage({ params }: PageProps) {
                                 title={affair.partyAtTime.name}
                                 style={{
                                   borderColor: affair.partyAtTime.color || undefined,
-                                  color: affair.partyAtTime.color || undefined,
+                                  color: affair.partyAtTime.color
+                                    ? ensureContrast(affair.partyAtTime.color, "#ffffff")
+                                    : undefined,
                                 }}
                               >
                                 {affair.partyAtTime.shortName} à l&apos;époque

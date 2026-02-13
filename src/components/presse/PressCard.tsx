@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/utils";
+import { ensureContrast } from "@/lib/contrast";
 
 interface PressCardProps {
   id: string;
@@ -137,7 +138,9 @@ export function PressCard({
                   title={mention.party.name}
                   style={{
                     borderColor: mention.party.color || undefined,
-                    color: mention.party.color || undefined,
+                    color: mention.party.color
+                      ? ensureContrast(mention.party.color, "#ffffff")
+                      : undefined,
                   }}
                 >
                   {mention.party.shortName}

@@ -13,6 +13,7 @@ import {
   MANDATE_TYPE_LABELS,
 } from "@/config/labels";
 import { MandateUrlEditor } from "@/components/admin/MandateUrlEditor";
+import { ensureContrast } from "@/lib/contrast";
 import type { AffairStatus, AffairCategory, MandateType } from "@/types";
 
 interface PageProps {
@@ -92,7 +93,9 @@ export default async function AdminPoliticianPage({ params }: PageProps) {
                 backgroundColor: politician.currentParty.color
                   ? `${politician.currentParty.color}20`
                   : undefined,
-                color: politician.currentParty.color || undefined,
+                color: politician.currentParty.color
+                  ? ensureContrast(politician.currentParty.color, "#ffffff")
+                  : undefined,
               }}
               title={politician.currentParty.name}
             >

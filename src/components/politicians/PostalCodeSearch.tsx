@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { PoliticianAvatar } from "./PoliticianAvatar";
+import { ensureContrast } from "@/lib/contrast";
 
 interface GeoCommune {
   nom: string;
@@ -242,7 +243,9 @@ export function PostalCodeSearch() {
                               backgroundColor: deputy.party.color
                                 ? `${deputy.party.color}15`
                                 : undefined,
-                              color: deputy.party.color || undefined,
+                              color: deputy.party.color
+                                ? ensureContrast(deputy.party.color, "#ffffff")
+                                : undefined,
                             }}
                           >
                             {deputy.party.shortName}

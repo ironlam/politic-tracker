@@ -10,6 +10,7 @@ import {
   type AffairSuperCategory,
 } from "@/config/labels";
 import { COLORS, getColor } from "@/config/colors";
+import { ensureContrast } from "@/lib/contrast";
 import type { AffairStatus } from "@/types";
 
 interface GlobalStats {
@@ -256,7 +257,9 @@ export function AffairsTab({
                         title={politician.currentParty.name}
                         style={{
                           borderColor: politician.currentParty.color || undefined,
-                          color: politician.currentParty.color || undefined,
+                          color: politician.currentParty.color
+                            ? ensureContrast(politician.currentParty.color, "#ffffff")
+                            : undefined,
                         }}
                       >
                         {politician.currentParty.shortName}

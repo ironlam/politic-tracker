@@ -72,6 +72,30 @@ export default function MentionsLegalesPage() {
               )
             </li>
             <li>
+              Gouvernement (
+              <a
+                href="https://www.gouvernement.fr"
+                className="underline"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                gouvernement.fr
+              </a>
+              ) — données ministérielles
+            </li>
+            <li>
+              Parlement européen (
+              <a
+                href="https://www.europarl.europa.eu"
+                className="underline"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                europarl.europa.eu
+              </a>
+              ) — mandats européens
+            </li>
+            <li>
               Haute Autorité pour la Transparence de la Vie Publique (
               <a
                 href="https://www.hatvp.fr"
@@ -83,6 +107,40 @@ export default function MentionsLegalesPage() {
               </a>
               )
             </li>
+            <li>
+              Wikidata (
+              <a
+                href="https://www.wikidata.org"
+                className="underline"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                wikidata.org
+              </a>
+              ) — données biographiques, photos, identifiants
+            </li>
+            <li>
+              NosDéputés / NosSénateurs (
+              <a
+                href="https://www.nosdeputes.fr"
+                className="underline"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                nosdeputes.fr
+              </a>
+              {" / "}
+              <a
+                href="https://www.nossenateurs.fr"
+                className="underline"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                nossenateurs.fr
+              </a>
+              ) — activité parlementaire
+            </li>
+            <li>Google Fact Check Tools API — vérification des faits (fact-checking)</li>
             <li>Articles de presse (sources citées pour chaque information)</li>
           </ul>
         </section>

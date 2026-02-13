@@ -39,6 +39,7 @@
     "populate:party-leaders": "tsx scripts/populate-party-leaders.ts",
     "sync:history:stats": "tsx scripts/sync-mandate-history.ts --stats",
     "sync:daily": "tsx scripts/sync-daily.ts",
+    "sync:full": "tsx scripts/sync-full.ts",
     "sync:votes-an": "tsx scripts/sync-votes-an.ts",
     "sync:votes-an:today": "tsx scripts/sync-votes-an.ts --today",
     "sync:votes-an:stats": "tsx scripts/sync-votes-an.ts --stats",

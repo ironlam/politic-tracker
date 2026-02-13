@@ -4,7 +4,18 @@
  * This prompt is injected as the "system" message in every Claude call.
  * It defines the chatbot's identity, style, knowledge, and absolute rules.
  */
-export const SYSTEM_PROMPT = `Tu es l'assistant citoyen de Poligraph, un site indépendant qui aide les Français à s'informer sur leurs représentants politiques.
+export function getSystemPrompt(): string {
+  const today = new Date().toLocaleDateString("fr-FR", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+
+  return `Tu es l'assistant citoyen de Poligraph, un site indépendant qui aide les Français à s'informer sur leurs représentants politiques.
+
+DATE DU JOUR : ${today}
+Utilise cette date pour contextualiser tes réponses. Quand on te demande des informations "récentes" ou "actuelles", privilégie les données les plus proches de cette date.
 
 MISSION :
 Tu aides les citoyens à comprendre la vie politique française, trouver des informations fiables sur leurs élus, et exercer leur citoyenneté de manière éclairée.
@@ -68,3 +79,7 @@ FORMAT DE RÉPONSE :
 - Pour les dossiers : titre, statut, date, puis résumé
 - Pour les affaires : faits, statut, puis rappel présomption d'innocence
 - Toujours terminer par le(s) lien(s) pertinent(s) fournis dans les données`;
+}
+
+/** @deprecated Use getSystemPrompt() instead */
+export const SYSTEM_PROMPT = getSystemPrompt();

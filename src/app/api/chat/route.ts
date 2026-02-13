@@ -5,7 +5,7 @@ import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 import { searchSimilar, rerankResults, type SearchResult } from "@/services/embeddings";
 import { db } from "@/lib/db";
-import { SYSTEM_PROMPT } from "@/services/chat/systemPrompt";
+import { getSystemPrompt } from "@/services/chat/systemPrompt";
 import { matchPattern } from "@/services/chat/patterns";
 import { searchDatabaseByKeywords } from "@/services/chat/keywords";
 
@@ -114,6 +114,33 @@ async function getGlobalStats(): Promise<{
       (countByType["SECRETAIRE_ETAT"] || 0) +
       (countByType["PREMIER_MINISTRE"] || 0),
   };
+}
+
+// ─── Temporal boost for recency-aware ranking ───────────────────
+
+const MAX_CONTEXT_LENGTH = 4000;
+
+function applyTemporalBoost(results: SearchResult[]): SearchResult[] {
+  const now = Date.now();
+  const THREE_MONTHS = 90 * 24 * 60 * 60 * 1000;
+  const ONE_YEAR = 365 * 24 * 60 * 60 * 1000;
+  const THREE_YEARS = 3 * ONE_YEAR;
+
+  return results
+    .map((r) => {
+      const dateStr = (r.metadata?.votingDate as string) || (r.metadata?.publishedAt as string);
+
+      if (!dateStr) return r;
+
+      const age = now - new Date(dateStr).getTime();
+      let boost = 1;
+      if (age < THREE_MONTHS) boost = 1.5;
+      else if (age < ONE_YEAR) boost = 1.2;
+      else if (age > THREE_YEARS) boost = 0.7;
+
+      return { ...r, similarity: r.similarity * boost };
+    })
+    .sort((a, b) => b.similarity - a.similarity);
 }
 
 // ─── Build context from RAG search results ──────────────────────
@@ -270,7 +297,19 @@ async function buildContext(results: SearchResult[], query: string): Promise<str
     sections.push(section);
   }
 
-  return sections.join("\n\n---\n\n");
+  // Truncate context to avoid overwhelming the LLM
+  let context = "";
+  for (const section of sections) {
+    const candidate = context ? `${context}\n\n---\n\n${section}` : section;
+    if (candidate.length > MAX_CONTEXT_LENGTH) {
+      // Add at least the first section even if it exceeds the limit
+      if (!context) context = section;
+      break;
+    }
+    context = candidate;
+  }
+
+  return context;
 }
 
 // ─── POST handler ───────────────────────────────────────────────
@@ -341,6 +380,8 @@ export async function POST(request: Request) {
           } catch (rerankError) {
             console.error("Reranking error, using vector search order:", rerankError);
           }
+          // Apply temporal boost to prioritize recent results
+          rankedResults = applyTemporalBoost(rankedResults);
           context = await buildContext(rankedResults, userQuery);
         }
       } catch (error) {
@@ -380,7 +421,7 @@ export async function POST(request: Request) {
     // Stream response using Vercel AI SDK
     const result = streamText({
       model: anthropic("claude-3-haiku-20240307"),
-      system: SYSTEM_PROMPT,
+      system: getSystemPrompt(),
       messages: messagesWithContext,
     });
 

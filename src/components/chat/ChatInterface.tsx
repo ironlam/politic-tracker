@@ -7,10 +7,10 @@ import { cn } from "@/lib/utils";
 import { Send, Bot, User, Loader2, AlertCircle, MessageSquare, RefreshCw } from "lucide-react";
 
 const SUGGESTED_QUESTIONS = [
-  "Qui est mon député et comment a-t-il voté ?",
-  "Quelles affaires judiciaires touchent des élus ?",
-  "Comment fonctionne le vote d'une loi en France ?",
-  "Quels dossiers sont en discussion à l'Assemblée ?",
+  "Qui est le Premier ministre actuel ?",
+  "Quels sont les derniers votes à l'Assemblée ?",
+  "Comment fonctionne le vote d'une loi ?",
+  "Quels ministres ont des affaires en cours ?",
 ];
 
 // Ghost text autocomplete - single suggestion that completes what user is typing

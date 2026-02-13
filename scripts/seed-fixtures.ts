@@ -544,10 +544,10 @@ async function seed() {
           type: m.type,
           title: m.title,
           institution: m.institution,
-          constituency: m.constituency,
-          departmentCode: m.departmentCode,
+          constituency: "constituency" in m ? m.constituency : undefined,
+          departmentCode: "departmentCode" in m ? m.departmentCode : undefined,
           startDate: m.startDate,
-          endDate: m.endDate,
+          endDate: "endDate" in m ? m.endDate : undefined,
           isCurrent: m.isCurrent,
         },
       });

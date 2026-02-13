@@ -33,6 +33,7 @@ const MANDATE_DATA = {
   startDate: new Date("2017-05-14"),
   endDate: null,
   isCurrent: true,
+  source: DataSource.GOUVERNEMENT,
   sourceUrl: "https://www.elysee.fr/emmanuel-macron",
 };
 

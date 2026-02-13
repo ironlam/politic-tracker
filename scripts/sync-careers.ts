@@ -309,6 +309,7 @@ Features:
                           ? "Assemblée nationale"
                           : "Sénat",
                       role: roleInfo.role,
+                      source: DataSource.WIKIDATA,
                       startDate,
                       endDate,
                       isCurrent: !endDate,
@@ -371,6 +372,7 @@ Features:
                   type: mandateInfo.type,
                   title,
                   institution: mandateInfo.institution,
+                  source: DataSource.WIKIDATA,
                   startDate,
                   endDate,
                   isCurrent: !endDate,

@@ -357,6 +357,7 @@ async function syncSenator(
       departmentCode: getDepartmentCode(sen.circonscription?.libelle),
       startDate: mandateStart || new Date(),
       isCurrent: true,
+      source: DataSource.SENAT,
       sourceUrl: sen.url || `https://www.senat.fr/senateur/${sen.matricule}/`,
       officialUrl: sen.url || `https://www.senat.fr/senateur/${sen.matricule}/`,
       externalId: `senat-${sen.matricule}`,

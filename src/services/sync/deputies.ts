@@ -164,6 +164,7 @@ async function syncDeputy(
       departmentCode: dep.departementCode || null,
       startDate: mandateStart,
       isCurrent: true,
+      source: DataSource.ASSEMBLEE_NATIONALE,
       sourceUrl: `https://www.assemblee-nationale.fr/dyn/deputes/${dep.id}`,
       officialUrl: `https://www.assemblee-nationale.fr/dyn/deputes/${dep.id}`,
       externalId: `${dep.id}-leg${dep.legislature}`,

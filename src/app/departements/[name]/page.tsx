@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { PoliticianAvatar } from "@/components/politicians/PoliticianAvatar";
+import { ensureContrast } from "@/lib/contrast";
 interface PageProps {
   params: Promise<{ name: string }>;
 }
@@ -168,7 +169,9 @@ export default async function DepartmentPage({ params }: PageProps) {
                           backgroundColor: deputy.currentParty.color
                             ? `${deputy.currentParty.color}15`
                             : undefined,
-                          color: deputy.currentParty.color || undefined,
+                          color: deputy.currentParty.color
+                            ? ensureContrast(deputy.currentParty.color, "#ffffff")
+                            : undefined,
                         }}
                       >
                         {deputy.currentParty.shortName}
@@ -223,7 +226,9 @@ export default async function DepartmentPage({ params }: PageProps) {
                           backgroundColor: senator.currentParty.color
                             ? `${senator.currentParty.color}15`
                             : undefined,
-                          color: senator.currentParty.color || undefined,
+                          color: senator.currentParty.color
+                            ? ensureContrast(senator.currentParty.color, "#ffffff")
+                            : undefined,
                         }}
                       >
                         {senator.currentParty.shortName}

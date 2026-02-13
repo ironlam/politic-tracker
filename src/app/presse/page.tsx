@@ -3,6 +3,7 @@ import Link from "next/link";
 import { db } from "@/lib/db";
 import { PressCard, PartyFilterSelect } from "@/components/presse";
 import { Badge } from "@/components/ui/badge";
+import { ensureContrast } from "@/lib/contrast";
 
 export const metadata: Metadata = {
   title: "Revue de presse",
@@ -292,7 +293,9 @@ export default async function PressePage({ searchParams }: PageProps) {
               title={currentParty.name}
               style={{
                 borderColor: currentParty.color || undefined,
-                color: currentParty.color || undefined,
+                color: currentParty.color
+                  ? ensureContrast(currentParty.color, "#ffffff")
+                  : undefined,
               }}
             >
               {currentParty.shortName}

@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { PoliticianAvatar } from "./PoliticianAvatar";
 import { MANDATE_TYPE_LABELS, PARTY_ROLE_LABELS, feminizePartyRole } from "@/config/labels";
+import { ensureContrast } from "@/lib/contrast";
 import type { PoliticianWithParty, PoliticianWithPartyAndCounts } from "@/types";
 
 interface PoliticianCardProps {
@@ -92,7 +93,9 @@ export function PoliticianCard({ politician, showConvictionBadge = false }: Poli
                       backgroundColor: politician.currentParty.color
                         ? `${politician.currentParty.color}15`
                         : undefined,
-                      color: politician.currentParty.color || undefined,
+                      color: politician.currentParty.color
+                        ? ensureContrast(politician.currentParty.color, "#ffffff")
+                        : undefined,
                       borderColor: politician.currentParty.color
                         ? `${politician.currentParty.color}30`
                         : undefined,

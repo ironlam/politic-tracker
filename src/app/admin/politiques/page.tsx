@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { ensureContrast } from "@/lib/contrast";
 
 interface PageProps {
   searchParams: Promise<{ q?: string; page?: string }>;
@@ -106,7 +107,9 @@ export default async function AdminPoliticiansPage({ searchParams }: PageProps) 
                             backgroundColor: politician.currentParty.color
                               ? `${politician.currentParty.color}20`
                               : undefined,
-                            color: politician.currentParty.color || undefined,
+                            color: politician.currentParty.color
+                              ? ensureContrast(politician.currentParty.color, "#ffffff")
+                              : undefined,
                           }}
                         >
                           {politician.currentParty.shortName}

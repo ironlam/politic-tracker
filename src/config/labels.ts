@@ -398,31 +398,54 @@ import type { DossierStatus, AmendmentStatus } from "@/generated/prisma";
 
 export const DOSSIER_STATUS_LABELS: Record<DossierStatus, string> = {
   DEPOSE: "Déposé",
+  EN_COMMISSION: "En commission",
   EN_COURS: "En discussion",
+  CONSEIL_CONSTITUTIONNEL: "Conseil constitutionnel",
   ADOPTE: "Adopté",
   REJETE: "Rejeté",
   RETIRE: "Retiré",
+  CADUQUE: "Caduc",
 };
 
 export const DOSSIER_STATUS_COLORS: Record<DossierStatus, string> = {
   DEPOSE:
     "bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-900/40 dark:text-amber-300 dark:border-amber-700",
+  EN_COMMISSION:
+    "bg-violet-100 text-violet-800 border-violet-300 dark:bg-violet-900/40 dark:text-violet-300 dark:border-violet-700",
   EN_COURS:
     "bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-900/40 dark:text-blue-300 dark:border-blue-700",
+  CONSEIL_CONSTITUTIONNEL:
+    "bg-purple-100 text-purple-800 border-purple-300 dark:bg-purple-900/40 dark:text-purple-300 dark:border-purple-700",
   ADOPTE:
     "bg-green-100 text-green-800 border-green-300 dark:bg-green-900/40 dark:text-green-300 dark:border-green-700",
   REJETE:
     "bg-red-100 text-red-800 border-red-300 dark:bg-red-900/40 dark:text-red-300 dark:border-red-700",
   RETIRE:
     "bg-gray-100 text-gray-700 border-gray-300 dark:bg-gray-800/40 dark:text-gray-300 dark:border-gray-700",
+  CADUQUE:
+    "bg-stone-100 text-stone-600 border-stone-300 dark:bg-stone-800/40 dark:text-stone-400 dark:border-stone-700",
 };
 
 export const DOSSIER_STATUS_ICONS: Record<DossierStatus, string> = {
   DEPOSE: "📋",
+  EN_COMMISSION: "🔍",
   EN_COURS: "🔴",
+  CONSEIL_CONSTITUTIONNEL: "⚖️",
   ADOPTE: "✅",
   REJETE: "❌",
   RETIRE: "⏸️",
+  CADUQUE: "🕐",
+};
+
+export const DOSSIER_STATUS_DESCRIPTIONS: Record<DossierStatus, string> = {
+  DEPOSE: "Texte déposé et renvoyé en commission, mais pas encore examiné.",
+  EN_COMMISSION: "Rapport de commission rendu, en attente de passage en séance.",
+  EN_COURS: "Texte en discussion active : séance publique, navette ou CMP.",
+  CONSEIL_CONSTITUTIONNEL: "Texte soumis au Conseil constitutionnel.",
+  ADOPTE: "Texte adopté définitivement et promulgué.",
+  REJETE: "Texte rejeté par le Parlement.",
+  RETIRE: "Texte retiré par son auteur.",
+  CADUQUE: "Texte devenu caduc à la fin de la législature précédente.",
 };
 
 export const AMENDMENT_STATUS_LABELS: Record<AmendmentStatus, string> = {

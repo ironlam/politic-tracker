@@ -635,11 +635,14 @@ model LegislativeDossier {
 }
 
 enum DossierStatus {
-  DEPOSE          // Déposé, pas encore examiné
-  EN_COURS        // En discussion
-  ADOPTE          // Adopté
-  REJETE          // Rejeté
-  RETIRE          // Retiré
+  DEPOSE                    // Déposé, pas encore examiné
+  EN_COMMISSION             // Examiné en commission, pas encore en séance
+  EN_COURS                  // En discussion (hémicycle, navette, CMP)
+  CONSEIL_CONSTITUTIONNEL   // Saisi au Conseil constitutionnel
+  ADOPTE                    // Promulgué
+  REJETE                    // Rejeté
+  RETIRE                    // Retiré
+  CADUQUE                   // Caduc (fin de législature sans adoption)
 }
 
 model Amendment {

@@ -11,6 +11,7 @@ import {
   DOSSIER_STATUS_LABELS,
   DOSSIER_STATUS_COLORS,
   DOSSIER_STATUS_ICONS,
+  DOSSIER_STATUS_DESCRIPTIONS,
 } from "./labels";
 
 describe("AFFAIR_STATUS_LABELS", () => {
@@ -157,14 +158,24 @@ describe("AFFAIR_EVENT_TYPE_LABELS", () => {
 });
 
 describe("DOSSIER_STATUS_LABELS", () => {
-  it("should have labels for all dossier statuses including DEPOSE", () => {
-    const statuses = ["DEPOSE", "EN_COURS", "ADOPTE", "REJETE", "RETIRE"];
+  it("should have labels for all 8 dossier statuses", () => {
+    const statuses = [
+      "DEPOSE",
+      "EN_COMMISSION",
+      "EN_COURS",
+      "CONSEIL_CONSTITUTIONNEL",
+      "ADOPTE",
+      "REJETE",
+      "RETIRE",
+      "CADUQUE",
+    ];
     statuses.forEach((status) => {
       expect(DOSSIER_STATUS_LABELS).toHaveProperty(status);
       expect(typeof DOSSIER_STATUS_LABELS[status as keyof typeof DOSSIER_STATUS_LABELS]).toBe(
         "string"
       );
     });
+    expect(Object.keys(DOSSIER_STATUS_LABELS)).toHaveLength(8);
   });
 
   it("should have matching colors for all dossier statuses", () => {
@@ -179,7 +190,16 @@ describe("DOSSIER_STATUS_LABELS", () => {
     });
   });
 
-  it("should label DEPOSE correctly", () => {
+  it("should have matching descriptions for all dossier statuses", () => {
+    Object.keys(DOSSIER_STATUS_LABELS).forEach((status) => {
+      expect(DOSSIER_STATUS_DESCRIPTIONS).toHaveProperty(status);
+    });
+  });
+
+  it("should label new statuses correctly", () => {
     expect(DOSSIER_STATUS_LABELS.DEPOSE).toBe("Déposé");
+    expect(DOSSIER_STATUS_LABELS.EN_COMMISSION).toBe("En commission");
+    expect(DOSSIER_STATUS_LABELS.CONSEIL_CONSTITUTIONNEL).toBe("Conseil constitutionnel");
+    expect(DOSSIER_STATUS_LABELS.CADUQUE).toBe("Caduc");
   });
 });

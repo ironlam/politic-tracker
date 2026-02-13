@@ -7,6 +7,8 @@ import { DossierCard, StatusBadge, CategoryBadge } from "@/components/legislatio
 import {
   DOSSIER_STATUS_LABELS,
   DOSSIER_STATUS_COLORS,
+  DOSSIER_STATUS_ICONS,
+  DOSSIER_STATUS_DESCRIPTIONS,
   THEME_CATEGORY_LABELS,
   THEME_CATEGORY_ICONS,
   THEME_CATEGORY_COLORS,
@@ -107,7 +109,13 @@ export default async function AssembleePage({ searchParams }: PageProps) {
   ]);
 
   const totalDossiers = Object.values(statusCounts).reduce((a, b) => a + b, 0);
-  const enCoursCount = statusCounts["EN_COURS"] || 0;
+  const activeStatuses: DossierStatus[] = [
+    "DEPOSE",
+    "EN_COMMISSION",
+    "EN_COURS",
+    "CONSEIL_CONSTITUTIONNEL",
+  ];
+  const activeCount = activeStatuses.reduce((sum, s) => sum + (statusCounts[s] || 0), 0);
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -125,7 +133,7 @@ export default async function AssembleePage({ searchParams }: PageProps) {
             <strong className="text-foreground">{totalDossiers}</strong> dossiers
           </span>
           <span>
-            <strong className="text-blue-600">{enCoursCount}</strong> en discussion
+            <strong className="text-blue-600">{activeCount}</strong> en cours
           </span>
           <a
             href="https://www.assemblee-nationale.fr/dyn/17/dossiers"
@@ -140,7 +148,7 @@ export default async function AssembleePage({ searchParams }: PageProps) {
       </div>
 
       {/* Status filter cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
         {(Object.keys(DOSSIER_STATUS_LABELS) as DossierStatus[]).map((status) => {
           const count = statusCounts[status] || 0;
           const isActive = statusFilter === status;
@@ -160,9 +168,16 @@ export default async function AssembleePage({ searchParams }: PageProps) {
                   isActive ? "ring-2 ring-primary" : ""
                 }`}
               >
-                <CardContent className="p-4">
-                  <div className={`text-2xl font-bold ${colorClasses.split(" ")[1]}`}>{count}</div>
-                  <div className="text-sm font-medium">{DOSSIER_STATUS_LABELS[status]}</div>
+                <CardContent className="p-3">
+                  <div className="flex items-center gap-2">
+                    <span>{DOSSIER_STATUS_ICONS[status]}</span>
+                    <div>
+                      <div className={`text-xl font-bold ${colorClasses.split(" ")[1]}`}>
+                        {count}
+                      </div>
+                      <div className="text-xs font-medium">{DOSSIER_STATUS_LABELS[status]}</div>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             </Link>
@@ -297,8 +312,29 @@ export default async function AssembleePage({ searchParams }: PageProps) {
         </Card>
       )}
 
+      {/* Status legend */}
+      <Card className="mt-8">
+        <CardContent className="pt-6">
+          <h2 className="font-semibold mb-3">Comprendre les statuts</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+            {(Object.keys(DOSSIER_STATUS_LABELS) as DossierStatus[]).map((status) => (
+              <div key={status} className="flex items-start gap-2">
+                <span className="shrink-0">{DOSSIER_STATUS_ICONS[status]}</span>
+                <div>
+                  <span className="font-medium">{DOSSIER_STATUS_LABELS[status]}</span>
+                  <span className="text-muted-foreground">
+                    {" "}
+                    &mdash; {DOSSIER_STATUS_DESCRIPTIONS[status]}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Info box */}
-      <Card className="mt-8 bg-blue-50 border-blue-200 dark:bg-blue-950 dark:border-blue-800">
+      <Card className="mt-4 bg-blue-50 border-blue-200 dark:bg-blue-950 dark:border-blue-800">
         <CardContent className="pt-6">
           <h2 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">
             À propos des données

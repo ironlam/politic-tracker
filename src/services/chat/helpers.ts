@@ -84,10 +84,13 @@ export function extractPersonName(raw: string): string {
  */
 export const DOSSIER_STATUS_LABELS: Record<string, string> = {
   DEPOSE: "Déposé",
+  EN_COMMISSION: "En commission",
   EN_COURS: "En discussion",
+  CONSEIL_CONSTITUTIONNEL: "Conseil constitutionnel",
   ADOPTE: "Adopté",
   REJETE: "Rejeté",
   RETIRE: "Retiré",
+  CADUQUE: "Caduc",
 };
 
 /**

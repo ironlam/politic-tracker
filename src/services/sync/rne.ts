@@ -203,6 +203,7 @@ export async function syncRNEMaires(
             departmentCode: deptCode,
             startDate,
             isCurrent: true,
+            source: DataSource.RNE,
           },
         });
         mandatesCreated++;

@@ -287,6 +287,7 @@ async function syncMEP(
           europeanGroupId: europeanGroupId || undefined,
           startDate,
           isCurrent: true,
+          source: DataSource.PARLEMENT_EUROPEEN,
           externalId: europarlId,
           sourceUrl: `https://www.europarl.europa.eu/meps/fr/${europarlId}`,
           officialUrl: `https://www.europarl.europa.eu/meps/fr/${europarlId}`,

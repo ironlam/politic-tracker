@@ -215,7 +215,16 @@ export default function MentionsLegalesPage() {
             patrimoine) sont des données publiques librement réutilisables.
           </p>
           <p className="text-muted-foreground mt-2">
-            Le code source de ce projet est disponible sous licence MIT.
+            Le code source de ce projet est disponible sous{" "}
+            <a
+              href="https://github.com/ironlam/politic-tracker/blob/main/LICENSE"
+              className="underline"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              licence AGPL-3.0
+            </a>
+            .
           </p>
         </section>
 

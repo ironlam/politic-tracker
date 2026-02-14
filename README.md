@@ -1,12 +1,12 @@
 # Poligraph
 
-Observatoire citoyen des représentants politiques français. Données publiques, regard indépendant.
+Observatoire citoyen des responsables politiques français. Données publiques, regard indépendant.
 
-**Site** : [https://politic-tracker.vercel.app](https://politic-tracker.vercel.app)
+**Site** : [https://poligraph.fr](https://poligraph.fr)
 
 ## Objectif
 
-Centraliser les informations publiques sur les représentants politiques français : mandats, patrimoine (HATVP), et affaires judiciaires documentées.
+Centraliser les informations publiques sur les responsables politiques français : mandats, patrimoine (HATVP), et affaires judiciaires documentées.
 
 ## Principes
 
@@ -137,22 +137,15 @@ docs/                     # Documentation
 
 ## Contribuer
 
-Les contributions sont les bienvenues. Pour les changements importants, ouvrez d'abord une issue.
+Les contributions sont les bienvenues ! Consultez le guide [CONTRIBUTING.md](./CONTRIBUTING.md) pour savoir comment participer.
 
-```bash
-# Créer une branche
-git checkout -b feature/ma-fonctionnalite
+## Sécurité
 
-# Commit
-git commit -m "feat: description"
-
-# Push
-git push origin feature/ma-fonctionnalite
-```
+Pour signaler une vulnérabilité, consultez [SECURITY.md](./SECURITY.md).
 
 ## Licence
 
-MIT
+Ce projet est sous licence **AGPL-3.0** — voir [LICENSE](./LICENSE).
 
 ## Avertissement
 

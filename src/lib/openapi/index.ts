@@ -38,11 +38,11 @@ Merci de faire un usage raisonnable de l'API.
       `.trim(),
       contact: {
         name: "Poligraph",
-        url: "https://politic-tracker.vercel.app",
+        url: "https://poligraph.fr",
       },
       license: {
-        name: "MIT",
-        url: "https://opensource.org/licenses/MIT",
+        name: "AGPL-3.0",
+        url: "https://www.gnu.org/licenses/agpl-3.0.html",
       },
     },
     tags: [

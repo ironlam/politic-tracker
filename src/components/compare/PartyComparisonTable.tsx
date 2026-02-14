@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { formatDate } from "@/lib/utils";
 import {
-  MANDATE_TYPE_LABELS,
+  MANDATE_TYPE_LABELS_PLURAL,
   AFFAIR_STATUS_LABELS,
   POLITICAL_POSITION_LABELS,
   VOTE_POSITION_LABELS,
@@ -328,7 +328,7 @@ export function PartyComparisonTable({ left, right, voteComparison }: PartyCompa
                 {mandateTypes.map((type) => (
                   <Row
                     key={type}
-                    label={MANDATE_TYPE_LABELS[type] + "s"}
+                    label={MANDATE_TYPE_LABELS_PLURAL[type]}
                     left={(leftMandateMap.get(type) || 0).toString()}
                     right={(rightMandateMap.get(type) || 0).toString()}
                   />

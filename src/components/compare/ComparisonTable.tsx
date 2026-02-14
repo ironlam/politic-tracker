@@ -102,6 +102,18 @@ function formatMoney(amount: number | null): string {
   }).format(amount);
 }
 
+function MobileLabel({ name, color }: { name: string; color?: string | null }) {
+  return (
+    <p className="md:hidden text-sm font-medium text-muted-foreground mb-1 flex items-center gap-1.5">
+      <span
+        className="w-2 h-2 rounded-full shrink-0"
+        style={{ backgroundColor: color || "#888" }}
+      />
+      {name}
+    </p>
+  );
+}
+
 export function ComparisonTable({
   left,
   right,
@@ -163,8 +175,14 @@ export function ComparisonTable({
       <section>
         <h2 className="text-xl font-semibold mb-4">Mandats</h2>
         <div className="grid md:grid-cols-2 gap-4">
-          <MandateList mandates={left.mandates} />
-          <MandateList mandates={right.mandates} />
+          <div>
+            <MobileLabel name={left.fullName} color={left.currentParty?.color} />
+            <MandateList mandates={left.mandates} />
+          </div>
+          <div>
+            <MobileLabel name={right.fullName} color={right.currentParty?.color} />
+            <MandateList mandates={right.mandates} />
+          </div>
         </div>
       </section>
 
@@ -274,26 +292,38 @@ export function ComparisonTable({
                 {/* Verdict bars */}
                 {(leftDirect.length > 0 || rightDirect.length > 0) && (
                   <div className="grid md:grid-cols-2 gap-4 mt-4">
-                    <VerdictBar mentions={leftDirect} />
-                    <VerdictBar mentions={rightDirect} />
+                    <div>
+                      <MobileLabel name={left.fullName} color={left.currentParty?.color} />
+                      <VerdictBar mentions={leftDirect} />
+                    </div>
+                    <div>
+                      <MobileLabel name={right.fullName} color={right.currentParty?.color} />
+                      <VerdictBar mentions={rightDirect} />
+                    </div>
                   </div>
                 )}
 
                 {/* Recent fact-checks */}
                 {(left.factCheckMentions.length > 0 || right.factCheckMentions.length > 0) && (
                   <div className="grid md:grid-cols-2 gap-4 mt-4">
-                    <FactCheckList
-                      mentions={leftDirect}
-                      totalCount={left._count.factCheckMentions}
-                      politicianSlug={left.slug}
-                      label="Ses déclarations"
-                    />
-                    <FactCheckList
-                      mentions={rightDirect}
-                      totalCount={right._count.factCheckMentions}
-                      politicianSlug={right.slug}
-                      label="Ses déclarations"
-                    />
+                    <div>
+                      <MobileLabel name={left.fullName} color={left.currentParty?.color} />
+                      <FactCheckList
+                        mentions={leftDirect}
+                        totalCount={left._count.factCheckMentions}
+                        politicianSlug={left.slug}
+                        label="Ses déclarations"
+                      />
+                    </div>
+                    <div>
+                      <MobileLabel name={right.fullName} color={right.currentParty?.color} />
+                      <FactCheckList
+                        mentions={rightDirect}
+                        totalCount={right._count.factCheckMentions}
+                        politicianSlug={right.slug}
+                        label="Ses déclarations"
+                      />
+                    </div>
                   </div>
                 )}
               </>
@@ -321,8 +351,14 @@ export function ComparisonTable({
           </div>
           {(left.affairs.length > 0 || right.affairs.length > 0) && (
             <div className="grid md:grid-cols-2 gap-4 mt-4">
-              <AffairList affairs={left.affairs} politicianSlug={left.slug} />
-              <AffairList affairs={right.affairs} politicianSlug={right.slug} />
+              <div>
+                <MobileLabel name={left.fullName} color={left.currentParty?.color} />
+                <AffairList affairs={left.affairs} politicianSlug={left.slug} />
+              </div>
+              <div>
+                <MobileLabel name={right.fullName} color={right.currentParty?.color} />
+                <AffairList affairs={right.affairs} politicianSlug={right.slug} />
+              </div>
             </div>
           )}
         </section>

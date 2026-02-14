@@ -31,12 +31,7 @@ function getAgreement(left: VotePosition, right: VotePosition): AgreementType {
   return "disagree";
 }
 
-export function VoteAgreement({
-  leftVotes,
-  rightVotes,
-  leftName: _leftName,
-  rightName: _rightName,
-}: VoteAgreementProps) {
+export function VoteAgreement({ leftVotes, rightVotes, leftName, rightName }: VoteAgreementProps) {
   // Create a map of scrutin ID to votes
   const leftVoteMap = new Map(leftVotes.map((v) => [v.scrutinId, v]));
   const rightVoteMap = new Map(rightVotes.map((v) => [v.scrutinId, v]));
@@ -169,12 +164,18 @@ export function VoteAgreement({
                 </div>
                 <div className="flex gap-4 flex-shrink-0">
                   <div className="text-center">
+                    <p className="text-xs font-medium text-muted-foreground mb-0.5 md:hidden">
+                      {leftName.split(" ").pop()}
+                    </p>
                     <span
                       className={`inline-block w-3 h-3 rounded-full ${VOTE_POSITION_DOT_COLORS[cv.leftPosition]}`}
                     />
                     <p className="text-xs mt-1">{VOTE_POSITION_LABELS[cv.leftPosition]}</p>
                   </div>
                   <div className="text-center">
+                    <p className="text-xs font-medium text-muted-foreground mb-0.5 md:hidden">
+                      {rightName.split(" ").pop()}
+                    </p>
                     <span
                       className={`inline-block w-3 h-3 rounded-full ${VOTE_POSITION_DOT_COLORS[cv.rightPosition]}`}
                     />

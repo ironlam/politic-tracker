@@ -149,6 +149,18 @@ function getMajorityAgreement(cv: ScrutinComparison): AgreementType {
 // Sub-components
 // ============================================
 
+function MobileLabel({ name, color }: { name: string; color?: string | null }) {
+  return (
+    <p className="md:hidden text-sm font-medium text-muted-foreground mb-1 flex items-center gap-1.5">
+      <span
+        className="w-2 h-2 rounded-full shrink-0"
+        style={{ backgroundColor: color || "#888" }}
+      />
+      {name}
+    </p>
+  );
+}
+
 function VerdictBar({ mentions }: { mentions: FactCheckMentionData[] }) {
   if (mentions.length === 0) {
     return (
@@ -445,6 +457,9 @@ export function PartyComparisonTable({ left, right, voteComparison }: PartyCompa
                       </div>
                       <div className="flex gap-4 flex-shrink-0">
                         <div className="text-center">
+                          <p className="text-xs font-medium text-muted-foreground mb-0.5 md:hidden">
+                            {lp.shortName}
+                          </p>
                           <span
                             className={`inline-block w-3 h-3 rounded-full ${VOTE_POSITION_DOT_COLORS[cv.leftPosition as VotePosition] || "bg-gray-400"}`}
                           />
@@ -454,6 +469,9 @@ export function PartyComparisonTable({ left, right, voteComparison }: PartyCompa
                           </p>
                         </div>
                         <div className="text-center">
+                          <p className="text-xs font-medium text-muted-foreground mb-0.5 md:hidden">
+                            {rp.shortName}
+                          </p>
                           <span
                             className={`inline-block w-3 h-3 rounded-full ${VOTE_POSITION_DOT_COLORS[cv.rightPosition as VotePosition] || "bg-gray-400"}`}
                           />
@@ -521,8 +539,14 @@ export function PartyComparisonTable({ left, right, voteComparison }: PartyCompa
             </table>
           </div>
           <div className="grid md:grid-cols-2 gap-4 mt-4">
-            <VerdictBar mentions={left.factCheckMentions} />
-            <VerdictBar mentions={right.factCheckMentions} />
+            <div>
+              <MobileLabel name={lp.shortName} color={lp.color} />
+              <VerdictBar mentions={left.factCheckMentions} />
+            </div>
+            <div>
+              <MobileLabel name={rp.shortName} color={rp.color} />
+              <VerdictBar mentions={right.factCheckMentions} />
+            </div>
           </div>
         </section>
       )}

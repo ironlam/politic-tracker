@@ -48,8 +48,9 @@ Thumbs.db
 # supabase local
 /supabase
 
-# claude code local settings
-.claude/settings.local.json
+# claude code
+CLAUDE.md
+.claude/
 
 # database backups (sensitive data)
 /backups

@@ -229,6 +229,134 @@ test.describe("Error Pages", () => {
   });
 });
 
+// ============================================
+// Compare Pages
+// ============================================
+
+test.describe("Compare - Politicians", () => {
+  test("renders comparison desktop", async ({ page }) => {
+    await page.goto("/comparer?left=emmanuel-macron&right=jordan-bardella");
+    await page.waitForLoadState("networkidle");
+
+    await expect(page.locator("h1")).toContainText(/comparer/i, { timeout: 15000 });
+    // Wait for comparison data to load
+    await expect(page.getByRole("heading", { name: /mandats/i })).toBeVisible({ timeout: 15000 });
+
+    await expect(page).toHaveScreenshot("compare-politicians-desktop.png", {
+      fullPage: false,
+      clip: { x: 0, y: 0, width: 1280, height: 900 },
+    });
+  });
+
+  test("empty state shows suggestions", async ({ page }) => {
+    await page.goto("/comparer");
+    await page.waitForLoadState("networkidle");
+
+    await expect(page.locator("h1")).toContainText(/comparer/i, { timeout: 15000 });
+
+    await expect(page).toHaveScreenshot("compare-empty.png", {
+      fullPage: false,
+      clip: { x: 0, y: 0, width: 1280, height: 900 },
+    });
+  });
+
+  test("one side selected shows invite", async ({ page }) => {
+    await page.goto("/comparer?left=emmanuel-macron");
+    await page.waitForLoadState("networkidle");
+
+    await expect(page.locator("h1")).toContainText(/comparer/i, { timeout: 15000 });
+
+    await expect(page).toHaveScreenshot("compare-one-side.png", {
+      fullPage: false,
+      clip: { x: 0, y: 0, width: 1280, height: 900 },
+    });
+  });
+});
+
+test.describe("Compare - Parties", () => {
+  test("renders party comparison desktop", async ({ page }) => {
+    await page.goto("/comparer?left=renaissance&right=rassemblement-national&mode=partis");
+    await page.waitForLoadState("networkidle");
+
+    await expect(page.locator("h1")).toContainText(/comparer/i, { timeout: 15000 });
+    await expect(page.getByRole("heading", { name: /informations générales/i })).toBeVisible({
+      timeout: 15000,
+    });
+
+    await expect(page).toHaveScreenshot("compare-parties-desktop.png", {
+      fullPage: false,
+      clip: { x: 0, y: 0, width: 1280, height: 900 },
+    });
+  });
+});
+
+test.describe("Compare - Politicians Mobile", () => {
+  test.use({ viewport: { width: 375, height: 667 } });
+
+  test("renders comparison mobile with sticky bar", async ({ page }) => {
+    await page.goto("/comparer?left=emmanuel-macron&right=jordan-bardella");
+    await page.waitForLoadState("networkidle");
+
+    await expect(page.locator("h1")).toContainText(/comparer/i, { timeout: 15000 });
+    await expect(page.getByRole("heading", { name: /mandats/i })).toBeVisible({ timeout: 15000 });
+
+    await expect(page).toHaveScreenshot("compare-politicians-mobile.png", {
+      fullPage: false,
+    });
+  });
+});
+
+test.describe("Compare - Parties Mobile", () => {
+  test.use({ viewport: { width: 375, height: 667 } });
+
+  test("renders party comparison mobile", async ({ page }) => {
+    await page.goto("/comparer?left=renaissance&right=rassemblement-national&mode=partis");
+    await page.waitForLoadState("networkidle");
+
+    await expect(page.locator("h1")).toContainText(/comparer/i, { timeout: 15000 });
+    await expect(page.getByRole("heading", { name: /informations générales/i })).toBeVisible({
+      timeout: 15000,
+    });
+
+    await expect(page).toHaveScreenshot("compare-parties-mobile.png", {
+      fullPage: false,
+    });
+  });
+});
+
+test.describe("Compare - Vote Concordance Page", () => {
+  test("renders vote concordance desktop", async ({ page }) => {
+    await page.goto("/comparer/votes?left=emmanuel-macron&right=jordan-bardella");
+    await page.waitForLoadState("networkidle");
+
+    await expect(page.locator("h1")).toContainText(/concordance/i, { timeout: 15000 });
+
+    await expect(page).toHaveScreenshot("compare-votes-desktop.png", {
+      fullPage: false,
+      clip: { x: 0, y: 0, width: 1280, height: 900 },
+    });
+  });
+});
+
+test.describe("Compare - Vote Concordance Mobile", () => {
+  test.use({ viewport: { width: 375, height: 667 } });
+
+  test("renders vote concordance mobile", async ({ page }) => {
+    await page.goto("/comparer/votes?left=emmanuel-macron&right=jordan-bardella");
+    await page.waitForLoadState("networkidle");
+
+    await expect(page.locator("h1")).toContainText(/concordance/i, { timeout: 15000 });
+
+    await expect(page).toHaveScreenshot("compare-votes-mobile.png", {
+      fullPage: false,
+    });
+  });
+});
+
+// ============================================
+// Politician with Affairs
+// ============================================
+
 test.describe("Politician with Affairs", () => {
   test("affair badges render correctly on desktop", async ({ page }) => {
     await page.goto("/politiques/sylvie-andrieux");

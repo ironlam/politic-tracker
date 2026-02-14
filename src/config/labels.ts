@@ -182,6 +182,26 @@ export const MANDATE_TYPE_LABELS: Record<MandateType, string> = {
   OTHER: "Autre mandat",
 };
 
+export const MANDATE_TYPE_LABELS_PLURAL: Record<MandateType, string> = {
+  DEPUTE: "Députés",
+  SENATEUR: "Sénateurs",
+  DEPUTE_EUROPEEN: "Députés européens",
+  PRESIDENT_REPUBLIQUE: "Présidents de la République",
+  PREMIER_MINISTRE: "Premiers ministres",
+  MINISTRE: "Ministres",
+  SECRETAIRE_ETAT: "Secrétaires d'État",
+  MINISTRE_DELEGUE: "Ministres délégués",
+  PRESIDENT_REGION: "Présidents de région",
+  PRESIDENT_DEPARTEMENT: "Présidents de département",
+  MAIRE: "Maires",
+  ADJOINT_MAIRE: "Adjoints au maire",
+  CONSEILLER_REGIONAL: "Conseillers régionaux",
+  CONSEILLER_DEPARTEMENTAL: "Conseillers départementaux",
+  CONSEILLER_MUNICIPAL: "Conseillers municipaux",
+  PRESIDENT_PARTI: "Dirigeant(e)s de parti",
+  OTHER: "Autres mandats",
+};
+
 // Feminize institutional roles based on civility
 export function feminizeRole(role: string, civility?: string | null): string {
   if (civility !== "Mme") return role;

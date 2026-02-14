@@ -28,7 +28,7 @@ test.describe("Homepage", () => {
 
   test("hero section visible", async ({ page }) => {
     await page.goto("/");
-    await expect(page.locator("h1")).toContainText(/transparence|politique/i);
+    await expect(page.locator("h1")).toContainText(/poligraph/i);
   });
 });
 
@@ -53,12 +53,12 @@ test.describe("Politicians List", () => {
 
   test("search functionality works", async ({ page }) => {
     await page.goto("/politiques");
-    await page.waitForLoadState("domcontentloaded");
+    await page.waitForLoadState("networkidle");
 
     // Wait for page to be ready
     await expect(page.locator("h1")).toContainText(/représentants/i, { timeout: 15000 });
 
-    const searchInput = page.locator('input[placeholder*="Rechercher"]');
+    const searchInput = page.getByRole("searchbox", { name: /rechercher/i });
     await expect(searchInput).toBeVisible({ timeout: 10000 });
     await searchInput.fill("Macron");
     await page.waitForTimeout(800); // Wait for debounce + API response

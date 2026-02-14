@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { withCache } from "@/lib/cache";
 
 /**
  * @openapi
@@ -120,7 +121,7 @@ export async function GET(request: NextRequest) {
       return 0;
     });
 
-    return NextResponse.json(result);
+    return withCache(NextResponse.json(result), "daily");
   } catch (error) {
     console.error("Error fetching deputies:", error);
     return NextResponse.json({ error: "Erreur lors de la recherche des députés" }, { status: 500 });

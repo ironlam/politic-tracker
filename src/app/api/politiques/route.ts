@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { MandateType } from "@/generated/prisma";
 import { getPoliticians } from "@/services/politicians";
+import { withCache } from "@/lib/cache";
 
 /**
  * @openapi
@@ -89,34 +90,37 @@ export async function GET(request: NextRequest) {
       limit,
     });
 
-    return NextResponse.json({
-      data: result.data.map((p) => ({
-        id: p.id,
-        slug: p.slug,
-        fullName: p.fullName,
-        firstName: p.firstName,
-        lastName: p.lastName,
-        civility: p.civility,
-        birthDate: p.birthDate,
-        deathDate: p.deathDate,
-        birthPlace: p.birthPlace,
-        photoUrl: p.photoUrl,
-        currentParty: p.currentParty
-          ? {
-              id: p.currentParty.id,
-              name: p.currentParty.name,
-              shortName: p.currentParty.shortName,
-              color: p.currentParty.color,
-            }
-          : null,
-      })),
-      pagination: {
-        page: result.page,
-        limit: result.limit,
-        total: result.total,
-        totalPages: result.totalPages,
-      },
-    });
+    return withCache(
+      NextResponse.json({
+        data: result.data.map((p) => ({
+          id: p.id,
+          slug: p.slug,
+          fullName: p.fullName,
+          firstName: p.firstName,
+          lastName: p.lastName,
+          civility: p.civility,
+          birthDate: p.birthDate,
+          deathDate: p.deathDate,
+          birthPlace: p.birthPlace,
+          photoUrl: p.photoUrl,
+          currentParty: p.currentParty
+            ? {
+                id: p.currentParty.id,
+                name: p.currentParty.name,
+                shortName: p.currentParty.shortName,
+                color: p.currentParty.color,
+              }
+            : null,
+        })),
+        pagination: {
+          page: result.page,
+          limit: result.limit,
+          total: result.total,
+          totalPages: result.totalPages,
+        },
+      }),
+      "daily"
+    );
   } catch (error) {
     console.error("API error:", error);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });

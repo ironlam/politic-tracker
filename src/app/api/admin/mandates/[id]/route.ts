@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { isAuthenticated } from "@/lib/auth";
+import { invalidateEntity } from "@/lib/cache";
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -77,6 +78,8 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       },
     });
 
+    invalidateEntity("mandate");
+
     return NextResponse.json(mandate);
   } catch (error) {
     console.error("Error updating mandate:", error);
@@ -152,6 +155,9 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       },
     });
 
+    invalidateEntity("mandate");
+    if (mandate.politician?.slug) invalidateEntity("politician", mandate.politician.slug);
+
     return NextResponse.json(mandate);
   } catch (error) {
     console.error("Error updating mandate:", error);
@@ -196,6 +202,13 @@ export async function DELETE(_request: NextRequest, context: RouteContext) {
         },
       },
     });
+
+    invalidateEntity("mandate");
+    const pol = await db.politician.findUnique({
+      where: { id: existing.politicianId },
+      select: { slug: true },
+    });
+    if (pol) invalidateEntity("politician", pol.slug);
 
     return NextResponse.json({ success: true });
   } catch (error) {

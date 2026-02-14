@@ -10,7 +10,6 @@ import { matchPattern } from "@/services/chat/patterns";
 import { searchDatabaseByKeywords } from "@/services/chat/keywords";
 
 // Runtime configuration for streaming
-export const runtime = "nodejs";
 export const maxDuration = 30;
 
 // ─── Rate limiting ──────────────────────────────────────────────

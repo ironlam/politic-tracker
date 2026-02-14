@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { generateSlug } from "@/lib/utils";
 import { isAuthenticated } from "@/lib/auth";
+import { invalidateEntity } from "@/lib/cache";
 import type { AffairStatus, AffairCategory } from "@/generated/prisma";
 
 interface SourceInput {
@@ -141,6 +142,9 @@ export async function POST(request: NextRequest) {
         changes: { title: affair.title, politician: affair.politician.fullName },
       },
     });
+
+    invalidateEntity("affair");
+    invalidateEntity("politician", politician.slug);
 
     return NextResponse.json(affair, { status: 201 });
   } catch (error) {

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { withCache } from "@/lib/cache";
 
 /**
  * @openapi
@@ -92,25 +93,28 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       db.factCheckMention.count({ where: mentionWhere }),
     ]);
 
-    return NextResponse.json({
-      politician: {
-        id: politician.id,
-        slug: politician.slug,
-        fullName: politician.fullName,
-        firstName: politician.firstName,
-        lastName: politician.lastName,
-        photoUrl: politician.photoUrl,
-        party: politician.currentParty,
-      },
-      factchecks: mentions.map((m) => m.factCheck),
-      total,
-      pagination: {
-        page,
-        limit,
+    return withCache(
+      NextResponse.json({
+        politician: {
+          id: politician.id,
+          slug: politician.slug,
+          fullName: politician.fullName,
+          firstName: politician.firstName,
+          lastName: politician.lastName,
+          photoUrl: politician.photoUrl,
+          party: politician.currentParty,
+        },
+        factchecks: mentions.map((m) => m.factCheck),
         total,
-        totalPages: Math.ceil(total / limit),
-      },
-    });
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
+      }),
+      "daily"
+    );
   } catch (error) {
     console.error("API error:", error);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });

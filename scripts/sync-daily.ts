@@ -17,6 +17,11 @@ import { execSync } from "child_process";
 
 const DRY_RUN = process.argv.includes("--dry-run");
 const dryRunFlag = DRY_RUN ? " --dry-run" : "";
+const BASE_URL =
+  process.env.NEXT_PUBLIC_BASE_URL || process.env.VERCEL_URL
+    ? `https://${process.env.VERCEL_URL}`
+    : "http://localhost:3000";
+const CRON_SECRET = process.env.CRON_SECRET;
 
 interface SyncStep {
   name: string;
@@ -68,6 +73,14 @@ const steps: SyncStep[] = [
     name: "Embeddings presse (delta)",
     command: `npx tsx scripts/index-embeddings.ts --type=PRESS_ARTICLE`,
   },
+  ...(CRON_SECRET
+    ? [
+        {
+          name: "Cache revalidation",
+          command: `curl -s -X POST "${BASE_URL}/api/cron/revalidate" -H "Authorization: Bearer ${CRON_SECRET}" -H "Content-Type: application/json" -d '{"tags":["votes","dossiers","stats","politicians"]}'`,
+        },
+      ]
+    : []),
 ];
 
 async function main() {

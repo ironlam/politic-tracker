@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { cacheTag, cacheLife } from "next/cache";
 import { db } from "@/lib/db";
 import { formatDate } from "@/lib/utils";
 import { VOTE_POSITION_LABELS, VOTE_POSITION_DOT_COLORS } from "@/config/labels";
@@ -48,6 +49,10 @@ function getAgreement(left: VotePosition, right: VotePosition): AgreementType {
 }
 
 async function getPoliticianVoteComparison(leftSlug: string, rightSlug: string) {
+  "use cache";
+  cacheTag(`politician:${leftSlug}`, `politician:${rightSlug}`, "votes");
+  cacheLife("minutes");
+
   const [leftPol, rightPol] = await Promise.all([
     db.politician.findUnique({
       where: { slug: leftSlug },
@@ -145,6 +150,10 @@ function getPartyAgreement(leftPosition: string, rightPosition: string): Agreeme
 }
 
 async function getPartyVoteComparisonData(leftSlug: string, rightSlug: string) {
+  "use cache";
+  cacheTag(`party:${leftSlug}`, `party:${rightSlug}`, "votes");
+  cacheLife("minutes");
+
   const [leftParty, rightParty] = await Promise.all([
     db.party.findFirst({
       where: { OR: [{ slug: leftSlug }, { id: leftSlug }] },

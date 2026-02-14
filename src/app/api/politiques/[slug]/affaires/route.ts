@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { withCache } from "@/lib/cache";
 
 interface RouteContext {
   params: Promise<{ slug: string }>;
@@ -97,19 +98,22 @@ export async function GET(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "Politique non trouvé" }, { status: 404 });
     }
 
-    return NextResponse.json({
-      politician: {
-        id: politician.id,
-        slug: politician.slug,
-        fullName: politician.fullName,
-        firstName: politician.firstName,
-        lastName: politician.lastName,
-        photoUrl: politician.photoUrl,
-        party: politician.currentParty,
-      },
-      affairs: politician.affairs,
-      total: politician.affairs.length,
-    });
+    return withCache(
+      NextResponse.json({
+        politician: {
+          id: politician.id,
+          slug: politician.slug,
+          fullName: politician.fullName,
+          firstName: politician.firstName,
+          lastName: politician.lastName,
+          photoUrl: politician.photoUrl,
+          party: politician.currentParty,
+        },
+        affairs: politician.affairs,
+        total: politician.affairs.length,
+      }),
+      "daily"
+    );
   } catch (error) {
     console.error("API error:", error);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });

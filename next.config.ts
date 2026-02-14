@@ -1,6 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  experimental: {
+    useCache: true,
+  },
   images: {
     // Allow all remote images - photos come from many sources
     remotePatterns: [

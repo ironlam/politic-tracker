@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { withCache } from "@/lib/cache";
 
 /**
  * @openapi
@@ -94,7 +95,7 @@ export async function GET(
       return NextResponse.json({ error: "Élection non trouvée" }, { status: 404 });
     }
 
-    return NextResponse.json(election);
+    return withCache(NextResponse.json(election), "daily");
   } catch (error) {
     console.error("API error:", error);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { withCache } from "@/lib/cache";
 
 /**
  * @openapi
@@ -128,21 +129,24 @@ export async function GET(
       affairsCount: _count.affairs,
     }));
 
-    return NextResponse.json({
-      ...rest,
-      memberCount: members.length,
-      members,
-      leadership: leadership.map((m) => ({
-        politicianId: m.politician.id,
-        politicianSlug: m.politician.slug,
-        politicianName: m.politician.fullName,
-        politicianPhoto: m.politician.photoUrl,
-        title: m.title,
-        startDate: m.startDate,
-        endDate: m.endDate,
-        isCurrent: m.isCurrent,
-      })),
-    });
+    return withCache(
+      NextResponse.json({
+        ...rest,
+        memberCount: members.length,
+        members,
+        leadership: leadership.map((m) => ({
+          politicianId: m.politician.id,
+          politicianSlug: m.politician.slug,
+          politicianName: m.politician.fullName,
+          politicianPhoto: m.politician.photoUrl,
+          title: m.title,
+          startDate: m.startDate,
+          endDate: m.endDate,
+          isCurrent: m.isCurrent,
+        })),
+      }),
+      "daily"
+    );
   } catch (error) {
     console.error("API error:", error);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });

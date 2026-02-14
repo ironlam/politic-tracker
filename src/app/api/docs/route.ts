@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { openapiSpec } from "@/lib/openapi";
+import { withCache } from "@/lib/cache";
 
 export async function GET() {
-  return NextResponse.json(openapiSpec);
+  return withCache(NextResponse.json(openapiSpec), "static");
 }

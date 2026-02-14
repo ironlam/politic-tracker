@@ -1,7 +1,5 @@
 import { ImageResponse } from "next/og";
 
-export const runtime = "edge";
-
 export const alt = "Poligraph - Observatoire citoyen de la vie politique";
 export const size = {
   width: 1200,

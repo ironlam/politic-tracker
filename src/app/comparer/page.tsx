@@ -360,6 +360,29 @@ export default async function ComparerPage({ searchParams }: PageProps) {
           </div>
         </div>
 
+        {/* Sticky mobile bar — party mode */}
+        {leftPartyPreview && rightPartyPreview && (
+          <div className="md:hidden sticky top-16 z-30 -mx-4 px-4 py-2 mb-4 bg-background/80 backdrop-blur-md border-b">
+            <div className="flex items-center justify-between gap-2 text-sm">
+              <span className="flex items-center gap-1.5 min-w-0">
+                <span
+                  className="w-2.5 h-2.5 rounded-full shrink-0"
+                  style={{ backgroundColor: leftPartyPreview.color || "#888" }}
+                />
+                <span className="font-medium truncate">{leftPartyPreview.shortName}</span>
+              </span>
+              <span className="text-muted-foreground font-bold shrink-0">VS</span>
+              <span className="flex items-center gap-1.5 min-w-0 justify-end">
+                <span className="font-medium truncate">{rightPartyPreview.shortName}</span>
+                <span
+                  className="w-2.5 h-2.5 rounded-full shrink-0"
+                  style={{ backgroundColor: rightPartyPreview.color || "#888" }}
+                />
+              </span>
+            </div>
+          </div>
+        )}
+
         {/* VS separator */}
         {(leftPartyPreview || rightPartyPreview) && (
           <div className="flex items-center justify-center mb-8">
@@ -464,6 +487,29 @@ export default async function ComparerPage({ searchParams }: PageProps) {
           />
         </div>
       </div>
+
+      {/* Sticky mobile bar — politician mode */}
+      {leftPreview && rightPreview && (
+        <div className="md:hidden sticky top-16 z-30 -mx-4 px-4 py-2 mb-4 bg-background/80 backdrop-blur-md border-b">
+          <div className="flex items-center justify-between gap-2 text-sm">
+            <span className="flex items-center gap-1.5 min-w-0">
+              <span
+                className="w-2.5 h-2.5 rounded-full shrink-0"
+                style={{ backgroundColor: leftPreview.currentParty?.color || "#888" }}
+              />
+              <span className="font-medium truncate">{leftPreview.fullName}</span>
+            </span>
+            <span className="text-muted-foreground font-bold shrink-0">VS</span>
+            <span className="flex items-center gap-1.5 min-w-0 justify-end">
+              <span className="font-medium truncate">{rightPreview.fullName}</span>
+              <span
+                className="w-2.5 h-2.5 rounded-full shrink-0"
+                style={{ backgroundColor: rightPreview.currentParty?.color || "#888" }}
+              />
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* VS separator */}
       {(leftPreview || rightPreview) && (

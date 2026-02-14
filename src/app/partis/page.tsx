@@ -5,6 +5,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { POLITICAL_POSITION_LABELS, POLITICAL_POSITION_COLORS } from "@/config/labels";
 
+export const revalidate = 300; // 5 minutes, cohérent avec l'API
+
 export const metadata: Metadata = {
   title: "Partis politiques",
   description: "Liste des partis politiques français avec leurs membres et historique",
@@ -58,12 +60,20 @@ export default async function PartiesPage() {
                 <Card className="h-full hover:shadow-md transition-shadow">
                   <CardContent className="p-4">
                     <div className="flex items-start gap-3">
-                      <div
-                        className="w-12 h-12 rounded-lg flex items-center justify-center text-lg font-bold text-white shrink-0"
-                        style={{ backgroundColor: party.color || "#888" }}
-                      >
-                        {party.shortName.substring(0, 2)}
-                      </div>
+                      {party.logoUrl ? (
+                        <img
+                          src={party.logoUrl}
+                          alt={party.name}
+                          className="w-12 h-12 object-contain shrink-0"
+                        />
+                      ) : (
+                        <div
+                          className="w-12 h-12 rounded-lg flex items-center justify-center text-lg font-bold text-white shrink-0"
+                          style={{ backgroundColor: party.color || "#888" }}
+                        >
+                          {party.shortName.substring(0, 2)}
+                        </div>
+                      )}
                       <div className="min-w-0 flex-1">
                         <h3 className="font-semibold truncate">{party.name}</h3>
                         <div className="flex items-center gap-2 mt-1 flex-wrap">
@@ -112,12 +122,20 @@ export default async function PartiesPage() {
                   <Card className="h-full hover:shadow-md transition-shadow opacity-75 hover:opacity-100">
                     <CardContent className="p-4">
                       <div className="flex items-start gap-3">
-                        <div
-                          className="w-10 h-10 rounded-lg flex items-center justify-center text-sm font-bold text-white shrink-0"
-                          style={{ backgroundColor: party.color || "#888" }}
-                        >
-                          {party.shortName.substring(0, 2)}
-                        </div>
+                        {party.logoUrl ? (
+                          <img
+                            src={party.logoUrl}
+                            alt={party.name}
+                            className="w-10 h-10 object-contain shrink-0"
+                          />
+                        ) : (
+                          <div
+                            className="w-10 h-10 rounded-lg flex items-center justify-center text-sm font-bold text-white shrink-0"
+                            style={{ backgroundColor: party.color || "#888" }}
+                          >
+                            {party.shortName.substring(0, 2)}
+                          </div>
+                        )}
                         <div className="min-w-0 flex-1">
                           <h3 className="font-medium truncate">{party.name}</h3>
                           <div className="flex items-center gap-2 mt-1">

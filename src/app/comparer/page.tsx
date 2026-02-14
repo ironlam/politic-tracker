@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import { cacheTag, cacheLife } from "next/cache";
 import { db } from "@/lib/db";
 import {
   PoliticianSelector,
@@ -28,6 +29,10 @@ interface PageProps {
 }
 
 async function getPoliticianBySlug(slug: string) {
+  "use cache";
+  cacheTag(`politician:${slug}`, "votes");
+  cacheLife("minutes");
+
   const politician = await db.politician.findUnique({
     where: { slug },
     include: {
@@ -92,6 +97,10 @@ async function getPoliticianBySlug(slug: string) {
 }
 
 async function getPoliticianPreview(slug: string) {
+  "use cache";
+  cacheTag(`politician:${slug}`);
+  cacheLife("minutes");
+
   const politician = await db.politician.findUnique({
     where: { slug },
     select: {
@@ -147,6 +156,10 @@ async function getPartyPreview(slugOrId: string) {
 }
 
 async function getPartyComparisonData(slugOrId: string): Promise<PartyComparisonData | null> {
+  "use cache";
+  cacheTag(`party:${slugOrId}`);
+  cacheLife("minutes");
+
   const party = await db.party.findFirst({
     where: {
       OR: [{ slug: slugOrId }, { id: slugOrId }],
@@ -224,6 +237,10 @@ interface PartyMajorityVoteRow {
 }
 
 async function getPartyVoteComparison(leftPartyId: string, rightPartyId: string) {
+  "use cache";
+  cacheTag("votes");
+  cacheLife("minutes");
+
   // Get majority position per scrutin for each party
   const [leftRows, rightRows] = await Promise.all([
     db.$queryRaw<PartyMajorityVoteRow[]>`

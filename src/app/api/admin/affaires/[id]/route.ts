@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { isAuthenticated } from "@/lib/auth";
+import { invalidateEntity } from "@/lib/cache";
 import type { AffairStatus, AffairCategory } from "@/generated/prisma";
 
 interface SourceInput {
@@ -147,6 +148,14 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       },
     });
 
+    // Invalidate cache for affair and related politician
+    invalidateEntity("affair");
+    const pol = await db.politician.findUnique({
+      where: { id: data.politicianId },
+      select: { slug: true },
+    });
+    if (pol) invalidateEntity("politician", pol.slug);
+
     return NextResponse.json(affair);
   } catch (error) {
     console.error("Error updating affair:", error);
@@ -165,7 +174,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
   try {
     const affair = await db.affair.findUnique({
       where: { id },
-      select: { id: true, title: true },
+      select: { id: true, title: true, politician: { select: { slug: true } } },
     });
 
     if (!affair) {
@@ -184,6 +193,9 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
         changes: { title: affair.title },
       },
     });
+
+    invalidateEntity("affair");
+    if (affair.politician?.slug) invalidateEntity("politician", affair.politician.slug);
 
     return NextResponse.json({ success: true });
   } catch (error) {

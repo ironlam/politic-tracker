@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { withCache } from "@/lib/cache";
 
 interface RouteContext {
   params: Promise<{ slug: string }>;
@@ -159,29 +160,32 @@ export async function GET(request: NextRequest, context: RouteContext) {
     votingStats.participationRate =
       countedForParticipation > 0 ? Math.round((expressed / countedForParticipation) * 100) : 0;
 
-    return NextResponse.json({
-      politician: {
-        id: politician.id,
-        slug: politician.slug,
-        fullName: politician.fullName,
-        firstName: politician.firstName,
-        lastName: politician.lastName,
-        photoUrl: politician.photoUrl,
-        party: politician.currentParty,
-      },
-      stats: votingStats,
-      votes: votes.map((v) => ({
-        id: v.id,
-        position: v.position,
-        scrutin: v.scrutin,
-      })),
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-      },
-    });
+    return withCache(
+      NextResponse.json({
+        politician: {
+          id: politician.id,
+          slug: politician.slug,
+          fullName: politician.fullName,
+          firstName: politician.firstName,
+          lastName: politician.lastName,
+          photoUrl: politician.photoUrl,
+          party: politician.currentParty,
+        },
+        stats: votingStats,
+        votes: votes.map((v) => ({
+          id: v.id,
+          position: v.position,
+          scrutin: v.scrutin,
+        })),
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
+      }),
+      "daily"
+    );
   } catch (error) {
     console.error("API error:", error);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });

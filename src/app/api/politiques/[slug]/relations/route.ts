@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { withCache } from "@/lib/cache";
 import { RelationType, GraphNode, GraphLink, RelationsResponse } from "@/types/relations";
 import { RELATION_TYPE_STRENGTH, ALL_RELATION_TYPES } from "@/config/relations";
 import { MandateType } from "@/generated/prisma";
@@ -405,7 +406,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
       },
     };
 
-    return NextResponse.json(response);
+    return withCache(NextResponse.json(response), "daily");
   } catch (error) {
     console.error("API error:", error);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });

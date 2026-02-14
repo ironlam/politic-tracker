@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSearchFilterOptions } from "@/services/search";
+import { withCache } from "@/lib/cache";
 
 /**
  * @openapi
@@ -50,7 +51,7 @@ import { getSearchFilterOptions } from "@/services/search";
 export async function GET() {
   try {
     const filters = await getSearchFilterOptions();
-    return NextResponse.json(filters);
+    return withCache(NextResponse.json(filters), "static");
   } catch (error) {
     console.error("Filter options error:", error);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });

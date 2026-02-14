@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { MandateType } from "@/generated/prisma";
 import { DEPARTMENTS } from "@/config/departments";
-
-export const dynamic = "force-dynamic";
+import { withCache } from "@/lib/cache";
 
 export interface DepartmentStats {
   code: string;
@@ -146,11 +145,14 @@ export async function GET(request: NextRequest) {
       totalSenateurs: departments.reduce((sum, d) => sum + d.senateurs, 0),
     };
 
-    return NextResponse.json({
-      departments,
-      stats: totalStats,
-      filter: filter || "all",
-    });
+    return withCache(
+      NextResponse.json({
+        departments,
+        stats: totalStats,
+        filter: filter || "all",
+      }),
+      "stats"
+    );
   } catch (error) {
     console.error("Error fetching department stats:", error);
     return NextResponse.json({ error: "Failed to fetch department stats" }, { status: 500 });

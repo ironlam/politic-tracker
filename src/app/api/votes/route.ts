@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { withCache } from "@/lib/cache";
 
 /**
  * @openapi
@@ -106,19 +107,22 @@ export async function GET(request: NextRequest) {
       db.scrutin.count({ where }),
     ]);
 
-    return NextResponse.json({
-      data: scrutins.map((s) => ({
-        ...s,
-        totalVotes: s._count.votes,
-        _count: undefined,
-      })),
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-      },
-    });
+    return withCache(
+      NextResponse.json({
+        data: scrutins.map((s) => ({
+          ...s,
+          totalVotes: s._count.votes,
+          _count: undefined,
+        })),
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
+      }),
+      "daily"
+    );
   } catch (error) {
     console.error("API error:", error);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });

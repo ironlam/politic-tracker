@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { isAuthenticated } from "@/lib/auth";
+import { invalidateEntity } from "@/lib/cache";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -89,6 +90,8 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       where: { id },
       data: updateData,
     });
+
+    invalidateEntity("dossier");
 
     return NextResponse.json(updated);
   } catch (error) {

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { isAuthenticated } from "@/lib/auth";
+import { invalidateEntity } from "@/lib/cache";
 
 /**
  * POST /api/admin/mandates
@@ -94,6 +95,13 @@ export async function POST(request: NextRequest) {
         },
       },
     });
+
+    invalidateEntity("mandate");
+    const polWithSlug = await db.politician.findUnique({
+      where: { id: politicianId },
+      select: { slug: true },
+    });
+    if (polWithSlug) invalidateEntity("politician", polWithSlug.slug);
 
     return NextResponse.json(mandate, { status: 201 });
   } catch (error) {

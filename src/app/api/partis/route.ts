@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { PoliticalPosition } from "@/generated/prisma";
+import { withCache } from "@/lib/cache";
 
 /**
  * @openapi
@@ -117,15 +118,18 @@ export async function GET(request: NextRequest) {
       memberCount: _count.politicians,
     }));
 
-    return NextResponse.json({
-      data,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-      },
-    });
+    return withCache(
+      NextResponse.json({
+        data,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
+      }),
+      "daily"
+    );
   } catch (error) {
     console.error("API error:", error);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });

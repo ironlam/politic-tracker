@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { isAuthenticated } from "@/lib/auth";
 import { generateSlug } from "@/lib/utils";
+import { invalidateEntity } from "@/lib/cache";
 import type { DataSource } from "@/generated/prisma";
 
 interface ExternalIdInput {
@@ -189,6 +190,8 @@ export async function PUT(request: NextRequest, context: RouteContext) {
         },
       },
     });
+
+    invalidateEntity("politician", politician.slug);
 
     return NextResponse.json(politician);
   } catch (error) {

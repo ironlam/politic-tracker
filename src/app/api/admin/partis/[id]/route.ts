@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { isAuthenticated } from "@/lib/auth";
+import { invalidateEntity } from "@/lib/cache";
 import { PoliticalPosition } from "@/generated/prisma";
 
 interface RouteParams {
@@ -136,6 +137,9 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       },
     });
 
+    invalidateEntity("party", updatedParty.slug ?? undefined);
+    invalidateEntity("stats");
+
     return NextResponse.json(updatedParty);
   } catch (error) {
     console.error("Error updating party:", error);
@@ -218,6 +222,9 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
         changes: { name: party.name, shortName: party.shortName },
       },
     });
+
+    invalidateEntity("party", party.slug ?? undefined);
+    invalidateEntity("stats");
 
     return NextResponse.json({ success: true });
   } catch (error) {

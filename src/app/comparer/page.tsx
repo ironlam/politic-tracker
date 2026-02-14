@@ -540,6 +540,8 @@ export default async function ComparerPage({ searchParams }: PageProps) {
                 rightVotes={rightPolitician.votes}
                 leftName={leftPolitician.fullName}
                 rightName={rightPolitician.fullName}
+                leftSlug={leftPolitician.slug}
+                rightSlug={rightPolitician.slug}
               />
             </section>
           )}

@@ -12,6 +12,8 @@ interface VoteAgreementProps {
   rightVotes: VoteWithScrutin[];
   leftName: string;
   rightName: string;
+  leftSlug: string;
+  rightSlug: string;
 }
 
 type AgreementType = "agree" | "disagree" | "partial";
@@ -31,7 +33,14 @@ function getAgreement(left: VotePosition, right: VotePosition): AgreementType {
   return "disagree";
 }
 
-export function VoteAgreement({ leftVotes, rightVotes, leftName, rightName }: VoteAgreementProps) {
+export function VoteAgreement({
+  leftVotes,
+  rightVotes,
+  leftName,
+  rightName,
+  leftSlug,
+  rightSlug,
+}: VoteAgreementProps) {
   // Create a map of scrutin ID to votes
   const leftVoteMap = new Map(leftVotes.map((v) => [v.scrutinId, v]));
   const rightVoteMap = new Map(rightVotes.map((v) => [v.scrutinId, v]));
@@ -187,8 +196,13 @@ export function VoteAgreement({ leftVotes, rightVotes, leftName, rightName }: Vo
           ))}
         </div>
         {comparedVotes.length > 10 && (
-          <p className="text-center text-sm text-muted-foreground mt-4">
-            + {comparedVotes.length - 10} autres votes en commun
+          <p className="text-center text-sm mt-4">
+            <Link
+              href={`/comparer/votes?left=${encodeURIComponent(leftSlug)}&right=${encodeURIComponent(rightSlug)}`}
+              className="text-primary hover:underline"
+            >
+              + {comparedVotes.length - 10} autres votes en commun
+            </Link>
           </p>
         )}
       </div>

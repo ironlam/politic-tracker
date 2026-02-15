@@ -26,7 +26,7 @@ export const NAV_GROUPS: NavGroup[] = [
       {
         href: "/partis",
         label: "Partis politiques",
-        description: "55+ partis avec leurs membres",
+        description: "Les partis et leurs membres",
       },
       {
         href: "/carte",

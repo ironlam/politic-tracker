@@ -2,6 +2,10 @@ import { db } from "@/lib/db";
 import { DataSource, MandateType } from "@/generated/prisma";
 import { parse } from "csv-parse/sync";
 import type { MaireRNECSV, RNESyncResult } from "./types";
+import { HTTPClient } from "@/lib/api/http-client";
+import { DATA_GOUV_RATE_LIMIT_MS } from "@/config/rate-limits";
+
+const client = new HTTPClient({ rateLimitMs: DATA_GOUV_RATE_LIMIT_MS });
 
 const RNE_MAIRES_CSV_URL =
   "https://static.data.gouv.fr/resources/repertoire-national-des-elus-1/20251223-104211/elus-maires-mai.csv";
@@ -27,12 +31,7 @@ function parseFrenchDate(str: string): Date | null {
 async function fetchRNECSV(): Promise<MaireRNECSV[]> {
   console.log(`Fetching RNE maires data from: ${RNE_MAIRES_CSV_URL}`);
 
-  const response = await fetch(RNE_MAIRES_CSV_URL);
-  if (!response.ok) {
-    throw new Error(`Failed to fetch CSV: ${response.status}`);
-  }
-
-  const csvText = await response.text();
+  const { data: csvText } = await client.getText(RNE_MAIRES_CSV_URL);
   const records = parse(csvText, {
     columns: true,
     skip_empty_lines: true,

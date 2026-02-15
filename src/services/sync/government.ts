@@ -6,6 +6,10 @@ import { GouvernementCSV, GouvernementSyncResult, GOUV_FUNCTION_MAPPING } from "
 import { politicianService } from "@/services/politician";
 import * as fs from "fs";
 import * as path from "path";
+import { HTTPClient } from "@/lib/api/http-client";
+import { DATA_GOUV_RATE_LIMIT_MS } from "@/config/rate-limits";
+
+const client = new HTTPClient({ rateLimitMs: DATA_GOUV_RATE_LIMIT_MS });
 
 // Local corrections file path
 const CORRECTIONS_FILE = path.join(process.cwd(), "data", "government-corrections.json");
@@ -87,12 +91,7 @@ function parseFrenchDate(dateStr: string): Date | null {
 async function fetchGovernmentCSV(): Promise<GouvernementCSV[]> {
   console.log(`Fetching government data from: ${DATA_GOUV_CSV_URL}`);
 
-  const response = await fetch(DATA_GOUV_CSV_URL);
-  if (!response.ok) {
-    throw new Error(`Failed to fetch CSV: ${response.status}`);
-  }
-
-  const csvText = await response.text();
+  const { data: csvText } = await client.getText(DATA_GOUV_CSV_URL);
   const records = parse(csvText, {
     columns: true,
     skip_empty_lines: true,

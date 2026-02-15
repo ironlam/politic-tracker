@@ -17,6 +17,10 @@ import { db } from "../src/lib/db";
 import { DataSource, PoliticalPosition } from "../src/generated/prisma";
 import { FRENCH_ASSEMBLY_PARTIES, FRENCH_SENATE_PARTIES, PartyConfig } from "../src/config/parties";
 import { generateSlug } from "../src/lib/utils";
+import { HTTPClient } from "../src/lib/api/http-client";
+import { WIKIDATA_SPARQL_RATE_LIMIT_MS } from "../src/config/rate-limits";
+
+const sparqlClient = new HTTPClient({ rateLimitMs: WIKIDATA_SPARQL_RATE_LIMIT_MS });
 
 const ALL_PARTY_CONFIGS: Record<string, PartyConfig> = {
   ...FRENCH_ASSEMBLY_PARTIES,
@@ -138,18 +142,10 @@ async function fetchWikidataParties(): Promise<WikidataPartyResult[]> {
   const url = new URL(WIKIDATA_ENDPOINT);
   url.searchParams.set("query", query);
 
-  const response = await fetch(url.toString(), {
-    headers: {
-      Accept: "application/json",
-      "User-Agent": "TransparencePolitique/1.0 (https://politic-tracker.vercel.app)",
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`Wikidata query failed: ${response.status}`);
-  }
-
-  const data = await response.json();
+  const { data } = await sparqlClient.get<{ results: { bindings: WikidataPartyResult[] } }>(
+    url.toString(),
+    { headers: { Accept: "application/json" } }
+  );
   return data.results.bindings;
 }
 

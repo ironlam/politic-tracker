@@ -1,5 +1,9 @@
 import { db } from "@/lib/db";
 import { DataSource, MandateType } from "@/generated/prisma";
+import { HTTPClient } from "@/lib/api/http-client";
+import { WIKIDATA_SPARQL_RATE_LIMIT_MS } from "@/config/rate-limits";
+
+const sparqlClient = new HTTPClient({ rateLimitMs: WIKIDATA_SPARQL_RATE_LIMIT_MS });
 
 // Photo source priority (higher = better)
 const PHOTO_PRIORITY: Record<string, number> = {
@@ -47,13 +51,9 @@ async function getWikidataPhoto(wikidataId: string): Promise<string | null> {
     `;
     const url = `https://query.wikidata.org/sparql?query=${encodeURIComponent(query)}&format=json`;
 
-    const response = await fetch(url, {
-      headers: { "User-Agent": "TransparencePolitique/1.0" },
-    });
-
-    if (!response.ok) return null;
-
-    const data = await response.json();
+    const { data } = await sparqlClient.get<{
+      results?: { bindings: Array<{ image?: { value: string } }> };
+    }>(url);
     const results = data.results?.bindings;
 
     if (results && results.length > 0 && results[0].image?.value) {

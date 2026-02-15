@@ -89,7 +89,9 @@ function runTests(args: string[]): boolean {
   logSection("Running Visual Tests...");
 
   try {
-    const command = `npx playwright test ${args.join(" ")}`;
+    // Map --update shorthand to Playwright's --update-snapshots flag
+    const playwrightArgs = args.map((a) => (a === "--update" ? "--update-snapshots" : a));
+    const command = `npx playwright test ${playwrightArgs.join(" ")}`;
     log(`  $ ${command}`, colors.blue);
     console.log();
 

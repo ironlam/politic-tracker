@@ -79,7 +79,7 @@ export const COLORS = {
 
   // Chart colors (for data visualization)
   chart: {
-    primary: { light: "#2563eb", dark: "#60a5fa" },
+    primary: { light: "#2d4a7c", dark: "#6b9fd4" },
     secondary: { light: "#9333ea", dark: "#a855f7" },
     tertiary: { light: "#059669", dark: "#34d399" },
     quaternary: { light: "#d97706", dark: "#f59e0b" },

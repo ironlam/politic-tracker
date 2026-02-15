@@ -7,6 +7,9 @@
 
 import type { FactCheckRating } from "@/generated/prisma";
 import { FACTCHECK_RATE_LIMIT_MS } from "@/config/rate-limits";
+import { HTTPClient } from "@/lib/api/http-client";
+
+const client = new HTTPClient({ rateLimitMs: FACTCHECK_RATE_LIMIT_MS });
 
 const API_BASE = "https://factchecktools.googleapis.com/v1alpha1/claims:search";
 
@@ -69,14 +72,7 @@ export async function searchClaims(
     }
 
     const url = `${API_BASE}?${params.toString()}`;
-    const response = await fetch(url);
-
-    if (!response.ok) {
-      const text = await response.text();
-      throw new Error(`Google Fact Check API error ${response.status}: ${text}`);
-    }
-
-    const data: FactCheckSearchResponse = await response.json();
+    const { data } = await client.get<FactCheckSearchResponse>(url);
 
     if (data.claims) {
       allClaims.push(...data.claims);
@@ -86,9 +82,6 @@ export async function searchClaims(
     pageCount++;
 
     if (!pageToken) break;
-
-    // Rate limiting between pages
-    await sleep(FACTCHECK_RATE_LIMIT_MS);
   }
 
   return allClaims;
@@ -190,8 +183,4 @@ export function mapTextualRating(text: string): FactCheckRating {
 
   // UNVERIFIABLE (default fallback)
   return "UNVERIFIABLE";
-}
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
 }

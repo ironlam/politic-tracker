@@ -2,8 +2,12 @@ import { PrismaClient, DataSource } from "../src/generated/prisma";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { Pool } from "pg";
 import { config } from "dotenv";
+import { HTTPClient } from "../src/lib/api/http-client";
+import { WIKIDATA_SPARQL_RATE_LIMIT_MS } from "../src/config/rate-limits";
 
 config();
+
+const sparqlClient = new HTTPClient({ rateLimitMs: WIKIDATA_SPARQL_RATE_LIMIT_MS });
 
 // Initialize Prisma
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
@@ -51,18 +55,10 @@ async function fetchWikidataMemberships(): Promise<WikidataMembershipResult[]> {
   url.searchParams.set("query", query);
 
   console.log("Fetching party memberships from Wikidata...");
-  const response = await fetch(url.toString(), {
-    headers: {
-      Accept: "application/json",
-      "User-Agent": "TransparencePolitique/1.0 (https://politic-tracker.vercel.app)",
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`Wikidata query failed: ${response.status}`);
-  }
-
-  const data = await response.json();
+  const { data } = await sparqlClient.get<{ results: { bindings: WikidataMembershipResult[] } }>(
+    url.toString(),
+    { headers: { Accept: "application/json" } }
+  );
   return data.results.bindings;
 }
 

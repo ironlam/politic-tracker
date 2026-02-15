@@ -9,7 +9,11 @@
  *   npm run wikidata:lookup -- Q170972 --chairperson  # Show P488 chairperson
  */
 
+import { HTTPClient } from "../src/lib/api/http-client";
+import { WIKIDATA_RATE_LIMIT_MS } from "../src/config/rate-limits";
+
 const WIKIDATA_API = "https://www.wikidata.org/w/api.php";
+const client = new HTTPClient({ rateLimitMs: WIKIDATA_RATE_LIMIT_MS });
 
 interface SearchResult {
   id: string;
@@ -19,9 +23,10 @@ interface SearchResult {
 
 async function search(query: string): Promise<SearchResult[]> {
   const url = `${WIKIDATA_API}?action=wbsearchentities&search=${encodeURIComponent(query)}&language=fr&type=item&limit=10&format=json`;
-  const res = await fetch(url);
-  const data = await res.json();
-  return (data.search || []).map((s: { id: string; label: string; description?: string }) => ({
+  const { data } = await client.get<{
+    search?: Array<{ id: string; label: string; description?: string }>;
+  }>(url);
+  return (data.search || []).map((s) => ({
     id: s.id,
     label: s.label,
     description: s.description,
@@ -30,8 +35,8 @@ async function search(query: string): Promise<SearchResult[]> {
 
 async function getEntity(id: string) {
   const url = `${WIKIDATA_API}?action=wbgetentities&ids=${id}&props=labels|descriptions|claims&languages=fr|en&format=json`;
-  const res = await fetch(url);
-  const data = await res.json();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data } = await client.get<{ entities?: Record<string, any> }>(url);
   return data.entities?.[id];
 }
 
@@ -84,8 +89,7 @@ async function resolveLabels(ids: string[]): Promise<Map<string, string>> {
   for (let i = 0; i < unique.length; i += 50) {
     const batch = unique.slice(i, i + 50);
     const url = `${WIKIDATA_API}?action=wbgetentities&ids=${batch.join("|")}&props=labels&languages=fr|en&format=json`;
-    const res = await fetch(url);
-    const data = await res.json();
+    const { data } = await client.get<{ entities?: Record<string, unknown> }>(url);
     for (const [id, entity] of Object.entries(data.entities || {})) {
       labels.set(id, getLabel(entity as { labels?: Record<string, { value: string }> }));
     }

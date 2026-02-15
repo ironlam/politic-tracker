@@ -1,5 +1,9 @@
 import { db } from "@/lib/db";
 import { DataSource } from "@/generated/prisma";
+import { HTTPClient } from "@/lib/api/http-client";
+import { WIKIDATA_SPARQL_RATE_LIMIT_MS } from "@/config/rate-limits";
+
+const sparqlClient = new HTTPClient({ rateLimitMs: WIKIDATA_SPARQL_RATE_LIMIT_MS });
 
 interface DeceasedSyncResult {
   success: boolean;
@@ -29,16 +33,12 @@ async function fetchDeathDatesFromWikidata(wikidataIds: string[]): Promise<Map<s
 
     try {
       const url = `https://query.wikidata.org/sparql?query=${encodeURIComponent(query)}&format=json`;
-      const response = await fetch(url, {
-        headers: { "User-Agent": "TransparencePolitique/1.0" },
-      });
+      const { data } = await sparqlClient.get<{
+        results?: {
+          bindings: Array<{ person?: { value: string }; deathDate?: { value: string } }>;
+        };
+      }>(url);
 
-      if (!response.ok) {
-        console.warn(`Wikidata query failed: ${response.status}`);
-        continue;
-      }
-
-      const data = await response.json();
       for (const binding of data.results?.bindings || []) {
         const wikidataId = binding.person?.value?.replace("http://www.wikidata.org/entity/", "");
         const deathDateStr = binding.deathDate?.value;
@@ -50,9 +50,6 @@ async function fetchDeathDatesFromWikidata(wikidataIds: string[]): Promise<Map<s
           }
         }
       }
-
-      // Small delay to be nice to Wikidata
-      await new Promise((resolve) => setTimeout(resolve, 100));
     } catch (error) {
       console.warn(`Error querying Wikidata batch: ${error}`);
     }

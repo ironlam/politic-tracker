@@ -17,7 +17,7 @@ import "dotenv/config";
 import { createCLI, type SyncHandler, type SyncResult } from "../src/lib/sync";
 import { db } from "../src/lib/db";
 import mammoth from "mammoth";
-import { LEGISLATION_RATE_LIMIT_MS } from "../src/config/rate-limits";
+import { ASSEMBLEE_DOCPARL_RATE_LIMIT_MS } from "../src/config/rate-limits";
 
 // Configuration
 const DOCPARL_URL_TEMPLATE =
@@ -35,30 +35,49 @@ const MAX_FALLBACK_LENGTH = 5000;
  */
 async function downloadDocx(documentId: string): Promise<Buffer | null> {
   const url = DOCPARL_URL_TEMPLATE.replace("{id}", documentId);
+  const maxRetries = 3;
 
-  try {
-    const response = await fetch(url, {
-      headers: {
-        Accept: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-      },
-    });
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const response = await fetch(url, {
+        headers: {
+          Accept: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+          "User-Agent": "TransparencePolitique/1.0 (https://politic-tracker.vercel.app)",
+        },
+      });
 
-    if (response.status === 404) {
-      return null;
+      if (response.status === 404) {
+        return null;
+      }
+
+      if (response.status === 429 || response.status >= 500) {
+        if (attempt < maxRetries) {
+          const delay = 1000 * Math.pow(2, attempt);
+          await new Promise((resolve) => setTimeout(resolve, delay));
+          continue;
+        }
+      }
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status} for ${url}`);
+      }
+
+      const arrayBuffer = await response.arrayBuffer();
+      return Buffer.from(arrayBuffer);
+    } catch (err) {
+      if (err instanceof Error && err.message.includes("404")) {
+        return null;
+      }
+      if (attempt < maxRetries) {
+        const delay = 1000 * Math.pow(2, attempt);
+        await new Promise((resolve) => setTimeout(resolve, delay));
+        continue;
+      }
+      throw err;
     }
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status} for ${url}`);
-    }
-
-    const arrayBuffer = await response.arrayBuffer();
-    return Buffer.from(arrayBuffer);
-  } catch (err) {
-    if (err instanceof Error && err.message.includes("404")) {
-      return null;
-    }
-    throw err;
   }
+
+  return null;
 }
 
 /**
@@ -237,7 +256,7 @@ Features:
           stats.notFound++;
           stats.processed++;
           // Rate limit even on 404
-          await new Promise((resolve) => setTimeout(resolve, LEGISLATION_RATE_LIMIT_MS));
+          await new Promise((resolve) => setTimeout(resolve, ASSEMBLEE_DOCPARL_RATE_LIMIT_MS));
           continue;
         }
 
@@ -264,7 +283,7 @@ Features:
 
         // Rate limiting
         if (i < dossiers.length - 1) {
-          await new Promise((resolve) => setTimeout(resolve, LEGISLATION_RATE_LIMIT_MS));
+          await new Promise((resolve) => setTimeout(resolve, ASSEMBLEE_DOCPARL_RATE_LIMIT_MS));
         }
       } catch (err) {
         const msg = `${dossier.externalId}: ${err instanceof Error ? err.message : String(err)}`;

@@ -4,6 +4,10 @@ import { MandateType, DataSource, Chamber } from "@/generated/prisma";
 import { SenateurAPI, NosSenateursAPI, SenatSyncResult } from "./types";
 import { politicianService } from "@/services/politician";
 import { SENATE_GROUPS, type ParliamentaryGroupConfig } from "@/config/parliamentaryGroups";
+import { HTTPClient } from "@/lib/api/http-client";
+import { SENAT_RATE_LIMIT_MS } from "@/config/rate-limits";
+
+const client = new HTTPClient({ rateLimitMs: SENAT_RATE_LIMIT_MS });
 
 const SENAT_API_URL = "https://www.senat.fr/api-senat/senateurs.json";
 const NOSSENATEURS_API_URL = "https://archive.nossenateurs.fr/senateurs/json";
@@ -150,12 +154,7 @@ function getDepartmentCode(deptName: string | null | undefined): string | null {
 async function fetchSenatAPI(): Promise<SenateurAPI[]> {
   console.log(`Fetching senators from: ${SENAT_API_URL}`);
 
-  const response = await fetch(SENAT_API_URL);
-  if (!response.ok) {
-    throw new Error(`Failed to fetch senat.fr API: ${response.status}`);
-  }
-
-  const data = await response.json();
+  const { data } = await client.get<SenateurAPI[]>(SENAT_API_URL);
   console.log(`Parsed ${data.length} senators from senat.fr`);
   return data;
 }
@@ -167,14 +166,10 @@ async function fetchNosSenateursAPI(): Promise<Map<string, NosSenateursAPI>> {
   console.log(`Fetching additional data from: ${NOSSENATEURS_API_URL}`);
 
   try {
-    const response = await fetch(NOSSENATEURS_API_URL);
-    if (!response.ok) {
-      console.warn(`NosSenateurs API returned ${response.status}, skipping enrichment`);
-      return new Map();
-    }
-
-    const data = await response.json();
-    const senators: NosSenateursAPI[] = data.senateurs || data;
+    const { data } = await client.get<{ senateurs?: NosSenateursAPI[] } | NosSenateursAPI[]>(
+      NOSSENATEURS_API_URL
+    );
+    const senators: NosSenateursAPI[] = Array.isArray(data) ? data : data.senateurs || [];
     console.log(`Parsed ${senators.length} senators from NosSenateurs`);
 
     // Create lookup map by matricule/id_institution

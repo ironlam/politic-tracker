@@ -3,6 +3,10 @@ import { generateSlug } from "@/lib/utils";
 import { MandateType, DataSource, PoliticalPosition } from "@/generated/prisma";
 import { EuroparlMEP, EuroparlSyncResult } from "./types";
 import { EUROPEAN_GROUPS } from "@/config/parties";
+import { HTTPClient } from "@/lib/api/http-client";
+import { EUROPARL_RATE_LIMIT_MS } from "@/config/rate-limits";
+
+const client = new HTTPClient({ rateLimitMs: EUROPARL_RATE_LIMIT_MS });
 
 const EUROPARL_API_BASE = "https://data.europarl.europa.eu/api/v2";
 const CURRENT_LEGISLATURE = 10; // 2024-2029
@@ -57,18 +61,11 @@ async function syncEuropeanGroups(): Promise<Map<string, string>> {
 async function fetchCurrentMEPs(): Promise<EuroparlMEP[]> {
   console.log("Fetching MEPs from European Parliament API...");
 
-  const response = await fetch(`${EUROPARL_API_BASE}/meps/show-current`, {
-    headers: {
-      Accept: "application/ld+json",
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch MEPs: ${response.status}`);
-  }
-
-  const data = await response.json();
-  const meps = data.data as EuroparlMEP[];
+  const { data } = await client.get<{ data: EuroparlMEP[] }>(
+    `${EUROPARL_API_BASE}/meps/show-current`,
+    { headers: { Accept: "application/ld+json" } }
+  );
+  const meps = data.data;
 
   console.log(`Fetched ${meps.length} total MEPs`);
   return meps;

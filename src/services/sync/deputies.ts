@@ -5,6 +5,10 @@ import { DeputeCSV, SyncResult } from "./types";
 import { parse } from "csv-parse/sync";
 import { politicianService } from "@/services/politician";
 import { ASSEMBLY_GROUPS, type ParliamentaryGroupConfig } from "@/config/parliamentaryGroups";
+import { HTTPClient } from "@/lib/api/http-client";
+import { DATA_GOUV_RATE_LIMIT_MS } from "@/config/rate-limits";
+
+const client = new HTTPClient({ rateLimitMs: DATA_GOUV_RATE_LIMIT_MS });
 
 const DATA_GOUV_URL =
   "https://static.data.gouv.fr/resources/deputes-actifs-de-lassemblee-nationale-informations-et-statistiques/20260118-063755/deputes-active.csv";
@@ -18,13 +22,10 @@ const DATA_GOUV_DATASET_API =
  */
 async function getLatestCsvUrl(): Promise<string> {
   try {
-    const response = await fetch(DATA_GOUV_DATASET_API);
-    if (!response.ok) throw new Error("Failed to fetch dataset info");
-
-    const data = await response.json();
-    const csvResource = data.resources?.find(
-      (r: { format: string }) => r.format?.toLowerCase() === "csv"
+    const { data } = await client.get<{ resources?: Array<{ format: string; url: string }> }>(
+      DATA_GOUV_DATASET_API
     );
+    const csvResource = data.resources?.find((r) => r.format?.toLowerCase() === "csv");
 
     if (csvResource?.url) {
       return csvResource.url;
@@ -43,12 +44,7 @@ async function fetchDeputiesCSV(): Promise<DeputeCSV[]> {
   const url = await getLatestCsvUrl();
   console.log(`Fetching deputies from: ${url}`);
 
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error(`Failed to fetch CSV: ${response.status}`);
-  }
-
-  const csvText = await response.text();
+  const { data: csvText } = await client.getText(url);
   const records = parse(csvText, {
     columns: true,
     skip_empty_lines: true,

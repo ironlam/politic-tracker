@@ -2,6 +2,10 @@ import { db } from "@/lib/db";
 import { DataSource, DeclarationType } from "@/generated/prisma";
 import { parse } from "csv-parse/sync";
 import { HATVPCSV, HATVPSyncResult, HATVP_DOCUMENT_TYPE_MAPPING } from "./types";
+import { HTTPClient } from "@/lib/api/http-client";
+import { HATVP_RATE_LIMIT_MS } from "@/config/rate-limits";
+
+const client = new HTTPClient({ rateLimitMs: HATVP_RATE_LIMIT_MS });
 
 const HATVP_CSV_URL = "https://www.hatvp.fr/livraison/opendata/liste.csv";
 
@@ -11,12 +15,7 @@ const HATVP_CSV_URL = "https://www.hatvp.fr/livraison/opendata/liste.csv";
 async function fetchHATVPCSV(): Promise<HATVPCSV[]> {
   console.log(`Fetching HATVP data from: ${HATVP_CSV_URL}`);
 
-  const response = await fetch(HATVP_CSV_URL);
-  if (!response.ok) {
-    throw new Error(`Failed to fetch CSV: ${response.status}`);
-  }
-
-  const csvText = await response.text();
+  const { data: csvText } = await client.getText(HATVP_CSV_URL);
   const records = parse(csvText, {
     columns: true,
     skip_empty_lines: true,

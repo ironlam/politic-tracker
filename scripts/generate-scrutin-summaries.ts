@@ -16,6 +16,7 @@
 import "dotenv/config";
 import { db } from "../src/lib/db";
 import { summarizeScrutin, SummaryResponse } from "../src/services/summarize";
+import { AI_RATE_LIMIT_MS, AI_429_BACKOFF_MS } from "../src/config/rate-limits";
 
 // Progress tracking
 const isTTY = process.stdout.isTTY === true;
@@ -168,9 +169,9 @@ async function generateScrutinSummaries(options: {
       stats.generated++;
       stats.processed++;
 
-      // Rate limiting: 500ms between requests
+      // Rate limiting between AI requests
       if (i < scrutins.length - 1) {
-        await new Promise((resolve) => setTimeout(resolve, 500));
+        await new Promise((resolve) => setTimeout(resolve, AI_RATE_LIMIT_MS));
       }
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : String(err);
@@ -180,7 +181,7 @@ async function generateScrutinSummaries(options: {
       // If rate limited, wait longer
       if (errorMsg.includes("429") || errorMsg.includes("rate")) {
         console.log("\n\u23f3 Rate limited, waiting 30s...");
-        await new Promise((resolve) => setTimeout(resolve, 30000));
+        await new Promise((resolve) => setTimeout(resolve, AI_429_BACKOFF_MS));
       }
     }
   }

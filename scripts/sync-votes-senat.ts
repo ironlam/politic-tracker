@@ -24,6 +24,7 @@ import { db } from "../src/lib/db";
 import { generateDateSlug } from "../src/lib/utils";
 import { VotePosition, VotingResult, DataSource, Chamber } from "../src/generated/prisma";
 import * as https from "https";
+import { SENAT_RATE_LIMIT_MS } from "../src/config/rate-limits";
 
 // Configuration
 const BASE_URL = "https://www.senat.fr";
@@ -32,7 +33,6 @@ const AVAILABLE_SESSIONS = [
   2024, 2023, 2022, 2021, 2020, 2019, 2018, 2017, 2016, 2015, 2014, 2013, 2012, 2011, 2010, 2009,
   2008, 2007, 2006,
 ];
-const RATE_LIMIT_MS = 200; // Delay between requests
 
 // Progress tracking
 const isTTY = process.stdout.isTTY === true;
@@ -585,7 +585,7 @@ async function syncVotesSenat(
           stats.scrutinsProcessed++;
 
           // Rate limiting
-          await sleep(RATE_LIMIT_MS);
+          await sleep(SENAT_RATE_LIMIT_MS);
         } catch (err) {
           stats.errors.push(
             `Session ${currentSession} n°${number}: ${err instanceof Error ? err.message : String(err)}`

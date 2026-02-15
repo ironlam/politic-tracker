@@ -6,9 +6,9 @@
  */
 
 import type { FactCheckRating } from "@/generated/prisma";
+import { FACTCHECK_RATE_LIMIT_MS } from "@/config/rate-limits";
 
 const API_BASE = "https://factchecktools.googleapis.com/v1alpha1/claims:search";
-const RATE_LIMIT_MS = 200;
 
 export interface FactCheckClaim {
   text: string;
@@ -88,7 +88,7 @@ export async function searchClaims(
     if (!pageToken) break;
 
     // Rate limiting between pages
-    await sleep(RATE_LIMIT_MS);
+    await sleep(FACTCHECK_RATE_LIMIT_MS);
   }
 
   return allClaims;

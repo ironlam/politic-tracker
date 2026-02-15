@@ -5,6 +5,7 @@
  */
 
 import { HTTPClient } from "./http-client";
+import { WIKIDATA_RATE_LIMIT_MS } from "@/config/rate-limits";
 
 // ============================================================================
 // Constants
@@ -147,7 +148,7 @@ export class WikidataService {
 
   constructor(options: WikidataServiceOptions = {}) {
     this.client = new HTTPClient({
-      rateLimitMs: options.rateLimitMs ?? 200,
+      rateLimitMs: options.rateLimitMs ?? WIKIDATA_RATE_LIMIT_MS,
       retries: 3,
       timeout: 30000,
     });

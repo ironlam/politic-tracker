@@ -19,6 +19,7 @@ import type { WikidataPartyAffiliation } from "../src/lib/api";
 import { db } from "../src/lib/db";
 import { DataSource, MandateType } from "../src/generated/prisma";
 import { politicianService } from "../src/services/politician";
+import { WIKIDATA_SPARQL_RATE_LIMIT_MS } from "../src/config/rate-limits";
 
 /**
  * Find the current party affiliation from a list of Wikidata P102 claims.
@@ -136,7 +137,7 @@ Options:
       force?: boolean;
     };
 
-    const wikidata = new WikidataService({ rateLimitMs: 300 });
+    const wikidata = new WikidataService({ rateLimitMs: WIKIDATA_SPARQL_RATE_LIMIT_MS });
 
     const stats = {
       partiesSet: 0,

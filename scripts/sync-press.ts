@@ -15,6 +15,7 @@ import "dotenv/config";
 import { createCLI, ProgressTracker, type SyncHandler, type SyncResult } from "../src/lib/sync";
 import { RSSClient, RSS_FEEDS, type RSSItem } from "../src/lib/api";
 import { db } from "../src/lib/db";
+import { RSS_RATE_LIMIT_MS } from "../src/config/rate-limits";
 
 // ============================================
 // NAME MATCHING
@@ -479,7 +480,7 @@ Options:
     console.log(`Indexed ${politicians.length} politicians\n`);
 
     // Fetch RSS feeds
-    const rssClient = new RSSClient({ rateLimitMs: 1000 });
+    const rssClient = new RSSClient({ rateLimitMs: RSS_RATE_LIMIT_MS });
     const feedIds = feed ? [feed] : undefined;
 
     console.log("Fetching RSS feeds...\n");

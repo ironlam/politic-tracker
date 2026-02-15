@@ -22,6 +22,7 @@ import {
 } from "../src/lib/sync";
 import { WikidataService, POLITICAL_POSITIONS } from "../src/lib/api";
 import { db } from "../src/lib/db";
+import { WIKIDATA_RATE_LIMIT_MS } from "../src/config/rate-limits";
 import { DataSource } from "../src/generated/prisma";
 
 /**
@@ -106,7 +107,7 @@ Features:
       resume?: boolean;
     };
 
-    const wikidata = new WikidataService({ rateLimitMs: 200 });
+    const wikidata = new WikidataService({ rateLimitMs: WIKIDATA_RATE_LIMIT_MS });
     const checkpoint = new CheckpointManager("sync-wikidata-ids", { autoSaveInterval: 25 });
 
     const stats = {

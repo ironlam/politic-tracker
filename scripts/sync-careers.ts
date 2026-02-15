@@ -25,6 +25,7 @@ import { parseDate } from "../src/lib/parsing";
 import { db } from "../src/lib/db";
 import { MandateType, DataSource, PartyRole } from "../src/generated/prisma";
 import { setCurrentParty, setPartyRole } from "../src/services/politician";
+import { WIKIDATA_SPARQL_RATE_LIMIT_MS } from "../src/config/rate-limits";
 
 // Mapping from Wikidata position IDs to our MandateType
 const POSITION_MAPPING: Record<string, { type: MandateType; institution: string }> = {
@@ -149,7 +150,7 @@ Features:
       foundersOnly?: boolean;
     };
 
-    const wikidata = new WikidataService({ rateLimitMs: 300 });
+    const wikidata = new WikidataService({ rateLimitMs: WIKIDATA_SPARQL_RATE_LIMIT_MS });
     const checkpoint = new CheckpointManager("sync-careers", { autoSaveInterval: 50 });
 
     const stats = {
@@ -672,7 +673,7 @@ Features:
           }
 
           // Rate limiting
-          await new Promise((r) => setTimeout(r, 300));
+          await new Promise((r) => setTimeout(r, WIKIDATA_SPARQL_RATE_LIMIT_MS));
         }
       }
 

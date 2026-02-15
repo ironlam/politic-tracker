@@ -62,6 +62,14 @@ const steps: SyncStep[] = [
     command: `npx tsx scripts/sync-press-analysis.ts --limit=20${dryRunFlag}`,
   },
   {
+    name: "Judilibre (limit 20)",
+    command: `npx tsx scripts/sync-judilibre.ts --limit=20${dryRunFlag}`,
+  },
+  {
+    name: "Réconciliation affaires",
+    command: `npx tsx scripts/reconcile-affairs.ts --auto-merge${dryRunFlag}`,
+  },
+  {
     name: "Fact-checks (Google API)",
     command: `npx tsx scripts/sync-factchecks.ts --limit=50${dryRunFlag}`,
   },

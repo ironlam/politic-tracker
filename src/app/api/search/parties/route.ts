@@ -44,7 +44,11 @@ export async function GET(request: NextRequest) {
 
   const parties = await db.party.findMany({
     where: {
-      AND: [{ OR: nameConditions }, ...(activeOnly ? [{ dissolvedDate: null }] : [])],
+      AND: [
+        { OR: nameConditions },
+        { politicians: { some: {} } },
+        ...(activeOnly ? [{ dissolvedDate: null }] : []),
+      ],
     },
     select: {
       id: true,
@@ -59,7 +63,7 @@ export async function GET(request: NextRequest) {
         },
       },
     },
-    orderBy: { name: "asc" },
+    orderBy: [{ politicians: { _count: "desc" } }, { name: "asc" }],
     take: 8,
   });
 

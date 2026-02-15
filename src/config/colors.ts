@@ -8,48 +8,48 @@ export interface ColorVariant {
 }
 
 export const COLORS = {
-  // Vote colors
+  // Vote colors — soft green (pour), soft red (contre), gray (abstention)
   vote: {
-    pour: { light: "#22c55e", dark: "#4ade80", tailwind: "bg-green-500" },
-    contre: { light: "#ef4444", dark: "#f87171", tailwind: "bg-red-500" },
-    abstention: { light: "#eab308", dark: "#facc15", tailwind: "bg-yellow-500" },
-    absent: { light: "#9ca3af", dark: "#6b7280", tailwind: "bg-gray-400" },
-    nonVotant: { light: "#6b7280", dark: "#9ca3af", tailwind: "bg-gray-500" },
+    pour: { light: "#4a8a5c", dark: "#7ab892", tailwind: "bg-green-700" },
+    contre: { light: "#9e5454", dark: "#c88a8a", tailwind: "bg-red-700" },
+    abstention: { light: "#8a8e96", dark: "#6a6e78", tailwind: "bg-gray-500" },
+    absent: { light: "#9498a0", dark: "#5a5e68", tailwind: "bg-gray-400" },
+    nonVotant: { light: "#9498a0", dark: "#5a5e68", tailwind: "bg-gray-400" },
   },
 
-  // Chamber colors
+  // Chamber colors — shades of the primary blue
   chamber: {
-    AN: { light: "#2563eb", dark: "#60a5fa", tailwind: "bg-blue-600" },
-    SENAT: { light: "#be185d", dark: "#f472b6", tailwind: "bg-pink-700" },
-    PE: { light: "#7c3aed", dark: "#a78bfa", tailwind: "bg-violet-600" },
-    GOUVERNEMENT: { light: "#059669", dark: "#34d399", tailwind: "bg-emerald-600" },
+    AN: { light: "#2d4a7c", dark: "#7a9ec6", tailwind: "bg-blue-800" },
+    SENAT: { light: "#4a6a9c", dark: "#8aaad0", tailwind: "bg-blue-600" },
+    PE: { light: "#3a5a8e", dark: "#6a90ba", tailwind: "bg-blue-700" },
+    GOUVERNEMENT: { light: "#5a7aaa", dark: "#9ab6d6", tailwind: "bg-blue-500" },
   },
 
-  // Affair status colors
+  // Affair status colors — blue shades + muted red for condamnation
   affairStatus: {
-    ENQUETE_PRELIMINAIRE: { light: "#f59e0b", dark: "#fbbf24", tailwind: "bg-amber-500" },
-    INSTRUCTION: { light: "#f97316", dark: "#fb923c", tailwind: "bg-orange-500" },
-    MISE_EN_EXAMEN: { light: "#ef4444", dark: "#f87171", tailwind: "bg-red-500" },
-    RENVOI_TRIBUNAL: { light: "#dc2626", dark: "#ef4444", tailwind: "bg-red-600" },
-    PROCES_EN_COURS: { light: "#b91c1c", dark: "#dc2626", tailwind: "bg-red-700" },
-    APPEL_EN_COURS: { light: "#d97706", dark: "#f59e0b", tailwind: "bg-amber-600" },
-    CONDAMNATION_DEFINITIVE: { light: "#991b1b", dark: "#b91c1c", tailwind: "bg-red-800" },
-    RELAXE: { light: "#22c55e", dark: "#4ade80", tailwind: "bg-green-500" },
-    ACQUITTEMENT: { light: "#16a34a", dark: "#22c55e", tailwind: "bg-green-600" },
-    NON_LIEU: { light: "#6b7280", dark: "#9ca3af", tailwind: "bg-gray-500" },
-    PRESCRIPTION: { light: "#9ca3af", dark: "#6b7280", tailwind: "bg-gray-400" },
-    CLASSEMENT_SANS_SUITE: { light: "#a3a3a3", dark: "#737373", tailwind: "bg-neutral-400" },
+    ENQUETE_PRELIMINAIRE: { light: "#88a4c6", dark: "#5a7eaa", tailwind: "bg-blue-300" },
+    INSTRUCTION: { light: "#7090b8", dark: "#5a7eaa", tailwind: "bg-blue-400" },
+    MISE_EN_EXAMEN: { light: "#5a7aaa", dark: "#6a90ba", tailwind: "bg-blue-500" },
+    RENVOI_TRIBUNAL: { light: "#4a6a9c", dark: "#7a9ec6", tailwind: "bg-blue-600" },
+    PROCES_EN_COURS: { light: "#3a5a8e", dark: "#7a9ec6", tailwind: "bg-blue-700" },
+    APPEL_EN_COURS: { light: "#2d4a7c", dark: "#7a9ec6", tailwind: "bg-blue-800" },
+    CONDAMNATION_DEFINITIVE: { light: "#9e5454", dark: "#c88a8a", tailwind: "bg-red-800" },
+    RELAXE: { light: "#88a4c6", dark: "#9ab6d6", tailwind: "bg-blue-300" },
+    ACQUITTEMENT: { light: "#88a4c6", dark: "#9ab6d6", tailwind: "bg-blue-300" },
+    NON_LIEU: { light: "#9498a0", dark: "#6a6e78", tailwind: "bg-gray-400" },
+    PRESCRIPTION: { light: "#9498a0", dark: "#5a5e68", tailwind: "bg-gray-400" },
+    CLASSEMENT_SANS_SUITE: { light: "#9498a0", dark: "#5a5e68", tailwind: "bg-neutral-400" },
   },
 
-  // Affair super-categories
+  // Affair super-categories — shades of primary blue
   affairCategory: {
-    PROBITE: { light: "#9333ea", dark: "#a855f7", tailwind: "bg-purple-600" },
-    FINANCES: { light: "#2563eb", dark: "#60a5fa", tailwind: "bg-blue-600" },
-    PERSONNES: { light: "#dc2626", dark: "#f87171", tailwind: "bg-red-600" },
-    EXPRESSION: { light: "#d97706", dark: "#f59e0b", tailwind: "bg-amber-600" },
+    PROBITE: { light: "#2d4a7c", dark: "#7a9ec6", tailwind: "bg-blue-800" },
+    FINANCES: { light: "#3a5a8e", dark: "#8aaad0", tailwind: "bg-blue-700" },
+    PERSONNES: { light: "#4a6a9c", dark: "#6a90ba", tailwind: "bg-blue-600" },
+    EXPRESSION: { light: "#5a7aaa", dark: "#5a7eaa", tailwind: "bg-blue-500" },
   },
 
-  // Political positions (left-right spectrum)
+  // Political positions (left-right spectrum) — keep semantic colors
   position: {
     EXTREME_GAUCHE: { light: "#991b1b", dark: "#dc2626", tailwind: "bg-red-800" },
     GAUCHE: { light: "#dc2626", dark: "#ef4444", tailwind: "bg-red-600" },
@@ -61,29 +61,29 @@ export const COLORS = {
     ECOLOGISTE: { light: "#22c55e", dark: "#4ade80", tailwind: "bg-green-500" },
   },
 
-  // Generic UI colors
+  // Generic UI colors — blue + muted red
   ui: {
-    success: { light: "#22c55e", dark: "#4ade80", tailwind: "bg-green-500" },
-    warning: { light: "#f59e0b", dark: "#fbbf24", tailwind: "bg-amber-500" },
-    error: { light: "#ef4444", dark: "#f87171", tailwind: "bg-red-500" },
-    info: { light: "#3b82f6", dark: "#60a5fa", tailwind: "bg-blue-500" },
-    muted: { light: "#9ca3af", dark: "#6b7280", tailwind: "bg-gray-400" },
+    success: { light: "#2d4a7c", dark: "#7a9ec6", tailwind: "bg-blue-800" },
+    warning: { light: "#5a7aaa", dark: "#8aaad0", tailwind: "bg-blue-500" },
+    error: { light: "#9e5454", dark: "#c88a8a", tailwind: "bg-red-800" },
+    info: { light: "#3a5a8e", dark: "#7a9ec6", tailwind: "bg-blue-700" },
+    muted: { light: "#9498a0", dark: "#6a6e78", tailwind: "bg-gray-400" },
   },
 
   // Press sources
   press: {
     lemonde: { light: "#1a1a1a", dark: "#e5e5e5", tailwind: "bg-neutral-900" },
-    politico: { light: "#b91c1c", dark: "#ef4444", tailwind: "bg-red-700" },
-    mediapart: { light: "#f97316", dark: "#fb923c", tailwind: "bg-orange-500" },
+    politico: { light: "#9e5454", dark: "#c88a8a", tailwind: "bg-red-800" },
+    mediapart: { light: "#3a5a8e", dark: "#7a9ec6", tailwind: "bg-blue-700" },
   },
 
-  // Chart colors (for data visualization)
+  // Chart colors — monochromatic blue shades
   chart: {
-    primary: { light: "#2d4a7c", dark: "#6b9fd4" },
-    secondary: { light: "#9333ea", dark: "#a855f7" },
-    tertiary: { light: "#059669", dark: "#34d399" },
-    quaternary: { light: "#d97706", dark: "#f59e0b" },
-    quinary: { light: "#dc2626", dark: "#f87171" },
+    primary: { light: "#2d4a7c", dark: "#7a9ec6" },
+    secondary: { light: "#3a5a8e", dark: "#8aaad0" },
+    tertiary: { light: "#4a6a9c", dark: "#6a90ba" },
+    quaternary: { light: "#5a7aaa", dark: "#5a7eaa" },
+    quinary: { light: "#7090b8", dark: "#9ab6d6" },
   },
 } as const;
 

@@ -8,6 +8,10 @@ import type {
 } from "@/types";
 import { generateSlug } from "@/lib/utils";
 
+// Re-export matching service
+export { findMatchingAffairs, isDuplicate } from "./matching";
+export type { MatchResult, MatchCandidate, MatchConfidence } from "./matching";
+
 const DEFAULT_LIMIT = 20;
 
 export async function getAffairs(
@@ -100,6 +104,9 @@ export async function createAffair(input: CreateAffairInput): Promise<AffairWith
       startDate: input.startDate,
       verdictDate: input.verdictDate,
       sentence: input.sentence,
+      ecli: input.ecli,
+      pourvoiNumber: input.pourvoiNumber,
+      caseNumbers: input.caseNumbers || [],
       sources: {
         create: input.sources,
       },

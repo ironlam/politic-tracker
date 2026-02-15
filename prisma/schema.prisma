@@ -340,6 +340,11 @@ model Affair {
   chamber    String? // Ex: "11ème chambre correctionnelle"
   caseNumber String? // Ex: "2023/12345"
 
+  // Judicial identifiers (multi-source matching)
+  ecli          String?  @unique // European Case Law Identifier
+  pourvoiNumber String? // N° de pourvoi Cour de cassation
+  caseNumbers   String[] // N° de dossier multiples
+
   // Sources (minimum 1 required - enforced at app level)
   sources Source[]
 
@@ -357,6 +362,7 @@ model Affair {
   @@index([politicianId, status])
   @@index([status])
   @@index([category])
+  @@index([pourvoiNumber])
 }
 
 // Timeline events for an affair
@@ -452,6 +458,14 @@ enum AffairCategory {
   AUTRE
 }
 
+enum SourceType {
+  WIKIDATA
+  JUDILIBRE
+  CONSEIL_ETAT
+  PRESSE
+  MANUAL
+}
+
 // Sources for affairs (mandatory for credibility)
 model Source {
   id       String @id @default(cuid())
@@ -462,6 +476,7 @@ model Source {
   title       String // Article title
   publisher   String // Ex: "Mediapart", "Le Monde", "AFP"
   publishedAt DateTime
+  sourceType  SourceType @default(PRESSE)
 
   // Archive for link rot protection
   archivedUrl String? // archive.org or archive.is URL
@@ -471,6 +486,7 @@ model Source {
 
   @@index([affairId])
   @@index([publisher])
+  @@index([sourceType])
 }
 
 // ============================================

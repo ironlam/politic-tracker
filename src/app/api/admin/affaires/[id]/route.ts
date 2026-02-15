@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { isAuthenticated } from "@/lib/auth";
 import { invalidateEntity } from "@/lib/cache";
-import type { AffairStatus, AffairCategory } from "@/generated/prisma";
+import type { AffairStatus, AffairCategory, SourceType } from "@/generated/prisma";
 
 interface SourceInput {
   id?: string;
@@ -11,6 +11,7 @@ interface SourceInput {
   publisher: string;
   publishedAt: string;
   excerpt?: string;
+  sourceType?: SourceType;
 }
 
 interface AffairInput {
@@ -35,6 +36,10 @@ interface AffairInput {
   court?: string;
   chamber?: string;
   caseNumber?: string;
+  // Judicial identifiers
+  ecli?: string;
+  pourvoiNumber?: string;
+  caseNumbers?: string[];
   sources: SourceInput[];
 }
 
@@ -120,6 +125,10 @@ export async function PUT(request: NextRequest, context: RouteContext) {
         court: data.court || null,
         chamber: data.chamber || null,
         caseNumber: data.caseNumber || null,
+        // Judicial identifiers
+        ecli: data.ecli || null,
+        pourvoiNumber: data.pourvoiNumber || null,
+        caseNumbers: data.caseNumbers || [],
       },
     });
 
@@ -135,6 +144,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
         publisher: s.publisher,
         publishedAt: new Date(s.publishedAt),
         excerpt: s.excerpt || null,
+        sourceType: s.sourceType || "MANUAL",
       })),
     });
 

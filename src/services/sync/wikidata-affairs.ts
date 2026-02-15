@@ -9,6 +9,7 @@ import { db } from "@/lib/db";
 import { AffairCategory, AffairStatus, DataSource } from "@/generated/prisma";
 import { generateSlug } from "@/lib/utils";
 import { WIKIDATA_SPARQL_RATE_LIMIT_MS } from "@/config/rate-limits";
+import { isDuplicate } from "@/services/affairs/matching";
 
 // Wikidata SPARQL endpoint
 const WIKIDATA_ENDPOINT = "https://query.wikidata.org/sparql";
@@ -456,15 +457,16 @@ export async function importConviction(
     };
   }
 
-  // Check if affair already exists for this politician + crime
-  const existingAffair = await db.affair.findFirst({
-    where: {
-      politicianId,
-      title: { contains: crime, mode: "insensitive" },
-    },
+  // Check if affair already exists using multi-criteria matching
+  const category = mapCrimeToCategory(crime);
+  const duplicate = await isDuplicate({
+    politicianId,
+    title: crime,
+    category,
+    verdictDate: convictionDate,
   });
 
-  if (existingAffair) {
+  if (duplicate) {
     return { imported: false, skipped: true };
   }
 
@@ -474,7 +476,6 @@ export async function importConviction(
     : null;
 
   // Create affair with unique slug
-  const category = mapCrimeToCategory(crime);
   let slug = baseSlug;
   let counter = 1;
   while (existingSlugs.has(slug)) {
@@ -500,6 +501,7 @@ export async function importConviction(
             title: `Wikidata - ${result.personLabel.value}`,
             publisher: "Wikidata",
             publishedAt: convictionDate || new Date(),
+            sourceType: "WIKIDATA",
           },
         },
       },

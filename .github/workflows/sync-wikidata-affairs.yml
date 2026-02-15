@@ -1,0 +1,48 @@
+name: Sync Wikidata Affairs
+
+on:
+  schedule:
+    # Run every Wednesday at 4:00 AM UTC (~5h Paris winter / ~6h summer)
+    - cron: "0 4 * * 3"
+  workflow_dispatch:
+
+env:
+  DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+jobs:
+  sync-wikidata-affairs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: production
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+
+      - name: Import Wikidata affairs
+        run: npm run import:wikidata
+
+      - name: Show stats
+        if: always()
+        run: npm run import:wikidata -- --stats
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## Sync Wikidata Affairs Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Triggered by**: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Date**: $(date -u +'%Y-%m-%d %H:%M UTC')" >> $GITHUB_STEP_SUMMARY

@@ -351,6 +351,9 @@ model Affair {
   // Timeline events
   events AffairEvent[]
 
+  // Press article links
+  pressArticles PressArticleAffair[]
+
   // Verification
   verifiedAt DateTime?
   verifiedBy String? // Admin who verified
@@ -461,7 +464,7 @@ enum AffairCategory {
 enum SourceType {
   WIKIDATA
   JUDILIBRE
-  CONSEIL_ETAT
+  LEGIFRANCE
   PRESSE
   MANUAL
 }
@@ -834,15 +837,24 @@ model PressArticle {
   // Publication
   publishedAt DateTime
 
+  // AI Analysis (Phase 3)
+  aiSummary       String?   @db.Text
+  aiAnalyzedAt    DateTime?
+  isAffairRelated Boolean?
+  aiAnalysisError String?
+
   // Relations
   mentions      PressArticleMention[]
   partyMentions PressArticlePartyMention[]
+  affairLinks   PressArticleAffair[]
 
   createdAt DateTime @default(now())
 
   @@unique([feedSource, externalId])
   @@index([feedSource])
   @@index([publishedAt])
+  @@index([isAffairRelated])
+  @@index([aiAnalyzedAt])
 }
 
 model PressArticleMention {
@@ -875,6 +887,26 @@ model PressArticlePartyMention {
   @@unique([articleId, partyId])
   @@index([partyId])
   @@index([articleId])
+}
+
+model PressArticleAffair {
+  id        String          @id @default(cuid())
+  articleId String
+  article   PressArticle    @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  affairId  String
+  affair    Affair          @relation(fields: [affairId], references: [id], onDelete: Cascade)
+  role      PressAffairRole @default(MENTION)
+  createdAt DateTime        @default(now())
+
+  @@unique([articleId, affairId])
+  @@index([affairId])
+  @@index([articleId])
+}
+
+enum PressAffairRole {
+  REVELATION // Article d'investigation qui révèle l'affaire
+  MENTION // Article qui mentionne une affaire existante
+  UPDATE // Article avec de nouveaux développements
 }
 
 // ============================================

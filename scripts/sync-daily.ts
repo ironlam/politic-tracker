@@ -58,6 +58,10 @@ const steps: SyncStep[] = [
     command: `npx tsx scripts/sync-press.ts${dryRunFlag}`,
   },
   {
+    name: "Analyse presse IA (limit 20)",
+    command: `npx tsx scripts/sync-press-analysis.ts --limit=20${dryRunFlag}`,
+  },
+  {
     name: "Fact-checks (Google API)",
     command: `npx tsx scripts/sync-factchecks.ts --limit=50${dryRunFlag}`,
   },

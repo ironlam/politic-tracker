@@ -225,7 +225,7 @@ export const MANDATE_SALARIES: Partial<Record<MandateType, number>> = {
 export const SOURCE_TYPE_LABELS: Record<SourceType, string> = {
   WIKIDATA: "Wikidata",
   JUDILIBRE: "Judilibre",
-  CONSEIL_ETAT: "Conseil d'État",
+  LEGIFRANCE: "Légifrance",
   PRESSE: "Presse",
   MANUAL: "Saisie manuelle",
 };

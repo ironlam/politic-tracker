@@ -175,7 +175,8 @@ export class HTTPClient {
   private async fetchWithRetry<T>(
     url: string,
     init: RequestInit,
-    options: RequestOptions
+    options: RequestOptions,
+    parseAs: "json" | "text" = "json"
   ): Promise<HTTPResponse<T>> {
     const maxRetries = options.retries ?? this.options.retries;
     const timeout = options.timeout ?? this.options.timeout;
@@ -225,7 +226,7 @@ export class HTTPClient {
           );
         }
 
-        const data = (await response.json()) as T;
+        const data = (parseAs === "text" ? await response.text() : await response.json()) as T;
         return { data, status: response.status, ok: true, cached: false };
       } catch (error) {
         lastError = error as Error;
@@ -260,6 +261,28 @@ export class HTTPClient {
     }
 
     const response = await this.fetchWithRetry<T>(fullUrl, { method: "GET" }, options);
+
+    // Store in cache on success
+    if (response.ok && !options.skipCache) {
+      this.setCache(fullUrl, response.data, response.status);
+    }
+
+    return response;
+  }
+
+  /**
+   * GET request returning text content (HTML, XML, etc.)
+   */
+  async getText(url: string, options: RequestOptions = {}): Promise<HTTPResponse<string>> {
+    const fullUrl = this.options.baseUrl ? `${this.options.baseUrl}${url}` : url;
+
+    // Check cache first (unless skipCache is set)
+    if (!options.skipCache) {
+      const cached = this.getFromCache<string>(fullUrl);
+      if (cached) return cached;
+    }
+
+    const response = await this.fetchWithRetry<string>(fullUrl, { method: "GET" }, options, "text");
 
     // Store in cache on success
     if (response.ok && !options.skipCache) {

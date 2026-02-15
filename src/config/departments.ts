@@ -1,3 +1,5 @@
+import { generateSlug } from "@/lib/utils";
+
 // French departments data - shared across the application
 export const DEPARTMENTS: Record<string, { name: string; region: string }> = {
   "01": { name: "Ain", region: "Auvergne-Rhône-Alpes" },
@@ -145,4 +147,27 @@ export function findDepartmentCode(query: string): string | null {
   }
 
   return null;
+}
+
+// Slug → department lookup (lazy-initialized)
+let _slugMap: Map<string, { code: string; name: string; region: string }> | null = null;
+
+function getSlugMap() {
+  if (!_slugMap) {
+    _slugMap = new Map();
+    for (const [code, dept] of Object.entries(DEPARTMENTS)) {
+      _slugMap.set(generateSlug(dept.name), { code, ...dept });
+    }
+  }
+  return _slugMap;
+}
+
+/** Resolve a slug to department info, or null if not found */
+export function getDepartmentBySlug(slug: string) {
+  return getSlugMap().get(slug) ?? null;
+}
+
+/** Generate a slug from a department name */
+export function getDepartmentSlug(name: string) {
+  return generateSlug(name);
 }

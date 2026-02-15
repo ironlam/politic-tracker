@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ProgressBar } from "./ProgressBar";
 import { getColor, TEXT_COLORS } from "@/config/colors";
+import { getDepartmentSlug } from "@/config/departments";
 
 interface DepartmentStats {
   code: string;
@@ -105,7 +106,7 @@ export function GeoTab({ stats }: GeoTabProps) {
               <div key={dept.code}>
                 <div className="flex justify-between text-sm mb-1">
                   <Link
-                    href={`/departements/${dept.code}`}
+                    href={`/departements/${getDepartmentSlug(dept.name)}`}
                     className="hover:underline flex items-center gap-2"
                   >
                     <Badge variant="outline" className="font-mono">

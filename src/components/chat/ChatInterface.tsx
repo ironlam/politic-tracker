@@ -4,7 +4,8 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { Send, Bot, User, Loader2, AlertCircle, MessageSquare, RefreshCw } from "lucide-react";
+import Image from "next/image";
+import { Send, User, Loader2, AlertCircle, RefreshCw } from "lucide-react";
 
 const SUGGESTED_QUESTIONS = [
   "Qui est le Premier ministre actuel ?",
@@ -308,9 +309,13 @@ export function ChatInterface() {
       <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center space-y-6">
-            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-              <MessageSquare className="w-8 h-8 text-primary" />
-            </div>
+            <Image
+              src="/logo.png"
+              alt="Poligraph"
+              width={64}
+              height={64}
+              className="rounded-full"
+            />
             <div>
               <h2 className="text-xl font-semibold mb-2">Assistant Poligraph</h2>
               <p className="text-muted-foreground max-w-md">
@@ -342,9 +347,13 @@ export function ChatInterface() {
                 )}
               >
                 {message.role === "assistant" && (
-                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <Bot className="w-4 h-4 text-primary" />
-                  </div>
+                  <Image
+                    src="/logo.png"
+                    alt="Poligraph"
+                    width={32}
+                    height={32}
+                    className="rounded-full flex-shrink-0"
+                  />
                 )}
                 <Card
                   className={cn(

@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
-import { MessageSquare, X, Minimize2, Maximize2, Sparkles } from "lucide-react";
+import Image from "next/image";
+import { MessageSquare, X, Minimize2, Maximize2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ChatInterface } from "./ChatInterface";
@@ -69,9 +70,13 @@ export function ChatWidget() {
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b bg-muted/30">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                <Sparkles className="w-4 h-4 text-primary" />
-              </div>
+              <Image
+                src="/logo.png"
+                alt="Poligraph"
+                width={32}
+                height={32}
+                className="rounded-full"
+              />
               <div>
                 <h3 className="font-medium text-sm">Assistant IA</h3>
                 {!isMinimized && (

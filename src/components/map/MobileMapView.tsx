@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select } from "@/components/ui/select";
 import { DepartmentStats } from "@/app/api/stats/departments/route";
+import { getDepartmentSlug } from "@/config/departments";
 
 interface MobileMapViewProps {
   departments: DepartmentStats[];
@@ -49,15 +50,6 @@ export function MobileMapView({ departments }: MobileMapViewProps) {
     return result;
   }, [departments, search, sortBy]);
 
-  // Generate slug for department page
-  const getDeptSlug = (name: string) =>
-    name
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/(^-|-$)/g, "");
-
   return (
     <div className="flex flex-col gap-4">
       {/* Search and sort controls */}
@@ -93,7 +85,7 @@ export function MobileMapView({ departments }: MobileMapViewProps) {
         {filteredAndSorted.map((dept) => (
           <Link
             key={dept.code}
-            href={`/departements/${getDeptSlug(dept.name)}`}
+            href={`/departements/${getDepartmentSlug(dept.name)}`}
             className="flex items-center justify-between p-3 hover:bg-muted/50 transition-colors"
           >
             <div className="flex-1 min-w-0">

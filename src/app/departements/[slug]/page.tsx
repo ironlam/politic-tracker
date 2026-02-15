@@ -6,8 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { PoliticianAvatar } from "@/components/politicians/PoliticianAvatar";
 import { ensureContrast } from "@/lib/contrast";
+import { getDepartmentBySlug } from "@/config/departments";
+
 interface PageProps {
-  params: Promise<{ name: string }>;
+  params: Promise<{ slug: string }>;
 }
 
 async function getDeputiesByDepartment(departmentName: string) {
@@ -73,22 +75,37 @@ async function getSenatorsByDepartment(departmentName: string) {
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const { name } = await params;
-  const departmentName = decodeURIComponent(name);
+  const { slug } = await params;
+  const dept = getDepartmentBySlug(slug);
+
+  if (!dept) {
+    return { title: "Département introuvable" };
+  }
+
+  const { name } = dept;
 
   return {
-    title: departmentName,
-    description: `Députés et sénateurs du département ${departmentName}. Liste complète des représentants politiques.`,
+    title: name,
+    description: `Députés et sénateurs du département ${name}. Liste complète des représentants politiques.`,
     openGraph: {
-      title: `${departmentName} | Poligraph`,
-      description: `Découvrez les députés et sénateurs du département ${departmentName}.`,
+      title: `${name} | Poligraph`,
+      description: `Découvrez les députés et sénateurs du département ${name}.`,
+    },
+    alternates: {
+      canonical: `/departements/${slug}`,
     },
   };
 }
 
 export default async function DepartmentPage({ params }: PageProps) {
-  const { name } = await params;
-  const departmentName = decodeURIComponent(name);
+  const { slug } = await params;
+  const dept = getDepartmentBySlug(slug);
+
+  if (!dept) {
+    notFound();
+  }
+
+  const departmentName = dept.name;
 
   const [deputies, senators] = await Promise.all([
     getDeputiesByDepartment(departmentName),

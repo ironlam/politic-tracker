@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { DepartmentStats } from "@/app/api/stats/departments/route";
+import { getDepartmentSlug } from "@/config/departments";
 
 interface MapSidebarProps {
   department: DepartmentStats;
@@ -13,13 +14,7 @@ interface MapSidebarProps {
 }
 
 export function MapSidebar({ department, onClose }: MapSidebarProps) {
-  // Generate slug for department page
-  const deptSlug = department.name
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
+  const deptSlug = getDepartmentSlug(department.name);
 
   return (
     <Card className="w-full md:w-80 h-full md:h-auto border-l-0 md:border-l rounded-l-none md:rounded-l-lg">

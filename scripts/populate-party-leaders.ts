@@ -21,6 +21,7 @@ import { parseDate } from "../src/lib/parsing";
 import { db } from "../src/lib/db";
 import { DataSource, MandateType } from "../src/generated/prisma";
 import { PARTY_LEADERSHIP_TITLE_SUGGESTIONS } from "../src/config/labels";
+import { WIKIDATA_SPARQL_RATE_LIMIT_MS } from "../src/config/rate-limits";
 
 function getTitleForParty(partyShortName: string | null, partyName: string): string {
   if (partyShortName && PARTY_LEADERSHIP_TITLE_SUGGESTIONS[partyShortName]) {
@@ -72,7 +73,7 @@ Safeguards:
   async sync(options): Promise<SyncResult> {
     const { dryRun = false } = options as { dryRun?: boolean };
 
-    const wikidata = new WikidataService({ rateLimitMs: 300 });
+    const wikidata = new WikidataService({ rateLimitMs: WIKIDATA_SPARQL_RATE_LIMIT_MS });
     const stats = {
       partiesProcessed: 0,
       mandatesCreated: 0,

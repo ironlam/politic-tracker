@@ -7,6 +7,7 @@
 
 import { XMLParser } from "fast-xml-parser";
 import { HTTPClient, HTTPError } from "./http-client";
+import { RSS_RATE_LIMIT_MS } from "@/config/rate-limits";
 
 // ============================================
 // TYPES
@@ -105,7 +106,7 @@ export interface RSSClientOptions {
 const DEFAULT_OPTIONS: Required<RSSClientOptions> = {
   timeout: 30000,
   retries: 3,
-  rateLimitMs: 500,
+  rateLimitMs: RSS_RATE_LIMIT_MS,
 };
 
 /**

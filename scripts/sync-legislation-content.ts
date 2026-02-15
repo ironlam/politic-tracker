@@ -17,11 +17,11 @@ import "dotenv/config";
 import { createCLI, type SyncHandler, type SyncResult } from "../src/lib/sync";
 import { db } from "../src/lib/db";
 import mammoth from "mammoth";
+import { LEGISLATION_RATE_LIMIT_MS } from "../src/config/rate-limits";
 
 // Configuration
 const DOCPARL_URL_TEMPLATE =
   "https://docparl.assemblee-nationale.fr/base/{id}?format=application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-const RATE_LIMIT_MS = 300;
 
 // Regex to extract exposé des motifs section from document text
 const EXPOSE_REGEX =
@@ -237,7 +237,7 @@ Features:
           stats.notFound++;
           stats.processed++;
           // Rate limit even on 404
-          await new Promise((resolve) => setTimeout(resolve, RATE_LIMIT_MS));
+          await new Promise((resolve) => setTimeout(resolve, LEGISLATION_RATE_LIMIT_MS));
           continue;
         }
 
@@ -264,7 +264,7 @@ Features:
 
         // Rate limiting
         if (i < dossiers.length - 1) {
-          await new Promise((resolve) => setTimeout(resolve, RATE_LIMIT_MS));
+          await new Promise((resolve) => setTimeout(resolve, LEGISLATION_RATE_LIMIT_MS));
         }
       } catch (err) {
         const msg = `${dossier.externalId}: ${err instanceof Error ? err.message : String(err)}`;

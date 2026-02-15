@@ -13,6 +13,7 @@ import { createCLI, ProgressTracker, type SyncHandler, type SyncResult } from ".
 import { WikidataService } from "../src/lib/api";
 import { db } from "../src/lib/db";
 import { DataSource } from "../src/generated/prisma";
+import { WIKIDATA_RATE_LIMIT_MS } from "../src/config/rate-limits";
 
 const handler: SyncHandler = {
   name: "Politic Tracker - Birth Date Sync",
@@ -55,7 +56,7 @@ for politicians who have a Wikidata ID but no birth date in our database.
 
   async sync(options): Promise<SyncResult> {
     const { dryRun = false, limit } = options;
-    const wikidata = new WikidataService({ rateLimitMs: 100 });
+    const wikidata = new WikidataService({ rateLimitMs: WIKIDATA_RATE_LIMIT_MS });
 
     const stats = {
       processed: 0,

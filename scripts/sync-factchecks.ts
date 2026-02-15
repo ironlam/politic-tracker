@@ -16,6 +16,7 @@ import "dotenv/config";
 import { createCLI, ProgressTracker, type SyncHandler, type SyncResult } from "../src/lib/sync";
 import { searchClaims, mapTextualRating } from "../src/lib/api";
 import type { FactCheckClaim } from "../src/lib/api";
+import { FACTCHECK_RATE_LIMIT_MS } from "../src/config/rate-limits";
 import { db } from "../src/lib/db";
 
 // ============================================
@@ -145,8 +146,6 @@ function findMentions(
 // ============================================
 // SYNC HANDLER
 // ============================================
-
-const RATE_LIMIT_MS = 200;
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -470,7 +469,7 @@ Environment:
       }
 
       // Rate limiting between politician searches
-      await sleep(RATE_LIMIT_MS);
+      await sleep(FACTCHECK_RATE_LIMIT_MS);
       progress.tick();
     }
 

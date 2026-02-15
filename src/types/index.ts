@@ -30,6 +30,7 @@ import type {
   ElectionScope,
   SuffrageType,
   ElectionStatus,
+  SourceType,
 } from "@/generated/prisma";
 
 // Re-export Prisma types
@@ -65,6 +66,7 @@ export type {
   ElectionScope,
   SuffrageType,
   ElectionStatus,
+  SourceType,
 };
 
 // Serialized types (with Decimal converted to number for client components)
@@ -169,11 +171,16 @@ export type CreateAffairInput = {
   startDate?: Date;
   verdictDate?: Date;
   sentence?: string;
+  // Judicial identifiers (multi-source matching)
+  ecli?: string;
+  pourvoiNumber?: string;
+  caseNumbers?: string[];
   sources: {
     url: string;
     title: string;
     publisher: string;
     publishedAt: Date;
+    sourceType?: SourceType;
   }[];
 };
 

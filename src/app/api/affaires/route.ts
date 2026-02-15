@@ -111,6 +111,7 @@ export async function GET(request: NextRequest) {
               title: true,
               publisher: true,
               publishedAt: true,
+              sourceType: true,
             },
           },
         },

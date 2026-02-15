@@ -8,8 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { AFFAIR_STATUS_LABELS, AFFAIR_CATEGORY_LABELS } from "@/config/labels";
-import type { AffairStatus, AffairCategory } from "@/types";
+import { AFFAIR_STATUS_LABELS, AFFAIR_CATEGORY_LABELS, SOURCE_TYPE_LABELS } from "@/config/labels";
+import type { AffairStatus, AffairCategory, SourceType } from "@/types";
 
 interface Politician {
   id: string;
@@ -24,6 +24,7 @@ interface Source {
   publisher: string;
   publishedAt: string;
   excerpt?: string;
+  sourceType?: SourceType;
 }
 
 interface AffairFormData {
@@ -49,6 +50,9 @@ interface AffairFormData {
   court?: string;
   chamber?: string;
   caseNumber?: string;
+  // Judicial identifiers
+  ecli?: string;
+  pourvoiNumber?: string;
   sources: Source[];
 }
 
@@ -63,6 +67,7 @@ const emptySource: Source = {
   publisher: "",
   publishedAt: "",
   excerpt: "",
+  sourceType: "MANUAL" as SourceType,
 };
 
 export function AffairForm({ politicians, initialData }: AffairFormProps) {
@@ -327,6 +332,34 @@ export function AffairForm({ politicians, initialData }: AffairFormProps) {
               />
             </div>
           </div>
+
+          <hr className="my-4" />
+          <h4 className="font-medium text-sm">Identifiants judiciaires</h4>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="ecli">ECLI</Label>
+              <Input
+                id="ecli"
+                value={formData.ecli || ""}
+                onChange={(e) => updateField("ecli", e.target.value)}
+                placeholder="Ex: ECLI:FR:CCASS:2023:CR00123"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                European Case Law Identifier (identifiant unique européen)
+              </p>
+            </div>
+            <div>
+              <Label htmlFor="pourvoiNumber">N° de pourvoi</Label>
+              <Input
+                id="pourvoiNumber"
+                value={formData.pourvoiNumber || ""}
+                onChange={(e) => updateField("pourvoiNumber", e.target.value)}
+                placeholder="Ex: 22-83.456"
+              />
+              <p className="text-xs text-muted-foreground mt-1">Numéro de pourvoi en cassation</p>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
@@ -515,6 +548,20 @@ export function AffairForm({ politicians, initialData }: AffairFormProps) {
                     onChange={(e) => updateSource(index, "publishedAt", e.target.value)}
                     required
                   />
+                </div>
+
+                <div>
+                  <Label>Type de source</Label>
+                  <Select
+                    value={source.sourceType || "MANUAL"}
+                    onChange={(e) => updateSource(index, "sourceType", e.target.value)}
+                  >
+                    {Object.entries(SOURCE_TYPE_LABELS).map(([key, label]) => (
+                      <option key={key} value={key}>
+                        {label}
+                      </option>
+                    ))}
+                  </Select>
                 </div>
               </div>
 

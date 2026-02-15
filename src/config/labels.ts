@@ -15,6 +15,7 @@ import type {
   ElectionStatus,
   ElectionScope,
   SuffrageType,
+  SourceType,
 } from "@/types";
 
 export const AFFAIR_STATUS_LABELS: Record<AffairStatus, string> = {
@@ -218,6 +219,15 @@ export const MANDATE_SALARIES: Partial<Record<MandateType, number>> = {
   MINISTRE: 10647,
   SECRETAIRE_ETAT: 10135,
   MINISTRE_DELEGUE: 10135,
+};
+
+// Source type labels (for affair sources)
+export const SOURCE_TYPE_LABELS: Record<SourceType, string> = {
+  WIKIDATA: "Wikidata",
+  JUDILIBRE: "Judilibre",
+  CONSEIL_ETAT: "Conseil d'État",
+  PRESSE: "Presse",
+  MANUAL: "Saisie manuelle",
 };
 
 // Data source labels

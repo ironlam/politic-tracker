@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { generateSlug } from "@/lib/utils";
 import { isAuthenticated } from "@/lib/auth";
 import { invalidateEntity } from "@/lib/cache";
-import type { AffairStatus, AffairCategory } from "@/generated/prisma";
+import type { AffairStatus, AffairCategory, SourceType } from "@/generated/prisma";
 
 interface SourceInput {
   url: string;
@@ -11,6 +11,7 @@ interface SourceInput {
   publisher: string;
   publishedAt: string;
   excerpt?: string;
+  sourceType?: SourceType;
 }
 
 interface AffairInput {
@@ -35,6 +36,10 @@ interface AffairInput {
   court?: string;
   chamber?: string;
   caseNumber?: string;
+  // Judicial identifiers
+  ecli?: string;
+  pourvoiNumber?: string;
+  caseNumbers?: string[];
   sources: SourceInput[];
 }
 
@@ -117,6 +122,10 @@ export async function POST(request: NextRequest) {
         court: data.court || null,
         chamber: data.chamber || null,
         caseNumber: data.caseNumber || null,
+        // Judicial identifiers
+        ecli: data.ecli || null,
+        pourvoiNumber: data.pourvoiNumber || null,
+        caseNumbers: data.caseNumbers || [],
         sources: {
           create: data.sources.map((s) => ({
             url: s.url,
@@ -124,6 +133,7 @@ export async function POST(request: NextRequest) {
             publisher: s.publisher,
             publishedAt: new Date(s.publishedAt),
             excerpt: s.excerpt || null,
+            sourceType: s.sourceType || "MANUAL",
           })),
         },
       },

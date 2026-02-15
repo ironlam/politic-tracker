@@ -33,3 +33,7 @@ export type {
   CandidaturesSyncResult,
 } from "./types";
 export type { WikidataConvictionResult, ConvictionImportResult } from "./wikidata-affairs";
+export { syncVotesAN, getVotesANStats } from "./votes-an";
+export type { VotesANSyncStats } from "./votes-an";
+export { syncVotesSenat, getVotesSenatStats, AVAILABLE_SESSIONS } from "./votes-senat";
+export type { VotesSenatSyncStats } from "./votes-senat";

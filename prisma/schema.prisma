@@ -1101,6 +1101,20 @@ model ElectionRound {
 }
 
 // ============================================
+// AFFAIR RECONCILIATION
+// ============================================
+
+// Track dismissed duplicate pairs (false positives) to avoid re-proposing them
+model DismissedDuplicate {
+  id        String   @id @default(cuid())
+  affairIdA String
+  affairIdB String
+  createdAt DateTime @default(now())
+
+  @@unique([affairIdA, affairIdB])
+}
+
+// ============================================
 // SYNC METADATA (incremental sync tracking)
 // ============================================
 

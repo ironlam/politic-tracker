@@ -24,6 +24,7 @@ import {
   buildTitleFromDecision,
 } from "@/services/affairs/judilibre-mapping";
 import { syncMetadata } from "@/lib/sync";
+import { trackStatusChange } from "@/services/affairs/status-tracking";
 
 // ============================================
 // TYPES
@@ -60,7 +61,7 @@ interface PoliticianForSearch {
 // ============================================
 
 const SYNC_SOURCE_KEY = "judilibre";
-const MIN_SYNC_INTERVAL_MS = 24 * 60 * 60 * 1000; // 24 hours
+const MIN_SYNC_INTERVAL_MS = 8 * 60 * 60 * 1000; // 8 hours (daily sync runs 3x/day)
 const MIN_AGE_AT_DECISION = 18; // Skip if politician was < 18 at time of decision
 
 // ============================================
@@ -200,6 +201,12 @@ async function enrichAffairFromJudilibre(
     });
     if (currentAffair && shouldUpgradeStatus(currentAffair.status, newStatus)) {
       updateData.status = newStatus;
+      // Track status change in affair timeline
+      await trackStatusChange(affairId, currentAffair.status, newStatus, {
+        type: "JUDILIBRE",
+        url: `https://www.courdecassation.fr/decision/${decision.id}`,
+        title: `Cour de cassation - ${decision.solution} (${decision.number})`,
+      });
     }
 
     if (Object.keys(updateData).length > 0) {

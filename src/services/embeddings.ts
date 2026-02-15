@@ -582,7 +582,10 @@ export async function indexPressArticle(articleId: string): Promise<void> {
     `Publié le: ${article.publishedAt.toISOString().split("T")[0]}`,
   ];
 
-  if (article.description) {
+  // Prefer AI summary over raw description (better context for RAG)
+  if (article.aiSummary) {
+    parts.push(article.aiSummary);
+  } else if (article.description) {
     parts.push(article.description.slice(0, 500));
   }
 

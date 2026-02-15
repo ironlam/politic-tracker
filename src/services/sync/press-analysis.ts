@@ -1,0 +1,624 @@
+/**
+ * Press Analysis Sync Service
+ *
+ * Orchestrates AI analysis of press articles for judicial affair detection:
+ * 1. Fetch unanalyzed PressArticles
+ * 2. Scrape full article content (not stored — copyright)
+ * 3. Analyze with Claude Haiku (tool_use)
+ * 4. Match detected affairs with existing DB affairs
+ * 5. Enrich existing affairs or create new ones (prefixed [À VÉRIFIER])
+ *
+ * Key difference from Judilibre: press NEVER modifies affair status
+ * (press has no legal authority, only Judilibre upgrades status).
+ */
+
+import { db } from "@/lib/db";
+import type { AffairCategory, AffairStatus } from "@/generated/prisma";
+import { generateSlug } from "@/lib/utils";
+import { getArticleScraper } from "@/lib/api/article-scraper";
+import {
+  analyzeArticle,
+  isSensitiveCategory,
+  getAIRateLimitMs,
+  type DetectedAffair,
+} from "@/services/press-analysis";
+import { findMatchingAffairs } from "@/services/affairs/matching";
+import { buildPoliticianIndex, findMentions, type PoliticianName } from "@/lib/name-matching";
+import { syncMetadata } from "@/lib/sync";
+
+// ============================================
+// TYPES
+// ============================================
+
+export interface PressAnalysisOptions {
+  dryRun?: boolean;
+  force?: boolean;
+  limit?: number;
+  feedSource?: string;
+  politicianSlug?: string;
+  reanalyze?: boolean;
+  verbose?: boolean;
+}
+
+export interface PressAnalysisStats {
+  articlesProcessed: number;
+  articlesAnalyzed: number;
+  articlesAffairRelated: number;
+  affairsEnriched: number;
+  affairsCreated: number;
+  scrapeErrors: number;
+  analysisErrors: number;
+  sensitiveWarnings: number;
+}
+
+// ============================================
+// CONSTANTS
+// ============================================
+
+const SYNC_SOURCE_KEY = "press-analysis";
+const MIN_SYNC_INTERVAL_MS = 6 * 60 * 60 * 1000; // 6 hours
+
+// ============================================
+// MAIN SYNC
+// ============================================
+
+/**
+ * Main press analysis sync orchestrator
+ */
+export async function syncPressAnalysis(
+  options: PressAnalysisOptions = {}
+): Promise<PressAnalysisStats> {
+  const {
+    dryRun = false,
+    force = false,
+    limit,
+    feedSource,
+    politicianSlug,
+    reanalyze = false,
+    verbose = false,
+  } = options;
+
+  const stats: PressAnalysisStats = {
+    articlesProcessed: 0,
+    articlesAnalyzed: 0,
+    articlesAffairRelated: 0,
+    affairsEnriched: 0,
+    affairsCreated: 0,
+    scrapeErrors: 0,
+    analysisErrors: 0,
+    sensitiveWarnings: 0,
+  };
+
+  // Check sync interval
+  if (!force && !politicianSlug) {
+    const shouldSync = await syncMetadata.shouldSync(SYNC_SOURCE_KEY, MIN_SYNC_INTERVAL_MS);
+    if (!shouldSync) {
+      console.log("Analyse presse déjà effectuée récemment. Utilisez --force pour forcer.");
+      return stats;
+    }
+  }
+
+  // Get articles to analyze
+  const articles = await getArticlesToAnalyze({
+    feedSource,
+    politicianSlug,
+    reanalyze,
+    limit,
+  });
+
+  if (articles.length === 0) {
+    console.log("Aucun article à analyser.");
+    return stats;
+  }
+
+  console.log(`${articles.length} article(s) à analyser\n`);
+
+  // Build politician index for name matching
+  const politicianIndex = await buildPoliticianIndex();
+
+  const scraper = getArticleScraper();
+
+  for (const article of articles) {
+    stats.articlesProcessed++;
+
+    if (verbose) {
+      console.log(
+        `\n[${stats.articlesProcessed}/${articles.length}] ${article.feedSource}: ${article.title.slice(0, 80)}...`
+      );
+    }
+
+    // Step 1: Get article content — scrape or fallback to RSS
+    let analysisContent: string;
+
+    if (scraper.canScrape(article.feedSource)) {
+      const content = await scraper.extractArticle(article.url, article.feedSource);
+
+      if (!content) {
+        stats.scrapeErrors++;
+        // Fallback to RSS title+description even for scrapable sources
+        analysisContent = buildRSSFallbackContent(article);
+        if (verbose) {
+          console.log("  ⚠ Scrape échoué, fallback RSS");
+        }
+      } else {
+        analysisContent = content.textContent;
+        if (verbose) {
+          console.log(`  Contenu extrait: ${content.length} chars`);
+        }
+      }
+    } else {
+      // Paywalled source (lemonde, lefigaro) — use RSS title+description
+      analysisContent = buildRSSFallbackContent(article);
+      if (verbose) {
+        console.log("  Source payante, analyse sur titre+description RSS");
+      }
+    }
+
+    // Step 2: AI Analysis
+    try {
+      // Get pre-detected politician mentions from the article
+      const mentionedNames = article.mentions.map((m) => m.politician.fullName);
+
+      const result = await analyzeArticle({
+        title: article.title,
+        content: analysisContent,
+        feedSource: article.feedSource,
+        publishedAt: article.publishedAt,
+        mentionedPoliticians: mentionedNames,
+      });
+
+      stats.articlesAnalyzed++;
+
+      // Step 3: Update article with analysis results
+      if (!dryRun) {
+        await db.pressArticle.update({
+          where: { id: article.id },
+          data: {
+            aiSummary: result.summary,
+            aiAnalyzedAt: new Date(),
+            isAffairRelated: result.isAffairRelated,
+            aiAnalysisError: null,
+          },
+        });
+      }
+
+      if (verbose) {
+        console.log(`  Résumé: ${result.summary.slice(0, 100)}...`);
+        console.log(`  Affaire(s) détectée(s): ${result.affairs.length}`);
+      }
+
+      if (!result.isAffairRelated || result.affairs.length === 0) {
+        continue;
+      }
+
+      stats.articlesAffairRelated++;
+
+      // Step 4: Process each detected affair
+      for (const detected of result.affairs) {
+        // Check sensitive categories
+        if (isSensitiveCategory(detected.category)) {
+          stats.sensitiveWarnings++;
+          console.warn(
+            `  ⚠ CATÉGORIE SENSIBLE: ${detected.category} pour ${detected.politicianName} — ${detected.title}`
+          );
+        }
+
+        // Resolve politician name to ID
+        const politicianId = resolvePolitician(detected.politicianName, politicianIndex);
+
+        if (!politicianId) {
+          if (verbose) {
+            console.log(`  - Politicien non trouvé: ${detected.politicianName}, ignoré`);
+          }
+          continue;
+        }
+
+        // Try to match with existing affairs
+        const matches = await findMatchingAffairs({
+          politicianId,
+          title: detected.title,
+          category: detected.category as AffairCategory,
+        });
+
+        const bestMatch = matches[0];
+
+        if (bestMatch && (bestMatch.confidence === "CERTAIN" || bestMatch.confidence === "HIGH")) {
+          // Enrich existing affair
+          const enriched = await enrichAffairFromPress(
+            bestMatch.affairId,
+            article.id,
+            article.url,
+            article.title,
+            article.feedSource,
+            article.publishedAt,
+            detected,
+            dryRun,
+            verbose
+          );
+          if (enriched) stats.affairsEnriched++;
+        } else if (detected.isNewRevelation) {
+          // New revelation — create affair with [À VÉRIFIER]
+          const created = await createAffairFromPress(
+            politicianId,
+            article.id,
+            article.url,
+            article.title,
+            article.feedSource,
+            article.publishedAt,
+            detected,
+            dryRun,
+            verbose
+          );
+          if (created) stats.affairsCreated++;
+        } else if (bestMatch) {
+          // Possible match — link article to affair
+          if (!dryRun) {
+            await linkArticleToAffair(article.id, bestMatch.affairId, "MENTION");
+          }
+          if (verbose) {
+            console.log(`  → Lien MENTION créé: article ↔ affaire ${bestMatch.affairId}`);
+          }
+        }
+      }
+    } catch (error) {
+      stats.analysisErrors++;
+      const errorMsg = error instanceof Error ? error.message : String(error);
+
+      if (!dryRun) {
+        await db.pressArticle.update({
+          where: { id: article.id },
+          data: {
+            aiAnalyzedAt: new Date(),
+            aiAnalysisError: errorMsg.slice(0, 500),
+          },
+        });
+      }
+
+      console.error(`  ✗ Analyse IA échouée: ${errorMsg}`);
+    }
+
+    // Rate limit between AI calls
+    await sleep(getAIRateLimitMs());
+  }
+
+  // Update sync metadata
+  if (!dryRun) {
+    await syncMetadata.markCompleted(SYNC_SOURCE_KEY, {
+      itemCount: stats.articlesAnalyzed,
+    });
+  }
+
+  return stats;
+}
+
+// ============================================
+// QUERY HELPERS
+// ============================================
+
+/**
+ * Get articles to analyze based on options
+ */
+async function getArticlesToAnalyze(options: {
+  feedSource?: string;
+  politicianSlug?: string;
+  reanalyze?: boolean;
+  limit?: number;
+}) {
+  const where: Record<string, unknown> = {};
+
+  // Filter by analysis state
+  if (!options.reanalyze) {
+    where.aiAnalyzedAt = null;
+  }
+
+  // Filter by feed source
+  if (options.feedSource) {
+    where.feedSource = options.feedSource;
+  }
+
+  // Filter by politician
+  if (options.politicianSlug) {
+    const politician = await db.politician.findUnique({
+      where: { slug: options.politicianSlug },
+      select: { id: true },
+    });
+    if (!politician) {
+      console.error(`Politicien non trouvé: ${options.politicianSlug}`);
+      return [];
+    }
+    where.mentions = {
+      some: { politicianId: politician.id },
+    };
+  }
+
+  return db.pressArticle.findMany({
+    where,
+    select: {
+      id: true,
+      feedSource: true,
+      title: true,
+      description: true,
+      url: true,
+      publishedAt: true,
+      mentions: {
+        include: {
+          politician: { select: { id: true, fullName: true, slug: true } },
+        },
+      },
+    },
+    orderBy: [{ publishedAt: "desc" }],
+    take: options.limit,
+  });
+}
+
+// ============================================
+// ENRICHMENT & CREATION
+// ============================================
+
+/**
+ * Enrich an existing affair with press source + link
+ * NOTE: Press NEVER modifies affair status (no legal authority)
+ */
+async function enrichAffairFromPress(
+  affairId: string,
+  articleId: string,
+  articleUrl: string,
+  articleTitle: string,
+  feedSource: string,
+  publishedAt: Date,
+  detected: DetectedAffair,
+  dryRun: boolean,
+  verbose?: boolean
+): Promise<boolean> {
+  if (dryRun) {
+    if (verbose) {
+      console.log(`  [DRY-RUN] Enrichirait affaire ${affairId} depuis article presse`);
+    }
+    return true;
+  }
+
+  try {
+    // Add press source to the affair (for the affair page)
+    const existingSource = await db.source.findFirst({
+      where: { affairId, url: articleUrl },
+    });
+
+    if (!existingSource) {
+      await db.source.create({
+        data: {
+          affairId,
+          url: articleUrl,
+          title: articleTitle,
+          publisher: feedSourceToPublisher(feedSource),
+          publishedAt,
+          sourceType: "PRESSE",
+          excerpt: detected.excerpts[0] || null,
+        },
+      });
+    }
+
+    // Create PressArticleAffair link
+    await linkArticleToAffair(articleId, affairId, "UPDATE");
+
+    if (verbose) {
+      console.log(`  ✓ Affaire ${affairId} enrichie avec source presse`);
+    }
+    return true;
+  } catch (error) {
+    console.error(`  ✗ Erreur enrichissement affaire ${affairId}:`, error);
+    return false;
+  }
+}
+
+/**
+ * Create a new affair from a press revelation
+ * Prefixed [À VÉRIFIER], verifiedAt: null
+ */
+async function createAffairFromPress(
+  politicianId: string,
+  articleId: string,
+  articleUrl: string,
+  articleTitle: string,
+  feedSource: string,
+  publishedAt: Date,
+  detected: DetectedAffair,
+  dryRun: boolean,
+  verbose?: boolean
+): Promise<boolean> {
+  const title = `[À VÉRIFIER] ${detected.title}`;
+
+  if (dryRun) {
+    console.log(`  [DRY-RUN] Créerait affaire: ${title}`);
+    return true;
+  }
+
+  try {
+    const baseSlug = generateSlug(title);
+    let slug = baseSlug;
+
+    // Ensure unique slug
+    let counter = 1;
+    while (await db.affair.findUnique({ where: { slug }, select: { id: true } })) {
+      slug = `${baseSlug}-${counter}`;
+      counter++;
+    }
+
+    const affair = await db.affair.create({
+      data: {
+        politicianId,
+        title,
+        slug,
+        description: detected.description,
+        status: detected.status as AffairStatus,
+        category: detected.category as AffairCategory,
+        factsDate: detected.factsDate ? new Date(detected.factsDate) : null,
+        court: detected.court,
+        verifiedAt: null,
+        sources: {
+          create: {
+            url: articleUrl,
+            title: articleTitle,
+            publisher: feedSourceToPublisher(feedSource),
+            publishedAt,
+            sourceType: "PRESSE",
+            excerpt: detected.excerpts[0] || null,
+          },
+        },
+      },
+    });
+
+    // Link article to affair
+    await linkArticleToAffair(articleId, affair.id, "REVELATION");
+
+    if (verbose) {
+      console.log(`  ✓ Nouvelle affaire créée: ${title}`);
+    }
+    return true;
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("Unique constraint")) {
+      if (verbose) {
+        console.log(`  - Affaire déjà existante (slug), ignorée`);
+      }
+      return false;
+    }
+    console.error(`  ✗ Erreur création affaire:`, error);
+    return false;
+  }
+}
+
+/**
+ * Create PressArticleAffair link (upsert to avoid duplicates)
+ */
+async function linkArticleToAffair(
+  articleId: string,
+  affairId: string,
+  role: "REVELATION" | "MENTION" | "UPDATE"
+): Promise<void> {
+  await db.pressArticleAffair.upsert({
+    where: {
+      articleId_affairId: { articleId, affairId },
+    },
+    create: { articleId, affairId, role },
+    update: { role },
+  });
+}
+
+// ============================================
+// NAME RESOLUTION
+// ============================================
+
+/**
+ * Resolve a politician name (from AI output) to a politician ID
+ */
+function resolvePolitician(name: string, index: PoliticianName[]): string | null {
+  const matches = findMentions(name, index);
+  return matches.length > 0 ? matches[0].politicianId : null;
+}
+
+// ============================================
+// STATS
+// ============================================
+
+/**
+ * Get press analysis statistics for --stats display
+ */
+export async function getPressAnalysisStats(): Promise<void> {
+  const [
+    meta,
+    totalArticles,
+    analyzedArticles,
+    affairRelatedArticles,
+    articleAffairLinks,
+    pressSourceCount,
+    recentAnalyzed,
+    errorArticles,
+  ] = await Promise.all([
+    syncMetadata.get(SYNC_SOURCE_KEY),
+    db.pressArticle.count(),
+    db.pressArticle.count({ where: { aiAnalyzedAt: { not: null } } }),
+    db.pressArticle.count({ where: { isAffairRelated: true } }),
+    db.pressArticleAffair.count(),
+    db.source.count({ where: { sourceType: "PRESSE" } }),
+    db.pressArticle.findMany({
+      where: { aiAnalyzedAt: { not: null } },
+      select: {
+        title: true,
+        feedSource: true,
+        isAffairRelated: true,
+        aiAnalyzedAt: true,
+        aiSummary: true,
+      },
+      orderBy: { aiAnalyzedAt: "desc" },
+      take: 5,
+    }),
+    db.pressArticle.count({
+      where: { aiAnalysisError: { not: null } },
+    }),
+  ]);
+
+  console.log("\n" + "=".repeat(60));
+  console.log("Press Analysis Stats");
+  console.log("=".repeat(60));
+
+  if (meta) {
+    console.log(`\nDernier sync: ${meta.lastSyncAt?.toLocaleString("fr-FR") ?? "jamais"}`);
+    console.log(`Items traités: ${meta.itemCount ?? 0}`);
+  } else {
+    console.log("\nAucun sync effectué");
+  }
+
+  const pending = totalArticles - analyzedArticles;
+  console.log(`\nArticles totaux: ${totalArticles}`);
+  console.log(`Analysés: ${analyzedArticles}`);
+  console.log(`En attente: ${pending}`);
+  console.log(`Liés à une affaire: ${affairRelatedArticles}`);
+  console.log(`Erreurs d'analyse: ${errorArticles}`);
+  console.log(`\nLiens article-affaire: ${articleAffairLinks}`);
+  console.log(`Sources PRESSE sur affaires: ${pressSourceCount}`);
+
+  if (recentAnalyzed.length > 0) {
+    console.log("\nDerniers articles analysés:");
+    for (const a of recentAnalyzed) {
+      const date = a.aiAnalyzedAt?.toISOString().split("T")[0] ?? "?";
+      const affair = a.isAffairRelated ? "⚖️" : "—";
+      console.log(`  [${date}] ${affair} ${a.feedSource}: ${a.title.slice(0, 60)}...`);
+      if (a.aiSummary) {
+        console.log(`    ${a.aiSummary.slice(0, 100)}...`);
+      }
+    }
+  }
+}
+
+// ============================================
+// HELPERS
+// ============================================
+
+/**
+ * Build analysis content from RSS data when scraping isn't possible.
+ * Less precise than full article but still useful for detecting affairs.
+ */
+function buildRSSFallbackContent(article: { title: string; description: string | null }): string {
+  const parts = [article.title];
+  if (article.description) {
+    parts.push(article.description);
+  }
+  return parts.join("\n\n");
+}
+
+function feedSourceToPublisher(feedSource: string): string {
+  const publishers: Record<string, string> = {
+    lemonde: "Le Monde",
+    lefigaro: "Le Figaro",
+    franceinfo: "Franceinfo",
+    liberation: "Libération",
+    politico: "Politico",
+    mediapart: "Mediapart",
+    publicsenat: "Public Sénat",
+    lcp: "LCP",
+  };
+  return publishers[feedSource] || feedSource;
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}

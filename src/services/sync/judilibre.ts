@@ -91,7 +91,7 @@ function isRelevantDecision(
   // Check if the name appears in the summary (basic anti-homonyme)
   const nameParts = politician.fullName.toLowerCase().split(/\s+/);
   const lastName = nameParts[nameParts.length - 1];
-  const summaryLower = decision.summary.toLowerCase();
+  const summaryLower = (decision.summary || "").toLowerCase();
 
   if (!summaryLower.includes(lastName)) {
     return false;

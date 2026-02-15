@@ -65,6 +65,7 @@ export class JudilibreClient {
   private oauthUrl: string;
   private clientId: string;
   private clientSecret: string;
+  private apiKey: string;
 
   private accessToken: string | null = null;
   private tokenExpiresAt = 0;
@@ -74,16 +75,18 @@ export class JudilibreClient {
     const oauthUrl = process.env.JUDILIBRE_OAUTH_URL;
     const clientId = process.env.JUDILIBRE_CLIENT_ID;
     const clientSecret = process.env.JUDILIBRE_CLIENT_SECRET;
+    const apiKey = process.env.JUDILIBRE_API_KEY;
 
-    if (!baseUrl || !oauthUrl || !clientId || !clientSecret) {
+    if (!baseUrl || !oauthUrl || !clientId || !clientSecret || !apiKey) {
       throw new Error(
-        "Missing Judilibre config. Set JUDILIBRE_BASE_URL, JUDILIBRE_OAUTH_URL, JUDILIBRE_CLIENT_ID, JUDILIBRE_CLIENT_SECRET"
+        "Missing Judilibre config. Set JUDILIBRE_BASE_URL, JUDILIBRE_OAUTH_URL, JUDILIBRE_CLIENT_ID, JUDILIBRE_CLIENT_SECRET, JUDILIBRE_API_KEY"
       );
     }
 
     this.oauthUrl = oauthUrl;
     this.clientId = clientId;
     this.clientSecret = clientSecret;
+    this.apiKey = apiKey;
 
     this.httpClient = new HTTPClient({
       baseUrl,
@@ -131,7 +134,10 @@ export class JudilibreClient {
    */
   private async getAuthHeaders(): Promise<Record<string, string>> {
     await this.ensureAuthenticated();
-    return { Authorization: `Bearer ${this.accessToken}` };
+    return {
+      Authorization: `Bearer ${this.accessToken}`,
+      KeyId: this.apiKey,
+    };
   }
 
   /**
@@ -196,7 +202,11 @@ export class JudilibreClient {
  * Returns null if env vars are not configured.
  */
 export function createJudilibreClient(): JudilibreClient | null {
-  if (!process.env.JUDILIBRE_CLIENT_ID || !process.env.JUDILIBRE_CLIENT_SECRET) {
+  if (
+    !process.env.JUDILIBRE_CLIENT_ID ||
+    !process.env.JUDILIBRE_CLIENT_SECRET ||
+    !process.env.JUDILIBRE_API_KEY
+  ) {
     return null;
   }
   return new JudilibreClient();

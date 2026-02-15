@@ -17,6 +17,9 @@ export const ASSEMBLEE_DOCPARL_RATE_LIMIT_MS = 300; // docparl.assemblee-nationa
 export const EUROPARL_RATE_LIMIT_MS = 200; // data.europarl.europa.eu
 export const HATVP_RATE_LIMIT_MS = 200; // hatvp.fr — politesse
 
+// --- Justice (Judilibre / PISTE) ---
+export const JUDILIBRE_RATE_LIMIT_MS = 500; // PISTE OAuth API — politesse
+
 // --- IA (Claude/OpenAI) ---
 export const AI_RATE_LIMIT_MS = 500; // Délai entre appels IA
 export const AI_429_BACKOFF_MS = 30_000; // Backoff sur rate limit 429

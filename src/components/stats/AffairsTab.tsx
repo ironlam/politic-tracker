@@ -235,7 +235,8 @@ export function AffairsTab({
                 <ProgressBar
                   value={party.totalAffairs}
                   max={maxByParty}
-                  color="bg-primary"
+                  hexColor={party.color || undefined}
+                  color={party.color ? undefined : "bg-primary"}
                   label={`${party.name} : ${party.totalAffairs} affaires`}
                 />
               </div>
@@ -286,11 +287,7 @@ export function AffairsTab({
                 <ProgressBar
                   value={politician._count.affairs}
                   max={maxByPolitician}
-                  hexColor={
-                    politician.condamnations > 0
-                      ? COLORS.affairStatus.CONDAMNATION_DEFINITIVE.light
-                      : COLORS.ui.warning.light
-                  }
+                  color="bg-primary"
                   label={`${politician.fullName} : ${politician._count.affairs} affaires`}
                 />
               </div>

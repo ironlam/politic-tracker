@@ -6,16 +6,16 @@ import { FACTCHECK_RATING_LABELS } from "@/config/labels";
 import { ensureContrast } from "@/lib/contrast";
 import type { FactCheckRating } from "@/types";
 
-// Hex colors for verdict distribution bar
+// Hex colors for verdict distribution bar — blue (true) → gray → muted red (false)
 const RATING_HEX_COLORS: Record<FactCheckRating, string> = {
-  TRUE: "#22c55e",
-  MOSTLY_TRUE: "#86efac",
-  HALF_TRUE: "#eab308",
-  MISLEADING: "#f97316",
-  OUT_OF_CONTEXT: "#f59e0b",
-  MOSTLY_FALSE: "#f87171",
-  FALSE: "#ef4444",
-  UNVERIFIABLE: "#9ca3af",
+  TRUE: "#2d4a7c",
+  MOSTLY_TRUE: "#4a6a9c",
+  HALF_TRUE: "#8a8e96",
+  MISLEADING: "#9a7a7a",
+  OUT_OF_CONTEXT: "#9a7a7a",
+  MOSTLY_FALSE: "#9a6868",
+  FALSE: "#9e5454",
+  UNVERIFIABLE: "#9498a0",
 };
 
 // Ordered ratings for the distribution bar (vrai → faux)
@@ -218,21 +218,21 @@ export function FactChecksTab({
                       {politician.vrai > 0 && (
                         <div
                           className="h-full"
-                          style={{ width: `${vraiW}%`, backgroundColor: "#22c55e" }}
+                          style={{ width: `${vraiW}%`, backgroundColor: "#2d4a7c" }}
                           title={`Vrai : ${politician.vrai}`}
                         />
                       )}
                       {politician.mitige > 0 && (
                         <div
                           className="h-full"
-                          style={{ width: `${mitigeW}%`, backgroundColor: "#eab308" }}
+                          style={{ width: `${mitigeW}%`, backgroundColor: "#8a8e96" }}
                           title={`Mitigé : ${politician.mitige}`}
                         />
                       )}
                       {politician.faux > 0 && (
                         <div
                           className="h-full"
-                          style={{ width: `${fauxW}%`, backgroundColor: "#ef4444" }}
+                          style={{ width: `${fauxW}%`, backgroundColor: "#9e5454" }}
                           title={`Faux : ${politician.faux}`}
                         />
                       )}

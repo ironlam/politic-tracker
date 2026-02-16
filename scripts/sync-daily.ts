@@ -85,6 +85,14 @@ const steps: SyncStep[] = [
     name: "Embeddings presse (delta)",
     command: `npx tsx scripts/index-embeddings.ts --type=PRESS_ARTICLE`,
   },
+  {
+    name: "Prominence scores",
+    command: `npx tsx scripts/recalculate-prominence.ts${dryRunFlag}`,
+  },
+  {
+    name: "Publication status",
+    command: `npx tsx scripts/assign-publication-status.ts${dryRunFlag}`,
+  },
   ...(CRON_SECRET
     ? [
         {

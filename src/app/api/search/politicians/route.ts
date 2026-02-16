@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
 
   const politicians = await db.politician.findMany({
     where: {
-      AND: [{ OR: nameConditions }, ...activeConditions],
+      AND: [{ publicationStatus: "PUBLISHED" }, { OR: nameConditions }, ...activeConditions],
     },
     select: {
       id: true,
@@ -81,7 +81,7 @@ export async function GET(request: NextRequest) {
         take: 1,
       },
     },
-    orderBy: { lastName: "asc" },
+    orderBy: [{ prominenceScore: "desc" }, { lastName: "asc" }],
     take: 8,
   });
 

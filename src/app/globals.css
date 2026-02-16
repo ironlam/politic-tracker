@@ -150,6 +150,24 @@
   .font-display {
     font-family: var(--font-display), ui-sans-serif, system-ui, sans-serif;
   }
+
+  /* Animated underline for navigation links */
+  .nav-link-underline {
+    position: relative;
+  }
+  .nav-link-underline::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background: var(--primary);
+    transition: width 0.3s ease;
+  }
+  .nav-link-underline:hover::after {
+    width: 100%;
+  }
 }
 
 /* Global focus-visible styles */

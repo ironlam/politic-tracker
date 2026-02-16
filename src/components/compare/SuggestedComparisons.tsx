@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
 interface Suggestion {
   leftSlug: string;
@@ -9,7 +10,8 @@ interface Suggestion {
   rightName: string;
 }
 
-const POLITICIAN_SUGGESTIONS: Suggestion[] = [
+// Fallback for when API is unavailable
+const FALLBACK_SUGGESTIONS: Suggestion[] = [
   {
     leftSlug: "emmanuel-macron",
     leftName: "Emmanuel Macron",
@@ -17,34 +19,16 @@ const POLITICIAN_SUGGESTIONS: Suggestion[] = [
     rightName: "Jordan Bardella",
   },
   {
+    leftSlug: "marine-le-pen",
+    leftName: "Marine Le Pen",
+    rightSlug: "jean-luc-melenchon",
+    rightName: "Jean-Luc Mélenchon",
+  },
+  {
     leftSlug: "gabriel-attal",
     leftName: "Gabriel Attal",
     rightSlug: "mathilde-panot",
     rightName: "Mathilde Panot",
-  },
-  {
-    leftSlug: "marine-le-pen",
-    leftName: "Marine Le Pen",
-    rightSlug: "francois-ruffin",
-    rightName: "François Ruffin",
-  },
-  {
-    leftSlug: "gerald-darmanin",
-    leftName: "Gérald Darmanin",
-    rightSlug: "manuel-bompard",
-    rightName: "Manuel Bompard",
-  },
-  {
-    leftSlug: "yael-braun-pivet",
-    leftName: "Yaël Braun-Pivet",
-    rightSlug: "eric-ciotti",
-    rightName: "Éric Ciotti",
-  },
-  {
-    leftSlug: "bruno-retailleau",
-    leftName: "Bruno Retailleau",
-    rightSlug: "francois-hollande",
-    rightName: "François Hollande",
   },
 ];
 
@@ -80,7 +64,24 @@ interface SuggestedComparisonsProps {
 }
 
 export function SuggestedComparisons({ mode }: SuggestedComparisonsProps) {
-  const suggestions = mode === "partis" ? PARTY_SUGGESTIONS : POLITICIAN_SUGGESTIONS;
+  const [suggestions, setSuggestions] = useState<Suggestion[]>(
+    mode === "partis" ? PARTY_SUGGESTIONS : FALLBACK_SUGGESTIONS
+  );
+
+  useEffect(() => {
+    if (mode !== "politiciens") return;
+
+    fetch("/api/compare/suggestions")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data && data.length > 0) {
+          setSuggestions(data);
+        }
+      })
+      .catch(() => {
+        // Keep fallback
+      });
+  }, [mode]);
 
   return (
     <div className="py-8">

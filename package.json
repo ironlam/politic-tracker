@@ -108,6 +108,8 @@
     "sync:press-analysis:stats": "tsx scripts/sync-press-analysis.ts --stats",
     "classify:themes": "tsx scripts/classify-themes.ts",
     "classify:themes:stats": "tsx scripts/classify-themes.ts --stats",
+    "prominence:calculate": "npx tsx scripts/recalculate-prominence.ts",
+    "prominence:status": "npx tsx scripts/assign-publication-status.ts",
     "sync:rne:maires": "tsx scripts/sync-rne.ts",
     "sync:rne:maires:stats": "tsx scripts/sync-rne.ts --stats",
     "sync:elections:municipales": "tsx scripts/sync-candidatures.ts",

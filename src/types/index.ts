@@ -31,6 +31,7 @@ import type {
   SuffrageType,
   ElectionStatus,
   SourceType,
+  PublicationStatus,
 } from "@/generated/prisma";
 
 // Re-export Prisma types
@@ -67,6 +68,7 @@ export type {
   SuffrageType,
   ElectionStatus,
   SourceType,
+  PublicationStatus,
 };
 
 // Serialized types (with Decimal converted to number for client components)
@@ -138,8 +140,10 @@ export type PoliticianFilters = {
   partyId?: string;
   mandateType?: MandateType;
   hasAffairs?: boolean;
+  publicationStatus?: PublicationStatus;
   page?: number;
   limit?: number;
+  sortBy?: "name" | "prominence";
 };
 
 export type AffairFilters = {

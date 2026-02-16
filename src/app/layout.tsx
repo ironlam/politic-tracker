@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Outfit, Atkinson_Hyperlegible } from "next/font/google";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
@@ -9,14 +9,18 @@ import { GlobalSearchProvider, GlobalSearchDialog } from "@/components/search";
 import { UmamiAnalytics } from "@/components/analytics/UmamiAnalytics";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const outfit = Outfit({
+  variable: "--font-display",
   subsets: ["latin"],
+  weight: ["700", "800"],
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const atkinson = Atkinson_Hyperlegible({
+  variable: "--font-body",
   subsets: ["latin"],
+  weight: ["400", "700"],
+  display: "swap",
 });
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://poligraph.fr";
@@ -91,7 +95,7 @@ export default function RootLayout({
         <UmamiAnalytics />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
+        className={`${outfit.variable} ${atkinson.variable} antialiased min-h-screen flex flex-col`}
       >
         <ThemeProvider>
           <GlobalSearchProvider>

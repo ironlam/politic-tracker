@@ -184,11 +184,24 @@ export default async function HomePage() {
               <Badge variant="secondary" className="mb-6 text-xs sm:text-sm font-medium">
                 Observatoire citoyen de la vie politique
               </Badge>
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-extrabold tracking-tight mb-6">
-                <span className="bg-gradient-to-r from-primary to-foreground bg-clip-text text-transparent">
-                  Poligraph
-                </span>
-              </h1>
+
+              {/* Brand lockup: owl + title */}
+              <div className="flex items-center justify-center gap-4 md:gap-5 mb-6">
+                <img
+                  src="/logo.svg"
+                  alt=""
+                  aria-hidden="true"
+                  width={72}
+                  height={72}
+                  className="w-14 h-14 md:w-[72px] md:h-[72px] drop-shadow-lg"
+                />
+                <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-extrabold tracking-tight">
+                  <span className="bg-gradient-to-r from-primary to-foreground bg-clip-text text-transparent">
+                    Poligraph
+                  </span>
+                </h1>
+              </div>
+
               <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed">
                 Accédez aux informations publiques sur vos représentants politiques. Mandats, votes,
                 patrimoine, affaires judiciaires et fact-checking.

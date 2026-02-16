@@ -182,8 +182,8 @@ export default async function HomePage() {
               <Badge variant="secondary" className="mb-6 text-xs sm:text-sm font-medium">
                 Observatoire citoyen de la vie politique
               </Badge>
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6">
-                <span className="bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-extrabold tracking-tight mb-6">
+                <span className="bg-gradient-to-r from-primary to-foreground bg-clip-text text-transparent">
                   Poligraph
                 </span>
               </h1>
@@ -227,7 +227,7 @@ export default async function HomePage() {
         {/* CTA Section */}
         <section className="py-20 bg-gradient-to-br from-primary/5 to-accent/10">
           <div className="container mx-auto px-4 text-center">
-            <h2 className="text-2xl md:text-3xl font-bold mb-4">
+            <h2 className="text-2xl md:text-3xl font-display font-bold mb-4">
               Un projet citoyen, ouvert et indépendant
             </h2>
             <p className="text-muted-foreground max-w-2xl mx-auto mb-8">

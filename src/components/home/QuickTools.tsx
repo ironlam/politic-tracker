@@ -42,7 +42,7 @@ export function QuickTools() {
     <section className="py-16 bg-muted/30">
       <div className="container mx-auto px-4">
         <div className="mb-8">
-          <h2 className="text-2xl md:text-3xl font-bold mb-2">Outils</h2>
+          <h2 className="text-2xl md:text-3xl font-display font-bold mb-2">Outils</h2>
           <p className="text-muted-foreground">Accès rapide aux fonctionnalités clés</p>
         </div>
 
@@ -58,7 +58,7 @@ export function QuickTools() {
                     >
                       <Icon className={`h-6 w-6 ${tool.color}`} />
                     </div>
-                    <h3 className="font-semibold text-lg mb-2 flex items-center gap-2">
+                    <h3 className="font-display font-semibold text-lg mb-2 flex items-center gap-2">
                       {tool.title}
                       <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
                     </h3>

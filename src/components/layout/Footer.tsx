@@ -10,7 +10,7 @@ export function Footer() {
         <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-8">
           {/* About */}
           <div className="col-span-2 md:col-span-1">
-            <h3 className="font-semibold text-sm mb-3">À propos</h3>
+            <h3 className="font-display font-semibold text-sm mb-3">À propos</h3>
             <p className="text-sm text-muted-foreground leading-relaxed">
               Observatoire citoyen de la vie politique. Données publiques, fact-checking et regard
               indépendant.
@@ -20,7 +20,10 @@ export function Footer() {
           {/* Navigation sections (3 columns) */}
           {FOOTER_SECTIONS.map((section) => (
             <nav key={section.title} aria-labelledby={`footer-nav-${section.title}`}>
-              <h3 id={`footer-nav-${section.title}`} className="font-semibold text-sm mb-3">
+              <h3
+                id={`footer-nav-${section.title}`}
+                className="font-display font-semibold text-sm mb-3"
+              >
                 {section.title}
               </h3>
               <ul className="space-y-2 text-sm">
@@ -40,7 +43,7 @@ export function Footer() {
 
           {/* Data Sources */}
           <div>
-            <h3 className="font-semibold text-sm mb-3">Sources</h3>
+            <h3 className="font-display font-semibold text-sm mb-3">Sources</h3>
             <ul className="space-y-2 text-sm">
               {DATA_SOURCES.map((source) => (
                 <li key={source.href}>

@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { FOOTER_SECTIONS, DATA_SOURCES } from "@/config/navigation";
 import { ExternalLink } from "lucide-react";
+import { HexPattern } from "@/components/ui/HexPattern";
 
 export function Footer() {
   return (
-    <footer role="contentinfo" className="border-t bg-muted/30 mt-auto">
-      <div className="container mx-auto px-4 py-8 md:py-10">
+    <footer role="contentinfo" className="relative overflow-hidden border-t bg-muted/30 mt-auto">
+      <HexPattern className="absolute inset-0 text-primary opacity-[0.02] dark:opacity-[0.04] pointer-events-none" />
+      <div className="relative z-10 container mx-auto px-4 py-8 md:py-10">
         {/* Main footer content */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-8">
           {/* About */}
@@ -31,7 +33,7 @@ export function Footer() {
                   <li key={link.href}>
                     <Link
                       href={link.href}
-                      className="text-muted-foreground hover:text-foreground transition-colors"
+                      className="text-muted-foreground hover:text-foreground transition-colors nav-link-underline"
                     >
                       {link.label}
                     </Link>

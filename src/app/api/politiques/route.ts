@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { MandateType } from "@/generated/prisma";
+import { MandateType, PublicationStatus } from "@/generated/prisma";
 import { getPoliticians } from "@/services/politicians";
 import { withCache } from "@/lib/cache";
 
@@ -32,6 +32,20 @@ import { withCache } from "@/lib/cache";
  *         schema:
  *           type: boolean
  *         description: Filtrer les politiques avec/sans affaires judiciaires
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: ["PUBLISHED", "DRAFT", "ARCHIVED", "all"]
+ *           default: "PUBLISHED"
+ *         description: Statut de publication (défaut PUBLISHED)
+ *       - in: query
+ *         name: sort
+ *         schema:
+ *           type: string
+ *           enum: ["name", "prominence"]
+ *           default: "name"
+ *         description: Tri des résultats
  *       - in: query
  *         name: page
  *         schema:
@@ -77,6 +91,8 @@ export async function GET(request: NextRequest) {
   const hasAffairsParam = searchParams.get("hasAffairs");
   const hasAffairs =
     hasAffairsParam === "true" ? true : hasAffairsParam === "false" ? false : undefined;
+  const status = searchParams.get("status") || "PUBLISHED";
+  const sort = searchParams.get("sort");
   const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
   const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") || "20", 10)));
 
@@ -86,6 +102,8 @@ export async function GET(request: NextRequest) {
       partyId,
       mandateType: mandateType as MandateType,
       hasAffairs,
+      ...(status !== "all" && { publicationStatus: status as PublicationStatus }),
+      ...(sort === "prominence" && { sortBy: "prominence" as const }),
       page,
       limit,
     });

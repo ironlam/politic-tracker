@@ -1,16 +1,18 @@
 import Link from "next/link";
 import { FOOTER_SECTIONS, DATA_SOURCES } from "@/config/navigation";
 import { ExternalLink } from "lucide-react";
+import { HexPattern } from "@/components/ui/HexPattern";
 
 export function Footer() {
   return (
-    <footer role="contentinfo" className="border-t bg-muted/30 mt-auto">
-      <div className="container mx-auto px-4 py-8 md:py-10">
+    <footer role="contentinfo" className="relative overflow-hidden border-t bg-muted/30 mt-auto">
+      <HexPattern className="absolute inset-0 text-primary opacity-[0.02] dark:opacity-[0.04] pointer-events-none" />
+      <div className="relative z-10 container mx-auto px-4 py-8 md:py-10">
         {/* Main footer content */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-8">
           {/* About */}
           <div className="col-span-2 md:col-span-1">
-            <h3 className="font-semibold text-sm mb-3">À propos</h3>
+            <h3 className="font-display font-semibold text-sm mb-3">À propos</h3>
             <p className="text-sm text-muted-foreground leading-relaxed">
               Observatoire citoyen de la vie politique. Données publiques, fact-checking et regard
               indépendant.
@@ -20,7 +22,10 @@ export function Footer() {
           {/* Navigation sections (3 columns) */}
           {FOOTER_SECTIONS.map((section) => (
             <nav key={section.title} aria-labelledby={`footer-nav-${section.title}`}>
-              <h3 id={`footer-nav-${section.title}`} className="font-semibold text-sm mb-3">
+              <h3
+                id={`footer-nav-${section.title}`}
+                className="font-display font-semibold text-sm mb-3"
+              >
                 {section.title}
               </h3>
               <ul className="space-y-2 text-sm">
@@ -28,7 +33,7 @@ export function Footer() {
                   <li key={link.href}>
                     <Link
                       href={link.href}
-                      className="text-muted-foreground hover:text-foreground transition-colors"
+                      className="text-muted-foreground hover:text-foreground transition-colors nav-link-underline"
                     >
                       {link.label}
                     </Link>
@@ -40,7 +45,7 @@ export function Footer() {
 
           {/* Data Sources */}
           <div>
-            <h3 className="font-semibold text-sm mb-3">Sources</h3>
+            <h3 className="font-display font-semibold text-sm mb-3">Sources</h3>
             <ul className="space-y-2 text-sm">
               {DATA_SOURCES.map((source) => (
                 <li key={source.href}>

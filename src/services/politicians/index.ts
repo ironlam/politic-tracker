@@ -11,9 +11,19 @@ const DEFAULT_LIMIT = 20;
 export async function getPoliticians(
   filters: PoliticianFilters = {}
 ): Promise<PaginatedResponse<PoliticianWithParty>> {
-  const { search, partyId, mandateType, hasAffairs, page = 1, limit = DEFAULT_LIMIT } = filters;
+  const {
+    search,
+    partyId,
+    mandateType,
+    hasAffairs,
+    publicationStatus = "PUBLISHED",
+    page = 1,
+    limit = DEFAULT_LIMIT,
+    sortBy = "name",
+  } = filters;
 
   const where = {
+    publicationStatus,
     ...(search && {
       OR: [
         { fullName: { contains: search, mode: "insensitive" as const } },
@@ -34,13 +44,18 @@ export async function getPoliticians(
     }),
   };
 
+  const orderBy =
+    sortBy === "prominence"
+      ? [{ prominenceScore: "desc" as const }, { lastName: "asc" as const }]
+      : { lastName: "asc" as const };
+
   const [data, total] = await Promise.all([
     db.politician.findMany({
       where,
       include: {
         currentParty: true,
       },
-      orderBy: { lastName: "asc" },
+      orderBy,
       skip: (page - 1) * limit,
       take: limit,
     }),
@@ -109,6 +124,7 @@ export async function getPoliticianById(id: string): Promise<PoliticianFull | nu
 export async function searchPoliticians(query: string, limit = 10): Promise<PoliticianWithParty[]> {
   return db.politician.findMany({
     where: {
+      publicationStatus: "PUBLISHED",
       OR: [
         { fullName: { contains: query, mode: "insensitive" } },
         { lastName: { contains: query, mode: "insensitive" } },
@@ -118,7 +134,7 @@ export async function searchPoliticians(query: string, limit = 10): Promise<Poli
     include: {
       currentParty: true,
     },
-    orderBy: { lastName: "asc" },
+    orderBy: [{ prominenceScore: "desc" }, { lastName: "asc" }],
     take: limit,
   });
 }

@@ -11,6 +11,13 @@ datasource db {
 // POLITICAL ENTITIES
 // ============================================
 
+enum PublicationStatus {
+  PUBLISHED  // Visible partout
+  DRAFT      // Importé mais incomplet, caché
+  ARCHIVED   // Ancien, caché par défaut
+  EXCLUDED   // Ne doit jamais être affiché
+}
+
 model Politician {
   id          String    @id @default(cuid())
   slug        String    @unique
@@ -28,6 +35,11 @@ model Politician {
   // AI-generated biography
   biography            String?   @db.Text
   biographyGeneratedAt DateTime?
+
+  // Visibility & ranking
+  publicationStatus PublicationStatus @default(DRAFT)
+  statusOverride    Boolean           @default(false) // true = don't auto-reassign status
+  prominenceScore   Int               @default(0)     // 0-1000, higher = more prominent
 
   // Current party (nullable if independent)
   currentParty   Party?  @relation(fields: [currentPartyId], references: [id])
@@ -50,6 +62,7 @@ model Politician {
   @@index([lastName])
   @@index([currentPartyId])
   @@index([fullName])
+  @@index([publicationStatus, prominenceScore])
 }
 
 // External IDs from various data sources - enables multi-source matching

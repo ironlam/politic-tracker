@@ -103,6 +103,14 @@ export default function RootLayout({
             <a href="#main-content" className="skip-link">
               Aller au contenu principal
             </a>
+            {/* Accent bar — brand identity */}
+            <div
+              className="h-[3px] w-full"
+              style={{
+                background: "linear-gradient(90deg, var(--accent), var(--primary))",
+              }}
+              aria-hidden="true"
+            />
             <Header />
             <main id="main-content" role="main" className="flex-1" tabIndex={-1}>
               {children}

@@ -107,7 +107,7 @@ export default function RootLayout({
             <div
               className="h-[3px] w-full"
               style={{
-                background: "linear-gradient(90deg, var(--accent), var(--primary))",
+                background: "linear-gradient(90deg, var(--brand), var(--primary))",
               }}
               aria-hidden="true"
             />

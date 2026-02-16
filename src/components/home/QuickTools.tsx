@@ -58,10 +58,10 @@ export function QuickTools() {
                   <Card className="h-full border-2 border-transparent hover:border-primary/20 transition-all hover:shadow-lg">
                     <CardContent className="pt-6">
                       <div
-                        className={`inline-flex p-3 rounded-xl ${tool.bgColor} mb-4 group-hover:scale-110 transition-all group-hover:bg-accent/10`}
+                        className={`inline-flex p-3 rounded-xl ${tool.bgColor} mb-4 group-hover:scale-110 transition-all group-hover:bg-brand/10`}
                       >
                         <Icon
-                          className={`h-6 w-6 ${tool.color} group-hover:text-accent transition-colors`}
+                          className={`h-6 w-6 ${tool.color} group-hover:text-brand transition-colors`}
                         />
                       </div>
                       <h3 className="font-display font-semibold text-lg mb-2 flex items-center gap-2">

@@ -1,10 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="40 25 120 100" width="32" height="32">
   <!-- Head -->
-  <ellipse cx="100" cy="75" rx="52" ry="40" fill="#2D3A4E"/>
+  <ellipse cx="100" cy="75" rx="52" ry="40" fill="#002654"/>
   <!-- Left ear tuft -->
-  <path d="M55 52l-12-25c8 2 18 10 22 20z" fill="#2D3A4E"/>
+  <path d="M55 52l-12-25c8 2 18 10 22 20z" fill="#002654"/>
   <!-- Right ear tuft -->
-  <path d="M145 52l12-25c-8 2-18 10-22 20z" fill="#2D3A4E"/>
+  <path d="M145 52l12-25c-8 2-18 10-22 20z" fill="#002654"/>
   <!-- Left eye white -->
   <circle cx="78" cy="75" r="16" fill="white"/>
   <!-- Right eye white -->
@@ -14,17 +14,17 @@
   <!-- Right iris -->
   <circle cx="120" cy="75" r="10" fill="#4A9FD9"/>
   <!-- Left pupil -->
-  <circle cx="82" cy="74" r="5" fill="#1A1A2E"/>
+  <circle cx="82" cy="74" r="5" fill="#001833"/>
   <!-- Right pupil -->
-  <circle cx="118" cy="74" r="5" fill="#1A1A2E"/>
+  <circle cx="118" cy="74" r="5" fill="#001833"/>
   <!-- Eye shine left -->
   <circle cx="84" cy="72" r="2" fill="white"/>
   <!-- Eye shine right -->
   <circle cx="120" cy="72" r="2" fill="white"/>
   <!-- Beak -->
-  <path d="M96 85l4 10l4-10z" fill="#4A9FD9"/>
+  <path d="M96 85l4 10l4-10z" fill="#C1362B"/>
   <!-- Forehead V -->
-  <path d="M80 58l20 12l20-12" stroke="#232F3E" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M80 58l20 12l20-12" stroke="#C1362B" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
   <!-- Upper body hint -->
-  <ellipse cx="100" cy="110" rx="45" ry="20" fill="#2D3A4E"/>
+  <ellipse cx="100" cy="110" rx="45" ry="20" fill="#002654"/>
 </svg>

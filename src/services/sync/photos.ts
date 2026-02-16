@@ -1,9 +1,10 @@
+import { createHash } from "crypto";
 import { db } from "@/lib/db";
 import { DataSource, MandateType } from "@/generated/prisma";
 import { HTTPClient } from "@/lib/api/http-client";
-import { WIKIDATA_SPARQL_RATE_LIMIT_MS } from "@/config/rate-limits";
+import { WIKIDATA_RATE_LIMIT_MS } from "@/config/rate-limits";
 
-const sparqlClient = new HTTPClient({ rateLimitMs: WIKIDATA_SPARQL_RATE_LIMIT_MS });
+const wikidataClient = new HTTPClient({ rateLimitMs: WIKIDATA_RATE_LIMIT_MS });
 
 // Photo source priority (higher = better)
 const PHOTO_PRIORITY: Record<string, number> = {
@@ -11,9 +12,9 @@ const PHOTO_PRIORITY: Record<string, number> = {
   senat: 10,
   gouvernement: 10,
   hatvp: 8,
+  wikidata: 6,
   nosdeputes: 5,
   nossenateurs: 5,
-  wikidata: 3,
   manual: 1,
 };
 
@@ -39,28 +40,36 @@ async function isPhotoUrlValid(url: string): Promise<boolean> {
 }
 
 /**
- * Try to get photo URL from Wikidata
+ * Build a Wikimedia Commons thumbnail URL from a filename.
+ *
+ * Wikimedia Commons uses MD5-based directory hashing:
+ *   /wikipedia/commons/thumb/{hash[0]}/{hash[0:2]}/{filename}/{width}px-{filename}
+ */
+function buildCommonsThumbnailUrl(filename: string, width = 400): string {
+  const normalized = filename.replace(/ /g, "_");
+  const hash = createHash("md5").update(normalized).digest("hex");
+  const encoded = encodeURIComponent(normalized);
+  return `https://upload.wikimedia.org/wikipedia/commons/thumb/${hash[0]}/${hash.slice(0, 2)}/${encoded}/${width}px-${encoded}`;
+}
+
+/**
+ * Get photo URL from Wikidata P18 via REST API + Wikimedia Commons thumbnail.
+ *
+ * Uses the Wikidata REST API (not SPARQL) for speed and reliability,
+ * then constructs a direct thumbnail URL via MD5 hash convention.
  */
 async function getWikidataPhoto(wikidataId: string): Promise<string | null> {
   try {
-    const query = `
-      SELECT ?image WHERE {
-        wd:${wikidataId} wdt:P18 ?image .
-      }
-      LIMIT 1
-    `;
-    const url = `https://query.wikidata.org/sparql?query=${encodeURIComponent(query)}&format=json`;
+    const { data } = await wikidataClient.get<{
+      claims?: { P18?: Array<{ mainsnak?: { datavalue?: { value: string } } }> };
+    }>(
+      `https://www.wikidata.org/w/api.php?action=wbgetclaims&entity=${wikidataId}&property=P18&format=json`
+    );
 
-    const { data } = await sparqlClient.get<{
-      results?: { bindings: Array<{ image?: { value: string } }> };
-    }>(url);
-    const results = data.results?.bindings;
+    const filename = data.claims?.P18?.[0]?.mainsnak?.datavalue?.value;
+    if (!filename) return null;
 
-    if (results && results.length > 0 && results[0].image?.value) {
-      return results[0].image.value;
-    }
-
-    return null;
+    return buildCommonsThumbnailUrl(filename);
   } catch {
     return null;
   }

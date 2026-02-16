@@ -47,6 +47,7 @@ const MANDATE_GROUPS: Record<string, MandateType[]> = {
 
 // Sort configurations - using 'any' to handle complex Prisma orderBy types
 const SORT_CONFIGS: Record<SortOption, unknown> = {
+  prominence: [{ prominenceScore: "desc" }, { lastName: "asc" }],
   alpha: { lastName: "asc" },
   "alpha-desc": { lastName: "desc" },
   recent: { createdAt: "desc" },
@@ -68,6 +69,9 @@ async function getPoliticians(
   // Build where clause using AND array for composability
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const conditions: any[] = [];
+
+  // Only show PUBLISHED politicians by default
+  conditions.push({ publicationStatus: "PUBLISHED" as const });
 
   if (search) {
     conditions.push({
@@ -237,6 +241,7 @@ async function getFilterCounts() {
     // Conviction counts
     db.politician.count({
       where: {
+        publicationStatus: "PUBLISHED",
         affairs: {
           some: { status: { in: CONVICTION_STATUSES } },
         },
@@ -248,6 +253,7 @@ async function getFilterCounts() {
     // Mandate counts (current mandates only)
     db.politician.count({
       where: {
+        publicationStatus: "PUBLISHED",
         mandates: {
           some: { type: "DEPUTE", isCurrent: true },
         },
@@ -255,6 +261,7 @@ async function getFilterCounts() {
     }),
     db.politician.count({
       where: {
+        publicationStatus: "PUBLISHED",
         mandates: {
           some: { type: "SENATEUR", isCurrent: true },
         },
@@ -262,6 +269,7 @@ async function getFilterCounts() {
     }),
     db.politician.count({
       where: {
+        publicationStatus: "PUBLISHED",
         mandates: {
           some: {
             type: { in: MANDATE_GROUPS.gouvernement },
@@ -272,6 +280,7 @@ async function getFilterCounts() {
     }),
     db.politician.count({
       where: {
+        publicationStatus: "PUBLISHED",
         mandates: {
           some: { type: "PRESIDENT_PARTI", isCurrent: true },
         },
@@ -280,6 +289,7 @@ async function getFilterCounts() {
     // Dirigeants: PRESIDENT_PARTI + significant party roles
     db.politician.count({
       where: {
+        publicationStatus: "PUBLISHED",
         OR: [
           { mandates: { some: { type: "PRESIDENT_PARTI", isCurrent: true } } },
           { partyHistory: { some: { endDate: null, role: { not: "MEMBER" } } } },
@@ -289,6 +299,7 @@ async function getFilterCounts() {
     // Status counts (active = has current mandate OR significant party role)
     db.politician.count({
       where: {
+        publicationStatus: "PUBLISHED",
         OR: [
           { mandates: { some: { isCurrent: true } } },
           { partyHistory: { some: { endDate: null, role: { not: "MEMBER" } } } },
@@ -297,6 +308,7 @@ async function getFilterCounts() {
     }),
     db.politician.count({
       where: {
+        publicationStatus: "PUBLISHED",
         AND: [
           { mandates: { none: { isCurrent: true } } },
           { partyHistory: { none: { endDate: null, role: { not: "MEMBER" } } } },
@@ -325,7 +337,7 @@ export default async function PolitiquesPage({ searchParams }: PageProps) {
   const convictionFilter = params.conviction === "true";
   const mandateFilter = (params.mandate || "") as MandateFilter;
   const statusFilter = (params.status || "active") as StatusFilter;
-  const sortOption = (params.sort || "alpha") as SortOption;
+  const sortOption = (params.sort || "prominence") as SortOption;
   const page = parseInt(params.page || "1", 10);
 
   const [{ politicians, total, totalPages }, parties, counts] = await Promise.all([

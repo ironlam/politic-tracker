@@ -4,7 +4,7 @@ import { useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 
-export type SortOption = "alpha" | "alpha-desc" | "recent" | "affairs";
+export type SortOption = "prominence" | "alpha" | "alpha-desc" | "recent" | "affairs";
 export type MandateFilter =
   | ""
   | "depute"
@@ -15,6 +15,7 @@ export type MandateFilter =
 export type StatusFilter = "" | "active" | "former";
 
 const SORT_OPTIONS: Record<SortOption, string> = {
+  prominence: "Importance",
   alpha: "A - Z",
   "alpha-desc": "Z - A",
   recent: "Plus récents",

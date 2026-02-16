@@ -235,7 +235,7 @@ async function main() {
 
   // 4. Batch update in chunks of 500
   if (!dryRun) {
-    const CHUNK_SIZE = 500;
+    const CHUNK_SIZE = 100;
     const totalChunks = Math.ceil(updates.length / CHUNK_SIZE);
     console.log(`\nUpdating ${updates.length} politicians in ${totalChunks} chunk(s)...`);
 

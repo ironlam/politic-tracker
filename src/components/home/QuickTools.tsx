@@ -1,6 +1,9 @@
+"use client";
+
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { GitCompare, MapPin, Map, BarChart3, ChevronRight } from "lucide-react";
+import { StaggerChildren, StaggerItem } from "@/components/motion";
 
 const tools = [
   {
@@ -46,29 +49,33 @@ export function QuickTools() {
           <p className="text-muted-foreground">Accès rapide aux fonctionnalités clés</p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+        <StaggerChildren className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
           {tools.map((tool) => {
             const Icon = tool.icon;
             return (
-              <Link key={tool.href} href={tool.href} className="block group">
-                <Card className="h-full border-2 border-transparent hover:border-primary/20 transition-all hover:shadow-lg">
-                  <CardContent className="pt-6">
-                    <div
-                      className={`inline-flex p-3 rounded-xl ${tool.bgColor} mb-4 group-hover:scale-110 transition-transform`}
-                    >
-                      <Icon className={`h-6 w-6 ${tool.color}`} />
-                    </div>
-                    <h3 className="font-display font-semibold text-lg mb-2 flex items-center gap-2">
-                      {tool.title}
-                      <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
-                    </h3>
-                    <p className="text-sm text-muted-foreground">{tool.description}</p>
-                  </CardContent>
-                </Card>
-              </Link>
+              <StaggerItem key={tool.href}>
+                <Link href={tool.href} className="block group">
+                  <Card className="h-full border-2 border-transparent hover:border-primary/20 transition-all hover:shadow-lg">
+                    <CardContent className="pt-6">
+                      <div
+                        className={`inline-flex p-3 rounded-xl ${tool.bgColor} mb-4 group-hover:scale-110 transition-all group-hover:bg-accent/10`}
+                      >
+                        <Icon
+                          className={`h-6 w-6 ${tool.color} group-hover:text-accent transition-colors`}
+                        />
+                      </div>
+                      <h3 className="font-display font-semibold text-lg mb-2 flex items-center gap-2">
+                        {tool.title}
+                        <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                      </h3>
+                      <p className="text-sm text-muted-foreground">{tool.description}</p>
+                    </CardContent>
+                  </Card>
+                </Link>
+              </StaggerItem>
             );
           })}
-        </div>
+        </StaggerChildren>
       </div>
     </section>
   );

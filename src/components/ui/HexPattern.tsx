@@ -1,9 +1,16 @@
+"use client";
+
+import { useId } from "react";
+
 /**
  * Subtle hexagonal SVG pattern for backgrounds.
  * Stroke-only hexagons evoking "L'Hexagone" (France).
  * Used on hero and footer only.
  */
 export function HexPattern({ className }: { className?: string }) {
+  const id = useId();
+  const patternId = `hex-pattern-${id}`;
+
   return (
     <svg
       className={className}
@@ -14,7 +21,7 @@ export function HexPattern({ className }: { className?: string }) {
     >
       <defs>
         <pattern
-          id="hex-pattern"
+          id={patternId}
           x="0"
           y="0"
           width="56"
@@ -36,7 +43,7 @@ export function HexPattern({ className }: { className?: string }) {
           />
         </pattern>
       </defs>
-      <rect width="100%" height="100%" fill="url(#hex-pattern)" />
+      <rect width="100%" height="100%" fill={`url(#${patternId})`} />
     </svg>
   );
 }

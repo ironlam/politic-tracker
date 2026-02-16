@@ -69,10 +69,41 @@ const MIN_AGE_AT_DECISION = 18; // Skip if politician was < 18 at time of decisi
 // ============================================
 
 /**
+ * Check if a text likely refers to a politician (not just a common word).
+ *
+ * Requires BOTH firstName and lastName to appear in the text, OR
+ * lastName preceded by a legal title (M., Mme, sieur, dame, prévenu, condamné).
+ * This prevents false positives for surnames that are common French words
+ * (Portes, Blanc, Petit, Bureau, Faure, etc.).
+ */
+function textRefersToPersonByName(text: string, fullName: string): boolean {
+  const parts = fullName.toLowerCase().split(/\s+/);
+  const firstName = parts[0];
+  const lastName = parts[parts.length - 1];
+  const textLower = text.toLowerCase();
+
+  // Best case: full name appears together
+  if (textLower.includes(fullName.toLowerCase())) return true;
+
+  // Both firstName and lastName appear independently
+  if (textLower.includes(firstName) && textLower.includes(lastName)) return true;
+
+  // lastName preceded by a legal title (case-insensitive on original text)
+  const escapedLastName = lastName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const titlePattern = new RegExp(
+    `(?:M\\.|Mme|Mr|Sieur|Dame|Prévenu[e]?|Condamné[e]?|Appelant[e]?|Demandeur|Défendeur)\\s+${escapedLastName}`,
+    "i"
+  );
+  if (titlePattern.test(text)) return true;
+
+  return false;
+}
+
+/**
  * Check if a politician could plausibly be involved in a decision.
  * Filters out homonymes by verifying:
  * 1. The politician was at least 18 at the time of the decision
- * 2. The politician's name appears in the decision text/summary
+ * 2. The politician's name (not just surname) appears in the text
  */
 function isRelevantDecision(
   decision: JudilibreDecisionSummary,
@@ -89,12 +120,9 @@ function isRelevantDecision(
     }
   }
 
-  // Check if the name appears in the summary (basic anti-homonyme)
-  const nameParts = politician.fullName.toLowerCase().split(/\s+/);
-  const lastName = nameParts[nameParts.length - 1];
-  const summaryLower = (decision.summary || "").toLowerCase();
-
-  if (!summaryLower.includes(lastName)) {
+  // Check if the person's name (not just surname) appears in the summary
+  const summary = decision.summary || "";
+  if (!textRefersToPersonByName(summary, politician.fullName)) {
     return false;
   }
 
@@ -109,11 +137,7 @@ function isRelevantFullDecision(
   decision: JudilibreDecision,
   politician: PoliticianForSearch
 ): boolean {
-  const nameParts = politician.fullName.toLowerCase().split(/\s+/);
-  const lastName = nameParts[nameParts.length - 1];
-  const textLower = decision.text.toLowerCase();
-
-  return textLower.includes(lastName);
+  return textRefersToPersonByName(decision.text, politician.fullName);
 }
 
 // ============================================

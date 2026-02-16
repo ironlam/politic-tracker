@@ -33,6 +33,7 @@ const POSITION_MAPPING: Record<string, { type: MandateType; institution: string 
   Q30461: { type: MandateType.PRESIDENT_REPUBLIQUE, institution: "Présidence de la République" },
   Q1587677: { type: MandateType.PREMIER_MINISTRE, institution: "Gouvernement" },
   Q83307: { type: MandateType.MINISTRE, institution: "Gouvernement" },
+  Q814694: { type: MandateType.MINISTRE_DELEGUE, institution: "Gouvernement" },
   Q26261727: { type: MandateType.SECRETAIRE_ETAT, institution: "Gouvernement" },
 
   // Deputies
@@ -45,6 +46,7 @@ const POSITION_MAPPING: Record<string, { type: MandateType; institution: string 
   // Senators
   Q3044923: { type: MandateType.SENATEUR, institution: "Sénat" },
   Q18558628: { type: MandateType.SENATEUR, institution: "Sénat" },
+  Q14828018: { type: MandateType.SENATEUR, institution: "Sénat" },
 
   // European Parliament
   Q27169: { type: MandateType.DEPUTE_EUROPEEN, institution: "Parlement européen" },
@@ -57,6 +59,7 @@ const POSITION_MAPPING: Record<string, { type: MandateType; institution: string 
   Q1805817: { type: MandateType.PRESIDENT_DEPARTEMENT, institution: "Conseil départemental" },
   Q1162444: { type: MandateType.CONSEILLER_REGIONAL, institution: "Conseil régional" },
   Q21032554: { type: MandateType.CONSEILLER_DEPARTEMENTAL, institution: "Conseil départemental" },
+  Q3780304: { type: MandateType.CONSEILLER_DEPARTEMENTAL, institution: "Conseil général" },
   Q17519573: { type: MandateType.CONSEILLER_MUNICIPAL, institution: "Conseil municipal" },
 };
 

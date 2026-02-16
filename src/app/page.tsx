@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { ActivityTabs, QuickTools, UpcomingElections } from "@/components/home";
 import { WebSiteJsonLd } from "@/components/seo/JsonLd";
 import { Heart } from "lucide-react";
+import { HexPattern } from "@/components/ui/HexPattern";
 
 async function getRecentFactChecks() {
   const factChecks = await db.factCheck.findMany({
@@ -204,9 +205,7 @@ export default async function HomePage() {
               </div>
             </div>
           </div>
-          {/* Decorative elements */}
-          <div className="absolute top-0 left-0 w-72 h-72 bg-primary/10 rounded-full -translate-x-1/2 -translate-y-1/2 blur-3xl pointer-events-none" />
-          <div className="absolute bottom-0 right-0 w-96 h-96 bg-accent/20 rounded-full translate-x-1/3 translate-y-1/3 blur-3xl pointer-events-none" />
+          <HexPattern className="absolute inset-0 text-primary opacity-[0.03] dark:opacity-[0.05] pointer-events-none" />
         </section>
 
         {/* Activity Tabs */}

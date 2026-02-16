@@ -24,7 +24,7 @@ export function Header() {
               className="rounded-xl group-hover:scale-105 transition-transform duration-300"
             />
             <div className="hidden sm:block">
-              <span className="text-xl font-display font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent group-hover:from-primary group-hover:to-accent transition-all duration-300">
+              <span className="text-xl font-display font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent group-hover:from-primary group-hover:to-brand transition-all duration-300">
                 Poligraph
               </span>
             </div>

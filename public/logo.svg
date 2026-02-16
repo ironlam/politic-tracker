@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <!-- Body -->
+  <ellipse cx="100" cy="115" rx="62" ry="68" fill="#2D3A4E"/>
+  <!-- Belly -->
+  <ellipse cx="100" cy="135" rx="40" ry="40" fill="#F0F0F0"/>
+  <!-- Belly feather marks -->
+  <path d="M88 125c4 3 8 3 12 0M95 133c4 3 8 3 12 0M88 141c4 3 8 3 12 0" stroke="#D0D0D0" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <!-- Left wing -->
+  <path d="M38 105c-8 15-10 40 0 55c5-15 10-35 0-55z" fill="#232F3E"/>
+  <!-- Right wing -->
+  <path d="M162 105c8 15 10 40 0 55c-5-15-10-35 0-55z" fill="#232F3E"/>
+  <!-- Head -->
+  <ellipse cx="100" cy="75" rx="52" ry="40" fill="#2D3A4E"/>
+  <!-- Left ear tuft -->
+  <path d="M55 52l-12-25c8 2 18 10 22 20z" fill="#2D3A4E"/>
+  <!-- Right ear tuft -->
+  <path d="M145 52l12-25c-8 2-18 10-22 20z" fill="#2D3A4E"/>
+  <!-- Left eye white -->
+  <circle cx="78" cy="75" r="16" fill="white"/>
+  <!-- Right eye white -->
+  <circle cx="122" cy="75" r="16" fill="white"/>
+  <!-- Left iris -->
+  <circle cx="80" cy="75" r="10" fill="#4A9FD9"/>
+  <!-- Right iris -->
+  <circle cx="120" cy="75" r="10" fill="#4A9FD9"/>
+  <!-- Left pupil -->
+  <circle cx="82" cy="74" r="5" fill="#1A1A2E"/>
+  <!-- Right pupil -->
+  <circle cx="118" cy="74" r="5" fill="#1A1A2E"/>
+  <!-- Eye shine left -->
+  <circle cx="84" cy="72" r="2" fill="white"/>
+  <!-- Eye shine right -->
+  <circle cx="120" cy="72" r="2" fill="white"/>
+  <!-- Beak -->
+  <path d="M96 85l4 10l4-10z" fill="#4A9FD9"/>
+  <!-- Forehead V -->
+  <path d="M80 58l20 12l20-12" stroke="#232F3E" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Feet -->
+  <path d="M82 180c-3 3-8 3-12 0M88 180c-3 3-8 3-12 0" stroke="#2D3A4E" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <path d="M118 180c3 3 8 3 12 0M124 180c-3 3-8 3-12 0" stroke="#2D3A4E" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <!-- Branch -->
+  <path d="M30 182h140" stroke="#5D4E37" stroke-width="4" stroke-linecap="round"/>
+</svg>

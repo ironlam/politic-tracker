@@ -123,6 +123,7 @@ async function getUpcomingElections() {
 
 async function getRecentAffairs() {
   const affairs = await db.affair.findMany({
+    where: { publicationStatus: "PUBLISHED" },
     take: 5,
     orderBy: [
       { verdictDate: { sort: "desc", nulls: "last" } },

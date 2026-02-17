@@ -2,7 +2,7 @@
 # Deploy from project root: fly deploy -c worker/fly.toml
 
 app = "poligraph-sync-worker"
-primary_region = "fra"
+primary_region = "cdg"
 
 [build]
   dockerfile = "worker/Dockerfile"
@@ -23,6 +23,5 @@ primary_region = "fra"
     timeout = "5s"
 
 [[vm]]
+  size = "shared-cpu-1x"
   memory = "1gb"
-  cpu_kind = "shared"
-  cpus = 1

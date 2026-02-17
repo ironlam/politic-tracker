@@ -715,7 +715,8 @@ export const NUANCE_POLITIQUE_MAPPING: Record<string, string> = {
   LFI: "LFI", // La France Insoumise
 
   // Gauche
-  LUG: "NUPES", // Union de gauche
+  LUG: "NFP", // Union de gauche → Nouveau Front Populaire
+  UG: "NFP", // Union de la gauche / NFP (législatives 2024)
   LSOC: "PS", // Parti socialiste
   SOC: "PS", // Socialiste (législatives 2024)
   LDVG: "DVG", // Divers gauche

@@ -17,7 +17,7 @@ import { ElectionCountdown } from "@/components/elections/ElectionCountdown";
 import { ElectionKeyDates } from "@/components/elections/ElectionKeyDates";
 import { ElectionScrutinInfo } from "@/components/elections/ElectionScrutinInfo";
 import { AddToCalendar } from "@/components/elections/AddToCalendar";
-import { FEATURES } from "@/config/features";
+import { isFeatureEnabled } from "@/lib/feature-flags";
 import { ELECTION_GUIDES } from "@/config/election-guides";
 import { EventJsonLd, BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 import type { ElectionStatus } from "@/types";
@@ -112,6 +112,7 @@ export default async function ElectionDetailPage({ params }: PageProps) {
   const showCountdown = !isPhaseAtLeast(election.status, "ROUND_1") && election.round1Date;
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://poligraph.fr";
   const typeLabel = ELECTION_TYPE_LABELS[election.type];
+  const showGuideSection = await isFeatureEnabled("ELECTION_GUIDE_SECTION");
 
   return (
     <>
@@ -198,7 +199,7 @@ export default async function ElectionDetailPage({ params }: PageProps) {
             )}
 
             {/* Practical guide */}
-            {FEATURES.ELECTION_GUIDE_SECTION && ELECTION_GUIDES[election.type] && (
+            {showGuideSection && ELECTION_GUIDES[election.type] && (
               <section>
                 <h2 className="text-lg font-semibold mb-4">Guide pratique</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

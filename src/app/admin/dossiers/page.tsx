@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   DOSSIER_STATUS_LABELS,
@@ -138,52 +138,54 @@ export default async function AdminDossiersPage({ searchParams }: PageProps) {
     getStats(),
   ]);
 
+  const hasFilters = !!(
+    params.status ||
+    params.category ||
+    params.theme ||
+    params.search ||
+    params.hasSummary
+  );
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Dossiers législatifs</h1>
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl font-display font-bold tracking-tight">Dossiers législatifs</h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          {stats.total} dossiers — {stats.withSummary} avec résumé IA
+        </p>
       </div>
 
       {/* Stats cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <Card>
-          <CardContent className="pt-4">
-            <div className="text-2xl font-bold">{stats.total}</div>
-            <p className="text-sm text-muted-foreground">Total dossiers</p>
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold tabular-nums">{stats.total}</div>
+            <p className="text-xs text-muted-foreground mt-0.5">Total</p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="pt-4">
-            <div className="text-2xl font-bold text-green-600">{stats.withSummary}</div>
-            <p className="text-sm text-muted-foreground">Avec résumé IA</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-4">
-            <div className="text-2xl font-bold text-orange-600">{stats.withoutSummary}</div>
-            <p className="text-sm text-muted-foreground">Sans résumé</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-4">
-            <div className="text-2xl font-bold text-amber-600">{stats.byStatus["DEPOSE"] || 0}</div>
-            <p className="text-sm text-muted-foreground">Déposés</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-4">
-            <div className="text-2xl font-bold text-violet-600">
-              {stats.byStatus["EN_COMMISSION"] || 0}
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold tabular-nums text-emerald-600">
+              {stats.withSummary}
             </div>
-            <p className="text-sm text-muted-foreground">En commission</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Avec résumé IA</p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="pt-4">
-            <div className="text-2xl font-bold text-blue-600">
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold tabular-nums text-amber-600">
+              {stats.withoutSummary}
+            </div>
+            <p className="text-xs text-muted-foreground mt-0.5">Sans résumé</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold tabular-nums text-blue-600">
               {stats.byStatus["EN_COURS"] || 0}
             </div>
-            <p className="text-sm text-muted-foreground">En discussion</p>
+            <p className="text-xs text-muted-foreground mt-0.5">En discussion</p>
           </CardContent>
         </Card>
       </div>
@@ -193,48 +195,34 @@ export default async function AdminDossiersPage({ searchParams }: PageProps) {
 
       {/* Results */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <span>
+        <CardContent className="p-0">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+            <span className="text-sm text-muted-foreground">
               {total} dossier{total !== 1 ? "s" : ""} trouvé{total !== 1 ? "s" : ""}
             </span>
             {totalPages > 1 && (
-              <span className="text-sm font-normal text-muted-foreground">
-                Page {page} / {totalPages}
+              <span className="text-xs text-muted-foreground">
+                Page {page}/{totalPages}
               </span>
             )}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+          </div>
+
           {dossiers.length > 0 ? (
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b text-left">
-                    <th scope="col" className="pb-3 font-medium">
-                      Dossier
-                    </th>
-                    <th scope="col" className="pb-3 font-medium">
-                      Thème
-                    </th>
-                    <th scope="col" className="pb-3 font-medium">
-                      Statut
-                    </th>
-                    <th scope="col" className="pb-3 font-medium">
-                      Résumé IA
-                    </th>
-                    <th scope="col" className="pb-3 font-medium">
-                      Date
-                    </th>
-                    <th scope="col" className="pb-3 font-medium">
-                      Actions
-                    </th>
+                  <tr className="border-b border-border text-left">
+                    <th className="px-4 py-3 font-medium text-muted-foreground">Dossier</th>
+                    <th className="px-4 py-3 font-medium text-muted-foreground">Thème</th>
+                    <th className="px-4 py-3 font-medium text-muted-foreground">Statut</th>
+                    <th className="px-4 py-3 font-medium text-muted-foreground">Résumé IA</th>
+                    <th className="px-4 py-3 font-medium text-muted-foreground">Date</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-border">
                   {dossiers.map((dossier) => (
-                    <tr key={dossier.id} className="border-b last:border-0">
-                      <td className="py-3 pr-4 max-w-md">
+                    <tr key={dossier.id} className="hover:bg-muted/30 transition-colors">
+                      <td className="px-4 py-3 max-w-md">
                         <Link
                           href={`/admin/dossiers/${dossier.id}`}
                           className="font-medium hover:underline line-clamp-2"
@@ -247,7 +235,7 @@ export default async function AdminDossiersPage({ searchParams }: PageProps) {
                           </span>
                         )}
                       </td>
-                      <td className="py-3 pr-4">
+                      <td className="px-4 py-3">
                         {dossier.theme ? (
                           <Badge className={THEME_CATEGORY_COLORS[dossier.theme]}>
                             {THEME_CATEGORY_LABELS[dossier.theme]}
@@ -261,16 +249,21 @@ export default async function AdminDossiersPage({ searchParams }: PageProps) {
                           >
                             {dossier.category}
                           </Badge>
-                        ) : null}
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
                       </td>
-                      <td className="py-3 pr-4">
+                      <td className="px-4 py-3">
                         <Badge className={DOSSIER_STATUS_COLORS[dossier.status]}>
                           {DOSSIER_STATUS_LABELS[dossier.status]}
                         </Badge>
                       </td>
-                      <td className="py-3 pr-4">
+                      <td className="px-4 py-3">
                         {dossier.summary ? (
-                          <Badge className="bg-green-100 text-green-800">
+                          <Badge
+                            variant="outline"
+                            className="bg-emerald-50 text-emerald-700 border-emerald-200"
+                          >
                             Oui
                             {dossier.summaryDate && (
                               <span className="ml-1 opacity-70">
@@ -279,23 +272,13 @@ export default async function AdminDossiersPage({ searchParams }: PageProps) {
                             )}
                           </Badge>
                         ) : (
-                          <Badge variant="outline" className="text-orange-600 border-orange-300">
+                          <Badge variant="outline" className="text-muted-foreground">
                             Non
                           </Badge>
                         )}
                       </td>
-                      <td className="py-3 pr-4 text-sm text-muted-foreground">
-                        {dossier.filingDate ? formatDate(dossier.filingDate) : "-"}
-                      </td>
-                      <td className="py-3">
-                        <div className="flex gap-2">
-                          <Link
-                            href={`/admin/dossiers/${dossier.id}`}
-                            className="text-sm text-blue-600 hover:underline"
-                          >
-                            Voir / Éditer
-                          </Link>
-                        </div>
+                      <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">
+                        {dossier.filingDate ? formatDate(dossier.filingDate) : "—"}
                       </td>
                     </tr>
                   ))}
@@ -303,58 +286,65 @@ export default async function AdminDossiersPage({ searchParams }: PageProps) {
               </table>
             </div>
           ) : (
-            <div className="text-center py-8">
-              <p className="text-muted-foreground">Aucun dossier trouvé avec ces critères</p>
-            </div>
-          )}
-
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex justify-center gap-2 mt-6">
-              {page > 1 && (
-                <Link
-                  href={{
-                    pathname: "/admin/dossiers",
-                    query: { ...params, page: page - 1 },
-                  }}
-                  className="px-3 py-1 border rounded hover:bg-gray-100"
-                >
-                  Précédent
-                </Link>
-              )}
-              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                const pageNum = Math.max(1, Math.min(page - 2, totalPages - 4)) + i;
-                if (pageNum > totalPages) return null;
-                return (
-                  <Link
-                    key={pageNum}
-                    href={{
-                      pathname: "/admin/dossiers",
-                      query: { ...params, page: pageNum },
-                    }}
-                    className={`px-3 py-1 border rounded ${
-                      pageNum === page ? "bg-blue-600 text-white" : "hover:bg-gray-100"
-                    }`}
-                  >
-                    {pageNum}
-                  </Link>
-                );
-              })}
-              {page < totalPages && (
-                <Link
-                  href={{
-                    pathname: "/admin/dossiers",
-                    query: { ...params, page: page + 1 },
-                  }}
-                  className="px-3 py-1 border rounded hover:bg-gray-100"
-                >
-                  Suivant
-                </Link>
-              )}
+            <div className="p-8 text-center text-sm text-muted-foreground">
+              {hasFilters ? "Aucun dossier trouvé avec ces critères" : "Aucun dossier enregistré"}
             </div>
           )}
         </CardContent>
       </Card>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-muted-foreground">
+            {total} résultat{total !== 1 ? "s" : ""} — page {page}/{totalPages}
+          </p>
+          <div className="flex items-center gap-1">
+            {page > 1 && (
+              <Link
+                href={{
+                  pathname: "/admin/dossiers",
+                  query: { ...params, page: page - 1 },
+                }}
+                className="px-3 py-1.5 text-sm border border-border rounded-lg hover:bg-muted transition-colors"
+              >
+                Précédent
+              </Link>
+            )}
+            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+              const pageNum = Math.max(1, Math.min(page - 2, totalPages - 4)) + i;
+              if (pageNum > totalPages) return null;
+              return (
+                <Link
+                  key={pageNum}
+                  href={{
+                    pathname: "/admin/dossiers",
+                    query: { ...params, page: pageNum },
+                  }}
+                  className={`px-3 py-1.5 text-sm border rounded-lg transition-colors ${
+                    pageNum === page
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "border-border hover:bg-muted"
+                  }`}
+                >
+                  {pageNum}
+                </Link>
+              );
+            })}
+            {page < totalPages && (
+              <Link
+                href={{
+                  pathname: "/admin/dossiers",
+                  query: { ...params, page: page + 1 },
+                }}
+                className="px-3 py-1.5 text-sm border border-border rounded-lg hover:bg-muted transition-colors"
+              >
+                Suivant
+              </Link>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

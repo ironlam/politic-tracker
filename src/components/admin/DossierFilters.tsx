@@ -60,6 +60,7 @@ export function DossierFilters({ categories }: DossierFiltersProps) {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="max-w-xs"
+            aria-label="Rechercher un dossier"
           />
           <Button type="submit" variant="secondary">
             Rechercher
@@ -71,6 +72,7 @@ export function DossierFilters({ categories }: DossierFiltersProps) {
           value={searchParams.get("status") || ""}
           onChange={(e) => updateParams("status", e.target.value || null)}
           className="w-[180px]"
+          aria-label="Filtrer par statut"
         >
           <option value="">Tous les statuts</option>
           {(Object.keys(DOSSIER_STATUS_LABELS) as DossierStatus[]).map((status) => (
@@ -85,6 +87,7 @@ export function DossierFilters({ categories }: DossierFiltersProps) {
           value={searchParams.get("category") || ""}
           onChange={(e) => updateParams("category", e.target.value || null)}
           className="w-[180px]"
+          aria-label="Filtrer par catégorie"
         >
           <option value="">Toutes catégories</option>
           {categories.map((cat) => (
@@ -99,6 +102,7 @@ export function DossierFilters({ categories }: DossierFiltersProps) {
           value={searchParams.get("theme") || ""}
           onChange={(e) => updateParams("theme", e.target.value || null)}
           className="w-[200px]"
+          aria-label="Filtrer par thème"
         >
           <option value="">Tous les thèmes</option>
           {(Object.keys(THEME_CATEGORY_LABELS) as ThemeCategory[]).map((theme) => (
@@ -113,6 +117,7 @@ export function DossierFilters({ categories }: DossierFiltersProps) {
           value={searchParams.get("hasSummary") || ""}
           onChange={(e) => updateParams("hasSummary", e.target.value || null)}
           className="w-[180px]"
+          aria-label="Filtrer par résumé IA"
         >
           <option value="">Résumé IA</option>
           <option value="true">Avec résumé</option>

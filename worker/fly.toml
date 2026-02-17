@@ -5,7 +5,7 @@ app = "poligraph-sync-worker"
 primary_region = "cdg"
 
 [build]
-  dockerfile = "worker/Dockerfile"
+  dockerfile = "Dockerfile"
 
 [http_service]
   internal_port = 3000

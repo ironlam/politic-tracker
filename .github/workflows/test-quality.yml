@@ -3,8 +3,6 @@ name: Quality Tests
 on:
   push:
     branches: [main, staging]
-  pull_request:
-    branches: [main, staging]
   schedule:
     # Run daily at 6:00 AM UTC
     - cron: "0 6 * * *"

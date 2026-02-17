@@ -79,7 +79,7 @@ async function getGlobalStats(): Promise<{
     totalPressArticles,
     mandateCounts,
   ] = await Promise.all([
-    db.affair.count(),
+    db.affair.count({ where: { publicationStatus: "PUBLISHED" } }),
     db.politician.count(),
     db.legislativeDossier.count(),
     db.scrutin.count(),

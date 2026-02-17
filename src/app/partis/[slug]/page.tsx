@@ -571,6 +571,31 @@ export default async function PartyPage({ params }: PageProps) {
                     <span className="text-sm">{party.ideology}</span>
                   </div>
                 )}
+                {party.politicalPosition && party.politicalPositionSource && (
+                  <div>
+                    <span className="text-muted-foreground block mb-1">Position politique</span>
+                    <div className="flex items-center gap-2">
+                      <PoliticalPositionBadge
+                        position={party.politicalPosition}
+                        source={party.politicalPositionSource}
+                        sourceUrl={party.politicalPositionSourceUrl}
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Source : {party.politicalPositionSource}
+                    </p>
+                    {party.politicalPositionSourceUrl && (
+                      <a
+                        href={party.politicalPositionSourceUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-blue-600 hover:underline"
+                      >
+                        Voir la décision
+                      </a>
+                    )}
+                  </div>
+                )}
                 {party.headquarters && (
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Siège</span>

@@ -110,6 +110,18 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       }
     }
 
+    // Validate source URL if provided
+    if (body.politicalPositionSourceUrl) {
+      try {
+        const sourceUrl = new URL(body.politicalPositionSourceUrl);
+        if (!["http:", "https:"].includes(sourceUrl.protocol)) {
+          return NextResponse.json({ error: "URL source invalide" }, { status: 400 });
+        }
+      } catch {
+        return NextResponse.json({ error: "URL source invalide" }, { status: 400 });
+      }
+    }
+
     const updatedParty = await db.party.update({
       where: { id },
       data: {
@@ -121,6 +133,9 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
         foundedDate: body.foundedDate ? new Date(body.foundedDate) : null,
         dissolvedDate: body.dissolvedDate ? new Date(body.dissolvedDate) : null,
         politicalPosition: body.politicalPosition || null,
+        politicalPositionSource: body.politicalPositionSource || null,
+        politicalPositionSourceUrl: body.politicalPositionSourceUrl || null,
+        politicalPositionOverride: body.politicalPositionOverride ?? false,
         ideology: body.ideology || null,
         headquarters: body.headquarters || null,
         website: body.website || null,

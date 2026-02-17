@@ -22,6 +22,9 @@ interface PartyData {
   foundedDate: string | null;
   dissolvedDate: string | null;
   politicalPosition: PoliticalPosition | null;
+  politicalPositionSource: string | null;
+  politicalPositionSourceUrl: string | null;
+  politicalPositionOverride: boolean;
   ideology: string | null;
   headquarters: string | null;
   website: string | null;
@@ -89,6 +92,9 @@ export default function EditPartyPage() {
         foundedDate: formData.get("foundedDate") || null,
         dissolvedDate: formData.get("dissolvedDate") || null,
         politicalPosition: formData.get("politicalPosition") || null,
+        politicalPositionSource: formData.get("politicalPositionSource") || null,
+        politicalPositionSourceUrl: formData.get("politicalPositionSourceUrl") || null,
+        politicalPositionOverride: formData.get("politicalPositionOverride") === "on",
         ideology: formData.get("ideology") || null,
         headquarters: formData.get("headquarters") || null,
         website: formData.get("website") || null,
@@ -199,6 +205,43 @@ export default function EditPartyPage() {
                       </option>
                     ))}
                   </Select>
+                </div>
+              </div>
+
+              {/* Political position sourcing */}
+              <div className="space-y-3 p-3 rounded-lg bg-muted/50 border">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="politicalPositionOverride"
+                    name="politicalPositionOverride"
+                    defaultChecked={party.politicalPositionOverride}
+                    className="h-4 w-4 rounded border-gray-300"
+                  />
+                  <Label htmlFor="politicalPositionOverride" className="text-sm font-medium">
+                    Verrouiller la position (empêche l&apos;écrasement par le sync Wikidata)
+                  </Label>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="politicalPositionSource">Source</Label>
+                    <Input
+                      id="politicalPositionSource"
+                      name="politicalPositionSource"
+                      defaultValue={party.politicalPositionSource || ""}
+                      placeholder="Ex: Conseil d'État, décision n°488378"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="politicalPositionSourceUrl">URL source</Label>
+                    <Input
+                      id="politicalPositionSourceUrl"
+                      name="politicalPositionSourceUrl"
+                      type="url"
+                      defaultValue={party.politicalPositionSourceUrl || ""}
+                      placeholder="https://www.legifrance.gouv.fr/..."
+                    />
+                  </div>
                 </div>
               </div>
             </CardContent>

@@ -82,7 +82,6 @@ export default async function PartiesPage() {
                             <PoliticalPositionBadge
                               position={party.politicalPosition}
                               source={party.politicalPositionSource}
-                              sourceUrl={party.politicalPositionSourceUrl}
                               className="text-xs"
                             />
                           )}

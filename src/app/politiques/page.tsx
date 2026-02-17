@@ -248,7 +248,7 @@ async function getFilterCounts() {
       },
     }),
     db.affair.count({
-      where: { status: { in: CONVICTION_STATUSES } },
+      where: { publicationStatus: "PUBLISHED", status: { in: CONVICTION_STATUSES } },
     }),
     // Mandate counts (current mandates only)
     db.politician.count({

@@ -27,11 +27,12 @@ async function getAffairsGlobalStats() {
   const [totalPoliticians, totalAffairs, totalParties, politiciansWithAffairs, condamnations] =
     await Promise.all([
       db.politician.count(),
-      db.affair.count(),
+      db.affair.count({ where: { publicationStatus: "PUBLISHED" } }),
       db.party.count({ where: { politicians: { some: {} } } }),
-      db.politician.count({ where: { affairs: { some: {} } } }),
+      db.politician.count({ where: { affairs: { some: { publicationStatus: "PUBLISHED" } } } }),
       db.affair.count({
         where: {
+          publicationStatus: "PUBLISHED",
           status: {
             in: ["CONDAMNATION_PREMIERE_INSTANCE", "CONDAMNATION_DEFINITIVE"],
           },
@@ -53,6 +54,7 @@ async function getAffairsGlobalStats() {
 async function getAffairsByStatus() {
   const affairs = await db.affair.groupBy({
     by: ["status"],
+    where: { publicationStatus: "PUBLISHED" },
     _count: { status: true },
     orderBy: { _count: { status: "desc" } },
   });
@@ -66,6 +68,7 @@ async function getAffairsByStatus() {
 async function getAffairsByCategory() {
   const affairs = await db.affair.groupBy({
     by: ["category"],
+    where: { publicationStatus: "PUBLISHED" },
     _count: { category: true },
     orderBy: { _count: { category: "desc" } },
   });

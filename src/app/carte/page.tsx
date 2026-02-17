@@ -1,175 +1,126 @@
 import { Metadata } from "next";
 import { CarteClient } from "./CarteClient";
 import { db } from "@/lib/db";
-import { MandateType } from "@/generated/prisma";
 import { DEPARTMENTS } from "@/config/departments";
+import type { MapDepartmentData } from "@/app/api/carte/route";
 
 export const metadata: Metadata = {
-  title: "Carte des Élus | Poligraph",
+  title: "Carte des Résultats Électoraux | Poligraph",
   description:
-    "Carte interactive des députés et sénateurs par département. Visualisez la répartition politique de vos représentants en France métropolitaine et outre-mer.",
+    "Carte interactive des résultats électoraux par département. Visualisez la répartition politique des sièges aux législatives 2024 en France métropolitaine et outre-mer.",
   openGraph: {
-    title: "Carte des Élus | Poligraph",
+    title: "Carte des Résultats Électoraux | Poligraph",
     description:
-      "Carte interactive des députés et sénateurs par département. Visualisez la répartition politique de vos représentants.",
+      "Carte interactive des résultats électoraux par département. Visualisez la répartition politique des sièges aux législatives 2024.",
     type: "website",
   },
 };
 
-interface DepartmentStats {
-  code: string;
-  name: string;
-  region: string;
-  totalElus: number;
-  deputes: number;
-  senateurs: number;
-  dominantParty: {
-    id: string;
-    name: string;
-    shortName: string;
-    color: string | null;
-    count: number;
-  } | null;
-  parties: {
-    id: string;
-    name: string;
-    shortName: string;
-    color: string | null;
-    count: number;
-  }[];
-}
-
-async function getDepartmentStats(): Promise<{
-  departments: DepartmentStats[];
-  stats: {
-    totalDepartments: number;
-    totalElus: number;
-    totalDeputes: number;
-    totalSenateurs: number;
-  };
+async function getElectionMapData(): Promise<{
+  departments: MapDepartmentData[];
+  totalSeats: number;
 }> {
-  // Get all current mandates with department codes, grouped by department and party
-  const mandatesByDept = await db.$queryRaw<
-    {
-      departmentCode: string;
-      mandateType: MandateType;
-      partyId: string | null;
-      partyName: string | null;
-      partyShortName: string | null;
-      partyColor: string | null;
-      count: bigint;
-    }[]
-  >`
-    SELECT
-      m."departmentCode",
-      m.type as "mandateType",
-      p.id as "partyId",
-      p.name as "partyName",
-      p."shortName" as "partyShortName",
-      p.color as "partyColor",
-      COUNT(DISTINCT pol.id) as count
-    FROM "Mandate" m
-    JOIN "Politician" pol ON m."politicianId" = pol.id
-    LEFT JOIN "Party" p ON pol."currentPartyId" = p.id
-    WHERE m."isCurrent" = true
-      AND m."departmentCode" IS NOT NULL
-      AND m.type IN ('DEPUTE', 'SENATEUR')
-    GROUP BY m."departmentCode", m.type, p.id, p.name, p."shortName", p.color
-    ORDER BY m."departmentCode", count DESC
-  `;
+  const candidacies = await db.candidacy.findMany({
+    where: {
+      election: { slug: "legislatives-2024" },
+      isElected: true,
+    },
+    select: {
+      constituencyCode: true,
+      partyId: true,
+      partyLabel: true,
+      party: {
+        select: {
+          id: true,
+          name: true,
+          shortName: true,
+          color: true,
+          politicalPosition: true,
+        },
+      },
+      round2Votes: true,
+    },
+  });
 
-  // Aggregate stats by department
-  const deptMap = new Map<string, DepartmentStats>();
+  // Group by department code
+  const deptMap = new Map<string, MapDepartmentData>();
 
-  for (const row of mandatesByDept) {
-    const code = row.departmentCode;
-    const deptInfo = DEPARTMENTS[code];
+  for (const c of candidacies) {
+    // Extract dept code from constituency code
+    const circoCode = c.constituencyCode || "";
+    const deptCode = circoCode.startsWith("97")
+      ? circoCode.slice(0, 3) // DOM-TOM: 97101 → 971
+      : circoCode.slice(0, 2); // Métropole: 0101 → 01
 
-    if (!deptMap.has(code)) {
-      deptMap.set(code, {
-        code,
-        name: deptInfo?.name || code,
+    if (!deptMap.has(deptCode)) {
+      const deptInfo = DEPARTMENTS[deptCode];
+      deptMap.set(deptCode, {
+        code: deptCode,
+        name: deptInfo?.name || deptCode,
         region: deptInfo?.region || "Inconnu",
-        totalElus: 0,
-        deputes: 0,
-        senateurs: 0,
-        dominantParty: null,
+        totalSeats: 0,
+        winningParty: null,
         parties: [],
       });
     }
 
-    const dept = deptMap.get(code)!;
-    const count = Number(row.count);
+    const dept = deptMap.get(deptCode)!;
+    dept.totalSeats++;
 
-    dept.totalElus += count;
-
-    if (row.mandateType === MandateType.DEPUTE) {
-      dept.deputes += count;
-    } else if (row.mandateType === MandateType.SENATEUR) {
-      dept.senateurs += count;
+    // Aggregate by party
+    const partyKey = c.party?.id || c.partyLabel || "unknown";
+    let partyEntry = dept.parties.find((p) => p.id === partyKey);
+    if (!partyEntry) {
+      partyEntry = {
+        id: c.party?.id || partyKey,
+        name: c.party?.name || c.partyLabel || "Inconnu",
+        shortName: c.party?.shortName || c.partyLabel || "?",
+        color: c.party?.color || null,
+        seats: 0,
+        totalVotes: 0,
+        politicalPosition: c.party?.politicalPosition || null,
+      };
+      dept.parties.push(partyEntry);
     }
-
-    // Track party stats
-    if (row.partyId) {
-      const existingParty = dept.parties.find((p) => p.id === row.partyId);
-      if (existingParty) {
-        existingParty.count += count;
-      } else {
-        dept.parties.push({
-          id: row.partyId,
-          name: row.partyName || "Inconnu",
-          shortName: row.partyShortName || "?",
-          color: row.partyColor,
-          count,
-        });
-      }
-    }
+    partyEntry.seats++;
+    partyEntry.totalVotes += c.round2Votes || 0;
   }
 
-  // Calculate dominant party for each department
+  // Set winning party per department (strictly more seats than 2nd)
   for (const dept of deptMap.values()) {
-    // Sort parties by count (descending)
-    dept.parties.sort((a, b) => b.count - a.count);
-
-    // Set dominant party only if the top party has strictly more representatives than the second
+    dept.parties.sort((a, b) => b.seats - a.seats);
     if (
       dept.parties.length === 1 ||
-      (dept.parties.length > 1 && dept.parties[0].count > dept.parties[1].count)
+      (dept.parties.length > 1 && dept.parties[0].seats > dept.parties[1].seats)
     ) {
-      dept.dominantParty = dept.parties[0];
+      dept.winningParty = dept.parties[0];
     }
   }
 
-  // Convert to array and sort by department code
   const departments = Array.from(deptMap.values()).sort((a, b) =>
     a.code.localeCompare(b.code, "fr", { numeric: true })
   );
 
-  // Calculate global stats
-  const totalStats = {
-    totalDepartments: departments.length,
-    totalElus: departments.reduce((sum, d) => sum + d.totalElus, 0),
-    totalDeputes: departments.reduce((sum, d) => sum + d.deputes, 0),
-    totalSenateurs: departments.reduce((sum, d) => sum + d.senateurs, 0),
+  return {
+    departments,
+    totalSeats: departments.reduce((sum, d) => sum + d.totalSeats, 0),
   };
-
-  return { departments, stats: totalStats };
 }
 
 export default async function CartePage() {
-  const { departments, stats } = await getDepartmentStats();
+  const { departments, totalSeats } = await getElectionMapData();
 
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Carte des Élus</h1>
+        <h1 className="text-3xl font-bold mb-2">Carte des Résultats Électoraux</h1>
         <p className="text-muted-foreground">
-          Visualisez la répartition des députés et sénateurs par département. Cliquez sur un
-          département pour voir les détails.
+          Visualisez les résultats des législatives 2024 par département. Cliquez sur un département
+          pour voir les détails.
         </p>
       </div>
 
-      <CarteClient initialDepartments={departments} initialStats={stats} />
+      <CarteClient initialDepartments={departments} totalSeats={totalSeats} />
     </div>
   );
 }

@@ -16,6 +16,7 @@ enum PublicationStatus {
   DRAFT      // Importé mais incomplet, caché
   ARCHIVED   // Ancien, caché par défaut
   EXCLUDED   // Ne doit jamais être affiché
+  REJECTED   // Rejeté après modération (affaires)
 }
 
 model Politician {
@@ -367,6 +368,10 @@ model Affair {
   // Press article links
   pressArticles PressArticleAffair[]
 
+  // Publication control (moderation)
+  publicationStatus PublicationStatus @default(DRAFT)
+  rejectionReason   String?
+
   // Verification
   verifiedAt DateTime?
   verifiedBy String? // Admin who verified
@@ -379,6 +384,7 @@ model Affair {
   @@index([status])
   @@index([category])
   @@index([pourvoiNumber])
+  @@index([publicationStatus])
 }
 
 // Timeline events for an affair
@@ -581,6 +587,20 @@ model AuditLog {
   @@index([entityType, entityId])
   @@index([userId])
   @@index([createdAt])
+}
+
+model FeatureFlag {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  label       String
+  description String?
+  enabled     Boolean   @default(false)
+  value       Json?
+  startDate   DateTime?
+  endDate     DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  updatedBy   String?
 }
 
 // ============================================
@@ -1125,6 +1145,34 @@ model DismissedDuplicate {
   createdAt DateTime @default(now())
 
   @@unique([affairIdA, affairIdB])
+}
+
+// ============================================
+// SYNC JOBS (admin-triggered sync execution)
+// ============================================
+
+enum SyncJobStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+model SyncJob {
+  id          String        @id @default(cuid())
+  script      String
+  status      SyncJobStatus @default(PENDING)
+  progress    Int           @default(0)
+  total       Int?
+  processed   Int?
+  result      Json?
+  error       String?
+  startedAt   DateTime?
+  completedAt DateTime?
+  createdAt   DateTime      @default(now())
+
+  @@index([status])
+  @@index([createdAt])
 }
 
 // ============================================

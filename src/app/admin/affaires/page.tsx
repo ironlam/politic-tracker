@@ -12,6 +12,7 @@ import {
   AFFAIR_STATUS_COLORS,
   AFFAIR_CATEGORY_LABELS,
 } from "@/config/labels";
+import { PromptDialog } from "@/components/ui/prompt-dialog";
 import {
   Plus,
   Search,
@@ -67,6 +68,7 @@ export default function AdminAffairsPage() {
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkLoading, setBulkLoading] = useState(false);
+  const [showRejectPrompt, setShowRejectPrompt] = useState(false);
 
   // Read state from URL
   const activeTab = searchParams.get("status") || "all";
@@ -116,15 +118,8 @@ export default function AdminAffairsPage() {
   }, [fetchData]);
 
   // Bulk actions
-  async function handleBulk(action: "publish" | "reject") {
+  async function handleBulk(action: "publish" | "reject", rejectionReason?: string) {
     if (selected.size === 0) return;
-
-    let rejectionReason: string | undefined;
-    if (action === "reject") {
-      rejectionReason = prompt("Motif de rejet :") ?? undefined;
-      if (!rejectionReason) return;
-    }
-
     setBulkLoading(true);
     try {
       const res = await fetch("/api/admin/affaires/bulk", {
@@ -265,7 +260,7 @@ export default function AdminAffairsPage() {
             <Button
               size="sm"
               variant="destructive"
-              onClick={() => handleBulk("reject")}
+              onClick={() => setShowRejectPrompt(true)}
               disabled={bulkLoading}
             >
               Rejeter
@@ -437,6 +432,19 @@ export default function AdminAffairsPage() {
           </div>
         </div>
       )}
+      <PromptDialog
+        open={showRejectPrompt}
+        onOpenChange={setShowRejectPrompt}
+        onSubmit={(reason) => {
+          setShowRejectPrompt(false);
+          handleBulk("reject", reason);
+        }}
+        title="Motif de rejet"
+        description={`${selected.size} affaire${selected.size > 1 ? "s" : ""} sélectionnée${selected.size > 1 ? "s" : ""}`}
+        placeholder="Raison du rejet..."
+        submitLabel="Rejeter"
+        variant="destructive"
+      />
     </div>
   );
 }

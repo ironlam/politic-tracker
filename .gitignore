@@ -58,3 +58,6 @@ CLAUDE.md
 # database backups (sensitive data)
 /backups
 job-logs.txt
+
+# git worktrees
+/.worktrees

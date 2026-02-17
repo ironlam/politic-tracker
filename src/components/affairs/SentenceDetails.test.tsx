@@ -1,21 +1,26 @@
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { SentenceDetails } from "./SentenceDetails";
+
+function renderWithTooltip(ui: React.ReactElement) {
+  return render(<TooltipProvider>{ui}</TooltipProvider>);
+}
 
 describe("SentenceDetails", () => {
   it("should render nothing when no sentence data", () => {
-    const { container } = render(<SentenceDetails affair={{}} />);
+    const { container } = renderWithTooltip(<SentenceDetails affair={{}} />);
     expect(container.firstChild).toBeNull();
   });
 
   it("should render legacy sentence when no detailed fields", () => {
-    render(<SentenceDetails affair={{ sentence: "2 ans avec sursis" }} />);
+    renderWithTooltip(<SentenceDetails affair={{ sentence: "2 ans avec sursis" }} />);
     expect(screen.getByText("Peine :")).toBeInTheDocument();
     expect(screen.getByText("2 ans avec sursis")).toBeInTheDocument();
   });
 
   it("should render prison sentence", () => {
-    render(
+    renderWithTooltip(
       <SentenceDetails
         affair={{
           prisonMonths: 24,
@@ -29,7 +34,7 @@ describe("SentenceDetails", () => {
   });
 
   it("should render suspended prison sentence", () => {
-    render(
+    renderWithTooltip(
       <SentenceDetails
         affair={{
           prisonMonths: 6,
@@ -42,7 +47,7 @@ describe("SentenceDetails", () => {
   });
 
   it("should render fine amount", () => {
-    render(
+    renderWithTooltip(
       <SentenceDetails
         affair={{
           fineAmount: 50000,
@@ -54,7 +59,7 @@ describe("SentenceDetails", () => {
   });
 
   it("should render ineligibility period", () => {
-    render(
+    renderWithTooltip(
       <SentenceDetails
         affair={{
           ineligibilityMonths: 60,
@@ -66,7 +71,7 @@ describe("SentenceDetails", () => {
   });
 
   it("should render community service hours", () => {
-    render(
+    renderWithTooltip(
       <SentenceDetails
         affair={{
           communityService: 140,
@@ -78,7 +83,7 @@ describe("SentenceDetails", () => {
   });
 
   it("should render other sentence", () => {
-    render(
+    renderWithTooltip(
       <SentenceDetails
         affair={{
           prisonMonths: 12,
@@ -91,7 +96,7 @@ describe("SentenceDetails", () => {
   });
 
   it("should render multiple penalties together", () => {
-    render(
+    renderWithTooltip(
       <SentenceDetails
         affair={{
           prisonMonths: 24,
@@ -110,19 +115,31 @@ describe("SentenceDetails", () => {
 
   it("should format months correctly", () => {
     // Less than 12 months
-    const { rerender } = render(<SentenceDetails affair={{ prisonMonths: 8 }} />);
+    const { rerender } = renderWithTooltip(<SentenceDetails affair={{ prisonMonths: 8 }} />);
     expect(screen.getByText("8 mois")).toBeInTheDocument();
 
     // Exactly 1 year
-    rerender(<SentenceDetails affair={{ prisonMonths: 12 }} />);
+    rerender(
+      <TooltipProvider>
+        <SentenceDetails affair={{ prisonMonths: 12 }} />
+      </TooltipProvider>
+    );
     expect(screen.getByText("1 an")).toBeInTheDocument();
 
     // Multiple years
-    rerender(<SentenceDetails affair={{ prisonMonths: 36 }} />);
+    rerender(
+      <TooltipProvider>
+        <SentenceDetails affair={{ prisonMonths: 36 }} />
+      </TooltipProvider>
+    );
     expect(screen.getByText("3 ans")).toBeInTheDocument();
 
     // Years and months
-    rerender(<SentenceDetails affair={{ prisonMonths: 18 }} />);
+    rerender(
+      <TooltipProvider>
+        <SentenceDetails affair={{ prisonMonths: 18 }} />
+      </TooltipProvider>
+    );
     expect(screen.getByText("1 an et 6 mois")).toBeInTheDocument();
   });
 });

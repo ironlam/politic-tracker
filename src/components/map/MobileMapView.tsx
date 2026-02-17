@@ -6,14 +6,14 @@ import { ChevronRight, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select } from "@/components/ui/select";
-import { DepartmentStats } from "@/app/api/stats/departments/route";
+import type { MapDepartmentData } from "@/app/api/carte/route";
 import { getDepartmentSlug } from "@/config/departments";
 
 interface MobileMapViewProps {
-  departments: DepartmentStats[];
+  departments: MapDepartmentData[];
 }
 
-type SortOption = "name" | "totalElus" | "deputes" | "senateurs";
+type SortOption = "name" | "totalSeats";
 
 export function MobileMapView({ departments }: MobileMapViewProps) {
   const [search, setSearch] = useState("");
@@ -36,12 +36,8 @@ export function MobileMapView({ departments }: MobileMapViewProps) {
     // Sort
     result.sort((a, b) => {
       switch (sortBy) {
-        case "totalElus":
-          return b.totalElus - a.totalElus;
-        case "deputes":
-          return b.deputes - a.deputes;
-        case "senateurs":
-          return b.senateurs - a.senateurs;
+        case "totalSeats":
+          return b.totalSeats - a.totalSeats;
         default:
           return a.name.localeCompare(b.name, "fr");
       }
@@ -69,9 +65,7 @@ export function MobileMapView({ departments }: MobileMapViewProps) {
           className="w-full sm:w-[180px]"
         >
           <option value="name">Nom (A-Z)</option>
-          <option value="totalElus">Total élus</option>
-          <option value="deputes">Nombre de députés</option>
-          <option value="senateurs">Nombre de sénateurs</option>
+          <option value="totalSeats">Nombre de sièges</option>
         </Select>
       </div>
 
@@ -95,17 +89,19 @@ export function MobileMapView({ departments }: MobileMapViewProps) {
               </div>
               <div className="flex items-center gap-2 mt-1">
                 <Badge variant="secondary" className="text-xs">
-                  {dept.deputes} député{dept.deputes !== 1 ? "s" : ""}
+                  {dept.totalSeats} siège{dept.totalSeats !== 1 ? "s" : ""}
                 </Badge>
-                <Badge variant="outline" className="text-xs">
-                  {dept.senateurs} sénateur{dept.senateurs !== 1 ? "s" : ""}
-                </Badge>
-                {dept.dominantParty && (
-                  <div
-                    className="w-3 h-3 rounded-full"
-                    style={{ backgroundColor: dept.dominantParty.color || "#888" }}
-                    title={dept.dominantParty.name}
-                  />
+                {dept.winningParty && (
+                  <div className="flex items-center gap-1">
+                    <div
+                      className="w-3 h-3 rounded-full"
+                      style={{ backgroundColor: dept.winningParty.color || "#888" }}
+                      title={dept.winningParty.name}
+                    />
+                    <span className="text-xs text-muted-foreground">
+                      {dept.winningParty.shortName}
+                    </span>
+                  </div>
                 )}
               </div>
             </div>

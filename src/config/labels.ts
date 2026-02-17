@@ -700,46 +700,63 @@ export const PARTY_LEADERSHIP_TITLE_SUGGESTIONS: Record<string, string> = {
 };
 
 // ============================================
-// NUANCES POLITIQUES (candidatures municipales)
+// NUANCES POLITIQUES (candidatures)
 // ============================================
 
 // Maps nuance codes (used in candidatures CSVs) to party shortName in our DB
+// Includes both L-prefixed codes (municipales) and unprefixed codes (législatives 2024)
 export const NUANCE_POLITIQUE_MAPPING: Record<string, string> = {
   // Extrême gauche
   LEXG: "LO", // Lutte Ouvrière
+  EXG: "LO", // Extrême gauche (législatives 2024)
   LCOM: "PCF", // Parti communiste
+  COM: "PCF", // Communiste (législatives 2024)
   LRDG: "PCF", // Régionalistes de gauche / ancienne étiquette
   LFI: "LFI", // La France Insoumise
 
   // Gauche
   LUG: "NUPES", // Union de gauche
   LSOC: "PS", // Parti socialiste
+  SOC: "PS", // Socialiste (législatives 2024)
   LDVG: "DVG", // Divers gauche
+  DVG: "DVG", // Divers gauche (législatives 2024)
+  DSV: "DVG", // Divers gauche variante (législatives 2024)
   LVEC: "EELV", // Écologistes
   LECO: "EELV", // Écologistes (variante)
+  ECO: "EELV", // Écologiste (législatives 2024)
   LRG: "PRG", // Parti radical de gauche
 
   // Centre
   LREM: "RE", // Renaissance (ex-LREM)
+  ENS: "RE", // Ensemble / macronistes (législatives 2024)
   LMC: "RE", // Majorité présidentielle
   LMDM: "MoDem", // MoDem
+  HOR: "HOR", // Horizons (législatives 2024)
   LUDI: "UDI", // UDI
+  UDI: "UDI", // UDI (législatives 2024)
   LUC: "UC", // Union centriste
   LDVC: "DVC", // Divers centre
 
   // Droite
   LLR: "LR", // Les Républicains
+  LR: "LR", // Les Républicains (législatives 2024)
   LDVD: "DVD", // Divers droite
+  DVD: "DVD", // Divers droite (législatives 2024)
   LUD: "LR", // Union de la droite
 
   // Extrême droite
   LRN: "RN", // Rassemblement National
+  RN: "RN", // Rassemblement National (législatives 2024)
   LREC: "REC", // Reconquête
+  REC: "REC", // Reconquête (législatives 2024)
   LEXD: "RN", // Extrême droite (générique)
+  UXD: "RN", // Union extrême droite (législatives 2024)
 
   // Divers
   LDIV: "DIV", // Divers
+  DIV: "DIV", // Divers (législatives 2024)
   LAUT: "DIV", // Autres
+  REG: "REG", // Régionaliste (législatives 2024)
 };
 
 // ============================================

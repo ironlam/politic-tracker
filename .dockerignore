@@ -1,0 +1,57 @@
+# dependencies
+/node_modules
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# env files
+.env*
+!.env.example
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# prisma generated client
+/src/generated/prisma
+
+# testing
+/coverage
+/tests/visual/test-results/
+/tests/visual/playwright-report/
+
+# debug / logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# secrets / tokens
+*.pem
+.mcp.json
+
+# vercel
+.vercel
+
+# supabase local
+/supabase
+
+# claude code
+CLAUDE.md
+.claude/
+
+# database backups (sensitive data)
+/backups
+job-logs.txt

@@ -117,6 +117,9 @@ model Party {
   dissolvedDate     DateTime?
   politicalPosition PoliticalPosition?
   ideology          String? // Free text, e.g. "Social-démocratie, Socialisme démocratique"
+  politicalPositionSource    String?  // "wikidata" | "manual" | "conseil_etat"
+  politicalPositionSourceUrl String?  // URL to source (e.g. Conseil d'État decision)
+  politicalPositionOverride  Boolean  @default(false) // If true, sync won't overwrite position
   headquarters      String?
   website           String?
 

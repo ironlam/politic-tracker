@@ -1,8 +1,9 @@
 "use client";
 
-import { memo, useCallback } from "react";
+import { memo, useCallback, useMemo } from "react";
 import dynamic from "next/dynamic";
 import type { MapDepartmentData } from "@/app/api/carte/route";
+import { POSITION_COLORS, NO_DATA_COLOR_LIGHT, NO_DATA_COLOR_DARK } from "./constants";
 
 // DOM-TOM codes for separate display
 const DOMTOM_CODES = ["971", "972", "973", "974", "976"];
@@ -16,19 +17,6 @@ const DOMTOM_NAMES: Record<string, string> = {
 
 // Île-de-France department codes
 const IDF_CODES = ["75", "77", "78", "91", "92", "93", "94", "95"];
-
-// Political position color palette
-const POSITION_COLORS: Record<string, string> = {
-  FAR_LEFT: "#BB1840",
-  LEFT: "#E8555E",
-  CENTER_LEFT: "#F0956E",
-  CENTER: "#FFD966",
-  CENTER_RIGHT: "#7CB9E8",
-  RIGHT: "#2B6CB0",
-  FAR_RIGHT: "#1A365D",
-};
-const NO_DATA_COLOR_LIGHT = "#e5e7eb";
-const NO_DATA_COLOR_DARK = "#374151";
 
 // Dynamic import to avoid SSR issues with react-simple-maps
 const ComposableMap = dynamic(() => import("react-simple-maps").then((m) => m.ComposableMap), {
@@ -87,7 +75,7 @@ function DepartmentMapComponent({
   isDarkMode,
 }: DepartmentMapProps) {
   // Build lookup map
-  const deptMap = new Map(departments.map((d) => [d.code, d]));
+  const deptMap = useMemo(() => new Map(departments.map((d) => [d.code, d])), [departments]);
 
   const noDataColor = isDarkMode ? NO_DATA_COLOR_DARK : NO_DATA_COLOR_LIGHT;
 
@@ -195,6 +183,7 @@ function DepartmentMapComponent({
 
       {/* Île-de-France inset */}
       <div
+        aria-label="Carte de l'Île-de-France"
         className="absolute top-2 right-2 border rounded-lg overflow-hidden"
         style={{
           width: 220,
@@ -232,7 +221,10 @@ function DepartmentMapComponent({
 
       {/* DOM-TOM insets */}
       {domtomDepts.length > 0 && (
-        <div className="flex justify-center gap-2 py-2 border-t border-border/50">
+        <div
+          aria-label="Territoires d'outre-mer"
+          className="flex justify-center gap-2 py-2 border-t border-border/50"
+        >
           <span className="text-xs text-muted-foreground self-center mr-2">Outre-mer:</span>
           {DOMTOM_CODES.map((code) => {
             const dept = deptMap.get(code);

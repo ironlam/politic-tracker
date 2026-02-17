@@ -24,6 +24,7 @@ export async function GET(request: NextRequest) {
         ],
       },
       select: {
+        id: true,
         slug: true,
         fullName: true,
         photoUrl: true,
@@ -93,6 +94,7 @@ export async function GET(request: NextRequest) {
 
   return NextResponse.json({
     politicians: politicians.map((p) => ({
+      id: p.id,
       slug: p.slug,
       fullName: p.fullName,
       photoUrl: p.photoUrl,

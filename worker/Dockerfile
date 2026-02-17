@@ -16,18 +16,22 @@ FROM base AS build
 RUN apt-get update -qq && \
     apt-get install --no-install-recommends -y build-essential node-gyp openssl pkg-config python-is-python3
 
-COPY .npmrc package-lock.json package.json ./
+COPY .npmrc package-lock.json package.json prisma.config.ts ./
 COPY prisma prisma/
 RUN npm ci --include=dev
 
-# Generate Prisma Client
+# Generate Prisma Client (needs prisma.config.ts + schema)
 RUN npx prisma generate
 
 # Copy project (scripts + worker + src needed for Prisma imports)
 COPY . .
 
-# Remove dev dependencies
-RUN npm prune --omit=dev
+# Remove dev dependencies but preserve Prisma runtime
+# @prisma/client is in devDependencies but the generated client
+# needs @prisma/client-runtime-utils at runtime
+RUN cp -r node_modules/@prisma/client-runtime-utils /tmp/prisma-runtime && \
+    npm prune --omit=dev && \
+    cp -r /tmp/prisma-runtime node_modules/@prisma/client-runtime-utils
 
 # Final stage
 FROM base

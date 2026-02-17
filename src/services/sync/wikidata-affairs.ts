@@ -493,6 +493,7 @@ export async function importConviction(
         description: `Condamnation pour ${crime}.`,
         status: "CONDAMNATION_DEFINITIVE" as AffairStatus,
         category,
+        publicationStatus: "DRAFT",
         verdictDate: convictionDate,
         partyAtTimeId,
         sources: {

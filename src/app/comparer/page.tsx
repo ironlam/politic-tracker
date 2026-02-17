@@ -192,7 +192,7 @@ async function getPartyComparisonData(slugOrId: string): Promise<PartyComparison
 
   // Affairs
   const affairs = await db.affair.findMany({
-    where: { politician: { currentPartyId: party.id } },
+    where: { publicationStatus: "PUBLISHED", politician: { currentPartyId: party.id } },
     select: { id: true, status: true },
   });
 

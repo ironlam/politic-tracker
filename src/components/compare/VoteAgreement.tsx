@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { formatDate } from "@/lib/utils";
 import { VOTE_POSITION_LABELS, VOTE_POSITION_DOT_COLORS } from "@/config/labels";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 import type { Vote, Scrutin, VotePosition } from "@/types";
 
 interface VoteWithScrutin extends Vote {
@@ -105,13 +106,16 @@ export function VoteAgreement({
         <div className="bg-yellow-500/10 dark:bg-yellow-500/20 rounded-lg p-4 text-center">
           <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{stats.partial}</p>
           <p className="text-sm text-muted-foreground">Partiellement</p>
+          <p className="text-xs text-muted-foreground/70 hidden sm:block">Abstention ou absence</p>
         </div>
       </div>
 
       {/* Agreement bar */}
       <div className="bg-muted rounded-lg p-4">
         <div className="flex justify-between mb-2 text-sm">
-          <span>Taux de concordance</span>
+          <span className="flex items-center gap-1">
+            Taux de concordance <InfoTooltip term="concordance" />
+          </span>
           <span className="font-bold">{agreementRate}%</span>
         </div>
         <div className="h-4 rounded-full overflow-hidden bg-gray-200 flex">

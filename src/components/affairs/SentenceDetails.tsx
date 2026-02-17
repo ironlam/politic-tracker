@@ -1,3 +1,5 @@
+import { InfoTooltip } from "@/components/ui/info-tooltip";
+
 interface SentenceDetailsProps {
   affair: {
     prisonMonths?: number | null;
@@ -75,10 +77,16 @@ export function SentenceDetails({ affair }: SentenceDetailsProps) {
             <span>
               <span className="font-medium">{formatMonths(affair.prisonMonths!)}</span>
               {affair.prisonSuspended && (
-                <span className="text-muted-foreground"> (avec sursis)</span>
+                <span className="text-muted-foreground inline-flex items-center gap-1">
+                  {" "}
+                  (avec sursis) <InfoTooltip term="sursis" />
+                </span>
               )}
               {!affair.prisonSuspended && (
-                <span className="text-red-600 dark:text-red-400"> (ferme)</span>
+                <span className="text-red-600 dark:text-red-400 inline-flex items-center gap-1">
+                  {" "}
+                  (ferme) <InfoTooltip term="ferme" />
+                </span>
               )}
             </span>
           </div>
@@ -117,7 +125,10 @@ export function SentenceDetails({ affair }: SentenceDetailsProps) {
             </svg>
             <span>
               <span className="font-medium">{formatMonths(affair.ineligibilityMonths!)}</span>
-              <span className="text-muted-foreground"> d&apos;inéligibilité</span>
+              <span className="text-muted-foreground inline-flex items-center gap-1">
+                {" "}
+                d&apos;inéligibilité <InfoTooltip term="ineligibilite" />
+              </span>
             </span>
           </div>
         )}
@@ -138,7 +149,10 @@ export function SentenceDetails({ affair }: SentenceDetailsProps) {
             </svg>
             <span>
               <span className="font-medium">{affair.communityService}h</span>
-              <span className="text-muted-foreground"> de TIG</span>
+              <span className="text-muted-foreground inline-flex items-center gap-1">
+                {" "}
+                de TIG <InfoTooltip term="tig" />
+              </span>
             </span>
           </div>
         )}

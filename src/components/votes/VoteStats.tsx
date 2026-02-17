@@ -2,6 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { VOTE_POSITION_DOT_COLORS } from "@/config/labels";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 
 interface VoteStatsProps {
   stats: {
@@ -36,7 +37,9 @@ export function VoteStats({ stats }: VoteStatsProps) {
         {/* Participation */}
         <div>
           <div className="flex justify-between text-sm mb-1">
-            <span className="text-muted-foreground">Participation</span>
+            <span className="text-muted-foreground flex items-center gap-1">
+              Participation <InfoTooltip term="participationRate" />
+            </span>
             <span className="font-medium">{participationRate}%</span>
           </div>
           <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
@@ -86,18 +89,21 @@ export function VoteStats({ stats }: VoteStatsProps) {
           <div className="flex items-center gap-2">
             <span className={`w-2 h-2 rounded-full ${VOTE_POSITION_DOT_COLORS.ABSTENTION}`} />
             <span className="text-muted-foreground">Abstention</span>
+            <InfoTooltip term="abstention" />
             <span className="ml-auto font-medium">{abstention}</span>
           </div>
           {nonVotant > 0 && (
             <div className="flex items-center gap-2">
               <span className={`w-2 h-2 rounded-full ${VOTE_POSITION_DOT_COLORS.NON_VOTANT}`} />
               <span className="text-muted-foreground">Non-votant</span>
+              <InfoTooltip term="nonVotant" />
               <span className="ml-auto font-medium">{nonVotant}</span>
             </div>
           )}
           <div className="flex items-center gap-2">
             <span className={`w-2 h-2 rounded-full ${VOTE_POSITION_DOT_COLORS.ABSENT}`} />
             <span className="text-muted-foreground">Absent</span>
+            <InfoTooltip term="absent" />
             <span className="ml-auto font-medium">{absent}</span>
           </div>
         </div>

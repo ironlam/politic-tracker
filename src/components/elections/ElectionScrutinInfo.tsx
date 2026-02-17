@@ -1,5 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { ELECTION_TYPE_LABELS, ELECTION_SCOPE_LABELS, SUFFRAGE_TYPE_LABELS } from "@/config/labels";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 import type { ElectionType, ElectionScope, SuffrageType } from "@/types";
 
 interface ElectionScrutinInfoProps {
@@ -50,7 +51,10 @@ export function ElectionScrutinInfo({
           </div>
           <div>
             <dt className="text-muted-foreground">Suffrage</dt>
-            <dd className="font-medium">{SUFFRAGE_TYPE_LABELS[suffrage]}</dd>
+            <dd className="font-medium flex items-center gap-1">
+              {SUFFRAGE_TYPE_LABELS[suffrage]}
+              <InfoTooltip term={suffrage === "DIRECT" ? "suffrageDirecte" : "suffrageIndirect"} />
+            </dd>
           </div>
           {totalSeats && (
             <div>

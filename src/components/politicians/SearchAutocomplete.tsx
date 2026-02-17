@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { MANDATE_TYPE_LABELS } from "@/config/labels";
+import { cn } from "@/lib/utils";
 
 interface SearchResult {
   id: string;
@@ -56,7 +57,10 @@ function ResultAvatar({ photoUrl, fullName }: { photoUrl: string | null; fullNam
       <img
         src={photoUrl}
         alt=""
-        className={`w-full h-full object-cover transition-opacity duration-200 ${isLoaded ? "opacity-100" : "opacity-0"}`}
+        className={cn(
+          "w-full h-full object-cover transition-opacity duration-200",
+          isLoaded ? "opacity-100" : "opacity-0"
+        )}
         onError={() => setHasError(true)}
         onLoad={() => setIsLoaded(true)}
       />

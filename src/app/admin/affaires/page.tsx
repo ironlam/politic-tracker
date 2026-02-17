@@ -218,6 +218,7 @@ export default function AdminAffairsPage() {
             type="search"
             placeholder="Rechercher par titre ou politicien..."
             defaultValue={searchQuery}
+            aria-label="Rechercher par titre ou politicien"
             onChange={(e) => {
               const val = e.target.value;
               // Debounce via setTimeout
@@ -250,7 +251,7 @@ export default function AdminAffairsPage() {
 
       {/* Bulk actions bar */}
       {selected.size > 0 && (
-        <Card className="border-primary/30 bg-primary/5">
+        <Card className="border-primary/30 bg-primary/5" role="status" aria-live="polite">
           <CardContent className="p-3 flex items-center gap-4">
             <span className="text-sm font-medium">
               {selected.size} sélectionnée{selected.size > 1 ? "s" : ""}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -225,7 +226,7 @@ export default function SyncsPage() {
         await fetchData();
       } else {
         const err = await res.json();
-        alert(err.error || "Erreur lors du lancement");
+        toast.error(err.error || "Erreur lors du lancement");
       }
     } finally {
       setLaunching(null);

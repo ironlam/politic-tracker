@@ -2,7 +2,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Loading() {
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div
+      className="container mx-auto px-4 py-8"
+      aria-busy="true"
+      aria-label="Chargement de la page"
+    >
       {/* Header */}
       <div className="mb-8">
         <Skeleton className="h-9 w-48 mb-2" />

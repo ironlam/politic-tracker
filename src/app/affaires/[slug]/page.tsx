@@ -8,6 +8,7 @@ import { formatDate } from "@/lib/utils";
 import {
   AFFAIR_STATUS_LABELS,
   AFFAIR_STATUS_COLORS,
+  AFFAIR_STATUS_DESCRIPTIONS,
   AFFAIR_STATUS_NEEDS_PRESUMPTION,
   AFFAIR_CATEGORY_LABELS,
   AFFAIR_SUPER_CATEGORY_LABELS,
@@ -15,6 +16,7 @@ import {
   CATEGORY_TO_SUPER,
 } from "@/config/labels";
 import { SentenceDetails } from "@/components/affairs/SentenceDetails";
+import { StatusTooltip } from "@/components/affairs/StatusTooltip";
 import { AffairTimeline } from "@/components/affairs/AffairTimeline";
 import { PoliticianAvatar } from "@/components/politicians/PoliticianAvatar";
 import { ArticleJsonLd, BreadcrumbJsonLd } from "@/components/seo/JsonLd";
@@ -130,9 +132,12 @@ export default async function AffairDetailPage({ params }: PageProps) {
             <Badge className={AFFAIR_SUPER_CATEGORY_COLORS[superCategory]}>
               {AFFAIR_SUPER_CATEGORY_LABELS[superCategory]}
             </Badge>
-            <Badge className={AFFAIR_STATUS_COLORS[affair.status]}>
-              {AFFAIR_STATUS_LABELS[affair.status]}
-            </Badge>
+            <StatusTooltip
+              status={affair.status}
+              label={AFFAIR_STATUS_LABELS[affair.status]}
+              description={AFFAIR_STATUS_DESCRIPTIONS[affair.status]}
+              colorClass={AFFAIR_STATUS_COLORS[affair.status]}
+            />
             <Badge variant="outline">{AFFAIR_CATEGORY_LABELS[affair.category]}</Badge>
           </div>
 

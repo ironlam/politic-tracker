@@ -3,6 +3,7 @@
 import { useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 
 export type SortOption = "prominence" | "alpha" | "alpha-desc" | "recent" | "affairs";
 export type MandateFilter =
@@ -105,8 +106,12 @@ export function FilterBar({
 
       {/* Sort */}
       <div className="flex items-center gap-2">
-        <label htmlFor="sort-select" className="text-sm text-muted-foreground whitespace-nowrap">
+        <label
+          htmlFor="sort-select"
+          className="text-sm text-muted-foreground whitespace-nowrap flex items-center gap-1"
+        >
           Tri:
+          {currentSort === "prominence" && <InfoTooltip term="prominence" side="bottom" />}
         </label>
         <select
           id="sort-select"

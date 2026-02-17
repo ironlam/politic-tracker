@@ -91,7 +91,7 @@ export function DashboardStats({ stats }: DashboardStatsProps) {
       label: "Déclarations",
       href: "/politiques",
       icon: FileText,
-      description: "Déclarations HATVP",
+      description: "Déclarations HATVP (patrimoine et intérêts)",
     },
     {
       value: stats.articleCount,

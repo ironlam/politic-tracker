@@ -50,6 +50,27 @@ export const AFFAIR_STATUS_COLORS: Record<AffairStatus, string> = {
   CLASSEMENT_SANS_SUITE: "bg-gray-100 text-gray-800 dark:bg-gray-800/40 dark:text-gray-300",
 };
 
+export const AFFAIR_STATUS_DESCRIPTIONS: Record<AffairStatus, string> = {
+  ENQUETE_PRELIMINAIRE:
+    "Le parquet a ordonné une enquête pour vérifier les faits. Aucune mise en cause formelle.",
+  INSTRUCTION:
+    "Un juge d'instruction mène des investigations approfondies pour établir les responsabilités.",
+  MISE_EN_EXAMEN:
+    "Le juge considère qu'il existe des indices graves contre la personne. Ce n'est pas une condamnation.",
+  RENVOI_TRIBUNAL: "Le juge a considéré les charges suffisantes pour un procès devant le tribunal.",
+  PROCES_EN_COURS: "L'affaire est actuellement jugée devant un tribunal.",
+  CONDAMNATION_PREMIERE_INSTANCE:
+    "Le tribunal a prononcé une condamnation, mais un appel est encore possible.",
+  APPEL_EN_COURS: "La décision du tribunal est contestée devant la cour d'appel.",
+  CONDAMNATION_DEFINITIVE:
+    "Toutes les voies de recours sont épuisées. La condamnation est définitive.",
+  RELAXE: "Le tribunal correctionnel a déclaré la personne non coupable.",
+  ACQUITTEMENT: "La cour d'assises a déclaré la personne non coupable.",
+  NON_LIEU: "Le juge d'instruction a conclu que les charges étaient insuffisantes pour un procès.",
+  PRESCRIPTION: "Le délai légal pour engager des poursuites est dépassé.",
+  CLASSEMENT_SANS_SUITE: "Le procureur a décidé de ne pas poursuivre l'affaire.",
+};
+
 // Indicates if presumption of innocence reminder is needed
 export const AFFAIR_STATUS_NEEDS_PRESUMPTION: Record<AffairStatus, boolean> = {
   ENQUETE_PRELIMINAIRE: true,

@@ -37,6 +37,7 @@ export interface ArticleAnalysisResult {
 
 export interface DetectedAffair {
   politicianName: string;
+  involvement: "DIRECT" | "INDIRECT" | "MENTIONED_ONLY";
   category: string;
   status: string;
   title: string;
@@ -129,6 +130,12 @@ const ANALYSIS_TOOL = {
               type: "string",
               description: "Nom complet du politicien concerné (ex: 'Nicolas Sarkozy')",
             },
+            involvement: {
+              type: "string",
+              enum: ["DIRECT", "INDIRECT", "MENTIONED_ONLY"],
+              description:
+                "Niveau d'implication du politicien dans l'affaire. DIRECT = mis en cause, poursuivi, condamné ou directement visé. INDIRECT = témoin, victime ou acteur secondaire. MENTIONED_ONLY = simplement cité dans l'article sans lien réel avec l'affaire judiciaire.",
+            },
             category: {
               type: "string",
               enum: [...AFFAIR_CATEGORIES],
@@ -174,6 +181,7 @@ const ANALYSIS_TOOL = {
           },
           required: [
             "politician_name",
+            "involvement",
             "category",
             "status",
             "title",
@@ -205,7 +213,8 @@ RÈGLES STRICTES :
 5. En cas de doute sur la catégorie → AUTRE
 6. En cas de doute sur le statut → choisir la valeur MOINS GRAVE
 7. Les excerpts doivent être des CITATIONS EXACTES de l'article (mot pour mot)
-8. Si l'article ne contient pas d'affaire judiciaire, retourner is_affair_related: false avec un résumé simple`;
+8. Si l'article ne contient pas d'affaire judiciaire, retourner is_affair_related: false avec un résumé simple
+9. IMPLICATION RÉELLE : pour chaque politicien, évaluer son rôle RÉEL dans l'affaire. Un politicien simplement MENTIONNÉ dans l'article (réaction politique, contexte, autre sujet) n'est PAS impliqué → involvement: MENTIONED_ONLY. Seuls les politiciens MIS EN CAUSE, poursuivis, condamnés ou directement visés sont DIRECT. Les témoins et victimes sont INDIRECT.`;
 
 // ============================================
 // MAIN ANALYSIS FUNCTION
@@ -261,9 +270,15 @@ export async function analyzeArticle(input: ArticleAnalysisInput): Promise<Artic
   const affairs: DetectedAffair[] = (result.affairs || []).map((a: Record<string, unknown>) => {
     const category = validateEnum(a.category as string, AFFAIR_CATEGORIES, "AUTRE");
     const status = validateEnum(a.status as string, AFFAIR_STATUSES, "ENQUETE_PRELIMINAIRE");
+    const involvement = validateEnum(
+      a.involvement as string,
+      ["DIRECT", "INDIRECT", "MENTIONED_ONLY"] as const,
+      "DIRECT"
+    );
 
     return {
       politicianName: String(a.politician_name || ""),
+      involvement,
       category,
       status,
       title: String(a.title || ""),

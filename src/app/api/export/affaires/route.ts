@@ -16,7 +16,9 @@ export async function GET(request: NextRequest) {
   const limit = Math.min(parseInt(searchParams.get("limit") || "10000", 10), 50000);
 
   // Build where clause
-  const where: Record<string, unknown> = {};
+  const where: Record<string, unknown> = {
+    publicationStatus: "PUBLISHED",
+  };
 
   if (status) {
     where.status = status;

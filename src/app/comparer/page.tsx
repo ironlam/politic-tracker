@@ -44,6 +44,7 @@ async function getPoliticianBySlug(slug: string) {
         orderBy: { startDate: "desc" },
       },
       affairs: {
+        where: { publicationStatus: "PUBLISHED" },
         orderBy: { createdAt: "desc" },
       },
       declarations: {
@@ -192,7 +193,7 @@ async function getPartyComparisonData(slugOrId: string): Promise<PartyComparison
 
   // Affairs
   const affairs = await db.affair.findMany({
-    where: { politician: { currentPartyId: party.id } },
+    where: { publicationStatus: "PUBLISHED", politician: { currentPartyId: party.id } },
     select: { id: true, status: true },
   });
 

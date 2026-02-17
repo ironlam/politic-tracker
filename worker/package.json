@@ -1,0 +1,8 @@
+{
+  "name": "poligraph-sync-worker",
+  "private": true,
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {}
+}

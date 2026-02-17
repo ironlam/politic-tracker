@@ -1,0 +1,28 @@
+# Sync worker — separate Fly.io app
+# Deploy from project root: fly deploy -c worker/fly.toml
+
+app = "poligraph-sync-worker"
+primary_region = "fra"
+
+[build]
+  dockerfile = "worker/Dockerfile"
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+[checks]
+  [checks.health]
+    type = "http"
+    port = 3000
+    path = "/health"
+    interval = "30s"
+    timeout = "5s"
+
+[[vm]]
+  memory = "1gb"
+  cpu_kind = "shared"
+  cpus = 1

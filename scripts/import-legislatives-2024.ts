@@ -199,16 +199,16 @@ async function matchPolitician(
   nom: string,
   deptCode: string
 ): Promise<string | null> {
-  // Normalize case: "NOM" -> "Nom", "JEAN-PIERRE" -> "Jean-Pierre"
-  const normalizedLastName = nom
-    .split(/[\s-]+/)
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
-    .join(nom.includes("-") ? "-" : " ");
-
-  const normalizedFirstName = prenom
-    .split(/[\s-]+/)
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
-    .join(prenom.includes("-") ? "-" : " ");
+  // Normalize case while preserving original separators (spaces, hyphens, mixed)
+  // e.g. "DE COURSON-LEDUC" -> "De Courson-Leduc", "JEAN-PIERRE" -> "Jean-Pierre"
+  const normalizedLastName = nom.replace(
+    /[\wÀ-ÿ]+/g,
+    (w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()
+  );
+  const normalizedFirstName = prenom.replace(
+    /[\wÀ-ÿ]+/g,
+    (w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()
+  );
 
   const candidates = await db.politician.findMany({
     where: {
@@ -530,7 +530,7 @@ Options:
 
   if (result.unmappedNuances.size > 0) {
     console.log(`\nUnmapped nuance codes:`);
-    for (const [nuance, count] of result.unmappedNuances) {
+    for (const [nuance, count] of Array.from(result.unmappedNuances)) {
       console.log(`  ${nuance}: ${count} candidates`);
     }
   }

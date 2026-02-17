@@ -27,8 +27,8 @@ interface PageProps {
 }
 
 async function getAffair(slug: string) {
-  return db.affair.findUnique({
-    where: { slug },
+  return db.affair.findFirst({
+    where: { slug, publicationStatus: "PUBLISHED" },
     include: {
       politician: {
         select: {

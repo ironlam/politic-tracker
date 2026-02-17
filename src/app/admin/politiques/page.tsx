@@ -6,21 +6,38 @@ import { Input } from "@/components/ui/input";
 import { ensureContrast } from "@/lib/contrast";
 
 interface PageProps {
-  searchParams: Promise<{ q?: string; page?: string }>;
+  searchParams: Promise<{ q?: string; page?: string; status?: string; filter?: string }>;
 }
 
-async function getPoliticians(search: string, page: number) {
+async function getPoliticians(search: string, page: number, status?: string, filter?: string) {
   const pageSize = 50;
   const skip = (page - 1) * pageSize;
 
-  const where = search
-    ? {
-        OR: [
-          { fullName: { contains: search, mode: "insensitive" as const } },
-          { lastName: { contains: search, mode: "insensitive" as const } },
-        ],
-      }
-    : {};
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const conditions: any[] = [];
+
+  if (search) {
+    conditions.push({
+      OR: [
+        { fullName: { contains: search, mode: "insensitive" as const } },
+        { lastName: { contains: search, mode: "insensitive" as const } },
+      ],
+    });
+  }
+
+  if (status === "DRAFT" || status === "PUBLISHED" || status === "REJECTED") {
+    conditions.push({ publicationStatus: status });
+  }
+
+  if (filter === "no-photo") {
+    conditions.push({ photoUrl: null });
+    if (!status) conditions.push({ publicationStatus: "PUBLISHED" });
+  } else if (filter === "no-bio") {
+    conditions.push({ biography: null });
+    if (!status) conditions.push({ publicationStatus: "PUBLISHED" });
+  }
+
+  const where = conditions.length > 0 ? { AND: conditions } : {};
 
   const [politicians, total] = await Promise.all([
     db.politician.findMany({
@@ -29,6 +46,7 @@ async function getPoliticians(search: string, page: number) {
         id: true,
         fullName: true,
         slug: true,
+        publicationStatus: true,
         currentParty: { select: { name: true, shortName: true, color: true } },
         _count: { select: { affairs: true } },
       },
@@ -46,15 +64,32 @@ export default async function AdminPoliticiansPage({ searchParams }: PageProps) 
   const params = await searchParams;
   const search = params.q || "";
   const page = parseInt(params.page || "1", 10);
+  const status = params.status;
+  const filter = params.filter;
 
-  const { politicians, total, pageSize } = await getPoliticians(search, page);
+  const { politicians, total, pageSize } = await getPoliticians(search, page, status, filter);
   const totalPages = Math.ceil(total / pageSize);
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Politiques</h1>
-        <p className="text-muted-foreground">{total} politiques</p>
+        <div>
+          <h1 className="text-2xl font-display font-bold tracking-tight">Politiques</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            {total} résultat{total > 1 ? "s" : ""}
+            {status && ` · Statut : ${status}`}
+            {filter === "no-photo" && " · Sans photo"}
+            {filter === "no-bio" && " · Sans biographie"}
+          </p>
+        </div>
+        {(status || filter) && (
+          <Link
+            href="/admin/politiques"
+            className="text-sm text-muted-foreground hover:text-foreground underline"
+          >
+            Réinitialiser les filtres
+          </Link>
+        )}
       </div>
 
       <Card>

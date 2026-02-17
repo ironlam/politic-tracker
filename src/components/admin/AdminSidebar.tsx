@@ -9,7 +9,6 @@ import {
   Users,
   Building2,
   FileText,
-  Vote,
   RefreshCw,
   ToggleLeft,
   History,
@@ -36,7 +35,6 @@ const contentItems: NavItem[] = [
   { href: "/admin/politiques", label: "Politiques", icon: Users },
   { href: "/admin/partis", label: "Partis", icon: Building2 },
   { href: "/admin/dossiers", label: "Dossiers", icon: FileText },
-  { href: "/admin/elections", label: "Élections", icon: Vote },
 ];
 
 const systemItems: NavItem[] = [

@@ -5,13 +5,9 @@ import { db } from "@/lib/db";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/utils";
-import {
-  POLITICAL_POSITION_LABELS,
-  POLITICAL_POSITION_COLORS,
-  PARTY_ROLE_LABELS,
-  feminizePartyRole,
-} from "@/config/labels";
+import { PARTY_ROLE_LABELS, feminizePartyRole } from "@/config/labels";
 import { PoliticianAvatar } from "@/components/politicians/PoliticianAvatar";
+import { PoliticalPositionBadge } from "@/components/parties/PoliticalPositionBadge";
 import { OrganizationJsonLd, BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 import { ensureContrast } from "@/lib/contrast";
 
@@ -237,9 +233,11 @@ export default async function PartyPage({ params }: PageProps) {
                   {party.shortName}
                 </Badge>
                 {party.politicalPosition && (
-                  <Badge className={POLITICAL_POSITION_COLORS[party.politicalPosition]}>
-                    {POLITICAL_POSITION_LABELS[party.politicalPosition]}
-                  </Badge>
+                  <PoliticalPositionBadge
+                    position={party.politicalPosition}
+                    source={party.politicalPositionSource}
+                    sourceUrl={party.politicalPositionSourceUrl}
+                  />
                 )}
                 {party.dissolvedDate && (
                   <Badge variant="outline" className="text-muted-foreground">

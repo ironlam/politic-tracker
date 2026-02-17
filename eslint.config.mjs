@@ -18,6 +18,8 @@ const eslintConfig = defineConfig([
     "src/generated/**",
     // Scripts (not part of the app):
     "scripts/**",
+    // Worker (plain Node.js CommonJS, not TypeScript):
+    "worker/**",
   ]),
   {
     rules: {

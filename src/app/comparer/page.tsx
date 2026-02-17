@@ -44,6 +44,7 @@ async function getPoliticianBySlug(slug: string) {
         orderBy: { startDate: "desc" },
       },
       affairs: {
+        where: { publicationStatus: "PUBLISHED" },
         orderBy: { createdAt: "desc" },
       },
       declarations: {

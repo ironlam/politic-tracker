@@ -215,7 +215,14 @@ async function enrichFromWikidata(): Promise<{
             website: website || party.website,
             headquarters: headquarters || party.headquarters,
             ideology: ideology || party.ideology,
-            politicalPosition: politicalPosition || party.politicalPosition,
+            // Respect manual overrides — don't overwrite if flagged
+            ...(!party.politicalPositionOverride && politicalPosition
+              ? {
+                  politicalPosition,
+                  politicalPositionSource: "wikidata",
+                  politicalPositionSourceUrl: `https://www.wikidata.org/wiki/${wikidataId}`,
+                }
+              : {}),
           },
         });
         updated++;
@@ -244,7 +251,14 @@ async function enrichFromWikidata(): Promise<{
             website: website || party.website,
             headquarters: headquarters || party.headquarters,
             ideology: ideology || party.ideology,
-            politicalPosition: politicalPosition || party.politicalPosition,
+            // Respect manual overrides
+            ...(!party.politicalPositionOverride && politicalPosition
+              ? {
+                  politicalPosition,
+                  politicalPositionSource: "wikidata",
+                  politicalPositionSourceUrl: `https://www.wikidata.org/wiki/${wikidataId}`,
+                }
+              : {}),
           },
         });
 
@@ -298,6 +312,10 @@ async function enrichFromWikidata(): Promise<{
           headquarters,
           ideology,
           politicalPosition,
+          politicalPositionSource: politicalPosition ? "wikidata" : null,
+          politicalPositionSourceUrl: politicalPosition
+            ? `https://www.wikidata.org/wiki/${wikidataId}`
+            : null,
         },
       });
 

@@ -5,13 +5,9 @@ import { db } from "@/lib/db";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/utils";
-import {
-  POLITICAL_POSITION_LABELS,
-  POLITICAL_POSITION_COLORS,
-  PARTY_ROLE_LABELS,
-  feminizePartyRole,
-} from "@/config/labels";
+import { PARTY_ROLE_LABELS, feminizePartyRole } from "@/config/labels";
 import { PoliticianAvatar } from "@/components/politicians/PoliticianAvatar";
+import { PoliticalPositionBadge } from "@/components/parties/PoliticalPositionBadge";
 import { OrganizationJsonLd, BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 import { ensureContrast } from "@/lib/contrast";
 
@@ -237,9 +233,10 @@ export default async function PartyPage({ params }: PageProps) {
                   {party.shortName}
                 </Badge>
                 {party.politicalPosition && (
-                  <Badge className={POLITICAL_POSITION_COLORS[party.politicalPosition]}>
-                    {POLITICAL_POSITION_LABELS[party.politicalPosition]}
-                  </Badge>
+                  <PoliticalPositionBadge
+                    position={party.politicalPosition}
+                    source={party.politicalPositionSource}
+                  />
                 )}
                 {party.dissolvedDate && (
                   <Badge variant="outline" className="text-muted-foreground">
@@ -571,6 +568,27 @@ export default async function PartyPage({ params }: PageProps) {
                   <div>
                     <span className="text-muted-foreground block mb-1">Idéologie</span>
                     <span className="text-sm">{party.ideology}</span>
+                  </div>
+                )}
+                {party.politicalPosition && party.politicalPositionSource && (
+                  <div>
+                    <span className="text-muted-foreground block mb-1">Position politique</span>
+                    <div className="flex items-center gap-2">
+                      <PoliticalPositionBadge position={party.politicalPosition} />
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Source : {party.politicalPositionSource}
+                    </p>
+                    {party.politicalPositionSourceUrl && (
+                      <a
+                        href={party.politicalPositionSourceUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-blue-600 hover:underline"
+                      >
+                        Voir la source
+                      </a>
+                    )}
                   </div>
                 )}
                 {party.headquarters && (

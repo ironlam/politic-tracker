@@ -3,7 +3,7 @@ import Link from "next/link";
 import { db } from "@/lib/db";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { POLITICAL_POSITION_LABELS, POLITICAL_POSITION_COLORS } from "@/config/labels";
+import { PoliticalPositionBadge } from "@/components/parties/PoliticalPositionBadge";
 
 export const revalidate = 300; // 5 minutes, cohérent avec l'API
 
@@ -79,11 +79,11 @@ export default async function PartiesPage() {
                             {party.shortName}
                           </Badge>
                           {party.politicalPosition && (
-                            <Badge
-                              className={`text-xs ${POLITICAL_POSITION_COLORS[party.politicalPosition]}`}
-                            >
-                              {POLITICAL_POSITION_LABELS[party.politicalPosition]}
-                            </Badge>
+                            <PoliticalPositionBadge
+                              position={party.politicalPosition}
+                              source={party.politicalPositionSource}
+                              className="text-xs"
+                            />
                           )}
                         </div>
                         <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">

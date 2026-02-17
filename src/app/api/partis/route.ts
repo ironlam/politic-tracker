@@ -100,6 +100,8 @@ export async function GET(request: NextRequest) {
           shortName: true,
           color: true,
           politicalPosition: true,
+          politicalPositionSource: true,
+          politicalPositionSourceUrl: true,
           logoUrl: true,
           foundedDate: true,
           dissolvedDate: true,

@@ -1,9 +1,9 @@
 "use client";
 
-import { DepartmentStats } from "@/app/api/stats/departments/route";
+import type { MapDepartmentData } from "@/app/api/carte/route";
 
 interface DepartmentTooltipProps {
-  department: DepartmentStats;
+  department: MapDepartmentData;
   position: { x: number; y: number };
 }
 
@@ -24,28 +24,20 @@ export function DepartmentTooltip({ department, position }: DepartmentTooltipPro
       </div>
       <div className="text-xs text-muted-foreground mb-2">{department.region}</div>
 
-      <div className="grid grid-cols-2 gap-2 text-xs">
+      <div className="space-y-1 text-xs">
         <div>
-          <span className="text-muted-foreground">Total élus:</span>{" "}
-          <span className="font-medium">{department.totalElus}</span>
+          <span className="text-muted-foreground">Sièges :</span>{" "}
+          <span className="font-medium">{department.totalSeats}</span>
         </div>
-        <div>
-          <span className="text-muted-foreground">Députés:</span>{" "}
-          <span className="font-medium">{department.deputes}</span>
-        </div>
-        <div>
-          <span className="text-muted-foreground">Sénateurs:</span>{" "}
-          <span className="font-medium">{department.senateurs}</span>
-        </div>
-        {department.dominantParty && (
-          <div className="col-span-2 flex items-center gap-1">
-            <span className="text-muted-foreground">Parti dominant:</span>
+        {department.winningParty && (
+          <div className="flex items-center gap-1">
+            <span className="text-muted-foreground">Parti gagnant :</span>
             <span
               className="inline-block w-3 h-3 rounded-full"
-              style={{ backgroundColor: department.dominantParty.color || "#888" }}
+              style={{ backgroundColor: department.winningParty.color || "#888" }}
             />
-            <span className="font-medium" title={department.dominantParty.name}>
-              {department.dominantParty.shortName}
+            <span className="font-medium" title={department.winningParty.name}>
+              {department.winningParty.shortName}
             </span>
           </div>
         )}

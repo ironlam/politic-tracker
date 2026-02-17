@@ -4,6 +4,9 @@ import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Loader2, Plus, Trash2, Clock } from "lucide-react";
 
 interface FeatureFlag {
@@ -37,6 +40,10 @@ export default function FeatureTogglesPage() {
   const [flags, setFlags] = useState<FeatureFlag[]>([]);
   const [loading, setLoading] = useState(true);
   const [toggling, setToggling] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [newFlagName, setNewFlagName] = useState("");
+  const [newFlagLabel, setNewFlagLabel] = useState("");
 
   const fetchFlags = useCallback(async () => {
     try {
@@ -65,26 +72,30 @@ export default function FeatureTogglesPage() {
     }
   }
 
-  async function deleteFlag(id: string, name: string) {
-    if (!confirm(`Supprimer le flag "${name}" ?`)) return;
-    await fetch(`/api/admin/feature-flags/${id}`, { method: "DELETE" });
-    setFlags((prev) => prev.filter((f) => f.id !== id));
+  function deleteFlag(id: string, name: string) {
+    setDeleteTarget({ id, name });
+  }
+
+  async function confirmDelete() {
+    if (!deleteTarget) return;
+    await fetch(`/api/admin/feature-flags/${deleteTarget.id}`, { method: "DELETE" });
+    setFlags((prev) => prev.filter((f) => f.id !== deleteTarget.id));
+    setDeleteTarget(null);
   }
 
   async function createFlag() {
-    const name = prompt("Nom du flag (SNAKE_CASE) :");
-    if (!name) return;
-    const label = prompt("Label affiché :");
-    if (!label) return;
-
+    if (!newFlagName || !newFlagLabel) return;
     const res = await fetch("/api/admin/feature-flags", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, label }),
+      body: JSON.stringify({ name: newFlagName, label: newFlagLabel }),
     });
     if (res.ok) {
       const flag = await res.json();
       setFlags((prev) => [...prev, flag]);
+      setNewFlagName("");
+      setNewFlagLabel("");
+      setShowCreateForm(false);
     }
   }
 
@@ -97,11 +108,55 @@ export default function FeatureTogglesPage() {
             Activation/désactivation des fonctionnalités avec scheduling
           </p>
         </div>
-        <Button onClick={createFlag}>
+        <Button onClick={() => setShowCreateForm(true)}>
           <Plus className="w-4 h-4 mr-2" aria-hidden="true" />
           Nouveau flag
         </Button>
       </div>
+
+      {showCreateForm && (
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex flex-wrap items-end gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="flag-name">Nom (SNAKE_CASE)</Label>
+                <Input
+                  id="flag-name"
+                  value={newFlagName}
+                  onChange={(e) =>
+                    setNewFlagName(e.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, ""))
+                  }
+                  placeholder="MY_FEATURE"
+                  className="w-48"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="flag-label">Label affiché</Label>
+                <Input
+                  id="flag-label"
+                  value={newFlagLabel}
+                  onChange={(e) => setNewFlagLabel(e.target.value)}
+                  placeholder="Ma fonctionnalité"
+                  className="w-64"
+                />
+              </div>
+              <Button onClick={createFlag} disabled={!newFlagName || !newFlagLabel}>
+                Créer
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setShowCreateForm(false);
+                  setNewFlagName("");
+                  setNewFlagLabel("");
+                }}
+              >
+                Annuler
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {loading ? (
         <div className="flex items-center justify-center py-16">
@@ -188,6 +243,18 @@ export default function FeatureTogglesPage() {
           })}
         </div>
       )}
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null);
+        }}
+        onConfirm={confirmDelete}
+        title="Supprimer ce feature flag ?"
+        description={`Le flag « ${deleteTarget?.name ?? ""} » sera supprimé définitivement.`}
+        confirmLabel="Supprimer"
+        variant="destructive"
+      />
     </div>
   );
 }

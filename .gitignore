@@ -1,6 +1,9 @@
 # dependencies
 /node_modules
 
+# plans (local only)
+/docs/plans/
+
 # next.js
 /.next/
 /out/

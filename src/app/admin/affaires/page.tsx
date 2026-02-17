@@ -73,6 +73,7 @@ export default function AdminAffairsPage() {
   const searchQuery = searchParams.get("search") || "";
   const currentPage = parseInt(searchParams.get("page") || "1", 10);
   const categoryFilter = searchParams.get("category") || "";
+  const filterParam = searchParams.get("filter") || "";
 
   const updateParams = useCallback(
     (updates: Record<string, string>) => {
@@ -95,6 +96,7 @@ export default function AdminAffairsPage() {
     if (activeTab !== "all") params.set("publicationStatus", activeTab);
     if (searchQuery) params.set("search", searchQuery);
     if (categoryFilter) params.set("category", categoryFilter);
+    if (filterParam === "no-ecli") params.set("hasEcli", "false");
     params.set("page", String(currentPage));
     params.set("limit", "50");
 
@@ -107,7 +109,7 @@ export default function AdminAffairsPage() {
     } finally {
       setLoading(false);
     }
-  }, [activeTab, searchQuery, categoryFilter, currentPage]);
+  }, [activeTab, searchQuery, categoryFilter, currentPage, filterParam]);
 
   useEffect(() => {
     fetchData();

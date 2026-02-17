@@ -1,13 +1,11 @@
-import { cookies } from "next/headers";
+import { isAuthenticated as checkAuth } from "@/lib/auth";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { AdminBreadcrumb } from "@/components/admin/AdminBreadcrumb";
 import { AdminCommandPalette } from "@/components/admin/AdminCommandPalette";
 import { AdminCmdKTrigger } from "@/components/admin/AdminCmdKTrigger";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  const cookieStore = await cookies();
-  const session = cookieStore.get("admin_session");
-  const isAuthenticated = !!session?.value;
+  const isAuthenticated = await checkAuth();
 
   // Login page — render without admin chrome
   if (!isAuthenticated) {

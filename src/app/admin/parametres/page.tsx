@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { toast } from "sonner";
 import { LogOut, AlertTriangle, ToggleLeft, Trash2, Loader2 } from "lucide-react";
 
 export default function SettingsPage() {
@@ -12,6 +14,8 @@ export default function SettingsPage() {
   const [loggingOut, setLoggingOut] = useState(false);
   const [resettingFlags, setResettingFlags] = useState(false);
   const [purgingAudit, setPurgingAudit] = useState(false);
+  const [confirmReset, setConfirmReset] = useState(false);
+  const [confirmPurge, setConfirmPurge] = useState(false);
 
   async function handleLogout() {
     setLoggingOut(true);
@@ -24,13 +28,6 @@ export default function SettingsPage() {
   }
 
   async function handleResetFlags() {
-    if (
-      !confirm(
-        "Réinitialiser tous les feature flags ? Toutes les fonctionnalités seront désactivées."
-      )
-    ) {
-      return;
-    }
     setResettingFlags(true);
     try {
       const res = await fetch("/api/admin/feature-flags", { method: "GET" });
@@ -43,26 +40,21 @@ export default function SettingsPage() {
           body: JSON.stringify({ enabled: false }),
         });
       }
-      alert(`${flags.length} feature flags désactivés.`);
+      toast.success(`${flags.length} feature flags désactivés.`);
     } finally {
       setResettingFlags(false);
     }
   }
 
   async function handlePurgeAudit() {
-    if (
-      !confirm("Supprimer les entrées d'audit de plus de 90 jours ? Cette action est irréversible.")
-    ) {
-      return;
-    }
     setPurgingAudit(true);
     try {
       const res = await fetch("/api/admin/audit/purge", { method: "POST" });
       if (res.ok) {
         const data = await res.json();
-        alert(`${data.deleted} entrées supprimées.`);
+        toast.success(`${data.deleted} entrées supprimées.`);
       } else {
-        alert("Erreur lors de la purge.");
+        toast.error("Erreur lors de la purge.");
       }
     } finally {
       setPurgingAudit(false);
@@ -156,7 +148,7 @@ export default function SettingsPage() {
               <Button
                 variant="outline"
                 className="shrink-0 border-red-200 text-red-700 hover:bg-red-50 hover:text-red-800"
-                onClick={handleResetFlags}
+                onClick={() => setConfirmReset(true)}
                 disabled={resettingFlags}
               >
                 {resettingFlags ? (
@@ -180,7 +172,7 @@ export default function SettingsPage() {
               <Button
                 variant="outline"
                 className="shrink-0 border-red-200 text-red-700 hover:bg-red-50 hover:text-red-800"
-                onClick={handlePurgeAudit}
+                onClick={() => setConfirmPurge(true)}
                 disabled={purgingAudit}
               >
                 {purgingAudit ? (
@@ -194,6 +186,25 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
       </div>
+
+      <ConfirmDialog
+        open={confirmReset}
+        onOpenChange={setConfirmReset}
+        onConfirm={handleResetFlags}
+        title="Réinitialiser les feature flags ?"
+        description="Toutes les fonctionnalités seront désactivées. Elles devront être réactivées manuellement."
+        confirmLabel="Réinitialiser"
+        variant="destructive"
+      />
+      <ConfirmDialog
+        open={confirmPurge}
+        onOpenChange={setConfirmPurge}
+        onConfirm={handlePurgeAudit}
+        title="Purger l'audit log ?"
+        description="Les entrées de plus de 90 jours seront supprimées. Cette action est irréversible."
+        confirmLabel="Purger"
+        variant="destructive"
+      />
     </div>
   );
 }

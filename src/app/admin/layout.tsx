@@ -3,6 +3,7 @@ import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { AdminBreadcrumb } from "@/components/admin/AdminBreadcrumb";
 import { AdminCommandPalette } from "@/components/admin/AdminCommandPalette";
 import { AdminCmdKTrigger } from "@/components/admin/AdminCmdKTrigger";
+import { Toaster } from "@/components/ui/sonner";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const isAuthenticated = await checkAuth();
@@ -38,6 +39,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       </div>
 
       <AdminCommandPalette />
+      <Toaster />
     </div>
   );
 }

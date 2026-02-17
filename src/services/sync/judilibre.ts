@@ -68,33 +68,70 @@ const MIN_AGE_AT_DECISION = 18; // Skip if politician was < 18 at time of decisi
 // HOMONYME FILTERING
 // ============================================
 
+/** Minimum lastName length to avoid matching single letters ("O") or very short words */
+const MIN_LASTNAME_LENGTH = 3;
+
+/** Max character distance between firstName and lastName to count as a match */
+const NAME_PROXIMITY_CHARS = 80;
+
+const escapeRegex = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+// French-aware word boundaries (\b doesn't handle accented chars like é, è, ç)
+const WB_BEFORE = "(?<![a-zA-ZÀ-ÿ])";
+const WB_AFTER = "(?![a-zA-ZÀ-ÿ])";
+
+/** Wrap a pattern with French-aware word boundaries */
+function wb(pattern: string): string {
+  return `${WB_BEFORE}${pattern}${WB_AFTER}`;
+}
+
 /**
  * Check if a text likely refers to a politician (not just a common word).
  *
- * Requires BOTH firstName and lastName to appear in the text, OR
- * lastName preceded by a legal title (M., Mme, sieur, dame, prévenu, condamné).
- * This prevents false positives for surnames that are common French words
- * (Portes, Blanc, Petit, Bureau, Faure, etc.).
+ * Uses word boundaries and proximity checks to prevent false positives from:
+ * - Surnames that are common French words (mesure, blanc, rome, marchand...)
+ * - Very short names (O, Le, Peu...)
+ * - firstName and lastName appearing far apart in unrelated contexts
  */
 function textRefersToPersonByName(text: string, fullName: string): boolean {
-  const parts = fullName.toLowerCase().split(/\s+/);
+  const parts = fullName.split(/\s+/);
+  // firstName = first word, lastName = everything else (handles "Le Pen", "de Saint-Just")
   const firstName = parts[0];
-  const lastName = parts[parts.length - 1];
-  const textLower = text.toLowerCase();
+  const lastName = parts.slice(1).join(" ");
+
+  // Skip names too short to match reliably
+  if (lastName.length < MIN_LASTNAME_LENGTH) return false;
 
   // Best case: full name appears together
-  if (textLower.includes(fullName.toLowerCase())) return true;
+  const fullNamePattern = new RegExp(wb(escapeRegex(fullName)), "i");
+  if (fullNamePattern.test(text)) return true;
 
-  // Both firstName and lastName appear independently
-  if (textLower.includes(firstName) && textLower.includes(lastName)) return true;
-
-  // lastName preceded by a legal title (case-insensitive on original text)
-  const escapedLastName = lastName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  // lastName preceded by a legal title — strong signal
   const titlePattern = new RegExp(
-    `(?:M\\.|Mme|Mr|Sieur|Dame|Prévenu[e]?|Condamné[e]?|Appelant[e]?|Demandeur|Défendeur)\\s+${escapedLastName}`,
+    `(?:M\\.|Mme|Mr|Sieur|Dame|Prévenu[e]?|Condamné[e]?|Appelant[e]?|Demandeur(?:esse)?|Défendeur(?:esse)?)\\s+${escapeRegex(lastName)}${WB_AFTER}`,
     "i"
   );
   if (titlePattern.test(text)) return true;
+
+  // Both firstName and lastName with word boundaries AND proximity
+  const firstRe = new RegExp(wb(escapeRegex(firstName)), "gi");
+  const lastRe = new RegExp(wb(escapeRegex(lastName)), "gi");
+
+  const firstPositions: number[] = [];
+  const lastPositions: number[] = [];
+
+  let match;
+  while ((match = firstRe.exec(text)) !== null) firstPositions.push(match.index);
+  while ((match = lastRe.exec(text)) !== null) lastPositions.push(match.index);
+
+  if (firstPositions.length === 0 || lastPositions.length === 0) return false;
+
+  // Check if any pair of firstName/lastName occurrence is close together
+  for (const fp of firstPositions) {
+    for (const lp of lastPositions) {
+      if (Math.abs(fp - lp) <= NAME_PROXIMITY_CHARS) return true;
+    }
+  }
 
   return false;
 }

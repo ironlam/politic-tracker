@@ -37,11 +37,7 @@ export async function GET() {
       const a = top[i];
       const b = top[j];
       // Different parties, neither already used
-      if (
-        a.currentPartyId !== b.currentPartyId &&
-        !used.has(a.slug) &&
-        !used.has(b.slug)
-      ) {
+      if (a.currentPartyId !== b.currentPartyId && !used.has(a.slug) && !used.has(b.slug)) {
         pairs.push({
           leftSlug: a.slug,
           leftName: a.fullName,

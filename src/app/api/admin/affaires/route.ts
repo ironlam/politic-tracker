@@ -3,7 +3,12 @@ import { db } from "@/lib/db";
 import { generateSlug } from "@/lib/utils";
 import { isAuthenticated } from "@/lib/auth";
 import { invalidateEntity } from "@/lib/cache";
-import type { AffairStatus, AffairCategory, SourceType } from "@/generated/prisma";
+import type {
+  AffairStatus,
+  AffairCategory,
+  PublicationStatus,
+  SourceType,
+} from "@/generated/prisma";
 
 interface SourceInput {
   url: string;
@@ -43,21 +48,65 @@ interface AffairInput {
   sources: SourceInput[];
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   const authenticated = await isAuthenticated();
   if (!authenticated) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   }
 
-  const affairs = await db.affair.findMany({
-    orderBy: { createdAt: "desc" },
-    include: {
-      politician: { select: { id: true, fullName: true, slug: true } },
-      sources: true,
+  const { searchParams } = new URL(request.url);
+  const pubStatus = searchParams.get("publicationStatus") as PublicationStatus | null;
+  const category = searchParams.get("category") as AffairCategory | null;
+  const status = searchParams.get("status") as AffairStatus | null;
+  const search = searchParams.get("search");
+  const hasEcli = searchParams.get("hasEcli");
+  const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
+  const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") || "50", 10)));
+  const skip = (page - 1) * limit;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const where: any = {};
+  if (pubStatus) where.publicationStatus = pubStatus;
+  if (category) where.category = category;
+  if (status) where.status = status;
+  if (hasEcli === "true") where.ecli = { not: null };
+  if (hasEcli === "false") where.ecli = null;
+  if (search) {
+    where.OR = [
+      { title: { contains: search, mode: "insensitive" } },
+      { politician: { fullName: { contains: search, mode: "insensitive" } } },
+    ];
+  }
+
+  const [affairs, total, countDraft, countPublished, countRejected] = await Promise.all([
+    db.affair.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      skip,
+      take: limit,
+      include: {
+        politician: {
+          select: { id: true, fullName: true, slug: true, photoUrl: true },
+        },
+        sources: { select: { id: true, sourceType: true } },
+      },
+    }),
+    db.affair.count({ where }),
+    db.affair.count({ where: { publicationStatus: "DRAFT" } }),
+    db.affair.count({ where: { publicationStatus: "PUBLISHED" } }),
+    db.affair.count({ where: { publicationStatus: "REJECTED" } }),
+  ]);
+
+  return NextResponse.json({
+    data: affairs,
+    pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    counts: {
+      all: countDraft + countPublished + countRejected,
+      DRAFT: countDraft,
+      PUBLISHED: countPublished,
+      REJECTED: countRejected,
     },
   });
-
-  return NextResponse.json(affairs);
 }
 
 export async function POST(request: NextRequest) {

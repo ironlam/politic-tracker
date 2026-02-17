@@ -63,6 +63,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
           select: { shortName: true, name: true, color: true },
         },
         affairs: {
+          where: { publicationStatus: "PUBLISHED" },
           select: {
             id: true,
             slug: true,

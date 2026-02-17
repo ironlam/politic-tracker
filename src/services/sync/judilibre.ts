@@ -310,6 +310,7 @@ async function createAffairFromJudilibre(
         description: decision.summary || `Décision de la Cour de cassation : ${decision.solution}.`,
         status,
         category,
+        publicationStatus: "DRAFT",
         verdictDate: new Date(decision.decision_date),
         ecli: decision.ecli || null,
         pourvoiNumber: decision.number || null,

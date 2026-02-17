@@ -69,6 +69,7 @@ export async function GET(request: NextRequest) {
   const skip = (page - 1) * limit;
 
   const where = {
+    publicationStatus: "PUBLISHED" as const,
     ...(status && { status: status as AffairStatus }),
     ...(category && { category: category as AffairCategory }),
   };

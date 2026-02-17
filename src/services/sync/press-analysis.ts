@@ -203,6 +203,16 @@ export async function syncPressAnalysis(
           );
         }
 
+        // Skip politicians only mentioned but not involved in the affair
+        if (detected.involvement === "MENTIONED_ONLY") {
+          if (verbose) {
+            console.log(
+              `  - ${detected.politicianName} simplement mentionné, pas impliqué → ignoré`
+            );
+          }
+          continue;
+        }
+
         // Resolve politician name to ID
         const politicianId = resolvePolitician(detected.politicianName, politicianIndex);
 

@@ -1,12 +1,8 @@
 import { cookies } from "next/headers";
-import { timingSafeEqual } from "crypto";
+import { timingSafeEqual, createHmac } from "crypto";
 
 const ADMIN_COOKIE_NAME = "admin_session";
 const SESSION_DURATION = 60 * 60 * 24 * 7; // 7 days in seconds
-
-// In-memory session store
-// Note: in serverless (Vercel), this resets on cold start — admin must re-login. Acceptable for MVP.
-const activeSessions = new Map<string, { createdAt: number }>();
 
 /**
  * Simple admin authentication using ADMIN_PASSWORD env var
@@ -26,15 +22,46 @@ export async function verifyPassword(password: string): Promise<boolean> {
 }
 
 /**
- * Create admin session with tracked token
+ * Create a signed session token (stateless — no server-side store needed).
+ * Format: "timestamp.hmac_signature"
+ * The HMAC key is ADMIN_PASSWORD, so only someone who knows the password can forge a token.
+ */
+function signToken(timestamp: number): string {
+  const secret = process.env.ADMIN_PASSWORD || "";
+  const sig = createHmac("sha256", secret).update(String(timestamp)).digest("hex");
+  return `${timestamp}.${sig}`;
+}
+
+function verifyToken(token: string): boolean {
+  const secret = process.env.ADMIN_PASSWORD;
+  if (!secret) return false;
+
+  const dotIndex = token.indexOf(".");
+  if (dotIndex === -1) return false;
+
+  const timestamp = token.substring(0, dotIndex);
+  const signature = token.substring(dotIndex + 1);
+
+  // Verify HMAC signature
+  const expected = createHmac("sha256", secret).update(timestamp).digest("hex");
+  if (expected.length !== signature.length) return false;
+  if (!timingSafeEqual(Buffer.from(expected), Buffer.from(signature))) return false;
+
+  // Check expiry
+  const created = parseInt(timestamp, 10);
+  if (isNaN(created)) return false;
+  const elapsed = (Date.now() - created) / 1000;
+  return elapsed < SESSION_DURATION;
+}
+
+/**
+ * Create admin session with HMAC-signed cookie (stateless)
  */
 export async function createSession(): Promise<void> {
   const cookieStore = await cookies();
-  const sessionToken = generateSessionToken();
+  const token = signToken(Date.now());
 
-  activeSessions.set(sessionToken, { createdAt: Date.now() });
-
-  cookieStore.set(ADMIN_COOKIE_NAME, sessionToken, {
+  cookieStore.set(ADMIN_COOKIE_NAME, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
@@ -44,13 +71,13 @@ export async function createSession(): Promise<void> {
 }
 
 /**
- * Check if user is authenticated (validates token against session store)
+ * Check if user is authenticated (verifies HMAC signature + expiry)
  */
 export async function isAuthenticated(): Promise<boolean> {
   const cookieStore = await cookies();
   const session = cookieStore.get(ADMIN_COOKIE_NAME);
   if (!session?.value) return false;
-  return activeSessions.has(session.value);
+  return verifyToken(session.value);
 }
 
 /**
@@ -58,18 +85,5 @@ export async function isAuthenticated(): Promise<boolean> {
  */
 export async function destroySession(): Promise<void> {
   const cookieStore = await cookies();
-  const session = cookieStore.get(ADMIN_COOKIE_NAME);
-  if (session?.value) {
-    activeSessions.delete(session.value);
-  }
   cookieStore.delete(ADMIN_COOKIE_NAME);
-}
-
-/**
- * Generate a random session token
- */
-function generateSessionToken(): string {
-  const array = new Uint8Array(32);
-  crypto.getRandomValues(array);
-  return Array.from(array, (byte) => byte.toString(16).padStart(2, "0")).join("");
 }

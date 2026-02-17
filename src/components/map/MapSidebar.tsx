@@ -5,11 +5,11 @@ import { X, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { DepartmentStats } from "@/app/api/stats/departments/route";
+import type { MapDepartmentData } from "@/app/api/carte/route";
 import { getDepartmentSlug } from "@/config/departments";
 
 interface MapSidebarProps {
-  department: DepartmentStats;
+  department: MapDepartmentData;
   onClose: () => void;
 }
 
@@ -29,42 +29,28 @@ export function MapSidebar({ department, onClose }: MapSidebarProps) {
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-2 text-center">
+        <div className="grid grid-cols-2 gap-2 text-center">
           <div className="bg-muted rounded-lg p-2">
-            <div className="text-2xl font-bold">{department.totalElus}</div>
-            <div className="text-xs text-muted-foreground">Total</div>
+            <div className="text-2xl font-bold">{department.totalSeats}</div>
+            <div className="text-xs text-muted-foreground">Sièges</div>
           </div>
-          <div className="bg-muted rounded-lg p-2">
-            <div className="text-2xl font-bold">{department.deputes}</div>
-            <div className="text-xs text-muted-foreground">Députés</div>
-          </div>
-          <div className="bg-muted rounded-lg p-2">
-            <div className="text-2xl font-bold">{department.senateurs}</div>
-            <div className="text-xs text-muted-foreground">Sénateurs</div>
-          </div>
+          {department.winningParty && (
+            <div className="bg-muted rounded-lg p-2 flex flex-col items-center justify-center">
+              <div className="flex items-center gap-1.5">
+                <div
+                  className="w-3 h-3 rounded-full"
+                  style={{ backgroundColor: department.winningParty.color || "#888" }}
+                />
+                <span className="text-sm font-bold" title={department.winningParty.name}>
+                  {department.winningParty.shortName}
+                </span>
+              </div>
+              <div className="text-xs text-muted-foreground">Parti gagnant</div>
+            </div>
+          )}
         </div>
 
-        {/* Dominant party */}
-        {department.dominantParty && (
-          <div>
-            <h4 className="text-sm font-medium mb-2">Parti dominant</h4>
-            <div className="flex items-center gap-2">
-              <div
-                className="w-4 h-4 rounded-full"
-                style={{ backgroundColor: department.dominantParty.color || "#888" }}
-              />
-              <span className="font-medium" title={department.dominantParty.name}>
-                {department.dominantParty.shortName}
-              </span>
-              <span className="text-muted-foreground text-sm">
-                ({department.dominantParty.count} élu{department.dominantParty.count > 1 ? "s" : ""}
-                )
-              </span>
-            </div>
-          </div>
-        )}
-
-        {/* All parties */}
+        {/* All parties sorted by seats */}
         {department.parties.length > 0 && (
           <div>
             <h4 className="text-sm font-medium mb-2">Répartition par parti</h4>
@@ -74,13 +60,13 @@ export function MapSidebar({ department, onClose }: MapSidebarProps) {
                   key={party.id}
                   variant="outline"
                   className="text-xs"
-                  title={party.name}
+                  title={`${party.name} — ${party.totalVotes.toLocaleString("fr-FR")} votes`}
                   style={{
                     borderColor: party.color || undefined,
                     backgroundColor: party.color ? `${party.color}20` : undefined,
                   }}
                 >
-                  {party.shortName}: {party.count}
+                  {party.shortName}: {party.seats} siège{party.seats > 1 ? "s" : ""}
                 </Badge>
               ))}
             </div>
@@ -90,7 +76,7 @@ export function MapSidebar({ department, onClose }: MapSidebarProps) {
         {/* Action button */}
         <Button asChild className="w-full">
           <Link href={`/departements/${deptSlug}`}>
-            Voir tous les élus
+            Voir le département
             <ExternalLink className="ml-2 h-4 w-4" />
           </Link>
         </Button>

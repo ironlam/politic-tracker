@@ -39,6 +39,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // Get all affairs with slugs
   const affairs = await db.affair.findMany({
+    where: { publicationStatus: "PUBLISHED" },
     select: { slug: true, updatedAt: true },
     orderBy: { updatedAt: "desc" },
   });

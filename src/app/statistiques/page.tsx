@@ -100,7 +100,7 @@ async function getAffairsByParty() {
     where: {
       politicians: {
         some: {
-          affairs: { some: {} },
+          affairs: { some: { publicationStatus: "PUBLISHED" } },
         },
       },
     },
@@ -113,12 +113,12 @@ async function getAffairsByParty() {
       _count: {
         select: {
           politicians: {
-            where: { affairs: { some: {} } },
+            where: { affairs: { some: { publicationStatus: "PUBLISHED" } } },
           },
         },
       },
       politicians: {
-        where: { affairs: { some: {} } },
+        where: { affairs: { some: { publicationStatus: "PUBLISHED" } } },
         select: {
           _count: { select: { affairs: true } },
         },
@@ -142,7 +142,7 @@ async function getAffairsByParty() {
 
 async function getTopPoliticiansWithAffairs() {
   const politicians = await db.politician.findMany({
-    where: { affairs: { some: {} } },
+    where: { affairs: { some: { publicationStatus: "PUBLISHED" } } },
     select: {
       id: true,
       slug: true,
@@ -153,6 +153,7 @@ async function getTopPoliticiansWithAffairs() {
       _count: { select: { affairs: true } },
       affairs: {
         where: {
+          publicationStatus: "PUBLISHED",
           status: {
             in: ["CONDAMNATION_PREMIERE_INSTANCE", "CONDAMNATION_DEFINITIVE"],
           },

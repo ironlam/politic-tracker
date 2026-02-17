@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import { cn } from "@/lib/utils";
 
 interface PoliticianAvatarProps {
   photoUrl: string | null;
@@ -30,6 +31,7 @@ export function PoliticianAvatar({
   priority = false,
 }: PoliticianAvatarProps) {
   const [imageError, setImageError] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
 
   // Derive names - support both firstName/lastName and fullName
   const derivedFirstName = firstName || fullName?.split(" ")[0] || "";
@@ -44,7 +46,11 @@ export function PoliticianAvatar({
       <div
         role="img"
         aria-label={`Avatar de ${displayName}`}
-        className={`rounded-full bg-gray-200 flex items-center justify-center font-semibold text-gray-600 flex-shrink-0 ${sizeClass} ${className}`}
+        className={cn(
+          "rounded-full bg-gray-200 flex items-center justify-center font-semibold text-gray-600 flex-shrink-0",
+          sizeClass,
+          className
+        )}
       >
         <span aria-hidden="true">{initials}</span>
       </div>
@@ -53,18 +59,24 @@ export function PoliticianAvatar({
 
   return (
     <div
-      className={`relative rounded-full overflow-hidden flex-shrink-0 ${sizeClass} ${className}`}
+      className={cn("relative rounded-full overflow-hidden flex-shrink-0", sizeClass, className)}
     >
+      {/* Skeleton placeholder while image loads */}
+      {!imageLoaded && <div className="absolute inset-0 animate-pulse rounded-full bg-muted" />}
       <Image
         src={photoUrl}
         alt={displayName}
         fill
         sizes={size === "sm" ? "40px" : size === "md" ? "56px" : size === "lg" ? "96px" : "128px"}
-        className="object-cover"
+        className={cn(
+          "object-cover transition-opacity duration-200",
+          imageLoaded ? "opacity-100" : "opacity-0"
+        )}
         onError={() => setImageError(true)}
+        onLoad={() => setImageLoaded(true)}
         loading={priority ? "eager" : "lazy"}
         priority={priority}
-        unoptimized // External images from AN
+        unoptimized
       />
     </div>
   );

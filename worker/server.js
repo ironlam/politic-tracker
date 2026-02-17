@@ -15,10 +15,19 @@
 const http = require("http");
 const { spawn } = require("child_process");
 const { PrismaClient } = require("../src/generated/prisma");
+const { PrismaPg } = require("@prisma/adapter-pg");
+const { Pool } = require("pg");
 
 const PORT = process.env.PORT || 3000;
 const SECRET = process.env.SYNC_WORKER_SECRET;
-const db = new PrismaClient();
+
+// Prisma 7 requires the pg adapter to be passed explicitly
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false },
+});
+const adapter = new PrismaPg(pool);
+const db = new PrismaClient({ adapter });
 
 // Track running processes
 const running = new Map();

@@ -17,7 +17,6 @@ const SEGMENT_LABELS: Record<string, string> = {
   parametres: "Paramètres",
   edit: "Modifier",
   nouveau: "Nouveau",
-  verification: "Vérification",
 };
 
 interface Crumb {

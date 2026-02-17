@@ -451,6 +451,7 @@ async function createAffairFromPress(
         description: detected.description,
         status: detected.status as AffairStatus,
         category: detected.category as AffairCategory,
+        publicationStatus: "DRAFT",
         factsDate: detected.factsDate ? new Date(detected.factsDate) : null,
         court: detected.court,
         verifiedAt: null,

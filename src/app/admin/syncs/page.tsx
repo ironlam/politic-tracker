@@ -341,6 +341,7 @@ export default function SyncsPage() {
                       onClick={() => toggleCategory(cat.name)}
                       className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-muted/30 transition-colors rounded-t-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
                       aria-expanded={!isCollapsed}
+                      aria-label={`${isCollapsed ? "Afficher" : "Masquer"} ${cat.name}`}
                     >
                       <span className="text-sm font-medium">{cat.name}</span>
                       <span className="flex items-center gap-2">

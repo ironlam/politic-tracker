@@ -45,6 +45,7 @@ async function getAffairs(
   }
 
   const where = {
+    publicationStatus: "PUBLISHED" as const,
     ...(status && { status: status as AffairStatus }),
     ...(categoryFilter && { category: { in: categoryFilter } }),
   };
@@ -82,6 +83,7 @@ async function getAffairs(
 async function getSuperCategoryCounts() {
   const categoryCounts = await db.affair.groupBy({
     by: ["category"],
+    where: { publicationStatus: "PUBLISHED" },
     _count: { category: true },
   });
 
@@ -107,6 +109,7 @@ async function getSuperCategoryCounts() {
 async function getStatusCounts() {
   const statusCounts = await db.affair.groupBy({
     by: ["status"],
+    where: { publicationStatus: "PUBLISHED" },
     _count: { status: true },
   });
 

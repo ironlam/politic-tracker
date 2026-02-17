@@ -236,7 +236,6 @@ export default async function PartyPage({ params }: PageProps) {
                   <PoliticalPositionBadge
                     position={party.politicalPosition}
                     source={party.politicalPositionSource}
-                    sourceUrl={party.politicalPositionSourceUrl}
                   />
                 )}
                 {party.dissolvedDate && (
@@ -575,11 +574,7 @@ export default async function PartyPage({ params }: PageProps) {
                   <div>
                     <span className="text-muted-foreground block mb-1">Position politique</span>
                     <div className="flex items-center gap-2">
-                      <PoliticalPositionBadge
-                        position={party.politicalPosition}
-                        source={party.politicalPositionSource}
-                        sourceUrl={party.politicalPositionSourceUrl}
-                      />
+                      <PoliticalPositionBadge position={party.politicalPosition} />
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">
                       Source : {party.politicalPositionSource}
@@ -591,7 +586,7 @@ export default async function PartyPage({ params }: PageProps) {
                         rel="noopener noreferrer"
                         className="text-xs text-blue-600 hover:underline"
                       >
-                        Voir la décision
+                        Voir la source
                       </a>
                     )}
                   </div>

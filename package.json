@@ -152,6 +152,7 @@
     "swagger-ui-react": "^5.31.0",
     "tailwind-merge": "^3.4.0",
     "voyageai": "^0.1.0",
+    "dotenv": "^17.2.3",
     "zod": "^4.3.5"
   },
   "devDependencies": {
@@ -170,7 +171,6 @@
     "@types/react-simple-maps": "^3.0.6",
     "@types/swagger-jsdoc": "^6.0.4",
     "@vitejs/plugin-react": "^5.1.2",
-    "dotenv": "^17.2.3",
     "eslint": "^9",
     "eslint-config-next": "^16.1.4",
     "eslint-config-prettier": "^10.1.8",

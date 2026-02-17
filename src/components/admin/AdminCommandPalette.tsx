@@ -6,6 +6,7 @@ import { Search, Loader2, Users, Building2, FileText } from "lucide-react";
 
 interface SearchResults {
   politicians: Array<{
+    id: string;
     slug: string;
     fullName: string;
     photoUrl: string | null;
@@ -42,7 +43,7 @@ function buildAdminItems(results: SearchResults): NavigableItem[] {
 
   for (const p of results.politicians) {
     items.push({
-      href: `/admin/politiques/${p.slug}`,
+      href: `/admin/politiques/${p.id}`,
       label: p.fullName,
       category: "Politiques",
       icon: Users,

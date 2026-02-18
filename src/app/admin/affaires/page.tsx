@@ -336,7 +336,7 @@ export default function AdminAffairsPage() {
                       </td>
                       <td className="px-4 py-3">
                         <Link
-                          href={`/admin/politiques/${affair.politician.slug}`}
+                          href={`/admin/politiques/${affair.politician.id}`}
                           className="flex items-center gap-2 hover:text-foreground"
                         >
                           {affair.politician.photoUrl ? (

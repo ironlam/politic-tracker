@@ -223,7 +223,22 @@ RÈGLES STRICTES :
 6. En cas de doute sur le statut → choisir la valeur MOINS GRAVE
 7. Les excerpts doivent être des CITATIONS EXACTES de l'article (mot pour mot)
 8. Si l'article ne contient pas d'affaire judiciaire, retourner is_affair_related: false avec un résumé simple
-9. IMPLICATION RÉELLE : pour chaque politicien, évaluer son rôle RÉEL dans l'affaire. Un politicien simplement MENTIONNÉ dans l'article (réaction politique, contexte, autre sujet) n'est PAS impliqué → involvement: MENTIONED_ONLY. Seuls les politiciens MIS EN CAUSE, poursuivis, condamnés ou directement visés sont DIRECT. Les témoins et victimes sont INDIRECT.`;
+
+RÈGLE CRITIQUE — IMPLICATION DIRECTE :
+9. Un politicien doit être DIRECTEMENT MIS EN CAUSE (mis en examen, poursuivi, condamné, placé en garde à vue) pour avoir involvement: "DIRECT". Un politicien simplement MENTIONNÉ dans l'article (réaction politique, commentaire, contexte, autre sujet) → involvement: MENTIONED_ONLY
+10. Si l'article parle d'une affaire où le politicien est VICTIME, TÉMOIN ou simple commentateur → involvement: INDIRECT ou MENTIONED_ONLY
+11. Si un article mentionne un politicien dans un contexte politique (débat, vote, déclaration) et qu'une affaire judiciaire est mentionnée séparément dans le même article, NE PAS attribuer l'affaire au politicien
+
+SCORE DE CONFIANCE (confidence_score) :
+- 90-100 : le politicien est NOMMÉMENT cité comme mis en cause/condamné/poursuivi dans l'article
+- 70-89 : le politicien est fortement lié à l'affaire mais le rôle n'est pas 100% explicite
+- 50-69 : mention ambiguë, le lien entre le politicien et l'affaire n'est pas clair
+- 0-49 : le politicien est probablement juste mentionné, pas impliqué
+
+EXEMPLES DE FAUX POSITIFS À ÉVITER :
+- Un article sur "la mort de X" qui mentionne la réaction d'un politicien → le politicien n'est PAS impliqué dans la mort
+- Un article sur une affaire judiciaire qui cite un politicien comme source ou commentateur → MENTIONED_ONLY
+- Un article politique mentionnant en passant un procès en cours d'un autre politicien → seul le politicien poursuivi est DIRECT`;
 
 // ============================================
 // MAIN ANALYSIS FUNCTION
@@ -297,6 +312,7 @@ export async function analyzeArticle(input: ArticleAnalysisInput): Promise<Artic
       charges: Array.isArray(a.charges) ? a.charges.map(String) : [],
       excerpts: Array.isArray(a.excerpts) ? a.excerpts.map(String).slice(0, 3) : [],
       isNewRevelation: Boolean(a.is_new_revelation),
+      confidenceScore: typeof a.confidence_score === "number" ? a.confidence_score : 50,
     };
   });
 

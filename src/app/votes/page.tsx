@@ -14,6 +14,8 @@ import {
 } from "@/config/labels";
 import type { VotingResult, Chamber, ThemeCategory } from "@/types";
 
+export const revalidate = 300; // 5 minutes — CDN edge cache with ISR
+
 export const metadata: Metadata = {
   title: "Votes parlementaires",
   description:
@@ -31,7 +33,8 @@ interface PageProps {
   }>;
 }
 
-async function getScrutins(params: {
+// Core query logic shared by cached and uncached paths
+async function queryScrutins(params: {
   page: number;
   limit: number;
   result?: VotingResult;
@@ -40,9 +43,6 @@ async function getScrutins(params: {
   theme?: ThemeCategory;
   search?: string;
 }) {
-  // No "use cache" here — free-text `search` param creates unbounded key space.
-  // Bounded-param functions (getLegislatures, getChambers, getThemeCounts) keep their cache.
-
   const { page, limit, result, legislature, chamber, theme, search } = params;
   const skip = (page - 1) * limit;
 
@@ -82,6 +82,37 @@ async function getScrutins(params: {
       {} as Record<string, number>
     ),
   };
+}
+
+// Cached path — bounded key space (enums + page, no free-text search)
+async function getScrutinsFiltered(params: {
+  page: number;
+  limit: number;
+  result?: VotingResult;
+  legislature?: number;
+  chamber?: Chamber;
+  theme?: ThemeCategory;
+}) {
+  "use cache";
+  cacheTag("votes");
+  cacheLife("minutes");
+  return queryScrutins(params);
+}
+
+// Router: use cached path when no search, uncached when searching
+async function getScrutins(params: {
+  page: number;
+  limit: number;
+  result?: VotingResult;
+  legislature?: number;
+  chamber?: Chamber;
+  theme?: ThemeCategory;
+  search?: string;
+}) {
+  if (params.search) {
+    return queryScrutins(params);
+  }
+  return getScrutinsFiltered(params);
 }
 
 async function getLegislatures() {

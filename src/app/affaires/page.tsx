@@ -19,6 +19,8 @@ import {
 } from "@/config/labels";
 import type { AffairStatus, AffairCategory } from "@/types";
 
+export const revalidate = 300; // 5 minutes — CDN edge cache with ISR
+
 export const metadata: Metadata = {
   title: "Affaires judiciaires",
   description: "Liste des affaires judiciaires impliquant des représentants politiques français",

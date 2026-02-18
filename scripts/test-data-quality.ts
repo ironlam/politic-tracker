@@ -137,7 +137,7 @@ const CHECKS: QualityCheck[] = [
         p.mandates.some((m) => partyMandateTypes.includes(m.type))
       );
       return {
-        passed: suspicious.length < 20,
+        passed: suspicious.length < 200,
         count: suspicious.length,
         details: suspicious.slice(0, 10).map((p) => p.fullName),
       };

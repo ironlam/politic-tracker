@@ -547,6 +547,41 @@ export async function syncSenators(): Promise<SenatSyncResult> {
       else result.errors.push(`${sen.prenom} ${sen.nom}`);
     }
 
+    // 4. Close mandates for senators no longer in the API
+    const apiMatricules = new Set(senators.map((s) => s.matricule));
+
+    const currentDbMandates = await db.mandate.findMany({
+      where: { type: MandateType.SENATEUR, isCurrent: true },
+      include: {
+        politician: {
+          select: {
+            id: true,
+            fullName: true,
+            externalIds: {
+              where: { source: DataSource.SENAT },
+              select: { externalId: true },
+            },
+          },
+        },
+      },
+    });
+
+    let mandatesClosed = 0;
+    for (const mandate of currentDbMandates) {
+      const senatId = mandate.politician.externalIds[0]?.externalId;
+      if (!senatId || !apiMatricules.has(senatId)) {
+        await db.mandate.update({
+          where: { id: mandate.id },
+          data: { isCurrent: false, endDate: new Date() },
+        });
+        mandatesClosed++;
+        console.log(`  Mandat fermé: ${mandate.politician.fullName}`);
+      }
+    }
+    if (mandatesClosed > 0) {
+      console.log(`${mandatesClosed} mandats sénatoriaux fermés (absents de l'API)`);
+    }
+
     result.success = true;
     console.log("Sync completed:", result);
   } catch (error) {

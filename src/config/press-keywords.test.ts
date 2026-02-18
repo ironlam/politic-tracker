@@ -52,4 +52,29 @@ describe("classifyArticleTier", () => {
   it("should handle null description", () => {
     expect(classifyArticleTier("Visite diplomatique", null)).toBe("TIER_2");
   });
+
+  // False-positive resistance — single-word keywords must not match substrings
+  it("should not match 'violation' for 'viol' keyword", () => {
+    expect(classifyArticleTier("Violation des droits de l'homme", null)).toBe("TIER_2");
+  });
+
+  it("should not match 'processus' for 'proces' keyword", () => {
+    expect(classifyArticleTier("Le processus législatif continue", null)).toBe("TIER_2");
+  });
+
+  it("should not match 'préjugé' for 'juge' keyword", () => {
+    expect(classifyArticleTier("Sans préjugé de la décision finale", null)).toBe("TIER_2");
+  });
+
+  it("should not match 'relaxation' for 'relaxe' keyword", () => {
+    expect(classifyArticleTier("Moment de relaxation au Sénat", null)).toBe("TIER_2");
+  });
+
+  it("should still match 'viol' as a standalone word", () => {
+    expect(classifyArticleTier("Accusé de viol par son assistante", null)).toBe("TIER_1");
+  });
+
+  it("should still match 'procès' as a standalone word", () => {
+    expect(classifyArticleTier("Le procès de l'ancien ministre débute", null)).toBe("TIER_1");
+  });
 });

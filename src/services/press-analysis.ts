@@ -1,8 +1,8 @@
 /**
  * Press Article AI Analysis Service
  *
- * Uses Claude Haiku via tool_use to analyze press articles for judicial affairs.
- * Extracts structured data: affair detection, category, status, key excerpts.
+ * Two-tier model: Sonnet 4.5 for judicial articles (TIER_1), Haiku 4.5 for others (TIER_2).
+ * Uses Claude tool_use to extract structured data: affair detection, category, status, key excerpts.
  *
  * IMPORTANT: Legal safety is critical.
  * - Presumption of innocence for all mise en examen

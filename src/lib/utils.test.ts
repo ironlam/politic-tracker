@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { cn, generateSlug, formatDate, formatCurrency } from "./utils";
+import { cn, generateSlug, formatDate, formatCurrency, normalizeImageUrl } from "./utils";
 
 describe("cn", () => {
   it("should merge class names", () => {
@@ -16,6 +16,28 @@ describe("cn", () => {
 
   it("should handle empty inputs", () => {
     expect(cn()).toBe("");
+  });
+});
+
+describe("normalizeImageUrl", () => {
+  it("should return null for null input", () => {
+    expect(normalizeImageUrl(null)).toBeNull();
+  });
+
+  it("should convert http:// to https://", () => {
+    expect(normalizeImageUrl("http://commons.wikimedia.org/photo.jpg")).toBe(
+      "https://commons.wikimedia.org/photo.jpg"
+    );
+  });
+
+  it("should leave https:// URLs unchanged", () => {
+    expect(normalizeImageUrl("https://example.com/photo.jpg")).toBe(
+      "https://example.com/photo.jpg"
+    );
+  });
+
+  it("should leave relative URLs unchanged", () => {
+    expect(normalizeImageUrl("/images/photo.jpg")).toBe("/images/photo.jpg");
   });
 });
 

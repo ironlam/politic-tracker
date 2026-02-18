@@ -96,6 +96,7 @@ async function queryPoliticians(
       affairs: {
         some: {
           status: { in: CONVICTION_STATUSES },
+          publicationStatus: "PUBLISHED",
         },
       },
     });
@@ -150,10 +151,10 @@ async function queryPoliticians(
       include: {
         currentParty: true,
         _count: {
-          select: { affairs: true },
+          select: { affairs: { where: { publicationStatus: "PUBLISHED" } } },
         },
         affairs: {
-          where: { status: { in: CONVICTION_STATUSES } },
+          where: { status: { in: CONVICTION_STATUSES }, publicationStatus: "PUBLISHED" },
           select: { id: true },
           take: 1,
         },
@@ -330,7 +331,7 @@ async function getFilterCounts() {
       where: {
         publicationStatus: "PUBLISHED",
         affairs: {
-          some: { status: { in: CONVICTION_STATUSES } },
+          some: { status: { in: CONVICTION_STATUSES }, publicationStatus: "PUBLISHED" },
         },
       },
     }),

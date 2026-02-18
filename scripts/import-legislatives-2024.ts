@@ -17,6 +17,8 @@ import { db } from "../src/lib/db";
 import { parse } from "csv-parse/sync";
 import { NUANCE_POLITIQUE_MAPPING } from "../src/config/labels";
 import type { ElectionStatus } from "../src/generated/prisma";
+import { HTTPClient } from "../src/lib/api/http-client";
+import { DATA_GOUV_RATE_LIMIT_MS } from "../src/config/rate-limits";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -25,6 +27,11 @@ import type { ElectionStatus } from "../src/generated/prisma";
 const CSV_URL = "https://www.data.gouv.fr/api/1/datasets/r/41ed46cd-77c2-4ecc-b8eb-374aa953ca39";
 
 const ELECTION_SLUG = "legislatives-2024";
+
+const dataGouvClient = new HTTPClient({
+  rateLimitMs: DATA_GOUV_RATE_LIMIT_MS,
+  sourceName: "data.gouv.fr",
+});
 
 // Maximum number of candidates per row in the wide-format CSV
 const MAX_CANDIDATES = 10;
@@ -67,13 +74,7 @@ interface CirconscriptionRow {
 async function fetchCSV(): Promise<string> {
   console.log(`Fetching CSV from: ${CSV_URL}`);
 
-  // Follow redirect (data.gouv.fr API redirects to static URL)
-  const response = await fetch(CSV_URL, { redirect: "follow" });
-  if (!response.ok) {
-    throw new Error(`Failed to fetch CSV: ${response.status} ${response.statusText}`);
-  }
-
-  const text = await response.text();
+  const { data: text } = await dataGouvClient.getText(CSV_URL);
   console.log(`Downloaded ${(text.length / 1024).toFixed(0)} KB`);
   return text;
 }

@@ -1,5 +1,6 @@
 import { Metadata } from "next";
 import Link from "next/link";
+import { cacheTag, cacheLife } from "next/cache";
 import { db } from "@/lib/db";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +13,10 @@ export const metadata: Metadata = {
 };
 
 async function getDepartmentStats() {
+  "use cache";
+  cacheTag("departments", "politicians");
+  cacheLife("minutes");
+
   // Get counts of deputies per department
   const mandates = await db.mandate.findMany({
     where: {

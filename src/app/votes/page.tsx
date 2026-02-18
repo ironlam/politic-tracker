@@ -1,5 +1,6 @@
 import { Metadata } from "next";
 import Link from "next/link";
+import { cacheTag, cacheLife } from "next/cache";
 import { db } from "@/lib/db";
 import { VoteCard } from "@/components/votes";
 import { Badge } from "@/components/ui/badge";
@@ -39,6 +40,10 @@ async function getScrutins(params: {
   theme?: ThemeCategory;
   search?: string;
 }) {
+  "use cache";
+  cacheTag("votes");
+  cacheLife("minutes");
+
   const { page, limit, result, legislature, chamber, theme, search } = params;
   const skip = (page - 1) * limit;
 
@@ -81,6 +86,10 @@ async function getScrutins(params: {
 }
 
 async function getLegislatures() {
+  "use cache";
+  cacheTag("votes");
+  cacheLife("minutes");
+
   return db.scrutin.groupBy({
     by: ["legislature"],
     _count: true,
@@ -89,6 +98,10 @@ async function getLegislatures() {
 }
 
 async function getChambers() {
+  "use cache";
+  cacheTag("votes");
+  cacheLife("minutes");
+
   return db.scrutin.groupBy({
     by: ["chamber"],
     _count: true,
@@ -96,6 +109,10 @@ async function getChambers() {
 }
 
 async function getThemeCounts() {
+  "use cache";
+  cacheTag("votes");
+  cacheLife("minutes");
+
   const counts = await db.scrutin.groupBy({
     by: ["theme"],
     _count: true,

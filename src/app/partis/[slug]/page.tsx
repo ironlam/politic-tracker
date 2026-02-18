@@ -28,7 +28,7 @@ async function getParty(slug: string) {
             take: 1,
           },
           _count: {
-            select: { affairs: true },
+            select: { affairs: { where: { publicationStatus: "PUBLISHED" } } },
           },
         },
       },
@@ -41,6 +41,7 @@ async function getParty(slug: string) {
       },
       // Affairs that happened when politician was in this party
       affairsAtTime: {
+        where: { publicationStatus: "PUBLISHED" },
         include: {
           politician: true,
         },

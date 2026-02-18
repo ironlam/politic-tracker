@@ -50,6 +50,7 @@ async function getPolitician(slug: string) {
         },
       },
       affairs: {
+        where: { publicationStatus: "PUBLISHED" },
         include: {
           sources: true,
           partyAtTime: true,

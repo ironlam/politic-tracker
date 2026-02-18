@@ -11,7 +11,6 @@ on:
 env:
   DATABASE_URL: ${{ secrets.DATABASE_URL }}
   ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-  OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
 jobs:
   daily-sync:

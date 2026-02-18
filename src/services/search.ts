@@ -121,9 +121,9 @@ async function searchWithFTS(
     }
 
     if (hasAffairs === true) {
-      additionalFilters.push({ affairs: { some: {} } });
+      additionalFilters.push({ affairs: { some: { publicationStatus: "PUBLISHED" } } });
     } else if (hasAffairs === false) {
-      additionalFilters.push({ affairs: { none: {} } });
+      additionalFilters.push({ affairs: { none: { publicationStatus: "PUBLISHED" } } });
     }
 
     if (isActive === true) {
@@ -166,7 +166,7 @@ async function searchWithFTS(
         select: { type: true, constituency: true },
         take: 1,
       },
-      _count: { select: { affairs: true } },
+      _count: { select: { affairs: { where: { publicationStatus: "PUBLISHED" } } } },
     },
   });
 
@@ -245,14 +245,14 @@ export async function searchPoliticians(
     });
   }
 
-  // Affairs filter
+  // Affairs filter — only count PUBLISHED affairs
   if (hasAffairs === true) {
     whereConditions.push({
-      affairs: { some: {} },
+      affairs: { some: { publicationStatus: "PUBLISHED" } },
     });
   } else if (hasAffairs === false) {
     whereConditions.push({
-      affairs: { none: {} },
+      affairs: { none: { publicationStatus: "PUBLISHED" } },
     });
   }
 
@@ -414,7 +414,7 @@ export async function getAutocompleteSuggestions(
         select: { type: true, constituency: true },
         take: 1,
       },
-      _count: { select: { affairs: true } },
+      _count: { select: { affairs: { where: { publicationStatus: "PUBLISHED" } } } },
     },
   });
 

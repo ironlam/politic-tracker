@@ -386,7 +386,7 @@ export async function searchDatabaseByKeywords(query: string): Promise<string | 
         },
       }),
       db.party.count(),
-      db.affair.count(),
+      db.affair.count({ where: { publicationStatus: "PUBLISHED" } }),
       db.legislativeDossier.count(),
       db.scrutin.count(),
       db.declaration.count(),

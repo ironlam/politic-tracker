@@ -137,7 +137,7 @@ async function getAffairsByParty() {
       politicians: {
         where: { affairs: { some: { publicationStatus: "PUBLISHED" } } },
         select: {
-          _count: { select: { affairs: true } },
+          _count: { select: { affairs: { where: { publicationStatus: "PUBLISHED" } } } },
         },
       },
     },
@@ -171,7 +171,7 @@ async function getTopPoliticiansWithAffairs() {
       currentParty: {
         select: { name: true, shortName: true, color: true },
       },
-      _count: { select: { affairs: true } },
+      _count: { select: { affairs: { where: { publicationStatus: "PUBLISHED" } } } },
       affairs: {
         where: {
           publicationStatus: "PUBLISHED",

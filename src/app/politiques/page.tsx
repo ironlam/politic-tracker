@@ -14,6 +14,8 @@ import { ExportButton } from "@/components/ui/ExportButton";
 // Minimum members to show a party in filters (avoid cluttering with old/small parties)
 const MIN_PARTY_MEMBERS = 2;
 
+export const revalidate = 300; // 5 minutes — CDN edge cache with ISR
+
 export const metadata: Metadata = {
   title: "Représentants politiques",
   description: "Liste des représentants politiques français - députés, sénateurs, ministres",
@@ -55,7 +57,8 @@ const SORT_CONFIGS: Record<SortOption, unknown> = {
   affairs: [{ affairs: { _count: "desc" } }, { lastName: "asc" }],
 };
 
-async function getPoliticians(
+// Core query logic shared by cached and uncached paths
+async function queryPoliticians(
   search?: string,
   partyId?: string,
   withConviction?: boolean,
@@ -64,9 +67,6 @@ async function getPoliticians(
   sortOption: SortOption = "alpha",
   page = 1
 ) {
-  // No "use cache" here — free-text `search` param creates unbounded key space.
-  // Bounded-param functions (getParties, getFilterCounts) keep their cache.
-
   const limit = 24;
   const skip = (page - 1) * limit;
 
@@ -213,6 +213,81 @@ async function getPoliticians(
     page,
     totalPages: Math.ceil(total / limit),
   };
+}
+
+// Cached path — bounded key space (enums + page, no free-text search)
+async function getPoliticiansFiltered(
+  partyId?: string,
+  withConviction?: boolean,
+  mandateFilter?: MandateFilter,
+  statusFilter?: StatusFilter,
+  sortOption: SortOption = "alpha",
+  page = 1
+) {
+  "use cache";
+  cacheTag("politicians");
+  cacheLife("minutes");
+  return queryPoliticians(
+    undefined,
+    partyId,
+    withConviction,
+    mandateFilter,
+    statusFilter,
+    sortOption,
+    page
+  );
+}
+
+// Uncached path — free-text search creates unbounded key space
+async function searchPoliticians(
+  search: string,
+  partyId?: string,
+  withConviction?: boolean,
+  mandateFilter?: MandateFilter,
+  statusFilter?: StatusFilter,
+  sortOption: SortOption = "alpha",
+  page = 1
+) {
+  return queryPoliticians(
+    search,
+    partyId,
+    withConviction,
+    mandateFilter,
+    statusFilter,
+    sortOption,
+    page
+  );
+}
+
+// Router: use cached path when no search, uncached when searching
+async function getPoliticians(
+  search?: string,
+  partyId?: string,
+  withConviction?: boolean,
+  mandateFilter?: MandateFilter,
+  statusFilter?: StatusFilter,
+  sortOption: SortOption = "alpha",
+  page = 1
+) {
+  if (search) {
+    return searchPoliticians(
+      search,
+      partyId,
+      withConviction,
+      mandateFilter,
+      statusFilter,
+      sortOption,
+      page
+    );
+  }
+  return getPoliticiansFiltered(
+    partyId,
+    withConviction,
+    mandateFilter,
+    statusFilter,
+    sortOption,
+    page
+  );
 }
 
 async function getParties() {

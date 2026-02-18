@@ -64,6 +64,8 @@ model Politician {
   @@index([currentPartyId])
   @@index([fullName])
   @@index([publicationStatus, prominenceScore])
+  @@index([publicationStatus, lastName])     // filter PUBLISHED + alpha sort
+  @@index([publicationStatus, createdAt])    // filter PUBLISHED + recent sort
 }
 
 // External IDs from various data sources - enables multi-source matching
@@ -651,6 +653,7 @@ model Scrutin {
   @@index([legislature])
   @@index([chamber])
   @@index([theme])
+  @@index([result, votingDate])  // result filter + default date sort
 }
 
 model Vote {

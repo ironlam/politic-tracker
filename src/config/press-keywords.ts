@@ -109,10 +109,7 @@ function matchesKeyword(text: string, keyword: string): boolean {
  * Classify an article as TIER_1 (judicial keywords found) or TIER_2 (no match).
  * Matching is case-insensitive and accent-insensitive on title + description.
  */
-export function classifyArticleTier(
-  title: string,
-  description: string | null
-): ArticleTier {
+export function classifyArticleTier(title: string, description: string | null): ArticleTier {
   const text = normalizeForMatching(`${title} ${description || ""}`);
 
   for (const keyword of JUDICIAL_KEYWORDS) {

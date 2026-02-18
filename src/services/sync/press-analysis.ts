@@ -689,6 +689,12 @@ function feedSourceToPublisher(feedSource: string): string {
     mediapart: "Mediapart",
     publicsenat: "Public Sénat",
     lcp: "LCP",
+    ouestfrance: "Ouest-France",
+    sudouest: "Sud Ouest",
+    ladepeche: "La Dépêche du Midi",
+    ledauphine: "Le Dauphiné Libéré",
+    dna: "DNA",
+    googlenews: "Google News",
   };
   return publishers[feedSource] || feedSource;
 }

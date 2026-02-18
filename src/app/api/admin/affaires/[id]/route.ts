@@ -2,46 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { isAuthenticated } from "@/lib/auth";
 import { invalidateEntity } from "@/lib/cache";
-import type { AffairStatus, AffairCategory, SourceType } from "@/generated/prisma";
-
-interface SourceInput {
-  id?: string;
-  url: string;
-  title: string;
-  publisher: string;
-  publishedAt: string;
-  excerpt?: string;
-  sourceType?: SourceType;
-}
-
-interface AffairInput {
-  politicianId: string;
-  title: string;
-  description: string;
-  status: AffairStatus;
-  category: AffairCategory;
-  factsDate?: string;
-  startDate?: string;
-  verdictDate?: string;
-  sentence?: string;
-  appeal?: boolean;
-  // Detailed sentence
-  prisonMonths?: number;
-  prisonSuspended?: boolean;
-  fineAmount?: number;
-  ineligibilityMonths?: number;
-  communityService?: number;
-  otherSentence?: string;
-  // Jurisdiction
-  court?: string;
-  chamber?: string;
-  caseNumber?: string;
-  // Judicial identifiers
-  ecli?: string;
-  pourvoiNumber?: string;
-  caseNumbers?: string[];
-  sources: SourceInput[];
-}
+import { updateAffairSchema } from "@/lib/validations/affairs";
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -79,7 +40,13 @@ export async function PUT(request: NextRequest, context: RouteContext) {
   const { id } = await context.params;
 
   try {
-    const data: AffairInput = await request.json();
+    const body = await request.json();
+
+    const parsed = updateAffairSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+    }
+    const data = parsed.data;
 
     // Check affair exists
     const existing = await db.affair.findUnique({
@@ -89,15 +56,6 @@ export async function PUT(request: NextRequest, context: RouteContext) {
 
     if (!existing) {
       return NextResponse.json({ error: "Affaire non trouvée" }, { status: 404 });
-    }
-
-    // Validation
-    if (!data.politicianId || !data.title || !data.description) {
-      return NextResponse.json({ error: "Champs requis manquants" }, { status: 400 });
-    }
-
-    if (!data.sources || data.sources.length === 0) {
-      return NextResponse.json({ error: "Au moins une source est requise" }, { status: 400 });
     }
 
     // Update affair

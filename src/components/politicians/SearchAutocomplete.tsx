@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { MANDATE_TYPE_LABELS } from "@/config/labels";
-import { cn } from "@/lib/utils";
+import { cn, normalizeImageUrl } from "@/lib/utils";
 
 interface SearchResult {
   id: string;
@@ -42,7 +42,9 @@ function ResultAvatar({ photoUrl, fullName }: { photoUrl: string | null; fullNam
     setIsLoaded(false);
   }, [photoUrl]);
 
-  if (!photoUrl || hasError) {
+  const normalizedUrl = normalizeImageUrl(photoUrl);
+
+  if (!normalizedUrl || hasError) {
     return (
       <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center shrink-0">
         <span className="text-xs font-medium text-muted-foreground">{getInitials(fullName)}</span>
@@ -55,7 +57,7 @@ function ResultAvatar({ photoUrl, fullName }: { photoUrl: string | null; fullNam
       {!isLoaded && <div className="absolute inset-0 animate-pulse rounded-full bg-muted" />}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src={photoUrl}
+        src={normalizedUrl}
         alt=""
         className={cn(
           "w-full h-full object-cover transition-opacity duration-200",

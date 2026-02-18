@@ -14,7 +14,7 @@
 import { AI_RATE_LIMIT_MS } from "@/config/rate-limits";
 
 const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
-const MODEL = "claude-3-haiku-20240307";
+const MODEL = "claude-haiku-4-5-20251001";
 const MAX_TOKENS = 2000;
 
 // ============================================
@@ -47,6 +47,7 @@ export interface DetectedAffair {
   charges: string[];
   excerpts: string[];
   isNewRevelation: boolean;
+  confidenceScore: number;
 }
 
 // ============================================
@@ -178,6 +179,13 @@ const ANALYSIS_TOOL = {
               description:
                 "L'article révèle-t-il cette affaire pour la première fois (investigation journalistique) ?",
             },
+            confidence_score: {
+              type: "integer",
+              minimum: 0,
+              maximum: 100,
+              description:
+                "Score de confiance (0-100) que cette affaire est correctement attribuée au politicien. 90+ = certain (nommément cité comme mis en cause). 70-89 = probable. 50-69 = incertain. <50 = peu fiable.",
+            },
           },
           required: [
             "politician_name",
@@ -191,6 +199,7 @@ const ANALYSIS_TOOL = {
             "charges",
             "excerpts",
             "is_new_revelation",
+            "confidence_score",
           ],
         },
       },

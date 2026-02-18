@@ -6,6 +6,7 @@ import Image from "next/image";
 import { Search, Loader2, Users, Building2, Vote } from "lucide-react";
 import { useGlobalSearch } from "./GlobalSearchProvider";
 import { MANDATE_TYPE_LABELS, CHAMBER_SHORT_LABELS } from "@/config/labels";
+import { normalizeImageUrl } from "@/lib/utils";
 import type { MandateType, Chamber } from "@/generated/prisma";
 
 interface PoliticianResult {
@@ -260,7 +261,7 @@ export function GlobalSearchDialog() {
                             >
                               {p.photoUrl ? (
                                 <Image
-                                  src={p.photoUrl}
+                                  src={normalizeImageUrl(p.photoUrl)!}
                                   alt=""
                                   width={28}
                                   height={28}

@@ -17,12 +17,12 @@ export const COLORS = {
     nonVotant: { light: "#9498a0", dark: "#5a5e68", tailwind: "bg-gray-400" },
   },
 
-  // Chamber colors — shades of the primary blue
+  // Chamber colors — distinct hues matching TEXT_COLORS
   chamber: {
-    AN: { light: "#2d4a7c", dark: "#7a9ec6", tailwind: "bg-blue-800" },
-    SENAT: { light: "#4a6a9c", dark: "#8aaad0", tailwind: "bg-blue-600" },
-    PE: { light: "#3a5a8e", dark: "#6a90ba", tailwind: "bg-blue-700" },
-    GOUVERNEMENT: { light: "#5a7aaa", dark: "#9ab6d6", tailwind: "bg-blue-500" },
+    AN: { light: "#1e40af", dark: "#60a5fa", tailwind: "bg-blue-800" },
+    SENAT: { light: "#be185d", dark: "#f472b6", tailwind: "bg-pink-700" },
+    PE: { light: "#7c3aed", dark: "#a78bfa", tailwind: "bg-violet-600" },
+    GOUVERNEMENT: { light: "#047857", dark: "#34d399", tailwind: "bg-emerald-700" },
   },
 
   // Affair status colors — blue shades + muted red for condamnation
@@ -41,12 +41,12 @@ export const COLORS = {
     CLASSEMENT_SANS_SUITE: { light: "#9498a0", dark: "#5a5e68", tailwind: "bg-neutral-400" },
   },
 
-  // Affair super-categories — shades of primary blue
+  // Affair super-categories — distinct hues per category
   affairCategory: {
-    PROBITE: { light: "#2d4a7c", dark: "#7a9ec6", tailwind: "bg-blue-800" },
-    FINANCES: { light: "#3a5a8e", dark: "#8aaad0", tailwind: "bg-blue-700" },
-    PERSONNES: { light: "#4a6a9c", dark: "#6a90ba", tailwind: "bg-blue-600" },
-    EXPRESSION: { light: "#5a7aaa", dark: "#5a7eaa", tailwind: "bg-blue-500" },
+    PROBITE: { light: "#1e40af", dark: "#818cf8", tailwind: "bg-indigo-700" },
+    FINANCES: { light: "#b45309", dark: "#fbbf24", tailwind: "bg-amber-700" },
+    PERSONNES: { light: "#be185d", dark: "#fb7185", tailwind: "bg-rose-700" },
+    EXPRESSION: { light: "#0f766e", dark: "#5eead4", tailwind: "bg-teal-700" },
   },
 
   // Political positions (left-right spectrum) — keep semantic colors

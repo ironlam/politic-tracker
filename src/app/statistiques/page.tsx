@@ -1,5 +1,6 @@
 import { Metadata } from "next";
 import { Suspense } from "react";
+import { cacheTag, cacheLife } from "next/cache";
 import { db } from "@/lib/db";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -24,6 +25,10 @@ export const metadata: Metadata = {
 
 // Affairs data fetchers
 async function getAffairsGlobalStats() {
+  "use cache";
+  cacheTag("statistics", "politicians", "affairs", "parties");
+  cacheLife("minutes");
+
   const [totalPoliticians, totalAffairs, totalParties, politiciansWithAffairs, condamnations] =
     await Promise.all([
       db.politician.count(),
@@ -52,6 +57,10 @@ async function getAffairsGlobalStats() {
 }
 
 async function getAffairsByStatus() {
+  "use cache";
+  cacheTag("statistics", "affairs");
+  cacheLife("minutes");
+
   const affairs = await db.affair.groupBy({
     by: ["status"],
     where: { publicationStatus: "PUBLISHED" },
@@ -66,6 +75,10 @@ async function getAffairsByStatus() {
 }
 
 async function getAffairsByCategory() {
+  "use cache";
+  cacheTag("statistics", "affairs");
+  cacheLife("minutes");
+
   const affairs = await db.affair.groupBy({
     by: ["category"],
     where: { publicationStatus: "PUBLISHED" },
@@ -96,6 +109,10 @@ async function getAffairsByCategory() {
 }
 
 async function getAffairsByParty() {
+  "use cache";
+  cacheTag("statistics", "parties", "affairs");
+  cacheLife("minutes");
+
   const parties = await db.party.findMany({
     where: {
       politicians: {
@@ -141,6 +158,10 @@ async function getAffairsByParty() {
 }
 
 async function getTopPoliticiansWithAffairs() {
+  "use cache";
+  cacheTag("statistics", "politicians", "affairs");
+  cacheLife("minutes");
+
   const politicians = await db.politician.findMany({
     where: { affairs: { some: { publicationStatus: "PUBLISHED" } } },
     select: {
@@ -173,6 +194,10 @@ async function getTopPoliticiansWithAffairs() {
 
 // Votes data fetcher (uses optimized service)
 async function getVotesData(chamber: "all" | "AN" | "SENAT") {
+  "use cache";
+  cacheTag("statistics", "votes");
+  cacheLife("minutes");
+
   const chamberParam = chamber === "all" ? undefined : (chamber as Chamber);
   return voteStatsService.getVoteStats(chamberParam);
 }
@@ -183,6 +208,10 @@ const MITIGE_RATINGS: FactCheckRating[] = ["HALF_TRUE"];
 const VRAI_RATINGS: FactCheckRating[] = ["TRUE", "MOSTLY_TRUE"];
 
 async function getFactCheckStats() {
+  "use cache";
+  cacheTag("statistics");
+  cacheLife("minutes");
+
   const [total, byRating, bySource, topPoliticiansRaw] = await Promise.all([
     db.factCheck.count(),
     db.factCheck.groupBy({
@@ -287,6 +316,10 @@ async function getFactCheckStats() {
 
 // Geo data fetchers
 async function getGeoStats() {
+  "use cache";
+  cacheTag("statistics");
+  cacheLife("minutes");
+
   const [deputes, senateurs, meps, gouvernement] = await Promise.all([
     db.mandate.count({ where: { type: "DEPUTE", isCurrent: true } }),
     db.mandate.count({ where: { type: "SENATEUR", isCurrent: true } }),

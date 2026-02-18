@@ -14,7 +14,14 @@
 import { AI_RATE_LIMIT_MS } from "@/config/rate-limits";
 
 const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
-const MODEL = "claude-haiku-4-5-20251001";
+
+const TIER_MODELS = {
+  TIER_1: "claude-sonnet-4-5-20250929",
+  TIER_2: "claude-haiku-4-5-20251001",
+} as const;
+
+type AnalysisTier = keyof typeof TIER_MODELS;
+
 const MAX_TOKENS = 2000;
 
 // ============================================
@@ -27,6 +34,8 @@ export interface ArticleAnalysisInput {
   feedSource: string;
   publishedAt: Date;
   mentionedPoliticians?: string[];
+  tier?: "TIER_1" | "TIER_2";
+  politicianContext?: string;
 }
 
 export interface ArticleAnalysisResult {
@@ -253,10 +262,17 @@ export async function analyzeArticle(input: ArticleAnalysisInput): Promise<Artic
     throw new Error("ANTHROPIC_API_KEY environment variable is not set");
   }
 
+  const tier: AnalysisTier = input.tier || "TIER_2";
+  const model = TIER_MODELS[tier];
+
   let userContent = `Analyse cet article de presse politique :\n\nTitre : ${input.title}\nSource : ${input.feedSource}\nDate : ${input.publishedAt.toISOString().split("T")[0]}\n\nContenu :\n${input.content}`;
 
   if (input.mentionedPoliticians && input.mentionedPoliticians.length > 0) {
     userContent += `\n\nPoliticiens mentionnés (pré-détectés) : ${input.mentionedPoliticians.join(", ")}`;
+  }
+
+  if (input.politicianContext) {
+    userContent += `\n\n--- CONTEXTE POLITICIENS CONNUS ---\n${input.politicianContext}\n\nSi un nom correspond à un politicien connu mais que l'article ne mentionne pas de fonction politique (député, sénateur, ministre, maire, etc.), retourner confidence_score < 30 et involvement: MENTIONED_ONLY.`;
   }
 
   const response = await fetch(ANTHROPIC_API_URL, {
@@ -267,7 +283,7 @@ export async function analyzeArticle(input: ArticleAnalysisInput): Promise<Artic
       "anthropic-version": "2023-06-01",
     },
     body: JSON.stringify({
-      model: MODEL,
+      model,
       max_tokens: MAX_TOKENS,
       system: SYSTEM_PROMPT,
       tools: [ANALYSIS_TOOL],

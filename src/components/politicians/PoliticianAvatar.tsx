@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { cn } from "@/lib/utils";
+import { cn, normalizeImageUrl } from "@/lib/utils";
 
 interface PoliticianAvatarProps {
   photoUrl: string | null;
@@ -40,8 +40,10 @@ export function PoliticianAvatar({
   const displayName = fullName || `${derivedFirstName} ${derivedLastName}`;
   const sizeClass = sizeClasses[size];
 
+  const normalizedUrl = normalizeImageUrl(photoUrl);
+
   // Fallback to initials if no photo or image fails to load
-  if (!photoUrl || imageError) {
+  if (!normalizedUrl || imageError) {
     return (
       <div
         role="img"
@@ -64,7 +66,7 @@ export function PoliticianAvatar({
       {/* Skeleton placeholder while image loads */}
       {!imageLoaded && <div className="absolute inset-0 animate-pulse rounded-full bg-muted" />}
       <Image
-        src={photoUrl}
+        src={normalizedUrl}
         alt={displayName}
         fill
         sizes={size === "sm" ? "40px" : size === "md" ? "56px" : size === "lg" ? "96px" : "128px"}

@@ -24,6 +24,18 @@ export function formatDate(date: Date | string | null): string {
   });
 }
 
+/**
+ * Normalize an image URL to use HTTPS.
+ * Fixes Mixed Content warnings from legacy photo URLs stored with http://.
+ */
+export function normalizeImageUrl(url: string | null): string | null {
+  if (!url) return null;
+  if (url.startsWith("http://")) {
+    return url.replace("http://", "https://");
+  }
+  return url;
+}
+
 export function formatCurrency(amount: number | null): string {
   if (amount === null) return "—";
   return new Intl.NumberFormat("fr-FR", {

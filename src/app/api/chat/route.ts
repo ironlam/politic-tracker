@@ -419,7 +419,7 @@ export async function POST(request: Request) {
 
     // Stream response using Vercel AI SDK
     const result = streamText({
-      model: anthropic("claude-3-haiku-20240307"),
+      model: anthropic("claude-haiku-4-5-20251001"),
       system: getSystemPrompt(),
       messages: messagesWithContext,
     });

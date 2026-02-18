@@ -20,6 +20,8 @@ export interface HTTPClientOptions {
   enableCache?: boolean;
   /** Cache TTL in milliseconds (default: 5 minutes) */
   cacheTtlMs?: number;
+  /** Source name for logging (e.g. "Wikidata SPARQL") */
+  sourceName?: string;
 }
 
 export interface RequestOptions {
@@ -64,6 +66,7 @@ const DEFAULT_OPTIONS: Required<HTTPClientOptions> = {
   headers: {},
   enableCache: false,
   cacheTtlMs: 5 * 60 * 1000, // 5 minutes
+  sourceName: "",
 };
 
 /**
@@ -176,7 +179,7 @@ export class HTTPClient {
     url: string,
     init: RequestInit,
     options: RequestOptions,
-    parseAs: "json" | "text" = "json"
+    parseAs: "json" | "text" | "arrayBuffer" | "head" = "json"
   ): Promise<HTTPResponse<T>> {
     const maxRetries = options.retries ?? this.options.retries;
     const timeout = options.timeout ?? this.options.timeout;
@@ -212,6 +215,14 @@ export class HTTPClient {
             );
           }
 
+          // Log 429 with source name for observability
+          if (response.status === 429) {
+            const source = this.options.sourceName || url;
+            console.warn(
+              `[HTTPClient] 429 Too Many Requests from ${source} (attempt ${attempt + 1}/${maxRetries + 1})`
+            );
+          }
+
           // Retry on server errors (5xx) and rate limits (429)
           if (attempt < maxRetries) {
             const delay = this.options.retryDelay * Math.pow(2, attempt);
@@ -226,7 +237,20 @@ export class HTTPClient {
           );
         }
 
-        const data = (parseAs === "text" ? await response.text() : await response.json()) as T;
+        let data: T;
+        switch (parseAs) {
+          case "text":
+            data = (await response.text()) as T;
+            break;
+          case "arrayBuffer":
+            data = Buffer.from(await response.arrayBuffer()) as T;
+            break;
+          case "head":
+            data = null as T;
+            break;
+          default:
+            data = (await response.json()) as T;
+        }
         return { data, status: response.status, ok: true, cached: false };
       } catch (error) {
         lastError = error as Error;
@@ -290,6 +314,22 @@ export class HTTPClient {
     }
 
     return response;
+  }
+
+  /**
+   * GET request returning a binary buffer (DOCX, images, etc.)
+   */
+  async getBuffer(url: string, options: RequestOptions = {}): Promise<HTTPResponse<Buffer>> {
+    const fullUrl = this.options.baseUrl ? `${this.options.baseUrl}${url}` : url;
+    return this.fetchWithRetry<Buffer>(fullUrl, { method: "GET" }, options, "arrayBuffer");
+  }
+
+  /**
+   * HEAD request — checks URL validity without downloading the body
+   */
+  async head(url: string, options: RequestOptions = {}): Promise<HTTPResponse<null>> {
+    const fullUrl = this.options.baseUrl ? `${this.options.baseUrl}${url}` : url;
+    return this.fetchWithRetry<null>(fullUrl, { method: "HEAD" }, options, "head");
   }
 
   /**

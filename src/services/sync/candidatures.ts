@@ -3,6 +3,8 @@ import { ElectionStatus } from "@/generated/prisma";
 import { parse } from "csv-parse/sync";
 import { NUANCE_POLITIQUE_MAPPING } from "@/config/labels";
 import type { CandidatureMunicipaleCSV, CandidaturesSyncResult } from "./types";
+import { HTTPClient } from "@/lib/api/http-client";
+import { DATA_GOUV_RATE_LIMIT_MS } from "@/config/rate-limits";
 
 // 2020 test URL (tab-separated, ISO-8859-1, comment header)
 const DEFAULT_CSV_URL =
@@ -10,19 +12,19 @@ const DEFAULT_CSV_URL =
 
 const DEFAULT_ELECTION_SLUG = "municipales-2026";
 
+const dataGouvClient = new HTTPClient({
+  rateLimitMs: DATA_GOUV_RATE_LIMIT_MS,
+  sourceName: "data.gouv.fr (candidatures)",
+});
+
 /**
  * Fetch and parse the candidatures CSV (TXT with tab delimiter, ISO-8859-1)
  */
 async function fetchCandidaturesCSV(url: string): Promise<CandidatureMunicipaleCSV[]> {
   console.log(`Fetching candidatures from: ${url}`);
 
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error(`Failed to fetch CSV: ${response.status} ${response.statusText}`);
-  }
-
-  // The file is ISO-8859-1 encoded
-  const buffer = await response.arrayBuffer();
+  // The file is ISO-8859-1 encoded — fetch as buffer and decode manually
+  const { data: buffer } = await dataGouvClient.getBuffer(url);
   const decoder = new TextDecoder("iso-8859-1");
   const text = decoder.decode(buffer);
 

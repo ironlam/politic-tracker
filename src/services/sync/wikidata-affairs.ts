@@ -10,6 +10,7 @@ import { AffairCategory, AffairStatus, DataSource } from "@/generated/prisma";
 import { generateSlug } from "@/lib/utils";
 import { WIKIDATA_SPARQL_RATE_LIMIT_MS } from "@/config/rate-limits";
 import { isDuplicate } from "@/services/affairs/matching";
+import { HTTPClient } from "@/lib/api/http-client";
 
 // Wikidata SPARQL endpoint
 const WIKIDATA_ENDPOINT = "https://query.wikidata.org/sparql";
@@ -17,8 +18,11 @@ const WIKIDATA_ENDPOINT = "https://query.wikidata.org/sparql";
 // Ve République started in 1958
 const VE_REPUBLIQUE_START = 1958;
 
-// Max retry attempts for SPARQL queries
-const MAX_RETRIES = 3;
+const sparqlClient = new HTTPClient({
+  rateLimitMs: WIKIDATA_SPARQL_RATE_LIMIT_MS,
+  retries: 2,
+  sourceName: "Wikidata SPARQL",
+});
 
 /**
  * Wikidata SPARQL query result for a politician conviction
@@ -165,37 +169,12 @@ export async function fetchWikidataConvictions(
   const url = new URL(WIKIDATA_ENDPOINT);
   url.searchParams.set("query", query);
 
-  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
-    if (attempt > 0) {
-      const backoffMs = Math.pow(2, attempt) * 1000;
-      console.log(`  Retry ${attempt}/${MAX_RETRIES - 1} after ${backoffMs}ms...`);
-      await new Promise((resolve) => setTimeout(resolve, backoffMs));
-    }
+  const { data } = await sparqlClient.get<{ results: { bindings: WikidataConvictionResult[] } }>(
+    url.toString(),
+    { headers: { Accept: "application/json" } }
+  );
 
-    const response = await fetch(url.toString(), {
-      headers: {
-        Accept: "application/json",
-        "User-Agent":
-          "TransparencePolitique/1.0 (https://politic-tracker.vercel.app; contact@example.com)",
-      },
-    });
-
-    if (response.ok) {
-      // Rate limit pause before returning
-      await new Promise((resolve) => setTimeout(resolve, WIKIDATA_SPARQL_RATE_LIMIT_MS));
-      const data = await response.json();
-      return data.results.bindings;
-    }
-
-    if (response.status === 429 || response.status === 503) {
-      console.warn(`  SPARQL returned ${response.status}, will retry...`);
-      continue;
-    }
-
-    throw new Error(`Wikidata SPARQL query failed: ${response.status}`);
-  }
-
-  throw new Error(`Wikidata SPARQL query failed after ${MAX_RETRIES} retries`);
+  return data.results.bindings;
 }
 
 /**

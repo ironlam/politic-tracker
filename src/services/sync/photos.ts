@@ -32,8 +32,8 @@ interface PhotoSyncResult {
  */
 async function isPhotoUrlValid(url: string): Promise<boolean> {
   try {
-    const response = await fetch(url, { method: "HEAD" });
-    return response.ok;
+    const { ok } = await wikidataClient.head(url);
+    return ok;
   } catch {
     return false;
   }

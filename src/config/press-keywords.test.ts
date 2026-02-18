@@ -13,7 +13,9 @@ describe("classifyArticleTier", () => {
   });
 
   it("should return TIER_1 for article with 'condamné' in description", () => {
-    expect(classifyArticleTier("Tribunal de Paris", "L'ancien maire condamné à 2 ans")).toBe("TIER_1");
+    expect(classifyArticleTier("Tribunal de Paris", "L'ancien maire condamné à 2 ans")).toBe(
+      "TIER_1"
+    );
   });
 
   it("should return TIER_1 for 'corruption' keyword", () => {
@@ -25,7 +27,9 @@ describe("classifyArticleTier", () => {
   });
 
   it("should return TIER_2 for article without judicial keywords", () => {
-    expect(classifyArticleTier("Macron en visite à Berlin", "Discussions sur le budget européen")).toBe("TIER_2");
+    expect(
+      classifyArticleTier("Macron en visite à Berlin", "Discussions sur le budget européen")
+    ).toBe("TIER_2");
   });
 
   it("should be case-insensitive", () => {

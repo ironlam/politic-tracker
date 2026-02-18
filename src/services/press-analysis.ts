@@ -297,7 +297,7 @@ export async function analyzeArticle(input: ArticleAnalysisInput): Promise<Artic
     const involvement = validateEnum(
       a.involvement as string,
       ["DIRECT", "INDIRECT", "MENTIONED_ONLY"] as const,
-      "DIRECT"
+      "MENTIONED_ONLY"
     );
 
     return {

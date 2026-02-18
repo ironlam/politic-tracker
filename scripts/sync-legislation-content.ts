@@ -18,10 +18,18 @@ import { createCLI, type SyncHandler, type SyncResult } from "../src/lib/sync";
 import { db } from "../src/lib/db";
 import mammoth from "mammoth";
 import { ASSEMBLEE_DOCPARL_RATE_LIMIT_MS } from "../src/config/rate-limits";
+import { HTTPClient, HTTPError } from "../src/lib/api/http-client";
 
 // Configuration
 const DOCPARL_URL_TEMPLATE =
   "https://docparl.assemblee-nationale.fr/base/{id}?format=application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+
+const docparlClient = new HTTPClient({
+  rateLimitMs: ASSEMBLEE_DOCPARL_RATE_LIMIT_MS,
+  retries: 3,
+  timeout: 60_000,
+  sourceName: "docparl AN",
+});
 
 // Regex to extract exposé des motifs section from document text
 const EXPOSE_REGEX =
@@ -35,49 +43,20 @@ const MAX_FALLBACK_LENGTH = 5000;
  */
 async function downloadDocx(documentId: string): Promise<Buffer | null> {
   const url = DOCPARL_URL_TEMPLATE.replace("{id}", documentId);
-  const maxRetries = 3;
 
-  for (let attempt = 0; attempt <= maxRetries; attempt++) {
-    try {
-      const response = await fetch(url, {
-        headers: {
-          Accept: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-          "User-Agent": "TransparencePolitique/1.0 (https://politic-tracker.vercel.app)",
-        },
-      });
-
-      if (response.status === 404) {
-        return null;
-      }
-
-      if (response.status === 429 || response.status >= 500) {
-        if (attempt < maxRetries) {
-          const delay = 1000 * Math.pow(2, attempt);
-          await new Promise((resolve) => setTimeout(resolve, delay));
-          continue;
-        }
-      }
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status} for ${url}`);
-      }
-
-      const arrayBuffer = await response.arrayBuffer();
-      return Buffer.from(arrayBuffer);
-    } catch (err) {
-      if (err instanceof Error && err.message.includes("404")) {
-        return null;
-      }
-      if (attempt < maxRetries) {
-        const delay = 1000 * Math.pow(2, attempt);
-        await new Promise((resolve) => setTimeout(resolve, delay));
-        continue;
-      }
-      throw err;
+  try {
+    const { data } = await docparlClient.getBuffer(url, {
+      headers: {
+        Accept: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      },
+    });
+    return data;
+  } catch (err) {
+    if (err instanceof HTTPError && err.status === 404) {
+      return null;
     }
+    throw err;
   }
-
-  return null;
 }
 
 /**
@@ -255,8 +234,6 @@ Features:
         if (!buffer) {
           stats.notFound++;
           stats.processed++;
-          // Rate limit even on 404
-          await new Promise((resolve) => setTimeout(resolve, ASSEMBLEE_DOCPARL_RATE_LIMIT_MS));
           continue;
         }
 
@@ -280,18 +257,10 @@ Features:
         }
 
         stats.processed++;
-
-        // Rate limiting
-        if (i < dossiers.length - 1) {
-          await new Promise((resolve) => setTimeout(resolve, ASSEMBLEE_DOCPARL_RATE_LIMIT_MS));
-        }
       } catch (err) {
         const msg = `${dossier.externalId}: ${err instanceof Error ? err.message : String(err)}`;
         errors.push(msg);
         stats.processed++;
-
-        // Wait longer on error
-        await new Promise((resolve) => setTimeout(resolve, 1000));
       }
     }
 

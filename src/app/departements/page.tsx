@@ -17,39 +17,34 @@ async function getDepartmentStats() {
   cacheTag("departments", "politicians");
   cacheLife("minutes");
 
-  // Get counts of deputies per department
-  const mandates = await db.mandate.findMany({
+  // Aggregate counts directly in the database using groupBy
+  const grouped = await db.mandate.groupBy({
+    by: ["departmentCode", "type"],
     where: {
       type: { in: ["DEPUTE", "SENATEUR"] },
       isCurrent: true,
-      constituency: { not: null },
+      departmentCode: { not: null },
     },
-    select: {
-      type: true,
-      constituency: true,
-    },
+    _count: { id: true },
   });
 
-  // Count by department name
+  // Build stats keyed by department name (to match what the page expects)
   const stats: Record<string, { deputes: number; senateurs: number }> = {};
 
-  for (const mandate of mandates) {
-    if (!mandate.constituency) continue;
+  for (const row of grouped) {
+    const code = row.departmentCode!;
+    const dept = DEPARTMENTS[code];
+    if (!dept) continue;
 
-    // Extract department name from "Département (X)"
-    const match = mandate.constituency.match(/^([^(]+)/);
-    if (!match) continue;
-
-    const deptName = match[1].trim();
-
-    if (!stats[deptName]) {
-      stats[deptName] = { deputes: 0, senateurs: 0 };
+    const name = dept.name;
+    if (!stats[name]) {
+      stats[name] = { deputes: 0, senateurs: 0 };
     }
 
-    if (mandate.type === "DEPUTE") {
-      stats[deptName].deputes++;
-    } else if (mandate.type === "SENATEUR") {
-      stats[deptName].senateurs++;
+    if (row.type === "DEPUTE") {
+      stats[name].deputes += row._count.id;
+    } else if (row.type === "SENATEUR") {
+      stats[name].senateurs += row._count.id;
     }
   }
 

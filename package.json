@@ -139,7 +139,7 @@
     "csv-parse": "^6.1.0",
     "d3-scale": "^4.0.2",
     "dotenv": "^17.2.3",
-    "fast-xml-parser": "^5.3.4",
+    "fast-xml-parser": "^5.3.6",
     "lucide-react": "^0.563.0",
     "mammoth": "^1.11.0",
     "motion": "^12.34.0",

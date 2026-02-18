@@ -2,12 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { isAuthenticated } from "@/lib/auth";
 import { invalidateEntity } from "@/lib/cache";
-
-interface BulkInput {
-  ids: string[];
-  action: "publish" | "reject";
-  rejectionReason?: string;
-}
+import { bulkAffairActionSchema } from "@/lib/validations/affairs";
 
 export async function POST(request: NextRequest) {
   const authenticated = await isAuthenticated();
@@ -16,15 +11,13 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { ids, action, rejectionReason }: BulkInput = await request.json();
+    const body = await request.json();
 
-    if (!ids?.length || !action) {
-      return NextResponse.json({ error: "ids et action requis" }, { status: 400 });
+    const parsed = bulkAffairActionSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
     }
-
-    if (action === "reject" && !rejectionReason) {
-      return NextResponse.json({ error: "Motif de rejet requis" }, { status: 400 });
-    }
+    const { ids, action, rejectionReason } = parsed.data;
 
     const publicationStatus = action === "publish" ? "PUBLISHED" : "REJECTED";
 

@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import { cacheTag, cacheLife } from "next/cache";
 import { db } from "@/lib/db";
 import {
   type SortOption,
@@ -63,6 +64,10 @@ async function getPoliticians(
   sortOption: SortOption = "alpha",
   page = 1
 ) {
+  "use cache";
+  cacheTag("politicians");
+  cacheLife("minutes");
+
   const limit = 24;
   const skip = (page - 1) * limit;
 
@@ -212,6 +217,10 @@ async function getPoliticians(
 }
 
 async function getParties() {
+  "use cache";
+  cacheTag("politicians", "parties");
+  cacheLife("minutes");
+
   const parties = await db.party.findMany({
     where: {
       politicians: { some: {} }, // Only parties with members
@@ -227,6 +236,10 @@ async function getParties() {
 }
 
 async function getFilterCounts() {
+  "use cache";
+  cacheTag("politicians");
+  cacheLife("minutes");
+
   const [
     withConviction,
     totalAffairs,

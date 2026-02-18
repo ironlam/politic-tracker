@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { cacheTag, cacheLife } from "next/cache";
 import { db } from "@/lib/db";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -32,6 +33,10 @@ interface PageProps {
 }
 
 async function getPolitician(slug: string) {
+  "use cache";
+  cacheTag(`politician:${slug}`, "politicians");
+  cacheLife("minutes");
+
   const politician = await db.politician.findUnique({
     where: { slug },
     include: {
@@ -45,6 +50,7 @@ async function getPolitician(slug: string) {
         },
       },
       affairs: {
+        where: { publicationStatus: "PUBLISHED" },
         include: {
           sources: true,
           partyAtTime: true,
@@ -109,6 +115,10 @@ async function getPolitician(slug: string) {
 }
 
 async function getVoteStats(politicianId: string) {
+  "use cache";
+  cacheTag("votes", "politicians");
+  cacheLife("minutes");
+
   const [stats, recentVotes] = await Promise.all([
     db.vote.groupBy({
       by: ["position"],

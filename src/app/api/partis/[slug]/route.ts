@@ -86,7 +86,7 @@ export async function GET(
               select: { type: true, title: true },
               take: 1,
             },
-            _count: { select: { affairs: true } },
+            _count: { select: { affairs: { where: { publicationStatus: "PUBLISHED" } } } },
           },
         },
         externalIds: {

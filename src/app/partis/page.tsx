@@ -19,7 +19,7 @@ async function getParties() {
         select: {
           politicians: true,
           partyMemberships: true,
-          affairsAtTime: true,
+          affairsAtTime: { where: { publicationStatus: "PUBLISHED" } },
         },
       },
       predecessor: {

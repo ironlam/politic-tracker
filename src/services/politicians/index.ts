@@ -85,6 +85,7 @@ export async function getPoliticianBySlug(slug: string): Promise<PoliticianFull 
         },
       },
       affairs: {
+        where: { publicationStatus: "PUBLISHED" },
         include: {
           sources: true,
         },
@@ -109,6 +110,7 @@ export async function getPoliticianById(id: string): Promise<PoliticianFull | nu
         orderBy: { startDate: "desc" },
       },
       affairs: {
+        where: { publicationStatus: "PUBLISHED" },
         include: {
           sources: true,
         },

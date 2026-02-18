@@ -25,6 +25,7 @@ import {
 import { findMatchingAffairs } from "@/services/affairs/matching";
 import { buildPoliticianIndex, findMentions, type PoliticianName } from "@/lib/name-matching";
 import { syncMetadata } from "@/lib/sync";
+import { classifyArticleTier, type ArticleTier } from "@/config/press-keywords";
 
 // ============================================
 // TYPES
@@ -57,6 +58,44 @@ export interface PressAnalysisStats {
 
 const SYNC_SOURCE_KEY = "press-analysis";
 const MIN_SYNC_INTERVAL_MS = 6 * 60 * 60 * 1000; // 6 hours
+
+// ============================================
+// POLITICIAN CONTEXT (Tier 1 anti-homonym)
+// ============================================
+
+/**
+ * Build politician context string for Tier 1 anti-homonym protection.
+ * Format: "Prénom Nom (Parti, Mandat actuel)" per politician.
+ * Limited to ~200 politicians to keep token count reasonable (~2000 tokens).
+ */
+async function buildPoliticianContext(): Promise<string> {
+  const politicians = await db.politician.findMany({
+    where: {
+      mandates: { some: { isCurrent: true } },
+    },
+    select: {
+      fullName: true,
+      currentParty: { select: { shortName: true } },
+      mandates: {
+        where: { isCurrent: true },
+        select: { title: true },
+        take: 1,
+      },
+    },
+    take: 200,
+    orderBy: { lastName: "asc" },
+  });
+
+  return politicians
+    .map((p) => {
+      // Sanitize: strip control chars, limit length (defense-in-depth vs prompt injection)
+      const name = p.fullName.replace(/[\x00-\x1f]/g, "").slice(0, 80);
+      const party = (p.currentParty?.shortName || "?").replace(/[\x00-\x1f]/g, "").slice(0, 30);
+      const mandate = (p.mandates[0]?.title || "?").replace(/[\x00-\x1f]/g, "").slice(0, 80);
+      return `${name} (${party}, ${mandate})`;
+    })
+    .join("\n");
+}
 
 // ============================================
 // MAIN SYNC
@@ -111,19 +150,39 @@ export async function syncPressAnalysis(
     return stats;
   }
 
-  console.log(`${articles.length} article(s) à analyser\n`);
+  console.log(`${articles.length} article(s) à analyser`);
+
+  // Classify articles into tiers and sort by priority
+  const classifiedArticles = articles.map((article) => ({
+    ...article,
+    tier: classifyArticleTier(article.title, article.description) as ArticleTier,
+  }));
+
+  // Sort: Tier 1 first, then Tier 2 (most recent first within tier)
+  classifiedArticles.sort((a, b) => {
+    if (a.tier === "TIER_1" && b.tier !== "TIER_1") return -1;
+    if (a.tier !== "TIER_1" && b.tier === "TIER_1") return 1;
+    return b.publishedAt.getTime() - a.publishedAt.getTime();
+  });
+
+  const tier1Count = classifiedArticles.filter((a) => a.tier === "TIER_1").length;
+  console.log(`  Tier 1 (Sonnet, mots-clés judiciaires): ${tier1Count}`);
+  console.log(`  Tier 2 (Haiku, couverture large): ${classifiedArticles.length - tier1Count}\n`);
+
+  // Build politician context for Tier 1 (only if there are Tier 1 articles)
+  const politicianContext = tier1Count > 0 ? await buildPoliticianContext() : "";
 
   // Build politician index for name matching
   const politicianIndex = await buildPoliticianIndex();
 
   const scraper = getArticleScraper();
 
-  for (const article of articles) {
+  for (const article of classifiedArticles) {
     stats.articlesProcessed++;
 
     if (verbose) {
       console.log(
-        `\n[${stats.articlesProcessed}/${articles.length}] ${article.feedSource}: ${article.title.slice(0, 80)}...`
+        `\n[${stats.articlesProcessed}/${classifiedArticles.length}] [${article.tier}] ${article.feedSource}: ${article.title.slice(0, 80)}...`
       );
     }
 
@@ -165,6 +224,8 @@ export async function syncPressAnalysis(
         feedSource: article.feedSource,
         publishedAt: article.publishedAt,
         mentionedPoliticians: mentionedNames,
+        tier: article.tier,
+        politicianContext: article.tier === "TIER_1" ? politicianContext : undefined,
       });
 
       stats.articlesAnalyzed++;
@@ -462,6 +523,7 @@ async function createAffairFromPress(
         status: detected.status as AffairStatus,
         category: detected.category as AffairCategory,
         publicationStatus: "DRAFT",
+        confidenceScore: detected.confidenceScore,
         factsDate: detected.factsDate ? new Date(detected.factsDate) : null,
         court: detected.court,
         verifiedAt: null,
@@ -482,7 +544,10 @@ async function createAffairFromPress(
     await linkArticleToAffair(articleId, affair.id, "REVELATION");
 
     if (verbose) {
-      console.log(`  ✓ Nouvelle affaire créée: ${title}`);
+      const scoreLabel = detected.confidenceScore >= 70 ? "✓" : "⚠";
+      console.log(
+        `  ${scoreLabel} Nouvelle affaire créée: ${title} (confiance: ${detected.confidenceScore}/100)`
+      );
     }
     return true;
   } catch (error) {
@@ -626,6 +691,12 @@ function feedSourceToPublisher(feedSource: string): string {
     mediapart: "Mediapart",
     publicsenat: "Public Sénat",
     lcp: "LCP",
+    ouestfrance: "Ouest-France",
+    sudouest: "Sud Ouest",
+    ladepeche: "La Dépêche du Midi",
+    ledauphine: "Le Dauphiné Libéré",
+    dna: "DNA",
+    googlenews: "Google News",
   };
   return publishers[feedSource] || feedSource;
 }

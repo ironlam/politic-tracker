@@ -17,7 +17,7 @@ import { db } from "../src/lib/db";
 import { MandateType, DataSource } from "../src/generated/prisma";
 import { politicianService } from "../src/services/politician";
 import { HTTPClient } from "../src/lib/api/http-client";
-import { SENATE_GROUPS } from "../src/config/parliamentaryGroups";
+import { SENATE_GROUPS, ASSEMBLY_GROUPS } from "../src/config/parliamentaryGroups";
 
 const client = new HTTPClient({ rateLimitMs: 500 });
 
@@ -367,61 +367,111 @@ async function fixMissingParties(stats: Stats, apply: boolean) {
     include: {
       mandates: {
         where: { isCurrent: true },
-        include: {
-          parliamentaryGroup: {
-            select: { id: true, code: true, chamber: true, defaultPartyId: true },
-          },
-        },
+        select: { type: true, parliamentaryGroupId: true },
+      },
+      externalIds: {
+        where: { source: { in: [DataSource.SENAT, DataSource.NOSDEPUTES] } },
+        select: { source: true, externalId: true },
       },
     },
   });
 
   console.log(`  ${politicians.length} politiciens avec mandat actuel sans parti`);
 
+  // Senat.fr API uses different group codes than our config
+  const SENAT_API_CODE_TO_CONFIG: Record<string, string> = {
+    LREM: "RDPI",
+    UMP: "LR",
+    CRC: "CRCE-K",
+    SOC: "SER",
+    RTLI: "INDEP",
+    // GEST, RDSE, UC, NI match directly
+  };
+
+  // Build senator matricule → group config key map from senat.fr API
+  let senatorGroupMap = new Map<string, string>();
+  try {
+    const { data: apiSenators } = await client.get<
+      { matricule: string; groupe?: { code: string } }[]
+    >("https://www.senat.fr/api-senat/senateurs.json");
+    for (const sen of apiSenators) {
+      if (sen.groupe?.code) {
+        const configKey = SENAT_API_CODE_TO_CONFIG[sen.groupe.code] || sen.groupe.code;
+        senatorGroupMap.set(sen.matricule, configKey);
+      }
+    }
+    console.log(`  API senat.fr: ${senatorGroupMap.size} sénateurs avec groupe`);
+  } catch {
+    console.warn("  ⚠ Could not fetch senat.fr API for group mapping");
+  }
+
+  // Build party Wikidata ID → DB party ID cache
+  const partyCache = new Map<string, string>();
+  async function resolvePartyByWikidata(wikidataId: string): Promise<string | null> {
+    if (partyCache.has(wikidataId)) return partyCache.get(wikidataId)!;
+    const extId = await db.externalId.findFirst({
+      where: {
+        source: DataSource.WIKIDATA,
+        externalId: wikidataId,
+        partyId: { not: null },
+      },
+      select: { partyId: true },
+    });
+    if (extId?.partyId) {
+      partyCache.set(wikidataId, extId.partyId);
+      return extId.partyId;
+    }
+    return null;
+  }
+
+  // Also try resolving via defaultPartyId on parliamentary groups in DB
+  const groupPartyMap = new Map<string, string>();
+  const groups = await db.parliamentaryGroup.findMany({
+    where: { defaultPartyId: { not: null } },
+    select: { id: true, code: true, defaultPartyId: true },
+  });
+  for (const g of groups) {
+    if (g.defaultPartyId) groupPartyMap.set(g.id, g.defaultPartyId);
+  }
+
   for (const pol of politicians) {
-    // Try via parliamentary group defaultPartyId
-    const mandateWithGroup = pol.mandates.find((m) => m.parliamentaryGroup?.defaultPartyId);
+    let resolved = false;
 
-    if (mandateWithGroup?.parliamentaryGroup?.defaultPartyId) {
-      const partyId = mandateWithGroup.parliamentaryGroup.defaultPartyId;
-      console.log(
-        `  ✓ ${pol.fullName} → parti via groupe ${mandateWithGroup.parliamentaryGroup.code}`
-      );
-      if (apply) {
-        await politicianService.setCurrentParty(pol.id, partyId);
+    // Strategy 1: Parliamentary group on mandate (if available)
+    for (const mandate of pol.mandates) {
+      if (mandate.parliamentaryGroupId && groupPartyMap.has(mandate.parliamentaryGroupId)) {
+        const partyId = groupPartyMap.get(mandate.parliamentaryGroupId)!;
+        console.log(`  ✓ ${pol.fullName} → parti via groupe en base`);
+        if (apply) await politicianService.setCurrentParty(pol.id, partyId);
+        stats.partiesFixed++;
+        resolved = true;
+        break;
       }
-      stats.partiesFixed++;
-      continue;
     }
+    if (resolved) continue;
 
-    // Try via SENATE_GROUPS config with partyWikidataId
-    const senateMandate = pol.mandates.find(
-      (m) => m.type === MandateType.SENATEUR && m.parliamentaryGroup
-    );
-    if (senateMandate?.parliamentaryGroup) {
-      const groupCode = senateMandate.parliamentaryGroup.code;
-      const config = SENATE_GROUPS[groupCode];
-      if (config?.partyWikidataId) {
-        const extId = await db.externalId.findFirst({
-          where: {
-            source: DataSource.WIKIDATA,
-            externalId: config.partyWikidataId,
-            partyId: { not: null },
-          },
-          select: { partyId: true },
-        });
-        if (extId?.partyId) {
-          console.log(`  ✓ ${pol.fullName} → parti via config groupe ${groupCode}`);
-          if (apply) {
-            await politicianService.setCurrentParty(pol.id, extId.partyId);
+    // Strategy 2: Senator → senat.fr API → group code → SENATE_GROUPS config
+    const senatExtId = pol.externalIds.find((e) => e.source === DataSource.SENAT);
+    if (senatExtId) {
+      const groupCode = senatorGroupMap.get(senatExtId.externalId);
+      if (groupCode) {
+        const config = SENATE_GROUPS[groupCode];
+        if (config?.partyWikidataId) {
+          const partyId = await resolvePartyByWikidata(config.partyWikidataId);
+          if (partyId) {
+            console.log(`  ✓ ${pol.fullName} → parti via API senat groupe ${groupCode}`);
+            if (apply) await politicianService.setCurrentParty(pol.id, partyId);
+            stats.partiesFixed++;
+            continue;
           }
-          stats.partiesFixed++;
-          continue;
         }
+        // Group exists but no party mapping (transpartisan groups like UC, RDSE, INDEP)
+        console.log(`  ? ${pol.fullName} → groupe ${groupCode} (transpartisan, pas de parti)`);
+        continue;
       }
     }
 
-    console.log(`  ? ${pol.fullName} → pas de groupe avec parti résolvable`);
+    console.log(`  ? ${pol.fullName} → pas de groupe résolvable`);
   }
 
   console.log(`  → ${stats.partiesFixed} partis corrigés\n`);

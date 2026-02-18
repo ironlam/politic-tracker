@@ -64,9 +64,8 @@ async function getPoliticians(
   sortOption: SortOption = "alpha",
   page = 1
 ) {
-  "use cache";
-  cacheTag("politicians");
-  cacheLife("minutes");
+  // No "use cache" here — free-text `search` param creates unbounded key space.
+  // Bounded-param functions (getParties, getFilterCounts) keep their cache.
 
   const limit = 24;
   const skip = (page - 1) * limit;

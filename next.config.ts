@@ -55,7 +55,7 @@ const nextConfig: NextConfig = {
         key: "Content-Security-Policy",
         value: [
           "default-src 'self'",
-          "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cloud.umami.is",
+          `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : ""} https://cloud.umami.is`,
           "style-src 'self' 'unsafe-inline'",
           "img-src 'self' https: data:",
           "font-src 'self'",

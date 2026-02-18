@@ -40,9 +40,8 @@ async function getScrutins(params: {
   theme?: ThemeCategory;
   search?: string;
 }) {
-  "use cache";
-  cacheTag("votes");
-  cacheLife("minutes");
+  // No "use cache" here — free-text `search` param creates unbounded key space.
+  // Bounded-param functions (getLegislatures, getChambers, getThemeCounts) keep their cache.
 
   const { page, limit, result, legislature, chamber, theme, search } = params;
   const skip = (page - 1) * limit;

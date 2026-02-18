@@ -22,6 +22,7 @@ import {
   ChevronRight,
   Loader2,
 } from "lucide-react";
+import { normalizeImageUrl } from "@/lib/utils";
 import type { PublicationStatus } from "@/generated/prisma";
 
 interface AffairItem {
@@ -341,7 +342,7 @@ export default function AdminAffairsPage() {
                         >
                           {affair.politician.photoUrl ? (
                             <Image
-                              src={affair.politician.photoUrl}
+                              src={normalizeImageUrl(affair.politician.photoUrl)!}
                               alt=""
                               width={24}
                               height={24}

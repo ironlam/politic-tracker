@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PoliticianAvatar } from "@/components/politicians/PoliticianAvatar";
+import { normalizeImageUrl } from "@/lib/utils";
 import {
   DATA_SOURCE_LABELS,
   AFFAIR_STATUS_LABELS,
@@ -168,7 +169,7 @@ export default async function AdminPoliticianPage({ params }: PageProps) {
             {politician.photoUrl && (
               <div className="mt-4">
                 <img
-                  src={politician.photoUrl}
+                  src={normalizeImageUrl(politician.photoUrl) || ""}
                   alt={politician.fullName}
                   className="w-32 h-32 object-cover rounded-lg border"
                 />

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { normalizeImageUrl } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { DATA_SOURCE_LABELS } from "@/config/labels";
 import type { DataSource } from "@/types";
@@ -279,7 +280,7 @@ export function PoliticianForm({ initialData, parties }: PoliticianFormProps) {
           {formData.photoUrl && (
             <div className="flex items-center gap-4">
               <img
-                src={formData.photoUrl}
+                src={normalizeImageUrl(formData.photoUrl) || ""}
                 alt="Aperçu"
                 className="w-24 h-24 object-cover rounded-lg border"
                 onError={(e) => {

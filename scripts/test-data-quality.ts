@@ -155,6 +155,7 @@ const CHECKS: QualityCheck[] = [
         where: {
           isCurrent: true,
           startDate: { lt: tenYearsAgo },
+          type: { not: MandateType.PRESIDENT_PARTI },
         },
         select: {
           title: true,

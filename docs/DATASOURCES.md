@@ -716,20 +716,19 @@ npm run sync:daily -- --dry-run
 
 ### Par source
 
-| Variable                   | Source                                          | Obligatoire                             |
-| -------------------------- | ----------------------------------------------- | --------------------------------------- |
-| `GOOGLE_FACTCHECK_API_KEY` | Google Fact Check (#13)                         | Pour `sync:factchecks`                  |
-| `JUDILIBRE_CLIENT_ID`      | Judilibre (#15)                                 | Pour `sync:judilibre`                   |
-| `JUDILIBRE_CLIENT_SECRET`  | Judilibre (#15)                                 | Pour `sync:judilibre`                   |
-| `JUDILIBRE_API_KEY`        | Judilibre (#15)                                 | Pour `sync:judilibre`                   |
-| `JUDILIBRE_BASE_URL`       | Judilibre (#15)                                 | Pour `sync:judilibre`                   |
-| `JUDILIBRE_OAUTH_URL`      | Judilibre (#15)                                 | Pour `sync:judilibre`                   |
-| `ANTHROPIC_API_KEY`        | Analyse presse, resumes, biographies (#18, #19) | Pour scripts IA                         |
-| `OPENAI_API_KEY`           | Classification thematique (#19)                 | Pour `classify:themes`                  |
-| `VOYAGE_API_KEY`           | Embeddings RAG (#19)                            | Pour `index:embeddings`                 |
-| `MEDIAPART_EMAIL`          | Analyse presse (#18)                            | Optionnel (articles complets Mediapart) |
-| `MEDIAPART_PASSWORD`       | Analyse presse (#18)                            | Optionnel                               |
-| `CRON_SECRET`              | Cache revalidation (sync:daily)                 | Optionnel                               |
+| Variable                   | Source                                                                     | Obligatoire                             |
+| -------------------------- | -------------------------------------------------------------------------- | --------------------------------------- |
+| `GOOGLE_FACTCHECK_API_KEY` | Google Fact Check (#13)                                                    | Pour `sync:factchecks`                  |
+| `JUDILIBRE_CLIENT_ID`      | Judilibre (#15)                                                            | Pour `sync:judilibre`                   |
+| `JUDILIBRE_CLIENT_SECRET`  | Judilibre (#15)                                                            | Pour `sync:judilibre`                   |
+| `JUDILIBRE_API_KEY`        | Judilibre (#15)                                                            | Pour `sync:judilibre`                   |
+| `JUDILIBRE_BASE_URL`       | Judilibre (#15)                                                            | Pour `sync:judilibre`                   |
+| `JUDILIBRE_OAUTH_URL`      | Judilibre (#15)                                                            | Pour `sync:judilibre`                   |
+| `ANTHROPIC_API_KEY`        | Analyse presse, resumes, biographies, classification thematique (#18, #19) | Pour scripts IA                         |
+| `VOYAGE_API_KEY`           | Embeddings RAG (#19)                                                       | Pour `index:embeddings`                 |
+| `MEDIAPART_EMAIL`          | Analyse presse (#18)                                                       | Optionnel (articles complets Mediapart) |
+| `MEDIAPART_PASSWORD`       | Analyse presse (#18)                                                       | Optionnel                               |
+| `CRON_SECRET`              | Cache revalidation (sync:daily)                                            | Optionnel                               |
 
 ### Configuration des URLs
 

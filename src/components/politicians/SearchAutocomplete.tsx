@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { MANDATE_TYPE_LABELS } from "@/config/labels";
+import { cn } from "@/lib/utils";
 
 interface SearchResult {
   id: string;
@@ -24,6 +25,7 @@ interface SearchAutocompleteProps {
 // Avatar component with error handling
 function ResultAvatar({ photoUrl, fullName }: { photoUrl: string | null; fullName: string }) {
   const [hasError, setHasError] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   const getInitials = (name: string) => {
     return name
@@ -34,9 +36,10 @@ function ResultAvatar({ photoUrl, fullName }: { photoUrl: string | null; fullNam
       .toUpperCase();
   };
 
-  // Reset error state when photoUrl changes
+  // Reset error and loaded state when photoUrl changes
   useEffect(() => {
     setHasError(false);
+    setIsLoaded(false);
   }, [photoUrl]);
 
   if (!photoUrl || hasError) {
@@ -48,13 +51,18 @@ function ResultAvatar({ photoUrl, fullName }: { photoUrl: string | null; fullNam
   }
 
   return (
-    <div className="w-8 h-8 rounded-full overflow-hidden bg-muted shrink-0">
+    <div className="w-8 h-8 rounded-full overflow-hidden bg-muted shrink-0 relative">
+      {!isLoaded && <div className="absolute inset-0 animate-pulse rounded-full bg-muted" />}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={photoUrl}
         alt=""
-        className="w-full h-full object-cover"
+        className={cn(
+          "w-full h-full object-cover transition-opacity duration-200",
+          isLoaded ? "opacity-100" : "opacity-0"
+        )}
         onError={() => setHasError(true)}
+        onLoad={() => setIsLoaded(true)}
       />
     </div>
   );

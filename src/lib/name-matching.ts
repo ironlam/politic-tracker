@@ -53,6 +53,7 @@ export function escapeRegex(str: string): string {
  * Common French words to exclude from matching (avoid false positives)
  */
 export const EXCLUDED_NAMES = new Set([
+  // Common first names
   "paul",
   "jean",
   "pierre",
@@ -60,6 +61,7 @@ export const EXCLUDED_NAMES = new Set([
   "charles",
   "marie",
   "anne",
+  // Political / geographic terms
   "fait",
   "gauche",
   "droite",
@@ -71,6 +73,7 @@ export const EXCLUDED_NAMES = new Set([
   "sud",
   "est",
   "ouest",
+  // Adjectives (colors, size, position)
   "grand",
   "petit",
   "blanc",
@@ -84,6 +87,33 @@ export const EXCLUDED_NAMES = new Set([
   "court",
   "haut",
   "bas",
+  // Nationalities / demonyms (common as adjectives in articles)
+  "allemand",
+  "anglais",
+  "francais",
+  "europeen",
+  "americain",
+  "italien",
+  "espagnol",
+  // Common verbs / past participles that are also surnames
+  "frappe",
+  "prevost",
+  "marchand",
+  "berger",
+  "chevalier",
+  "fontaine",
+  "moulin",
+  "richard",
+  "martin",
+  "moreau",
+  "bernard",
+  "thomas",
+  "robert",
+  "simon",
+  "michel",
+  "laurent",
+  "daniel",
+  "david",
 ]);
 
 /**
@@ -106,6 +136,7 @@ export const EXCLUDED_PARTY_SHORTNAMES = new Set([
  */
 export async function buildPoliticianIndex(): Promise<PoliticianName[]> {
   const politicians = await db.politician.findMany({
+    where: { publicationStatus: "PUBLISHED" },
     select: {
       id: true,
       fullName: true,
@@ -150,6 +181,23 @@ export async function buildPartyIndex(): Promise<PartyName[]> {
 // ============================================
 
 /**
+ * Check if a word at a given position in the original text was part of a
+ * hyphenated compound (e.g. "franco-allemand", "Braun-Pivet").
+ * We look at the original (non-normalized) text to see if a hyphen preceded or followed the word.
+ */
+function isPartOfHyphenatedWord(originalText: string, normalizedWord: string): boolean {
+  const lowerText = originalText
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+  // Match the word with a hyphen immediately before or after
+  const hyphenatedRegex = new RegExp(
+    `[\\w][-–—]${escapeRegex(normalizedWord)}\\b|\\b${escapeRegex(normalizedWord)}[-–—][\\w]`
+  );
+  return hyphenatedRegex.test(lowerText);
+}
+
+/**
  * Find politicians mentioned in text
  * Returns matches with the name that was found
  */
@@ -183,12 +231,16 @@ export function findMentions(
     // Try last name only (less specific, but catches more mentions)
     // Only match if last name is at least 5 characters (avoid false positives)
     // AND last name is not a common word
+    // AND the word is not part of a hyphenated compound in the original text
     if (
       politician.normalizedLastName.length >= 5 &&
       !EXCLUDED_NAMES.has(politician.normalizedLastName)
     ) {
       const lastNameRegex = new RegExp(`\\b${escapeRegex(politician.normalizedLastName)}\\b`);
-      if (lastNameRegex.test(normalizedText)) {
+      if (
+        lastNameRegex.test(normalizedText) &&
+        !isPartOfHyphenatedWord(text, politician.normalizedLastName)
+      ) {
         matches.push({
           politicianId: politician.id,
           matchedName: politician.lastName,

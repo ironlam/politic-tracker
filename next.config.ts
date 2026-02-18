@@ -5,16 +5,28 @@ const nextConfig: NextConfig = {
     useCache: true,
   },
   images: {
-    // Allow all remote images - photos come from many sources
     remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "**",
-      },
-      {
-        protocol: "http",
-        hostname: "**",
-      },
+      // Assemblee nationale
+      { protocol: "https", hostname: "www2.assemblee-nationale.fr" },
+      { protocol: "https", hostname: "data.assemblee-nationale.fr" },
+      // Senat
+      { protocol: "https", hostname: "www.senat.fr" },
+      { protocol: "https", hostname: "data.senat.fr" },
+      // Wikimedia (Wikidata photos)
+      { protocol: "https", hostname: "upload.wikimedia.org" },
+      { protocol: "https", hostname: "commons.wikimedia.org" },
+      // HATVP
+      { protocol: "https", hostname: "www.hatvp.fr" },
+      // European Parliament
+      { protocol: "https", hostname: "**.europarl.europa.eu" },
+      // Gouvernement
+      { protocol: "https", hostname: "www.gouvernement.fr" },
+      // NosDéputés / NosSénateurs
+      { protocol: "https", hostname: "www.nosdeputes.fr" },
+      { protocol: "https", hostname: "www.nossenateurs.fr" },
+      // data.gouv.fr (election photos)
+      { protocol: "https", hostname: "www.data.gouv.fr" },
+      { protocol: "https", hostname: "static.data.gouv.fr" },
     ],
   },
   async headers() {

@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
     });
   }
 
-  const [politicians, parties, scrutins, dossiers] = await Promise.all([
+  const [politicians, parties, scrutins] = await Promise.all([
     // Politicians: ILIKE on fullName/lastName/firstName
     db.politician.findMany({
       where: {
@@ -75,21 +75,6 @@ export async function GET(request: NextRequest) {
       orderBy: { votingDate: "desc" },
       take: 3,
     }),
-
-    // Dossiers: ILIKE on title
-    db.legislativeDossier.findMany({
-      where: {
-        title: { contains: query, mode: "insensitive" },
-      },
-      select: {
-        id: true,
-        slug: true,
-        title: true,
-        status: true,
-      },
-      orderBy: { filingDate: "desc" },
-      take: 3,
-    }),
   ]);
 
   return NextResponse.json({
@@ -116,11 +101,7 @@ export async function GET(request: NextRequest) {
       votingDate: s.votingDate.toISOString(),
       chamber: s.chamber,
     })),
-    dossiers: dossiers.map((d) => ({
-      slug: d.slug,
-      id: d.id,
-      title: d.title,
-      status: d.status,
-    })),
+    // Dossiers: disabled until a public page exists (see #118)
+    dossiers: [],
   });
 }

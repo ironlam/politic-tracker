@@ -3,10 +3,10 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Image from "next/image";
-import { Search, Loader2, Users, Building2, Vote, FileText } from "lucide-react";
+import { Search, Loader2, Users, Building2, Vote } from "lucide-react";
 import { useGlobalSearch } from "./GlobalSearchProvider";
-import { MANDATE_TYPE_LABELS, DOSSIER_STATUS_LABELS, CHAMBER_SHORT_LABELS } from "@/config/labels";
-import type { MandateType, DossierStatus, Chamber } from "@/generated/prisma";
+import { MANDATE_TYPE_LABELS, CHAMBER_SHORT_LABELS } from "@/config/labels";
+import type { MandateType, Chamber } from "@/generated/prisma";
 
 interface PoliticianResult {
   slug: string;
@@ -33,18 +33,10 @@ interface ScrutinResult {
   chamber: Chamber;
 }
 
-interface DossierResult {
-  slug: string | null;
-  id: string;
-  title: string;
-  status: DossierStatus;
-}
-
 interface SearchResults {
   politicians: PoliticianResult[];
   parties: PartyResult[];
   scrutins: ScrutinResult[];
-  dossiers: DossierResult[];
 }
 
 interface NavigableItem {
@@ -63,19 +55,11 @@ function buildItems(results: SearchResults): NavigableItem[] {
   for (const s of results.scrutins) {
     items.push({ href: `/votes/${s.slug || s.id}`, category: "scrutins" });
   }
-  for (const d of results.dossiers) {
-    items.push({ href: `/assemblee/dossiers/${d.slug || d.id}`, category: "dossiers" });
-  }
   return items;
 }
 
 function totalCount(results: SearchResults): number {
-  return (
-    results.politicians.length +
-    results.parties.length +
-    results.scrutins.length +
-    results.dossiers.length
-  );
+  return results.politicians.length + results.parties.length + results.scrutins.length;
 }
 
 export function GlobalSearchDialog() {
@@ -393,41 +377,6 @@ export function GlobalSearchDialog() {
                                   year: "numeric",
                                 })}
                               </span>
-                            </button>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </li>
-                )}
-
-                {/* Dossiers */}
-                {results.dossiers.length > 0 && (
-                  <li role="presentation">
-                    <div className="flex items-center gap-2 px-4 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider mt-1">
-                      <FileText className="h-3.5 w-3.5" aria-hidden="true" />
-                      Dossiers
-                    </div>
-                    <ul role="group" aria-label="Dossiers législatifs">
-                      {results.dossiers.map((d) => {
-                        const idx = nextIndex();
-                        return (
-                          <li key={d.id} role="presentation">
-                            <button
-                              id={`search-item-${idx}`}
-                              role="option"
-                              aria-selected={activeIndex === idx}
-                              data-index={idx}
-                              className={`w-full flex items-center gap-3 px-4 py-2 text-left transition-colors cursor-pointer ${
-                                activeIndex === idx ? "bg-accent" : "hover:bg-accent/50"
-                              }`}
-                              onClick={() => navigate(`/assemblee/dossiers/${d.slug || d.id}`)}
-                              onMouseEnter={() => setActiveIndex(idx)}
-                            >
-                              <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-muted text-muted-foreground shrink-0">
-                                {DOSSIER_STATUS_LABELS[d.status]}
-                              </span>
-                              <span className="font-medium text-sm truncate">{d.title}</span>
                             </button>
                           </li>
                         );

@@ -1,5 +1,6 @@
 import { Metadata } from "next";
 import Link from "next/link";
+import { cacheTag, cacheLife } from "next/cache";
 import { db } from "@/lib/db";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +19,8 @@ import {
 } from "@/config/labels";
 import type { AffairStatus, AffairCategory } from "@/types";
 
+export const revalidate = 300; // 5 minutes — CDN edge cache with ISR
+
 export const metadata: Metadata = {
   title: "Affaires judiciaires",
   description: "Liste des affaires judiciaires impliquant des représentants politiques français",
@@ -33,6 +36,10 @@ async function getAffairs(
   category?: string,
   page = 1
 ) {
+  "use cache";
+  cacheTag("affairs");
+  cacheLife("minutes");
+
   const limit = 20;
   const skip = (page - 1) * limit;
 
@@ -81,6 +88,10 @@ async function getAffairs(
 }
 
 async function getSuperCategoryCounts() {
+  "use cache";
+  cacheTag("affairs");
+  cacheLife("minutes");
+
   const categoryCounts = await db.affair.groupBy({
     by: ["category"],
     where: { publicationStatus: "PUBLISHED" },
@@ -107,6 +118,10 @@ async function getSuperCategoryCounts() {
 }
 
 async function getStatusCounts() {
+  "use cache";
+  cacheTag("affairs");
+  cacheLife("minutes");
+
   const statusCounts = await db.affair.groupBy({
     by: ["status"],
     where: { publicationStatus: "PUBLISHED" },

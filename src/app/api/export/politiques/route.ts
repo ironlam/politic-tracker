@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
   }
 
   if (hasAffairs) {
-    where.affairs = { some: {} };
+    where.affairs = { some: { publicationStatus: "PUBLISHED" } };
   }
 
   // Fetch politicians with current mandate and party
@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
         orderBy: { startDate: "desc" },
         take: 1,
       },
-      _count: { select: { affairs: true } },
+      _count: { select: { affairs: { where: { publicationStatus: "PUBLISHED" } } } },
     },
     orderBy: { lastName: "asc" },
   });

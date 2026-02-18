@@ -54,6 +54,8 @@ interface PoliticianForSearch {
   slug: string;
   birthDate: Date | null;
   hasAffairs: boolean;
+  /** Departments from mandates, for cross-checking identity against court jurisdictions */
+  departments: string[];
 }
 
 // ============================================
@@ -141,6 +143,11 @@ function textRefersToPersonByName(text: string, fullName: string): boolean {
  * Filters out homonymes by verifying:
  * 1. The politician was at least 18 at the time of the decision
  * 2. The politician's name (not just surname) appears in the text
+ *
+ * TODO: Cross-check politician.departments against the court jurisdiction
+ * mentioned in the decision (e.g. "Cour d'appel de Lyon" → Rhône) to further
+ * reduce homonyme false positives. The department data is now available on
+ * PoliticianForSearch for this purpose.
  */
 function isRelevantDecision(
   decision: JudilibreDecisionSummary,
@@ -553,6 +560,30 @@ export async function syncJudilibre(
 // ============================================
 
 /**
+ * Extract unique department names from mandates.
+ * Uses constituency (e.g. "Rhône (3ème)") as department name source,
+ * stripping any parenthetical suffix. Falls back to departmentCode if no constituency.
+ */
+function extractDepartments(
+  mandates: { constituency: string | null; departmentCode: string | null }[]
+): string[] {
+  const departments = new Set<string>();
+
+  for (const m of mandates) {
+    if (m.constituency) {
+      // Strip parenthetical suffix: "Rhône (3ème)" → "Rhône"
+      const name = m.constituency.replace(/\s*\(.*\)$/, "").trim();
+      if (name) departments.add(name);
+    } else if (m.departmentCode) {
+      // Fallback: keep the code for future resolution
+      departments.add(m.departmentCode);
+    }
+  }
+
+  return Array.from(departments);
+}
+
+/**
  * Get politicians to search, prioritizing those with existing affairs
  */
 async function getPoliticiansToSearch(
@@ -568,6 +599,7 @@ async function getPoliticiansToSearch(
         slug: true,
         birthDate: true,
         _count: { select: { affairs: true } },
+        mandates: { select: { constituency: true, departmentCode: true } },
       },
     });
     if (!politician) {
@@ -578,6 +610,7 @@ async function getPoliticiansToSearch(
       {
         ...politician,
         hasAffairs: politician._count.affairs > 0,
+        departments: extractDepartments(politician.mandates),
       },
     ];
   }
@@ -590,6 +623,7 @@ async function getPoliticiansToSearch(
       slug: true,
       birthDate: true,
       _count: { select: { affairs: true } },
+      mandates: { select: { constituency: true, departmentCode: true } },
     },
     orderBy: [{ affairs: { _count: "desc" } }, { fullName: "asc" }],
     ...(limit ? { take: limit } : {}),
@@ -601,6 +635,7 @@ async function getPoliticiansToSearch(
     slug: p.slug,
     birthDate: p.birthDate,
     hasAffairs: p._count.affairs > 0,
+    departments: extractDepartments(p.mandates),
   }));
 }
 

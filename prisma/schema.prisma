@@ -371,6 +371,9 @@ model Affair {
   // Press article links
   pressArticles PressArticleAffair[]
 
+  // AI confidence score (0-100) — affects auto-publication
+  confidenceScore Int?
+
   // Publication control (moderation)
   publicationStatus PublicationStatus @default(DRAFT)
   rejectionReason   String?

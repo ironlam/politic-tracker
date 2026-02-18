@@ -35,6 +35,13 @@ const SCRAPABLE_SOURCES = new Set([
   "lcp",
   "politico",
   "mediapart",
+  // Regional press (free access)
+  "ouestfrance",
+  "sudouest",
+  "ladepeche",
+  "ledauphine",
+  "dna",
+  // googlenews links to external articles — don't scrape
 ]);
 
 interface AuthSession {

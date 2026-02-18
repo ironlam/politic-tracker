@@ -91,6 +91,46 @@ export const RSS_FEEDS: RSSFeedConfig[] = [
     url: "https://lcp.fr/rss.xml",
     priority: 2,
   },
+
+  // ── Priority 2: Presse régionale ──
+  {
+    id: "ouestfrance",
+    name: "Ouest-France",
+    url: "https://www.ouest-france.fr/rss/france",
+    priority: 2,
+  },
+  {
+    id: "sudouest",
+    name: "Sud Ouest",
+    url: "https://www.sudouest.fr/politique/rss.xml",
+    priority: 2,
+  },
+  {
+    id: "ladepeche",
+    name: "La Dépêche du Midi",
+    url: "https://www.ladepeche.fr/rss.xml",
+    priority: 2,
+  },
+  {
+    id: "ledauphine",
+    name: "Le Dauphiné Libéré",
+    url: "https://www.ledauphine.com/rss",
+    priority: 2,
+  },
+  {
+    id: "dna",
+    name: "Dernières Nouvelles d'Alsace",
+    url: "https://www.dna.fr/rss",
+    priority: 2,
+  },
+
+  // ── Priority 2: Agrégateur ──
+  {
+    id: "googlenews",
+    name: "Google News FR (Politique/Justice)",
+    url: "https://news.google.com/rss/search?q=politique+france+justice&hl=fr&gl=FR&ceid=FR:fr",
+    priority: 2,
+  },
 ];
 
 // ============================================

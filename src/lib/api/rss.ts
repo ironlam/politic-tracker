@@ -62,7 +62,7 @@ export const RSS_FEEDS: RSSFeedConfig[] = [
   {
     id: "liberation",
     name: "Libération Politique",
-    url: "https://www.liberation.fr/arc/outboundfeeds/rss-all/category/politique/",
+    url: "https://www.liberation.fr/arc/outboundfeeds/rss-all/category/politique/?outputType=xml",
     priority: 1,
   },
 
@@ -82,7 +82,7 @@ export const RSS_FEEDS: RSSFeedConfig[] = [
   {
     id: "publicsenat",
     name: "Public Sénat",
-    url: "https://www.publicsenat.fr/rss.xml",
+    url: "https://www.publicsenat.fr/feed",
     priority: 2,
   },
   {

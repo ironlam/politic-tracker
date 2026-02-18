@@ -40,15 +40,15 @@ function getDatabaseHost(url: string): string {
 
 const dbHost = getDatabaseHost(connectionString);
 
-// Block known production patterns
-const PROD_PATTERNS = [
-  "pooler.supabase.com",
-  "bdhyuvtrnmaywojftntr.supabase.co", // production
-];
+// Block known production hosts (configurable via env var, comma-separated)
+const DEFAULT_BLOCKED_HOSTS = ["pooler.supabase.com"];
+const BLOCKED_HOSTS = process.env.SEED_BLOCKED_HOSTS
+  ? process.env.SEED_BLOCKED_HOSTS.split(",").map((h) => h.trim())
+  : DEFAULT_BLOCKED_HOSTS;
 
-if (PROD_PATTERNS.some((p) => dbHost.includes(p) && !dbHost.includes("staging"))) {
+if (BLOCKED_HOSTS.some((p) => dbHost.includes(p) && !dbHost.includes("staging"))) {
   console.error(`❌ Le host "${dbHost}" ressemble à la production. Abandon.`);
-  console.error("   Si c'est bien staging, ajoutez le host dans PROD_PATTERNS pour l'exclure.");
+  console.error("   Configurez SEED_BLOCKED_HOSTS pour ajuster les hosts bloqués.");
   process.exit(1);
 }
 

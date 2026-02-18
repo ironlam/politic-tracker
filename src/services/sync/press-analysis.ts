@@ -88,9 +88,11 @@ async function buildPoliticianContext(): Promise<string> {
 
   return politicians
     .map((p) => {
-      const party = p.currentParty?.shortName || "?";
-      const mandate = p.mandates[0]?.title || "?";
-      return `${p.fullName} (${party}, ${mandate})`;
+      // Sanitize: strip control chars, limit length (defense-in-depth vs prompt injection)
+      const name = p.fullName.replace(/[\x00-\x1f]/g, "").slice(0, 80);
+      const party = (p.currentParty?.shortName || "?").replace(/[\x00-\x1f]/g, "").slice(0, 30);
+      const mandate = (p.mandates[0]?.title || "?").replace(/[\x00-\x1f]/g, "").slice(0, 80);
+      return `${name} (${party}, ${mandate})`;
     })
     .join("\n");
 }

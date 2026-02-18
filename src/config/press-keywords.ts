@@ -91,6 +91,21 @@ function normalizeForMatching(text: string): string {
 }
 
 /**
+ * Match a keyword against text, using word boundaries for single-word keywords
+ * to avoid false positives (e.g., "viol" matching "violation").
+ * Multi-word keywords use substring matching (already specific enough).
+ */
+function matchesKeyword(text: string, keyword: string): boolean {
+  if (keyword.includes(" ")) {
+    return text.includes(keyword);
+  }
+  // Word boundary: space, start/end, or punctuation around the keyword
+  const escaped = keyword.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const regex = new RegExp(`(?:^|[\\s.,;:!?'"/()\\-])${escaped}(?:$|[\\s.,;:!?'"/()\\-])`, "i");
+  return regex.test(text);
+}
+
+/**
  * Classify an article as TIER_1 (judicial keywords found) or TIER_2 (no match).
  * Matching is case-insensitive and accent-insensitive on title + description.
  */
@@ -101,7 +116,7 @@ export function classifyArticleTier(
   const text = normalizeForMatching(`${title} ${description || ""}`);
 
   for (const keyword of JUDICIAL_KEYWORDS) {
-    if (text.includes(keyword)) {
+    if (matchesKeyword(text, keyword)) {
       return "TIER_1";
     }
   }

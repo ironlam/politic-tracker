@@ -462,6 +462,7 @@ async function createAffairFromPress(
         status: detected.status as AffairStatus,
         category: detected.category as AffairCategory,
         publicationStatus: "DRAFT",
+        confidenceScore: detected.confidenceScore,
         factsDate: detected.factsDate ? new Date(detected.factsDate) : null,
         court: detected.court,
         verifiedAt: null,
@@ -482,7 +483,10 @@ async function createAffairFromPress(
     await linkArticleToAffair(articleId, affair.id, "REVELATION");
 
     if (verbose) {
-      console.log(`  ✓ Nouvelle affaire créée: ${title}`);
+      const scoreLabel = detected.confidenceScore >= 70 ? "✓" : "⚠";
+      console.log(
+        `  ${scoreLabel} Nouvelle affaire créée: ${title} (confiance: ${detected.confidenceScore}/100)`
+      );
     }
     return true;
   } catch (error) {

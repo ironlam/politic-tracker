@@ -11,6 +11,7 @@ import {
   Clock,
   CheckCircle2,
   XCircle,
+  Square,
   ChevronDown,
   ChevronRight,
   Loader2,
@@ -179,6 +180,7 @@ export default function SyncsPage() {
   const [data, setData] = useState<ApiResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [launching, setLaunching] = useState<string | null>(null);
+  const [cancelling, setCancelling] = useState<string | null>(null);
   const [collapsedCats, setCollapsedCats] = useState<Set<string>>(new Set());
   const [expandedErrors, setExpandedErrors] = useState<Set<string>>(new Set());
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -213,6 +215,22 @@ export default function SyncsPage() {
       if (pollRef.current) clearInterval(pollRef.current);
     };
   }, [hasRunning, fetchData]);
+
+  async function cancelJob(jobId: string) {
+    setCancelling(jobId);
+    try {
+      const res = await fetch(`/api/admin/syncs/${jobId}`, { method: "PATCH" });
+      if (res.ok) {
+        toast.success("Job annulé");
+        await fetchData();
+      } else {
+        const err = await res.json();
+        toast.error(err.error || "Erreur lors de l'annulation");
+      }
+    } finally {
+      setCancelling(null);
+    }
+  }
 
   async function launchScript(scriptId: string) {
     setLaunching(scriptId);
@@ -304,12 +322,26 @@ export default function SyncsPage() {
                   <div key={job.id} className="space-y-1.5">
                     <div className="flex items-center justify-between text-sm">
                       <span className="font-medium">{scriptLabel(job.script)}</span>
-                      <span className="text-xs text-muted-foreground tabular-nums">
+                      <span className="flex items-center gap-2 text-xs text-muted-foreground tabular-nums">
                         {job.processed != null && job.total
                           ? `${job.processed}/${job.total}`
                           : `${job.progress}%`}
                         {" · "}
-                        {formatDuration(job.startedAt, null)}
+                        {formatDuration(job.startedAt || job.createdAt, null)}
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-6 w-6 p-0 text-muted-foreground hover:text-red-600"
+                          onClick={() => cancelJob(job.id)}
+                          disabled={cancelling === job.id}
+                          aria-label={`Annuler ${scriptLabel(job.script)}`}
+                        >
+                          {cancelling === job.id ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <Square className="w-3.5 h-3.5" />
+                          )}
+                        </Button>
                       </span>
                     </div>
                     <div

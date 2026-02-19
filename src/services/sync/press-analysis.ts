@@ -26,6 +26,7 @@ import { findMatchingAffairs } from "@/services/affairs/matching";
 import { buildPoliticianIndex, findMentions, type PoliticianName } from "@/lib/name-matching";
 import { syncMetadata } from "@/lib/sync";
 import { classifyArticleTier, type ArticleTier } from "@/config/press-keywords";
+import { MIN_CONFIDENCE_THRESHOLD } from "@/config/press-analysis";
 
 // ============================================
 // TYPES
@@ -47,6 +48,7 @@ export interface PressAnalysisStats {
   articlesAffairRelated: number;
   affairsEnriched: number;
   affairsCreated: number;
+  affairsRejected: number;
   scrapeErrors: number;
   analysisErrors: number;
   sensitiveWarnings: number;
@@ -123,6 +125,7 @@ export async function syncPressAnalysis(
     articlesAffairRelated: 0,
     affairsEnriched: 0,
     affairsCreated: 0,
+    affairsRejected: 0,
     scrapeErrors: 0,
     analysisErrors: 0,
     sensitiveWarnings: 0,
@@ -308,6 +311,12 @@ export async function syncPressAnalysis(
           );
           if (enriched) stats.affairsEnriched++;
         } else if (detected.isNewRevelation) {
+          // Reject low-confidence detections before creating
+          if (detected.confidenceScore < MIN_CONFIDENCE_THRESHOLD) {
+            await rejectLowConfidenceAffair(article.id, politicianId, detected, dryRun, verbose);
+            stats.affairsRejected++;
+            continue;
+          }
           // New revelation — create affair with [À VÉRIFIER]
           const created = await createAffairFromPress(
             politicianId,
@@ -576,6 +585,35 @@ async function linkArticleToAffair(
     },
     create: { articleId, affairId, role },
     update: { role },
+  });
+}
+
+/**
+ * Log a rejected low-confidence affair detection to DB
+ */
+async function rejectLowConfidenceAffair(
+  articleId: string,
+  politicianId: string | null,
+  detected: DetectedAffair,
+  dryRun: boolean,
+  verbose?: boolean
+): Promise<void> {
+  if (verbose) {
+    console.log(
+      `  ✗ Rejeté (confiance: ${detected.confidenceScore}/${MIN_CONFIDENCE_THRESHOLD}): ${detected.title} — ${detected.politicianName}`
+    );
+  }
+
+  if (dryRun) return;
+
+  await db.pressAnalysisRejection.create({
+    data: {
+      articleId,
+      politicianId,
+      politicianName: detected.politicianName,
+      detectedAffair: JSON.parse(JSON.stringify(detected)),
+      confidenceScore: detected.confidenceScore,
+    },
   });
 }
 

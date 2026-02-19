@@ -2,11 +2,26 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { isAuthenticated } from "@/lib/auth";
 
+const STALE_JOB_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
+
 export async function GET(request: NextRequest) {
   const authenticated = await isAuthenticated();
   if (!authenticated) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   }
+
+  // Cleanup stale jobs (stuck PENDING/RUNNING > 30 minutes)
+  await db.syncJob.updateMany({
+    where: {
+      status: { in: ["PENDING", "RUNNING"] },
+      createdAt: { lt: new Date(Date.now() - STALE_JOB_TIMEOUT_MS) },
+    },
+    data: {
+      status: "FAILED",
+      error: "Timeout : job bloqué depuis plus de 30 minutes",
+      completedAt: new Date(),
+    },
+  });
 
   const { searchParams } = new URL(request.url);
   const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));

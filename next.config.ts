@@ -59,7 +59,7 @@ const nextConfig: NextConfig = {
           "style-src 'self' 'unsafe-inline'",
           "img-src 'self' https: data:",
           "font-src 'self'",
-          "connect-src 'self' https://cloud.umami.is https://api.anthropic.com",
+          "connect-src 'self' https://cloud.umami.is https://api.anthropic.com https://geo.api.gouv.fr",
           "frame-ancestors 'none'",
         ].join("; "),
       },

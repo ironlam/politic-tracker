@@ -54,6 +54,7 @@ model Politician {
   externalIds       ExternalId[] // IDs from all external sources
   votes             Vote[] // Parliamentary votes
   pressMentions     PressArticleMention[] // Mentions in press articles
+  pressRejections   PressAnalysisRejection[] // Low-confidence press analysis rejections
   factCheckMentions FactCheckMention[] // Mentions in fact-checks
   candidacies       Candidacy[] // Election candidacies
 
@@ -889,6 +890,7 @@ model PressArticle {
   mentions      PressArticleMention[]
   partyMentions PressArticlePartyMention[]
   affairLinks   PressArticleAffair[]
+  rejections    PressAnalysisRejection[]
 
   createdAt DateTime @default(now())
 
@@ -949,6 +951,22 @@ enum PressAffairRole {
   REVELATION // Article d'investigation qui révèle l'affaire
   MENTION // Article qui mentionne une affaire existante
   UPDATE // Article avec de nouveaux développements
+}
+
+model PressAnalysisRejection {
+  id              String   @id @default(cuid())
+  articleId       String
+  politicianId    String?
+  politicianName  String
+  detectedAffair  Json
+  confidenceScore Int
+  rejectedAt      DateTime @default(now())
+
+  article    PressArticle @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  politician Politician?  @relation(fields: [politicianId], references: [id], onDelete: SetNull)
+
+  @@index([rejectedAt])
+  @@index([articleId])
 }
 
 // ============================================

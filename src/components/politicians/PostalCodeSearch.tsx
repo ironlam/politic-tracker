@@ -76,6 +76,11 @@ export function PostalCodeSearch() {
       const deptResponse = await fetch(
         `https://geo.api.gouv.fr/departements/${commune.codeDepartement}`
       );
+
+      if (!deptResponse.ok) {
+        throw new Error("Erreur lors de la recherche du département");
+      }
+
       const deptData = await deptResponse.json();
       const departmentName = deptData.nom;
 
@@ -97,7 +102,12 @@ export function PostalCodeSearch() {
         deputies,
       });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Une erreur est survenue");
+      // Always show French error messages — never expose raw browser errors like "Failed to fetch"
+      const message = err instanceof Error ? err.message : "";
+      const isFrench = message.startsWith("Erreur");
+      setError(
+        isFrench ? message : "Une erreur est survenue. Vérifiez votre connexion et réessayez."
+      );
     } finally {
       setIsSearching(false);
     }

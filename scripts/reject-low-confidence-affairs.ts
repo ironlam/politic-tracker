@@ -6,6 +6,7 @@
  *   npx tsx scripts/reject-low-confidence-affairs.ts --apply       # apply changes
  */
 
+import "dotenv/config";
 import { db } from "@/lib/db";
 import { MIN_CONFIDENCE_THRESHOLD } from "@/config/press-analysis";
 

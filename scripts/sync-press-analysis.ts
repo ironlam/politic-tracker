@@ -117,6 +117,7 @@ Environment:
         articlesAffairRelated: stats.articlesAffairRelated,
         affairsEnriched: stats.affairsEnriched,
         affairsCreated: stats.affairsCreated,
+        affairsRejected: stats.affairsRejected,
         scrapeErrors: stats.scrapeErrors,
         analysisErrors: stats.analysisErrors,
         sensitiveWarnings: stats.sensitiveWarnings,

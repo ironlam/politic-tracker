@@ -47,14 +47,21 @@ export function formatCurrency(amount: number | null): string {
 
 /**
  * Generate a SEO-friendly slug with date prefix
- * Format: YYYY-MM-DD-titre-slugifie (max 80 characters)
+ * Format: YYYY-MM-DD-titre-slugifie (max 120 characters)
+ *
+ * Truncates at a word boundary (last `-` before the limit) to avoid
+ * cutting in the middle of a word.
  *
  * @param date - The date to prefix the slug with (uses current date if null)
  * @param title - The title to slugify
- * @param maxLength - Maximum total length of the slug (default: 80)
+ * @param maxLength - Maximum total length of the slug (default: 120)
  * @returns A slugified string in format "YYYY-MM-DD-title-slug"
  */
-export function generateDateSlug(date: Date | null, title: string, maxLength: number = 80): string {
+export function generateDateSlug(
+  date: Date | null,
+  title: string,
+  maxLength: number = 120
+): string {
   const datePrefix = date
     ? date.toISOString().split("T")[0]
     : new Date().toISOString().split("T")[0];
@@ -63,7 +70,16 @@ export function generateDateSlug(date: Date | null, title: string, maxLength: nu
 
   // 10 chars for date (YYYY-MM-DD) + 1 for dash
   const availableLength = maxLength - datePrefix.length - 1;
-  const truncatedTitle = titleSlug.slice(0, availableLength).replace(/-$/, "");
+
+  let truncatedTitle = titleSlug;
+  if (titleSlug.length > availableLength) {
+    // Truncate at last word boundary (last dash before limit)
+    truncatedTitle = titleSlug.slice(0, availableLength);
+    const lastDash = truncatedTitle.lastIndexOf("-");
+    if (lastDash > 0) {
+      truncatedTitle = truncatedTitle.slice(0, lastDash);
+    }
+  }
 
   return `${datePrefix}-${truncatedTitle}`;
 }

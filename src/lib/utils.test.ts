@@ -1,5 +1,12 @@
 import { describe, it, expect } from "vitest";
-import { cn, generateSlug, formatDate, formatCurrency, normalizeImageUrl } from "./utils";
+import {
+  cn,
+  generateSlug,
+  generateDateSlug,
+  formatDate,
+  formatCurrency,
+  normalizeImageUrl,
+} from "./utils";
 
 describe("cn", () => {
   it("should merge class names", () => {
@@ -67,6 +74,44 @@ describe("generateSlug", () => {
 
   it("should handle empty string", () => {
     expect(generateSlug("")).toBe("");
+  });
+});
+
+describe("generateDateSlug", () => {
+  it("should generate date-prefixed slug", () => {
+    const date = new Date("2025-12-05");
+    expect(generateDateSlug(date, "Hello World")).toBe("2025-12-05-hello-world");
+  });
+
+  it("should truncate at word boundary, not mid-word", () => {
+    const date = new Date("2025-12-05");
+    const longTitle =
+      "Emmanuel Macron a-t-il réellement été humilié par les dirigeants étrangers lors du sommet";
+    const slug = generateDateSlug(date, longTitle, 80);
+    // Should not end with a partial word
+    expect(slug).not.toMatch(/-[a-z]$/); // No single-char word remnant at end
+    expect(slug.length).toBeLessThanOrEqual(80);
+    // Should end at a word boundary (no truncated word)
+    expect(slug).toMatch(/-[a-z]{2,}$/);
+  });
+
+  it("should not truncate short titles", () => {
+    const date = new Date("2025-01-01");
+    const slug = generateDateSlug(date, "Test court");
+    expect(slug).toBe("2025-01-01-test-court");
+  });
+
+  it("should respect custom maxLength", () => {
+    const date = new Date("2025-06-15");
+    const slug = generateDateSlug(date, "Un titre assez long pour tester la troncature", 40);
+    expect(slug.length).toBeLessThanOrEqual(40);
+  });
+
+  it("should default to 120 max length", () => {
+    const date = new Date("2025-01-01");
+    const veryLongTitle = "a".repeat(200);
+    const slug = generateDateSlug(date, veryLongTitle);
+    expect(slug.length).toBeLessThanOrEqual(120);
   });
 });
 

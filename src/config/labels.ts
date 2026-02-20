@@ -248,6 +248,7 @@ export const SOURCE_TYPE_LABELS: Record<SourceType, string> = {
   JUDILIBRE: "Judilibre",
   LEGIFRANCE: "Légifrance",
   PRESSE: "Presse",
+  WIKIPEDIA: "Wikipedia",
   MANUAL: "Saisie manuelle",
 };
 

@@ -46,7 +46,7 @@ export interface ArticleAnalysisResult {
 
 export interface DetectedAffair {
   politicianName: string;
-  involvement: "DIRECT" | "INDIRECT" | "MENTIONED_ONLY";
+  involvement: "DIRECT" | "INDIRECT" | "MENTIONED_ONLY" | "VICTIM" | "PLAINTIFF";
   category: string;
   status: string;
   title: string;
@@ -142,9 +142,9 @@ const ANALYSIS_TOOL = {
             },
             involvement: {
               type: "string",
-              enum: ["DIRECT", "INDIRECT", "MENTIONED_ONLY"],
+              enum: ["DIRECT", "INDIRECT", "MENTIONED_ONLY", "VICTIM", "PLAINTIFF"],
               description:
-                "Niveau d'implication du politicien dans l'affaire. DIRECT = mis en cause, poursuivi, condamné ou directement visé. INDIRECT = témoin, victime ou acteur secondaire. MENTIONED_ONLY = simplement cité dans l'article sans lien réel avec l'affaire judiciaire.",
+                "Niveau d'implication du politicien dans l'affaire. DIRECT = mis en cause, poursuivi, condamné ou directement visé. INDIRECT = témoin ou acteur secondaire. MENTIONED_ONLY = simplement cité dans l'article sans lien réel avec l'affaire judiciaire. VICTIM = le politicien est victime de l'infraction (menaces, agressions, cambriolage). PLAINTIFF = le politicien a déposé plainte.",
             },
             category: {
               type: "string",
@@ -235,7 +235,7 @@ RÈGLES STRICTES :
 
 RÈGLE CRITIQUE — IMPLICATION DIRECTE :
 9. Un politicien doit être DIRECTEMENT MIS EN CAUSE (mis en examen, poursuivi, condamné, placé en garde à vue) pour avoir involvement: "DIRECT". Un politicien simplement MENTIONNÉ dans l'article (réaction politique, commentaire, contexte, autre sujet) → involvement: MENTIONED_ONLY
-10. Si l'article parle d'une affaire où le politicien est VICTIME, TÉMOIN ou simple commentateur → involvement: INDIRECT ou MENTIONED_ONLY
+10. Si l'article parle d'une affaire où le politicien est VICTIME (menaces, agressions, cambriolage) → involvement: VICTIM. S'il a déposé plainte → PLAINTIFF. S'il est simple TÉMOIN ou commentateur → INDIRECT ou MENTIONED_ONLY
 11. Si un article mentionne un politicien dans un contexte politique (débat, vote, déclaration) et qu'une affaire judiciaire est mentionnée séparément dans le même article, NE PAS attribuer l'affaire au politicien
 
 SCORE DE CONFIANCE (confidence_score) :
@@ -312,7 +312,7 @@ export async function analyzeArticle(input: ArticleAnalysisInput): Promise<Artic
     const status = validateEnum(a.status as string, AFFAIR_STATUSES, "ENQUETE_PRELIMINAIRE");
     const involvement = validateEnum(
       a.involvement as string,
-      ["DIRECT", "INDIRECT", "MENTIONED_ONLY"] as const,
+      ["DIRECT", "INDIRECT", "MENTIONED_ONLY", "VICTIM", "PLAINTIFF"] as const,
       "MENTIONED_ONLY"
     );
 

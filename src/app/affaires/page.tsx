@@ -15,9 +15,11 @@ import {
   AFFAIR_SUPER_CATEGORY_DESCRIPTIONS,
   CATEGORY_TO_SUPER,
   getCategoriesForSuper,
+  INVOLVEMENT_LABELS,
+  INVOLVEMENT_COLORS,
   type AffairSuperCategory,
 } from "@/config/labels";
-import type { AffairStatus, AffairCategory } from "@/types";
+import type { AffairStatus, AffairCategory, Involvement } from "@/types";
 
 export const revalidate = 300; // 5 minutes — CDN edge cache with ISR
 
@@ -302,6 +304,13 @@ export default async function AffairesPage({ searchParams }: PageProps) {
                             {AFFAIR_STATUS_LABELS[affair.status]}
                           </Badge>
                           <Badge variant="outline">{AFFAIR_CATEGORY_LABELS[affair.category]}</Badge>
+                          {affair.involvement !== "DIRECT" && (
+                            <Badge
+                              className={INVOLVEMENT_COLORS[affair.involvement as Involvement]}
+                            >
+                              {INVOLVEMENT_LABELS[affair.involvement as Involvement]}
+                            </Badge>
+                          )}
                         </div>
 
                         <h2 className="text-lg font-semibold mb-1">{affair.title}</h2>

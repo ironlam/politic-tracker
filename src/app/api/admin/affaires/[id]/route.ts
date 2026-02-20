@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { isAuthenticated } from "@/lib/auth";
 import { invalidateEntity } from "@/lib/cache";
+import { trackStatusChange } from "@/services/affairs/status-tracking";
 import { updateAffairSchema } from "@/lib/validations/affairs";
 
 interface RouteContext {
@@ -89,6 +90,14 @@ export async function PUT(request: NextRequest, context: RouteContext) {
         caseNumbers: data.caseNumbers || [],
       },
     });
+
+    // Track status change for audit trail
+    if (existing.status !== data.status) {
+      await trackStatusChange(id, existing.status, data.status, {
+        type: "MANUAL",
+        title: "Modification manuelle via l'admin",
+      });
+    }
 
     // Handle sources: delete old ones and create new ones
     // (simpler than diffing for MVP)

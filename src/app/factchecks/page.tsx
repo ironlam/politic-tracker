@@ -454,13 +454,13 @@ export default async function FactChecksPage({ searchParams }: PageProps) {
           {factChecks.map((fc) => (
             <FactCheckCard
               key={fc.id}
+              slug={fc.slug!}
               title={fc.title}
               claimText={fc.claimText}
               claimant={fc.claimant}
               verdict={fc.verdict}
               verdictRating={fc.verdictRating}
               source={fc.source}
-              sourceUrl={fc.sourceUrl}
               publishedAt={fc.publishedAt}
               mentions={fc.mentions}
             />

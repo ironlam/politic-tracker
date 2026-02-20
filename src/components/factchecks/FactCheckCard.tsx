@@ -5,13 +5,13 @@ import { FACTCHECK_RATING_LABELS, FACTCHECK_RATING_COLORS } from "@/config/label
 import type { FactCheckRating } from "@/types";
 
 interface FactCheckCardProps {
+  slug: string;
   title: string;
   claimText: string;
   claimant?: string | null;
   verdict: string;
   verdictRating: FactCheckRating;
   source: string;
-  sourceUrl: string;
   publishedAt: Date;
   mentions: Array<{
     politician: {
@@ -22,12 +22,12 @@ interface FactCheckCardProps {
 }
 
 export function FactCheckCard({
+  slug,
   title,
   claimText,
   claimant,
   verdictRating,
   source,
-  sourceUrl,
   publishedAt,
   mentions,
 }: FactCheckCardProps) {
@@ -47,11 +47,11 @@ export function FactCheckCard({
       </div>
 
       {/* Title */}
-      <a href={sourceUrl} target="_blank" rel="noopener noreferrer" className="block">
-        <h3 className="font-semibold text-sm line-clamp-2 group-hover:text-primary transition-colors">
+      <Link href={`/factchecks/${slug}`} className="block">
+        <h3 className="font-semibold text-sm group-hover:text-primary transition-colors">
           {title}
         </h3>
-      </a>
+      </Link>
 
       {/* Claim */}
       <p className="text-sm text-muted-foreground mt-2">
@@ -84,15 +84,13 @@ export function FactCheckCard({
         </div>
       )}
 
-      {/* External link */}
-      <a
-        href={sourceUrl}
-        target="_blank"
-        rel="noopener noreferrer"
+      {/* Detail link */}
+      <Link
+        href={`/factchecks/${slug}`}
         className="text-xs text-primary hover:underline mt-2 inline-block"
       >
-        Lire le fact-check →
-      </a>
+        Voir le détail →
+      </Link>
     </article>
   );
 }

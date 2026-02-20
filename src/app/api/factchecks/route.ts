@@ -95,6 +95,7 @@ export async function GET(request: NextRequest) {
         where,
         select: {
           id: true,
+          slug: true,
           claimText: true,
           claimant: true,
           title: true,

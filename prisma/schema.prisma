@@ -977,6 +977,7 @@ model PressAnalysisRejection {
 
 model FactCheck {
   id            String          @id @default(cuid())
+  slug          String?         @unique // SEO-friendly URL slug
   claimText     String          @db.Text // La déclaration vérifiée
   claimant      String? // Qui a fait la déclaration
   title         String          @db.Text // Titre de l'article de fact-check

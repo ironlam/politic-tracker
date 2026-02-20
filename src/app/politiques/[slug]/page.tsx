@@ -27,6 +27,7 @@ import { PersonJsonLd, BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 import { SentenceDetails } from "@/components/affairs/SentenceDetails";
 import { AffairTimeline } from "@/components/affairs/AffairTimeline";
 import { VotePositionBadge } from "@/components/votes";
+import { getPoliticianVotingStats } from "@/services/voteStats";
 
 // ISR: regenerate every hour
 export const revalidate = 3600;
@@ -124,11 +125,7 @@ async function getVoteStats(politicianId: string) {
   cacheLife("minutes");
 
   const [stats, recentVotes] = await Promise.all([
-    db.vote.groupBy({
-      by: ["position"],
-      where: { politicianId },
-      _count: true,
-    }),
+    getPoliticianVotingStats(politicianId),
     db.vote.findMany({
       where: { politicianId },
       include: {
@@ -146,44 +143,7 @@ async function getVoteStats(politicianId: string) {
     }),
   ]);
 
-  const votingStats = {
-    total: 0,
-    pour: 0,
-    contre: 0,
-    abstention: 0,
-    nonVotant: 0,
-    absent: 0,
-    participationRate: 0,
-  };
-
-  for (const s of stats) {
-    votingStats.total += s._count;
-    switch (s.position) {
-      case "POUR":
-        votingStats.pour = s._count;
-        break;
-      case "CONTRE":
-        votingStats.contre = s._count;
-        break;
-      case "ABSTENTION":
-        votingStats.abstention = s._count;
-        break;
-      case "NON_VOTANT":
-        votingStats.nonVotant = s._count;
-        break;
-      case "ABSENT":
-        votingStats.absent = s._count;
-        break;
-    }
-  }
-
-  // Participation: non-votants are excluded from denominator (they are present but don't vote by role)
-  const expressed = votingStats.pour + votingStats.contre + votingStats.abstention;
-  const countedForParticipation = votingStats.total - votingStats.nonVotant;
-  votingStats.participationRate =
-    countedForParticipation > 0 ? Math.round((expressed / countedForParticipation) * 100) : 0;
-
-  return { stats: votingStats, recentVotes };
+  return { stats, recentVotes };
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {

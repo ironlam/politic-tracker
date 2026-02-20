@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { withCache } from "@/lib/cache";
+import { getPoliticianVotingStats } from "@/services/voteStats";
 
 interface RouteContext {
   params: Promise<{ slug: string }>;
@@ -88,7 +89,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
     }
 
     // Get votes with scrutin info
-    const [votes, total, stats] = await Promise.all([
+    const [votes, total, votingStats] = await Promise.all([
       db.vote.findMany({
         where: { politicianId: politician.id },
         include: {
@@ -114,51 +115,8 @@ export async function GET(request: NextRequest, context: RouteContext) {
       db.vote.count({
         where: { politicianId: politician.id },
       }),
-      // Calculate stats
-      db.vote.groupBy({
-        by: ["position"],
-        where: { politicianId: politician.id },
-        _count: true,
-      }),
+      getPoliticianVotingStats(politician.id),
     ]);
-
-    // Build stats object
-    const votingStats = {
-      total: 0,
-      pour: 0,
-      contre: 0,
-      abstention: 0,
-      nonVotant: 0,
-      absent: 0,
-      participationRate: 0,
-    };
-
-    for (const s of stats) {
-      votingStats.total += s._count;
-      switch (s.position) {
-        case "POUR":
-          votingStats.pour = s._count;
-          break;
-        case "CONTRE":
-          votingStats.contre = s._count;
-          break;
-        case "ABSTENTION":
-          votingStats.abstention = s._count;
-          break;
-        case "NON_VOTANT":
-          votingStats.nonVotant = s._count;
-          break;
-        case "ABSENT":
-          votingStats.absent = s._count;
-          break;
-      }
-    }
-
-    // Participation = votes expressed / total (excluding absents and non-votants)
-    const expressed = votingStats.pour + votingStats.contre + votingStats.abstention;
-    const countedForParticipation = votingStats.total - votingStats.nonVotant;
-    votingStats.participationRate =
-      countedForParticipation > 0 ? Math.round((expressed / countedForParticipation) * 100) : 0;
 
     return withCache(
       NextResponse.json({

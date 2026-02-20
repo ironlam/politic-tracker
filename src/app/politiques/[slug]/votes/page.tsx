@@ -8,6 +8,7 @@ import { VoteStats, VotePositionBadge, VotingResultBadge } from "@/components/vo
 import { formatDate } from "@/lib/utils";
 import { ArrowLeft, ExternalLink, Info } from "lucide-react";
 import { feminizeRole } from "@/config/labels";
+import { getPoliticianVotingStats } from "@/services/voteStats";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -40,64 +41,20 @@ async function getVotes(politicianId: string, page: number, limit: number) {
   const [votes, total, stats] = await Promise.all([
     db.vote.findMany({
       where: { politicianId },
-      include: {
-        scrutin: true,
-      },
+      include: { scrutin: true },
       orderBy: { scrutin: { votingDate: "desc" } },
       skip,
       take: limit,
     }),
-    db.vote.count({
-      where: { politicianId },
-    }),
-    db.vote.groupBy({
-      by: ["position"],
-      where: { politicianId },
-      _count: true,
-    }),
+    db.vote.count({ where: { politicianId } }),
+    getPoliticianVotingStats(politicianId),
   ]);
-
-  const votingStats = {
-    total: 0,
-    pour: 0,
-    contre: 0,
-    abstention: 0,
-    nonVotant: 0,
-    absent: 0,
-    participationRate: 0,
-  };
-
-  for (const s of stats) {
-    votingStats.total += s._count;
-    switch (s.position) {
-      case "POUR":
-        votingStats.pour = s._count;
-        break;
-      case "CONTRE":
-        votingStats.contre = s._count;
-        break;
-      case "ABSTENTION":
-        votingStats.abstention = s._count;
-        break;
-      case "NON_VOTANT":
-        votingStats.nonVotant = s._count;
-        break;
-      case "ABSENT":
-        votingStats.absent = s._count;
-        break;
-    }
-  }
-
-  const expressed = votingStats.pour + votingStats.contre + votingStats.abstention;
-  const countedForParticipation = votingStats.total - votingStats.nonVotant;
-  votingStats.participationRate =
-    countedForParticipation > 0 ? Math.round((expressed / countedForParticipation) * 100) : 0;
 
   return {
     votes,
     total,
     totalPages: Math.ceil(total / limit),
-    stats: votingStats,
+    stats,
   };
 }
 

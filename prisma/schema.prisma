@@ -12,11 +12,11 @@ datasource db {
 // ============================================
 
 enum PublicationStatus {
-  PUBLISHED  // Visible partout
-  DRAFT      // Importé mais incomplet, caché
-  ARCHIVED   // Ancien, caché par défaut
-  EXCLUDED   // Ne doit jamais être affiché
-  REJECTED   // Rejeté après modération (affaires)
+  PUBLISHED // Visible partout
+  DRAFT // Importé mais incomplet, caché
+  ARCHIVED // Ancien, caché par défaut
+  EXCLUDED // Ne doit jamais être affiché
+  REJECTED // Rejeté après modération (affaires)
 }
 
 model Politician {
@@ -40,7 +40,7 @@ model Politician {
   // Visibility & ranking
   publicationStatus PublicationStatus @default(DRAFT)
   statusOverride    Boolean           @default(false) // true = don't auto-reassign status
-  prominenceScore   Int               @default(0)     // 0-1000, higher = more prominent
+  prominenceScore   Int               @default(0) // 0-1000, higher = more prominent
 
   // Current party (nullable if independent)
   currentParty   Party?  @relation(fields: [currentPartyId], references: [id])
@@ -65,8 +65,8 @@ model Politician {
   @@index([currentPartyId])
   @@index([fullName])
   @@index([publicationStatus, prominenceScore])
-  @@index([publicationStatus, lastName])     // filter PUBLISHED + alpha sort
-  @@index([publicationStatus, createdAt])    // filter PUBLISHED + recent sort
+  @@index([publicationStatus, lastName]) // filter PUBLISHED + alpha sort
+  @@index([publicationStatus, createdAt]) // filter PUBLISHED + recent sort
 }
 
 // External IDs from various data sources - enables multi-source matching
@@ -116,15 +116,15 @@ model Party {
   logoUrl     String?
 
   // Enriched data (from Wikidata or other sources)
-  foundedDate       DateTime?
-  dissolvedDate     DateTime?
-  politicalPosition PoliticalPosition?
-  ideology          String? // Free text, e.g. "Social-démocratie, Socialisme démocratique"
-  politicalPositionSource    String?  // "wikidata" | "manual" | "conseil_etat"
-  politicalPositionSourceUrl String?  // URL to source (e.g. Conseil d'État decision)
-  politicalPositionOverride  Boolean  @default(false) // If true, sync won't overwrite position
-  headquarters      String?
-  website           String?
+  foundedDate                DateTime?
+  dissolvedDate              DateTime?
+  politicalPosition          PoliticalPosition?
+  ideology                   String? // Free text, e.g. "Social-démocratie, Socialisme démocratique"
+  politicalPositionSource    String? // "wikidata" | "manual" | "conseil_etat"
+  politicalPositionSourceUrl String? // URL to source (e.g. Conseil d'État decision)
+  politicalPositionOverride  Boolean            @default(false) // If true, sync won't overwrite position
+  headquarters               String?
+  website                    String?
 
   // Party evolution (succession chain)
   predecessor   Party?  @relation("PartySuccession", fields: [predecessorId], references: [id])
@@ -234,6 +234,7 @@ model Mandate {
   @@index([type])
   @@index([isCurrent])
   @@index([isCurrent, type])
+  @@index([isCurrent, type, departmentCode])
   @@index([europeanGroupId])
   @@index([parliamentaryGroupId])
   @@index([departmentCode])
@@ -390,6 +391,7 @@ model Affair {
 
   @@index([politicianId])
   @@index([politicianId, status])
+  @@index([politicianId, publicationStatus])
   @@index([status])
   @@index([category])
   @@index([pourvoiNumber])
@@ -654,7 +656,7 @@ model Scrutin {
   @@index([legislature])
   @@index([chamber])
   @@index([theme])
-  @@index([result, votingDate])  // result filter + default date sort
+  @@index([result, votingDate]) // result filter + default date sort
 }
 
 model Vote {

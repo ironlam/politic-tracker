@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { isAuthenticated } from "@/lib/auth";
 import { invalidateEntity } from "@/lib/cache";
+import { generateSlug } from "@/lib/utils";
 import { trackStatusChange } from "@/services/affairs/status-tracking";
 import { updateAffairSchema } from "@/lib/validations/affairs";
 
@@ -59,12 +60,29 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "Affaire non trouvée" }, { status: 404 });
     }
 
+    // Regenerate slug if title changed
+    let newSlug: string | undefined;
+    if (existing.title !== data.title) {
+      const baseSlug = generateSlug(data.title);
+      newSlug = baseSlug;
+      let counter = 1;
+      while (
+        await db.affair.findFirst({
+          where: { slug: newSlug, id: { not: id } },
+        })
+      ) {
+        newSlug = `${baseSlug}-${counter}`;
+        counter++;
+      }
+    }
+
     // Update affair
     const affair = await db.affair.update({
       where: { id },
       data: {
         politicianId: data.politicianId,
         title: data.title,
+        ...(newSlug && { slug: newSlug }),
         description: data.description,
         status: data.status,
         category: data.category,

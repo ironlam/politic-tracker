@@ -69,6 +69,7 @@ async function getPolitician(slug: string) {
             select: {
               id: true,
               title: true,
+              claimText: true,
               claimant: true,
               verdictRating: true,
               source: true,
@@ -614,11 +615,16 @@ export default async function PoliticianPage({ params }: PageProps) {
                                     href={mention.factCheck.sourceUrl}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="text-sm font-medium hover:underline line-clamp-1"
+                                    className="text-sm font-medium hover:underline line-clamp-2"
                                   >
                                     {mention.factCheck.title}
                                   </a>
-                                  <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
+                                  {mention.factCheck.claimText && (
+                                    <p className="text-sm text-muted-foreground mt-1 line-clamp-3">
+                                      &laquo;&nbsp;{mention.factCheck.claimText}&nbsp;&raquo;
+                                    </p>
+                                  )}
+                                  <p className="text-xs text-muted-foreground mt-0.5">
                                     {mention.factCheck.source} ·{" "}
                                     {formatDate(mention.factCheck.publishedAt)}
                                   </p>
@@ -651,13 +657,21 @@ export default async function PoliticianPage({ params }: PageProps) {
                                     href={mention.factCheck.sourceUrl}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="text-sm font-medium hover:underline line-clamp-1"
+                                    className="text-sm font-medium hover:underline line-clamp-2"
                                   >
                                     {mention.factCheck.title}
                                   </a>
-                                  <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
-                                    {mention.factCheck.claimant &&
-                                      `${mention.factCheck.claimant} — `}
+                                  {mention.factCheck.claimText && (
+                                    <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                                      {mention.factCheck.claimant && (
+                                        <span className="font-medium">
+                                          {mention.factCheck.claimant} :{" "}
+                                        </span>
+                                      )}
+                                      &laquo;&nbsp;{mention.factCheck.claimText}&nbsp;&raquo;
+                                    </p>
+                                  )}
+                                  <p className="text-xs text-muted-foreground mt-0.5">
                                     {mention.factCheck.source} ·{" "}
                                     {formatDate(mention.factCheck.publishedAt)}
                                   </p>

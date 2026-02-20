@@ -54,7 +54,7 @@ export function FactCheckCard({
       </a>
 
       {/* Claim */}
-      <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
+      <p className="text-sm text-muted-foreground mt-2">
         {claimant && <span className="font-medium">{claimant} : </span>}
         &laquo;&nbsp;{claimText}&nbsp;&raquo;
       </p>

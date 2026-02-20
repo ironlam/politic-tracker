@@ -496,6 +496,7 @@ enum SourceType {
   JUDILIBRE
   LEGIFRANCE
   PRESSE
+  WIKIPEDIA
   MANUAL
 }
 

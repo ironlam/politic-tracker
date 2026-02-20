@@ -278,6 +278,17 @@ async function runPhase2Wikipedia(
         });
 
         for (const extracted of result.affairs) {
+          // Skip affairs where the politician is not directly involved
+          // We only want affairs where the politician is accused/convicted, not victim/witness
+          if (extracted.involvement !== "DIRECT") {
+            if (verbose) {
+              console.log(
+                `    [WP] Skip (${extracted.involvement}, pas mis en cause): ${extracted.title}`
+              );
+            }
+            continue;
+          }
+
           // Skip low confidence
           if (extracted.confidenceScore < 40) {
             if (verbose) {

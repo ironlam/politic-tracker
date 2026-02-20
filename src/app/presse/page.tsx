@@ -1,9 +1,11 @@
 import { Metadata } from "next";
+import { notFound } from "next/navigation";
 import Link from "next/link";
 import { db } from "@/lib/db";
 import { PressCard, PartyFilterSelect } from "@/components/presse";
 import { Badge } from "@/components/ui/badge";
 import { ensureContrast } from "@/lib/contrast";
+import { isFeatureEnabled } from "@/lib/feature-flags";
 
 export const metadata: Metadata = {
   title: "Revue de presse",
@@ -142,6 +144,8 @@ async function getPartiesWithMentions() {
 }
 
 export default async function PressePage({ searchParams }: PageProps) {
+  if (!(await isFeatureEnabled("PRESS_SECTION"))) notFound();
+
   const params = await searchParams;
   const page = Math.max(1, parseInt(params.page || "1", 10));
   const limit = 12;

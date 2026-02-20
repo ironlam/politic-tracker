@@ -1,6 +1,8 @@
 import { Metadata } from "next";
+import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { isFeatureEnabled } from "@/lib/feature-flags";
 import { Badge } from "@/components/ui/badge";
 import {
   Building2,
@@ -266,7 +268,9 @@ function KeyNumbers() {
   );
 }
 
-export default function InstitutionsPage() {
+export default async function InstitutionsPage() {
+  if (!(await isFeatureEnabled("INSTITUTIONS_SECTION"))) notFound();
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-5xl">
       {/* Header */}

@@ -336,8 +336,9 @@ model Affair {
   slug        String @unique
   description String @db.Text
 
-  status   AffairStatus
-  category AffairCategory
+  status      AffairStatus
+  category    AffairCategory
+  involvement Involvement    @default(DIRECT)
 
   // Dates
   factsDate   DateTime? // Date of alleged facts
@@ -461,6 +462,14 @@ enum AffairStatus {
   NON_LIEU
   PRESCRIPTION
   CLASSEMENT_SANS_SUITE
+}
+
+enum Involvement {
+  DIRECT
+  INDIRECT
+  MENTIONED_ONLY
+  VICTIM
+  PLAINTIFF
 }
 
 enum AffairCategory {

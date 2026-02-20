@@ -334,9 +334,76 @@ async function getChamberCounts(chamber?: Chamber) {
 }
 
 // ============================================
+// Per-politician voting stats
+// ============================================
+
+export interface PoliticianVotingStats {
+  total: number;
+  pour: number;
+  contre: number;
+  abstention: number;
+  nonVotant: number;
+  absent: number;
+  participationRate: number;
+}
+
+/**
+ * Compute voting stats for a single politician.
+ * Shared by politician profile, votes subpage, and API route.
+ */
+export async function getPoliticianVotingStats(
+  politicianId: string
+): Promise<PoliticianVotingStats> {
+  const stats = await db.vote.groupBy({
+    by: ["position"],
+    where: { politicianId },
+    _count: true,
+  });
+
+  const votingStats: PoliticianVotingStats = {
+    total: 0,
+    pour: 0,
+    contre: 0,
+    abstention: 0,
+    nonVotant: 0,
+    absent: 0,
+    participationRate: 0,
+  };
+
+  for (const s of stats) {
+    votingStats.total += s._count;
+    switch (s.position) {
+      case "POUR":
+        votingStats.pour = s._count;
+        break;
+      case "CONTRE":
+        votingStats.contre = s._count;
+        break;
+      case "ABSTENTION":
+        votingStats.abstention = s._count;
+        break;
+      case "NON_VOTANT":
+        votingStats.nonVotant = s._count;
+        break;
+      case "ABSENT":
+        votingStats.absent = s._count;
+        break;
+    }
+  }
+
+  const expressed = votingStats.pour + votingStats.contre + votingStats.abstention;
+  const countedForParticipation = votingStats.total - votingStats.nonVotant;
+  votingStats.participationRate =
+    countedForParticipation > 0 ? Math.round((expressed / countedForParticipation) * 100) : 0;
+
+  return votingStats;
+}
+
+// ============================================
 // Export
 // ============================================
 
 export const voteStatsService = {
   getVoteStats,
+  getPoliticianVotingStats,
 };

@@ -1,6 +1,7 @@
 import type {
   AffairStatus,
   AffairCategory,
+  Involvement,
   MandateType,
   DataSource,
   PoliticalPosition,
@@ -114,6 +115,28 @@ export const AFFAIR_CATEGORY_LABELS: Record<AffairCategory, string> = {
   RECEL: "Recel",
   CONFLIT_INTERETS: "Conflit d'intérêts",
   AUTRE: "Autre",
+};
+
+// Involvement labels (politician's role in the affair)
+export const INVOLVEMENT_LABELS: Record<Involvement, string> = {
+  DIRECT: "Mis en cause",
+  INDIRECT: "Témoin/Secondaire",
+  MENTIONED_ONLY: "Mentionné",
+  VICTIM: "Victime",
+  PLAINTIFF: "Plaignant",
+};
+
+export const INVOLVEMENT_COLORS: Record<Involvement, string> = {
+  DIRECT:
+    "bg-red-100 text-red-800 border-red-300 dark:bg-red-900/40 dark:text-red-300 dark:border-red-700",
+  INDIRECT:
+    "bg-orange-100 text-orange-800 border-orange-300 dark:bg-orange-900/40 dark:text-orange-300 dark:border-orange-700",
+  MENTIONED_ONLY:
+    "bg-gray-100 text-gray-800 border-gray-300 dark:bg-gray-800/40 dark:text-gray-300 dark:border-gray-700",
+  VICTIM:
+    "bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-900/40 dark:text-blue-300 dark:border-blue-700",
+  PLAINTIFF:
+    "bg-indigo-100 text-indigo-800 border-indigo-300 dark:bg-indigo-900/40 dark:text-indigo-300 dark:border-indigo-700",
 };
 
 // Super-categories for grouping

@@ -40,6 +40,18 @@ interface AffairItem {
     photoUrl: string | null;
   };
   sources: { id: string; sourceType: string }[];
+  moderationReviews: {
+    id: string;
+    recommendation: "PUBLISH" | "REJECT" | "NEEDS_REVIEW";
+    confidence: number;
+    reasoning: string;
+    suggestedTitle: string | null;
+    suggestedDescription: string | null;
+    suggestedStatus: string | null;
+    suggestedCategory: string | null;
+    issues: { type: string }[] | null;
+    duplicateOfId: string | null;
+  }[];
 }
 
 interface ApiResponse {
@@ -61,6 +73,12 @@ const PUB_STATUS_STYLES: Record<string, string> = {
   REJECTED: "bg-red-50 text-red-700 border-red-200",
 };
 
+const AI_REC_STYLES: Record<string, { bg: string; label: string }> = {
+  PUBLISH: { bg: "bg-emerald-100 text-emerald-800 border-emerald-300", label: "IA: Publier" },
+  REJECT: { bg: "bg-red-100 text-red-800 border-red-300", label: "IA: Rejeter" },
+  NEEDS_REVIEW: { bg: "bg-amber-100 text-amber-800 border-amber-300", label: "IA: À vérifier" },
+};
+
 export default function AdminAffairsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -70,6 +88,7 @@ export default function AdminAffairsPage() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkLoading, setBulkLoading] = useState(false);
   const [showRejectPrompt, setShowRejectPrompt] = useState(false);
+  const [applyingAI, setApplyingAI] = useState(false);
 
   // Read state from URL
   const activeTab = searchParams.get("status") || "all";
@@ -134,6 +153,26 @@ export default function AdminAffairsPage() {
       }
     } finally {
       setBulkLoading(false);
+    }
+  }
+
+  async function handleApplyAI(recommendation: "PUBLISH" | "REJECT") {
+    const reviewIds = affairs
+      .flatMap((a) => a.moderationReviews)
+      .filter((r) => r.recommendation === recommendation)
+      .map((r) => r.id);
+    if (reviewIds.length === 0) return;
+
+    setApplyingAI(true);
+    try {
+      const res = await fetch("/api/admin/affaires/moderate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reviewIds, action: "apply" }),
+      });
+      if (res.ok) fetchData();
+    } finally {
+      setApplyingAI(false);
     }
   }
 
@@ -276,6 +315,51 @@ export default function AdminAffairsPage() {
         </Card>
       )}
 
+      {/* AI moderation actions */}
+      {activeTab === "DRAFT" && affairs.some((a) => a.moderationReviews.length > 0) && (
+        <Card className="border-blue-200 bg-blue-50/50">
+          <CardContent className="p-3 flex items-center gap-4 flex-wrap">
+            <span className="text-sm font-medium text-blue-900">Recommandations IA</span>
+            {(() => {
+              const reviews = affairs.flatMap((a) => a.moderationReviews);
+              const publishCount = reviews.filter((r) => r.recommendation === "PUBLISH").length;
+              const rejectCount = reviews.filter((r) => r.recommendation === "REJECT").length;
+              const reviewCount = reviews.filter((r) => r.recommendation === "NEEDS_REVIEW").length;
+              return (
+                <>
+                  {publishCount > 0 && (
+                    <Button
+                      size="sm"
+                      onClick={() => handleApplyAI("PUBLISH")}
+                      disabled={applyingAI}
+                      className="bg-emerald-600 hover:bg-emerald-700"
+                    >
+                      {applyingAI && <Loader2 className="w-3 h-3 mr-1 animate-spin" />}
+                      Publier {publishCount} recommandées
+                    </Button>
+                  )}
+                  {rejectCount > 0 && (
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => handleApplyAI("REJECT")}
+                      disabled={applyingAI}
+                    >
+                      Rejeter {rejectCount} recommandées
+                    </Button>
+                  )}
+                  {reviewCount > 0 && (
+                    <span className="text-xs text-amber-700">
+                      + {reviewCount} à vérifier manuellement
+                    </span>
+                  )}
+                </>
+              );
+            })()}
+          </CardContent>
+        </Card>
+      )}
+
       {/* Table */}
       <Card>
         <CardContent className="p-0">
@@ -359,12 +443,34 @@ export default function AdminAffairsPage() {
                         </Link>
                       </td>
                       <td className="px-4 py-3">
-                        <Link
-                          href={`/admin/affaires/${affair.id}`}
-                          className="font-medium hover:underline truncate max-w-[250px] block"
-                        >
-                          {affair.title}
-                        </Link>
+                        <div className="flex items-center gap-2">
+                          <Link
+                            href={`/admin/affaires/${affair.id}`}
+                            className="font-medium hover:underline truncate max-w-[200px] block"
+                          >
+                            {affair.moderationReviews[0]?.suggestedTitle || affair.title}
+                          </Link>
+                          {affair.moderationReviews[0] &&
+                            (() => {
+                              const rec = affair.moderationReviews[0];
+                              const style = AI_REC_STYLES[rec.recommendation];
+                              return style ? (
+                                <Badge
+                                  variant="outline"
+                                  className={`text-[10px] shrink-0 ${style.bg}`}
+                                  title={rec.reasoning}
+                                >
+                                  {style.label}
+                                  <span className="ml-1 opacity-60">{rec.confidence}%</span>
+                                </Badge>
+                              ) : null;
+                            })()}
+                        </div>
+                        {affair.moderationReviews[0]?.suggestedTitle && (
+                          <span className="text-xs text-muted-foreground line-through block truncate max-w-[200px]">
+                            {affair.title}
+                          </span>
+                        )}
                       </td>
                       <td className="px-4 py-3 text-muted-foreground text-xs">
                         {

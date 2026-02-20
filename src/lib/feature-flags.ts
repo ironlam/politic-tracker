@@ -29,3 +29,16 @@ export async function getFeatureValue<T = unknown>(name: string): Promise<T | nu
   const flags = await getFeatureFlags();
   return (flags[name]?.value as T) ?? null;
 }
+
+/**
+ * Returns a Set of enabled feature flag names.
+ * Used by navigation components to filter items in a single DB call.
+ */
+export async function getEnabledFlags(): Promise<Set<string>> {
+  const flags = await getFeatureFlags();
+  return new Set(
+    Object.entries(flags)
+      .filter(([, v]) => v.enabled)
+      .map(([k]) => k)
+  );
+}

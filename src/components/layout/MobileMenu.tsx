@@ -33,11 +33,24 @@ function getFocusableElements(container: HTMLElement): HTMLElement[] {
   return Array.from(elements);
 }
 
-export function MobileMenu() {
+interface MobileMenuProps {
+  /** Enabled feature flag names, passed from server component */
+  enabledFlags?: string[];
+}
+
+export function MobileMenu({ enabledFlags = [] }: MobileMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
   const menuRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+
+  const flagSet = new Set(enabledFlags);
+  const isVisible = (flag?: string) => !flag || flagSet.has(flag);
+
+  const filteredGroups = NAV_GROUPS.map((group) => ({
+    ...group,
+    items: group.items.filter((item) => isVisible(item.featureFlag)),
+  })).filter((group) => group.items.length > 0);
 
   // Handle keyboard navigation (Escape to close, Tab for focus trap)
   const handleKeyDown = useCallback(
@@ -163,26 +176,30 @@ export function MobileMenu() {
 
             {/* CTA Buttons */}
             <div className="flex gap-2 mb-4">
-              <Link
-                href={CTA_COMPARER.href}
-                onClick={() => setIsOpen(false)}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-3 border border-border font-medium rounded-lg hover:bg-muted/50"
-              >
-                <GitCompare className="h-5 w-5" />
-                {CTA_COMPARER.label}
-              </Link>
-              <Link
-                href={CTA_ASSISTANT.href}
-                onClick={() => setIsOpen(false)}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-3 border border-border font-medium rounded-lg hover:bg-muted/50"
-              >
-                <Bot className="h-5 w-5" />
-                {CTA_ASSISTANT.label}
-              </Link>
+              {isVisible(CTA_COMPARER.featureFlag) && (
+                <Link
+                  href={CTA_COMPARER.href}
+                  onClick={() => setIsOpen(false)}
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-3 border border-border font-medium rounded-lg hover:bg-muted/50"
+                >
+                  <GitCompare className="h-5 w-5" />
+                  {CTA_COMPARER.label}
+                </Link>
+              )}
+              {isVisible(CTA_ASSISTANT.featureFlag) && (
+                <Link
+                  href={CTA_ASSISTANT.href}
+                  onClick={() => setIsOpen(false)}
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-3 border border-border font-medium rounded-lg hover:bg-muted/50"
+                >
+                  <Bot className="h-5 w-5" />
+                  {CTA_ASSISTANT.label}
+                </Link>
+              )}
             </div>
 
             {/* Navigation groups */}
-            {NAV_GROUPS.map((group) => (
+            {filteredGroups.map((group) => (
               <div key={group.label} className="mb-4">
                 <p className="px-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                   {group.label}

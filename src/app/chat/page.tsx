@@ -1,7 +1,9 @@
 import { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ChatInterface } from "@/components/chat/ChatInterface";
 import { MessageSquare, ShieldCheck, Database, Sparkles } from "lucide-react";
+import { isFeatureEnabled } from "@/lib/feature-flags";
 
 export const metadata: Metadata = {
   title: "Assistant IA - Poligraph",
@@ -13,7 +15,8 @@ export const metadata: Metadata = {
   },
 };
 
-export default function ChatPage() {
+export default async function ChatPage() {
+  if (!(await isFeatureEnabled("CHATBOT_ENABLED"))) notFound();
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       {/* Header */}

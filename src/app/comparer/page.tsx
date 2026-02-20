@@ -1,6 +1,8 @@
 import { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { cacheTag, cacheLife } from "next/cache";
 import { db } from "@/lib/db";
+import { isFeatureEnabled } from "@/lib/feature-flags";
 import {
   PoliticianSelector,
   PartySelector,
@@ -320,6 +322,8 @@ async function getPartyVoteComparison(leftPartyId: string, rightPartyId: string)
 }
 
 export default async function ComparerPage({ searchParams }: PageProps) {
+  if (!(await isFeatureEnabled("COMPARISON_TOOL"))) notFound();
+
   const params = await searchParams;
   const leftSlug = params.left;
   const rightSlug = params.right;

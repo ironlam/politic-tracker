@@ -86,6 +86,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
         description: data.description,
         status: data.status,
         category: data.category,
+        involvement: data.involvement || "DIRECT",
         factsDate: data.factsDate ? new Date(data.factsDate) : null,
         startDate: data.startDate ? new Date(data.startDate) : null,
         verdictDate: data.verdictDate ? new Date(data.verdictDate) : null,

@@ -9,11 +9,9 @@
  *   npx tsx scripts/fix-truncated-titles.ts --dry-run    # Preview without saving
  */
 import "dotenv/config";
-import { PrismaClient } from "../src/generated/prisma";
+import { db } from "../src/lib/db";
 import { fetchPageTitle } from "../src/lib/api/factcheck";
 import { generateDateSlug } from "../src/lib/utils";
-
-const db = new PrismaClient();
 const isDryRun = process.argv.includes("--dry-run");
 
 function sleep(ms: number): Promise<void> {

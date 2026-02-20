@@ -26,6 +26,8 @@ import {
   mergeAffairs,
   type PotentialDuplicate,
 } from "../src/services/affairs/reconciliation";
+import { enrichAffair } from "../src/services/affair-enrichment";
+import { BRAVE_SEARCH_RATE_LIMIT_MS } from "../src/config/rate-limits";
 
 // ============================================
 // CLI ARGUMENTS
@@ -35,6 +37,9 @@ const args = process.argv.slice(2);
 const isDryRun = args.includes("--dry-run");
 const isStats = args.includes("--stats");
 const isVerbose = args.includes("--verbose");
+const skipEnrich = args.includes("--skip-enrich");
+const limitArg = args.find((a) => a.startsWith("--limit="));
+const limit = limitArg ? parseInt(limitArg.split("=")[1], 10) : 0;
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -272,7 +277,7 @@ async function phaseAIModeration(): Promise<ModerationStats> {
   }
 
   // Fetch DRAFT affairs that don't already have a pending (unapplied) ModerationReview
-  const affairs = await db.affair.findMany({
+  const allAffairs = await db.affair.findMany({
     where: {
       publicationStatus: "DRAFT",
       moderationReviews: {
@@ -297,7 +302,11 @@ async function phaseAIModeration(): Promise<ModerationStats> {
     },
   });
 
-  console.log(`${affairs.length} affaire(s) DRAFT a analyser`);
+  const affairs = limit > 0 ? allAffairs.slice(0, limit) : allAffairs;
+
+  console.log(
+    `${allAffairs.length} affaire(s) DRAFT trouvee(s)${limit > 0 ? `, limitee a ${affairs.length}` : ""}`
+  );
 
   if (affairs.length === 0) return stats;
 
@@ -431,6 +440,97 @@ async function phaseAIModeration(): Promise<ModerationStats> {
 }
 
 // ============================================
+// PHASE 3: WEB ENRICHMENT
+// ============================================
+
+interface EnrichmentStats {
+  processed: number;
+  enriched: number;
+  notFound: number;
+  errors: number;
+}
+
+async function phaseEnrichment(): Promise<EnrichmentStats> {
+  console.log("\n=== Phase 3 : Enrichissement web ===\n");
+
+  const stats: EnrichmentStats = { processed: 0, enriched: 0, notFound: 0, errors: 0 };
+
+  if (!process.env.BRAVE_API_KEY) {
+    console.log("BRAVE_API_KEY non definie. Phase 3 ignoree.");
+    return stats;
+  }
+
+  // Find REJECT reviews — filter for MISSING_SOURCE or POOR_DESCRIPTION in code
+  const allRejectReviews = await db.moderationReview.findMany({
+    where: {
+      recommendation: "REJECT",
+      appliedAt: null,
+      reasoning: { not: { startsWith: "[ENRICHI]" } },
+    },
+    select: { affairId: true, id: true, issues: true },
+  });
+
+  // Filter for reviews with enrichable issues
+  const rejectReviews = allRejectReviews.filter((r) => {
+    if (!Array.isArray(r.issues)) return false;
+    const issues = r.issues as { type: string }[];
+    return issues.some((i) => i.type === "MISSING_SOURCE" || i.type === "POOR_DESCRIPTION");
+  });
+
+  const allReviews = limit > 0 ? rejectReviews.slice(0, limit) : rejectReviews;
+  console.log(
+    `${rejectReviews.length} affaire(s) REJECT eligibles${limit > 0 ? `, limitee a ${allReviews.length}` : ""}`
+  );
+
+  if (allReviews.length === 0) return stats;
+
+  for (let i = 0; i < allReviews.length; i++) {
+    const review = allReviews[i];
+    const label = `[${i + 1}/${allReviews.length}]`;
+
+    try {
+      if (isDryRun) {
+        console.log(`${label} [DRY-RUN] Enrichissement ignore pour ${review.affairId}`);
+        stats.processed++;
+        continue;
+      }
+
+      const result = await enrichAffair(review.affairId);
+      stats.processed++;
+
+      if (result.enriched) {
+        stats.enriched++;
+        if (isVerbose) {
+          console.log(`${label} ENRICHI (${result.sourcesAdded} sources)`);
+          for (const change of result.changes) {
+            console.log(`  ${change}`);
+          }
+        } else {
+          console.log(`${label} ${review.affairId} -> ENRICHI (${result.sourcesAdded} sources)`);
+        }
+      } else {
+        stats.notFound++;
+        if (isVerbose) {
+          console.log(`${label} Pas de source: ${result.reasoning}`);
+        } else {
+          console.log(`${label} ${review.affairId} -> Pas de source`);
+        }
+      }
+
+      // Rate limit between Brave Search calls
+      if (i < allReviews.length - 1) {
+        await sleep(BRAVE_SEARCH_RATE_LIMIT_MS);
+      }
+    } catch (error) {
+      console.error(`${label} Erreur enrichissement ${review.affairId}:`, error);
+      stats.errors++;
+    }
+  }
+
+  return stats;
+}
+
+// ============================================
 // MAIN
 // ============================================
 
@@ -458,6 +558,14 @@ async function main() {
   // Phase 2: AI moderation
   const moderationStats = await phaseAIModeration();
 
+  // Phase 3: Web enrichment (optional)
+  let enrichStats: EnrichmentStats = { processed: 0, enriched: 0, notFound: 0, errors: 0 };
+  if (!skipEnrich) {
+    enrichStats = await phaseEnrichment();
+  } else {
+    console.log("\n=== Phase 3 : Enrichissement web (ignore via --skip-enrich) ===");
+  }
+
   // Summary
   console.log("\n=== Resume ===\n");
   console.log("Phase 1 - Doublons :");
@@ -473,7 +581,13 @@ async function main() {
   console.log(`  NEEDS_REVIEW : ${moderationStats.recommendReview}`);
   console.log(`  Erreurs : ${moderationStats.errors}`);
 
-  const totalErrors = dedupStats.errors + moderationStats.errors;
+  console.log("\nPhase 3 - Enrichissement web :");
+  console.log(`  Traitees : ${enrichStats.processed}`);
+  console.log(`  Enrichies : ${enrichStats.enriched}`);
+  console.log(`  Sans source : ${enrichStats.notFound}`);
+  console.log(`  Erreurs : ${enrichStats.errors}`);
+
+  const totalErrors = dedupStats.errors + moderationStats.errors + enrichStats.errors;
   if (totalErrors > 0) {
     console.log(`\n${totalErrors} erreur(s) au total.`);
     process.exitCode = 1;

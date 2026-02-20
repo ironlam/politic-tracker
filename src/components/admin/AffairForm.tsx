@@ -8,8 +8,13 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { AFFAIR_STATUS_LABELS, AFFAIR_CATEGORY_LABELS, SOURCE_TYPE_LABELS } from "@/config/labels";
-import type { AffairStatus, AffairCategory, SourceType } from "@/types";
+import {
+  AFFAIR_STATUS_LABELS,
+  AFFAIR_CATEGORY_LABELS,
+  INVOLVEMENT_LABELS,
+  SOURCE_TYPE_LABELS,
+} from "@/config/labels";
+import type { AffairStatus, AffairCategory, Involvement, SourceType } from "@/types";
 
 interface Politician {
   id: string;
@@ -34,6 +39,7 @@ interface AffairFormData {
   description: string;
   status: AffairStatus;
   category: AffairCategory;
+  involvement?: Involvement;
   factsDate?: string;
   startDate?: string;
   verdictDate?: string;
@@ -81,6 +87,7 @@ export function AffairForm({ politicians, initialData }: AffairFormProps) {
       description: "",
       status: "ENQUETE_PRELIMINAIRE" as AffairStatus,
       category: "AUTRE" as AffairCategory,
+      involvement: "DIRECT" as Involvement,
       appeal: false,
       sources: [{ ...emptySource }],
     }
@@ -223,7 +230,7 @@ export function AffairForm({ politicians, initialData }: AffairFormProps) {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
               <Label htmlFor="category">Catégorie *</Label>
               <Select
@@ -249,6 +256,21 @@ export function AffairForm({ politicians, initialData }: AffairFormProps) {
                 required
               >
                 {Object.entries(AFFAIR_STATUS_LABELS).map(([key, label]) => (
+                  <option key={key} value={key}>
+                    {label}
+                  </option>
+                ))}
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="involvement">Implication</Label>
+              <Select
+                id="involvement"
+                value={formData.involvement || "DIRECT"}
+                onChange={(e) => updateField("involvement", e.target.value as Involvement)}
+              >
+                {Object.entries(INVOLVEMENT_LABELS).map(([key, label]) => (
                   <option key={key} value={key}>
                     {label}
                   </option>

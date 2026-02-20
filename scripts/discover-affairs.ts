@@ -25,7 +25,7 @@ import { mapWikidataOffense, getOffenseLabel } from "../src/config/wikidata-affa
 import { wikipediaService } from "../src/lib/api/wikipedia";
 import { extractAffairsFromWikipedia } from "../src/services/wikipedia-affair-extraction";
 import { findMatchingAffairs } from "../src/services/affairs/matching";
-import type { AffairCategory, AffairStatus } from "../src/generated/prisma";
+import type { AffairCategory, AffairStatus, Involvement } from "../src/generated/prisma";
 
 // ============================================
 // TYPES
@@ -38,7 +38,7 @@ interface DiscoveredAffair {
   description: string;
   category: AffairCategory;
   status: AffairStatus;
-  involvement: "DIRECT" | "INDIRECT" | "MENTIONED_ONLY";
+  involvement: Involvement;
   factsDate: Date | null;
   court: string | null;
   charges: string[];
@@ -278,12 +278,16 @@ async function runPhase2Wikipedia(
         });
 
         for (const extracted of result.affairs) {
-          // Skip affairs where the politician is not directly involved
-          // We only want affairs where the politician is accused/convicted, not victim/witness
-          if (extracted.involvement !== "DIRECT") {
+          // Skip affairs where the politician has no significant role
+          // Keep DIRECT (accused/convicted), VICTIM (threatened/attacked), PLAINTIFF (filed complaint)
+          if (
+            extracted.involvement !== "DIRECT" &&
+            extracted.involvement !== "VICTIM" &&
+            extracted.involvement !== "PLAINTIFF"
+          ) {
             if (verbose) {
               console.log(
-                `    [WP] Skip (${extracted.involvement}, pas mis en cause): ${extracted.title}`
+                `    [WP] Skip (${extracted.involvement}, pas mis en cause/victime): ${extracted.title}`
               );
             }
             continue;
@@ -434,6 +438,7 @@ async function runPhase3Reconciliation(
           description: affair.description,
           status: affair.status,
           category: affair.category,
+          involvement: affair.involvement,
           factsDate: affair.factsDate,
           court: affair.court,
           confidenceScore: affair.confidenceScore,

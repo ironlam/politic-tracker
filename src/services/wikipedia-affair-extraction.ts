@@ -38,7 +38,7 @@ export interface ExtractedAffair {
   description: string;
   category: string;
   status: string;
-  involvement: "DIRECT" | "INDIRECT" | "MENTIONED_ONLY";
+  involvement: "DIRECT" | "INDIRECT" | "MENTIONED_ONLY" | "VICTIM" | "PLAINTIFF";
   factsDate: string | null;
   court: string | null;
   charges: string[];
@@ -138,9 +138,9 @@ const EXTRACTION_TOOL = {
             },
             involvement: {
               type: "string",
-              enum: ["DIRECT", "INDIRECT", "MENTIONED_ONLY"],
+              enum: ["DIRECT", "INDIRECT", "MENTIONED_ONLY", "VICTIM", "PLAINTIFF"],
               description:
-                "Niveau d'implication du politicien. DIRECT = mis en cause, poursuivi, condamné. INDIRECT = témoin, victime, acteur secondaire. MENTIONED_ONLY = simplement cité sans lien direct avec l'affaire.",
+                "Niveau d'implication du politicien. DIRECT = mis en cause, poursuivi, condamné. INDIRECT = témoin ou acteur secondaire. MENTIONED_ONLY = simplement cité sans lien direct avec l'affaire. VICTIM = le politicien est victime de l'infraction (menaces, agressions, cambriolage). PLAINTIFF = le politicien a déposé plainte.",
             },
             facts_date: {
               type: ["string", "null"],
@@ -294,7 +294,7 @@ ${truncatedWikitext}`;
       const status = validateEnum(a.status as string, AFFAIR_STATUSES, "ENQUETE_PRELIMINAIRE");
       const involvement = validateEnum(
         a.involvement as string,
-        ["DIRECT", "INDIRECT", "MENTIONED_ONLY"] as const,
+        ["DIRECT", "INDIRECT", "MENTIONED_ONLY", "VICTIM", "PLAINTIFF"] as const,
         "MENTIONED_ONLY"
       );
 

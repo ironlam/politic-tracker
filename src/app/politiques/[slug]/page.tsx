@@ -29,6 +29,18 @@ import { AffairTimeline } from "@/components/affairs/AffairTimeline";
 import { VotePositionBadge } from "@/components/votes";
 import { getPoliticianVotingStats } from "@/services/voteStats";
 
+export const revalidate = 3600; // ISR: revalidate every hour
+
+export async function generateStaticParams() {
+  const politicians = await db.politician.findMany({
+    where: { publicationStatus: "PUBLISHED" },
+    select: { slug: true },
+    take: 100,
+    orderBy: { prominenceScore: "desc" },
+  });
+  return politicians.map((p) => ({ slug: p.slug }));
+}
+
 interface PageProps {
   params: Promise<{ slug: string }>;
 }
@@ -186,12 +198,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export default async function PoliticianPage({ params }: PageProps) {
-  "use cache";
-  cacheLife("hours");
-
   const { slug } = await params;
-  cacheTag(`politician-page:${slug}`);
-
   const politician = await getPolitician(slug);
 
   if (!politician) {

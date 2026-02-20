@@ -19,6 +19,12 @@ enum PublicationStatus {
   REJECTED // Rejeté après modération (affaires)
 }
 
+enum ModerationRecommendation {
+  PUBLISH
+  REJECT
+  NEEDS_REVIEW
+}
+
 model Politician {
   id          String    @id @default(cuid())
   slug        String    @unique
@@ -375,6 +381,9 @@ model Affair {
 
   // Press article links
   pressArticles PressArticleAffair[]
+
+  // AI moderation reviews
+  moderationReviews ModerationReview[]
 
   // AI confidence score (0-100) — affects auto-publication
   confidenceScore Int?
@@ -1185,6 +1194,35 @@ model DismissedDuplicate {
   createdAt DateTime @default(now())
 
   @@unique([affairIdA, affairIdB])
+}
+
+// AI moderation review for affairs (auto-triage)
+model ModerationReview {
+  id       String @id @default(cuid())
+  affair   Affair @relation(fields: [affairId], references: [id], onDelete: Cascade)
+  affairId String
+
+  recommendation ModerationRecommendation
+  confidence     Int // 0-100
+  reasoning      String @db.Text
+
+  suggestedTitle       String?
+  suggestedDescription String? @db.Text
+  suggestedStatus      AffairStatus?
+  suggestedCategory    AffairCategory?
+
+  issues        Json? // [{type: string, detail: string}]
+  duplicateOfId String? // ID of primary affair if duplicate detected
+
+  model     String // e.g. "claude-sonnet-4-5-20250929"
+  appliedAt DateTime?
+  appliedBy String?
+
+  createdAt DateTime @default(now())
+
+  @@index([affairId])
+  @@index([recommendation])
+  @@index([createdAt])
 }
 
 // ============================================

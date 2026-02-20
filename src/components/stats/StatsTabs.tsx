@@ -7,6 +7,7 @@ export type StatsTabType = "affaires" | "votes" | "factchecks" | "geo";
 
 interface StatsTabsProps {
   activeTab: StatsTabType;
+  onTabChange?: (tab: StatsTabType) => void;
 }
 
 const tabs: { id: StatsTabType; label: string; icon: typeof Gavel }[] = [
@@ -16,14 +17,22 @@ const tabs: { id: StatsTabType; label: string; icon: typeof Gavel }[] = [
   { id: "geo", label: "Géographie", icon: MapPin },
 ];
 
-export function StatsTabs({ activeTab }: StatsTabsProps) {
+export function StatsTabs({ activeTab, onTabChange }: StatsTabsProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
   const handleTabChange = (tab: StatsTabType) => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("tab", tab);
-    router.push(`/statistiques?${params.toString()}`, { scroll: false });
+    if (onTabChange) {
+      onTabChange(tab);
+      // Update URL without navigation for bookmarkability
+      const params = new URLSearchParams(searchParams.toString());
+      params.set("tab", tab);
+      window.history.replaceState(null, "", `/statistiques?${params.toString()}`);
+    } else {
+      const params = new URLSearchParams(searchParams.toString());
+      params.set("tab", tab);
+      router.push(`/statistiques?${params.toString()}`, { scroll: false });
+    }
   };
 
   return (

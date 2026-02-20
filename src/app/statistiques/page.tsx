@@ -3,14 +3,7 @@ import { Suspense } from "react";
 import { cacheTag, cacheLife } from "next/cache";
 import { db } from "@/lib/db";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  StatsTabs,
-  AffairsTab,
-  VotesTab,
-  FactChecksTab,
-  GeoTab,
-  type StatsTabType,
-} from "@/components/stats";
+import { StatsContent } from "@/components/stats";
 import { CATEGORY_TO_SUPER, type AffairSuperCategory } from "@/config/labels";
 import { DEPARTMENTS } from "@/config/departments";
 import type { AffairStatus, AffairCategory, FactCheckRating } from "@/types";
@@ -400,56 +393,30 @@ async function getGeoStats() {
   };
 }
 
-interface PageProps {
-  searchParams: Promise<{ tab?: string; chamber?: string }>;
-}
-
-export default async function StatistiquesPage({ searchParams }: PageProps) {
-  const params = await searchParams;
-  const tab = (params.tab as StatsTabType) || "affaires";
-  const chamber = (params.chamber as "all" | "AN" | "SENAT") || "all";
-
-  // Fetch data based on active tab
-  let content;
-
-  if (tab === "affaires") {
-    const [globalStats, byStatus, byCategory, byParty, topPoliticians] = await Promise.all([
-      getAffairsGlobalStats(),
-      getAffairsByStatus(),
-      getAffairsByCategory(),
-      getAffairsByParty(),
-      getTopPoliticiansWithAffairs(),
-    ]);
-
-    content = (
-      <AffairsTab
-        globalStats={globalStats}
-        byStatus={byStatus}
-        byCategory={byCategory}
-        byParty={byParty}
-        topPoliticians={topPoliticians}
-      />
-    );
-  } else if (tab === "votes") {
-    const voteStats = await getVotesData(chamber);
-
-    content = <VotesTab data={voteStats} chamberFilter={chamber} />;
-  } else if (tab === "factchecks") {
-    const { total, groups, byRating, bySource, topPoliticians } = await getFactCheckStats();
-
-    content = (
-      <FactChecksTab
-        total={total}
-        groups={groups}
-        byRating={byRating}
-        bySource={bySource}
-        topPoliticians={topPoliticians}
-      />
-    );
-  } else if (tab === "geo") {
-    const stats = await getGeoStats();
-    content = <GeoTab stats={stats} />;
-  }
+export default async function StatistiquesPage() {
+  const [
+    globalStats,
+    byStatus,
+    byCategory,
+    byParty,
+    topPoliticians,
+    votesAll,
+    votesAN,
+    votesSENAT,
+    factChecksData,
+    geoData,
+  ] = await Promise.all([
+    getAffairsGlobalStats(),
+    getAffairsByStatus(),
+    getAffairsByCategory(),
+    getAffairsByParty(),
+    getTopPoliticiansWithAffairs(),
+    getVotesData("all"),
+    getVotesData("AN"),
+    getVotesData("SENAT"),
+    getFactCheckStats(),
+    getGeoStats(),
+  ]);
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -460,11 +427,14 @@ export default async function StatistiquesPage({ searchParams }: PageProps) {
         </p>
       </div>
 
-      <Suspense fallback={<div className="h-12 bg-muted/50 rounded-lg animate-pulse w-96" />}>
-        <StatsTabs activeTab={tab} />
+      <Suspense fallback={<div className="h-12 bg-muted/50 rounded-lg animate-pulse w-96 mb-8" />}>
+        <StatsContent
+          affairsData={{ globalStats, byStatus, byCategory, byParty, topPoliticians }}
+          votesData={{ all: votesAll, an: votesAN, senat: votesSENAT }}
+          factChecksData={factChecksData}
+          geoData={geoData}
+        />
       </Suspense>
-
-      {content}
 
       {/* Disclaimer */}
       <Card className="mt-8 bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800">

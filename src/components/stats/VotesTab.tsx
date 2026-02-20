@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -6,8 +9,9 @@ import { CHAMBER_LABELS, CHAMBER_COLORS } from "@/config/labels";
 import type { VoteStatsResult } from "@/services/voteStats";
 
 interface VotesTabProps {
-  data: VoteStatsResult;
-  chamberFilter: "all" | "AN" | "SENAT";
+  allData: VoteStatsResult;
+  anData: VoteStatsResult;
+  senatData: VoteStatsResult;
 }
 
 function CohesionBadge({ rate }: { rate: number }) {
@@ -42,7 +46,10 @@ function ParticipationBadge({ rate }: { rate: number }) {
   );
 }
 
-export function VotesTab({ data, chamberFilter }: VotesTabProps) {
+export function VotesTab({ allData, anData, senatData }: VotesTabProps) {
+  const [chamberFilter, setChamberFilter] = useState<"all" | "AN" | "SENAT">("all");
+
+  const data = chamberFilter === "AN" ? anData : chamberFilter === "SENAT" ? senatData : allData;
   const { global, parties, divisiveScrutins } = data;
 
   return (
@@ -138,8 +145,8 @@ export function VotesTab({ data, chamberFilter }: VotesTabProps) {
 
       {/* Chamber filter */}
       <div className="flex gap-2 mb-6">
-        <Link
-          href="/statistiques?tab=votes&chamber=all"
+        <button
+          onClick={() => setChamberFilter("all")}
           className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
             chamberFilter === "all"
               ? "bg-primary text-primary-foreground"
@@ -147,9 +154,9 @@ export function VotesTab({ data, chamberFilter }: VotesTabProps) {
           }`}
         >
           Toutes
-        </Link>
-        <Link
-          href="/statistiques?tab=votes&chamber=AN"
+        </button>
+        <button
+          onClick={() => setChamberFilter("AN")}
           className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
             chamberFilter === "AN"
               ? "bg-primary text-primary-foreground"
@@ -157,9 +164,9 @@ export function VotesTab({ data, chamberFilter }: VotesTabProps) {
           }`}
         >
           Assemblée
-        </Link>
-        <Link
-          href="/statistiques?tab=votes&chamber=SENAT"
+        </button>
+        <button
+          onClick={() => setChamberFilter("SENAT")}
           className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
             chamberFilter === "SENAT"
               ? "bg-primary text-primary-foreground"
@@ -167,7 +174,7 @@ export function VotesTab({ data, chamberFilter }: VotesTabProps) {
           }`}
         >
           Sénat
-        </Link>
+        </button>
       </div>
 
       <div className="grid lg:grid-cols-2 gap-8">

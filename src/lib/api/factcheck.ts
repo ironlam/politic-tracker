@@ -99,7 +99,7 @@ export async function searchClaims(
  */
 export async function fetchPageTitle(url: string, fallbackTitle: string): Promise<string> {
   try {
-    const { data: html } = await scraperClient.get<string>(url, {
+    const { data: html } = await scraperClient.getText(url, {
       headers: { Accept: "text/html" },
     });
 

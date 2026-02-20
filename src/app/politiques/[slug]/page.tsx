@@ -29,9 +29,6 @@ import { AffairTimeline } from "@/components/affairs/AffairTimeline";
 import { VotePositionBadge } from "@/components/votes";
 import { getPoliticianVotingStats } from "@/services/voteStats";
 
-// ISR: regenerate every hour
-export const revalidate = 3600;
-
 interface PageProps {
   params: Promise<{ slug: string }>;
 }
@@ -189,7 +186,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export default async function PoliticianPage({ params }: PageProps) {
+  "use cache";
+  cacheLife("hours");
+
   const { slug } = await params;
+  cacheTag(`politician-page:${slug}`);
+
   const politician = await getPolitician(slug);
 
   if (!politician) {

@@ -1,6 +1,8 @@
 import { Metadata } from "next";
+import { notFound } from "next/navigation";
 import Link from "next/link";
 import { db } from "@/lib/db";
+import { isFeatureEnabled } from "@/lib/feature-flags";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { DossierCard, StatusBadge, CategoryBadge } from "@/components/legislation";
@@ -97,6 +99,8 @@ function buildUrl(params: Record<string, string>) {
 }
 
 export default async function AssembleePage({ searchParams }: PageProps) {
+  if (!(await isFeatureEnabled("ASSEMBLEE_SECTION"))) notFound();
+
   const params = await searchParams;
   const statusFilter = params.status || "";
   const themeFilter = params.theme || "";

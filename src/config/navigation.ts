@@ -6,6 +6,8 @@ export interface NavItem {
   label: string;
   icon?: string;
   description?: string;
+  /** If set, this item is only shown when the named feature flag is enabled */
+  featureFlag?: string;
 }
 
 export interface NavGroup {
@@ -50,6 +52,7 @@ export const NAV_GROUPS: NavGroup[] = [
         label: "Dossiers législatifs",
         icon: "live",
         description: "Textes en discussion à l'Assemblée",
+        featureFlag: "ASSEMBLEE_SECTION",
       },
       {
         href: "/votes",
@@ -65,6 +68,7 @@ export const NAV_GROUPS: NavGroup[] = [
         href: "/statistiques",
         label: "Statistiques",
         description: "Tableaux de bord et analyses",
+        featureFlag: "STATISTIQUES_SECTION",
       },
       {
         href: "/elections",
@@ -76,6 +80,7 @@ export const NAV_GROUPS: NavGroup[] = [
         label: "Revue de presse",
         icon: "newspaper",
         description: "Articles Le Monde, Politico, Mediapart",
+        featureFlag: "PRESS_SECTION",
       },
     ],
   },
@@ -102,12 +107,14 @@ export const CTA_COMPARER: NavItem = {
   href: "/comparer",
   label: "Comparer",
   description: "Comparez deux représentants",
+  featureFlag: "COMPARISON_TOOL",
 };
 
 export const CTA_ASSISTANT: NavItem = {
   href: "/chat",
   label: "Assistant IA",
   description: "Chatbot alimenté par nos données",
+  featureFlag: "CHATBOT_ENABLED",
 };
 
 // Legacy exports for backwards compatibility
@@ -120,7 +127,12 @@ export const CHAT_LINK = CTA_ASSISTANT;
 export const CTA_LINK = CTA_MON_DEPUTE;
 
 // Footer navigation (3 columns)
-export const FOOTER_SECTIONS = [
+export interface FooterSection {
+  title: string;
+  links: Array<{ href: string; label: string; featureFlag?: string }>;
+}
+
+export const FOOTER_SECTIONS: FooterSection[] = [
   {
     title: "Explorer",
     links: [
@@ -135,8 +147,8 @@ export const FOOTER_SECTIONS = [
   {
     title: "Comprendre",
     links: [
-      { href: "/statistiques", label: "Statistiques" },
-      { href: "/institutions", label: "Institutions" },
+      { href: "/statistiques", label: "Statistiques", featureFlag: "STATISTIQUES_SECTION" },
+      { href: "/institutions", label: "Institutions", featureFlag: "INSTITUTIONS_SECTION" },
       { href: "/sources", label: "Sources" },
       { href: "/docs/api", label: "API" },
       { href: "/mentions-legales", label: "Mentions légales" },
@@ -145,13 +157,13 @@ export const FOOTER_SECTIONS = [
   {
     title: "Outils",
     links: [
-      { href: "/comparer", label: "Comparer" },
+      { href: "/comparer", label: "Comparer", featureFlag: "COMPARISON_TOOL" },
       { href: "/mon-depute", label: "Mon député" },
-      { href: "/chat", label: "Assistant IA" },
+      { href: "/chat", label: "Assistant IA", featureFlag: "CHATBOT_ENABLED" },
       { href: "/soutenir", label: "Nous soutenir" },
     ],
   },
-] as const;
+];
 
 // External data sources for footer
 export const DATA_SOURCES = [

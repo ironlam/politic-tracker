@@ -2,8 +2,17 @@ import Link from "next/link";
 import { FOOTER_SECTIONS, DATA_SOURCES } from "@/config/navigation";
 import { ExternalLink } from "lucide-react";
 import { HexPattern } from "@/components/ui/HexPattern";
+import { getEnabledFlags } from "@/lib/feature-flags";
 
-export function Footer() {
+export async function Footer() {
+  const enabledFlags = await getEnabledFlags();
+
+  // Filter footer links gated behind disabled feature flags
+  const filteredSections = FOOTER_SECTIONS.map((section) => ({
+    ...section,
+    links: section.links.filter((link) => !link.featureFlag || enabledFlags.has(link.featureFlag)),
+  })).filter((section) => section.links.length > 0);
+
   return (
     <footer role="contentinfo" className="relative overflow-hidden border-t bg-muted/30 mt-auto">
       <HexPattern className="absolute inset-0 text-primary opacity-[0.02] dark:opacity-[0.04] pointer-events-none" />
@@ -20,7 +29,7 @@ export function Footer() {
           </div>
 
           {/* Navigation sections (3 columns) */}
-          {FOOTER_SECTIONS.map((section) => (
+          {filteredSections.map((section) => (
             <nav key={section.title} aria-labelledby={`footer-nav-${section.title}`}>
               <h3
                 id={`footer-nav-${section.title}`}

@@ -1,7 +1,9 @@
 import { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { cacheTag, cacheLife } from "next/cache";
 import { db } from "@/lib/db";
+import { isFeatureEnabled } from "@/lib/feature-flags";
 import { Card, CardContent } from "@/components/ui/card";
 import { StatsContent } from "@/components/stats";
 import { CATEGORY_TO_SUPER, type AffairSuperCategory } from "@/config/labels";
@@ -394,6 +396,8 @@ async function getGeoStats() {
 }
 
 export default async function StatistiquesPage() {
+  if (!(await isFeatureEnabled("STATISTIQUES_SECTION"))) notFound();
+
   const [
     globalStats,
     byStatus,

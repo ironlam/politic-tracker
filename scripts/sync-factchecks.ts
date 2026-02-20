@@ -19,6 +19,26 @@ import type { FactCheckClaim } from "../src/lib/api";
 import { FACTCHECK_RATE_LIMIT_MS } from "../src/config/rate-limits";
 import { db } from "../src/lib/db";
 import { normalizeText, buildPoliticianIndex, findMentions } from "../src/lib/name-matching";
+import { generateDateSlug } from "../src/lib/utils";
+
+/**
+ * Generate a unique slug for a fact-check, handling collisions.
+ */
+async function generateUniqueFactCheckSlug(date: Date | null, title: string): Promise<string> {
+  const baseSlug = generateDateSlug(date, title);
+  let slug = baseSlug;
+  let counter = 2;
+
+  while (await db.factCheck.findUnique({ where: { slug } })) {
+    const suffix = `-${counter}`;
+    const maxBaseLength = 80 - suffix.length;
+    const truncatedBase = baseSlug.slice(0, maxBaseLength).replace(/-$/, "");
+    slug = `${truncatedBase}${suffix}`;
+    counter++;
+  }
+
+  return slug;
+}
 
 // ============================================
 // SYNC HANDLER
@@ -250,6 +270,8 @@ Environment:
 
             const verdictRating = mapTextualRating(review.textualRating);
 
+            const reviewDate = review.reviewDate ? new Date(review.reviewDate) : new Date();
+
             if (dryRun) {
               console.log(`\n[DRY-RUN] ${review.title.slice(0, 70)}...`);
               console.log(`  Claim: ${claim.text.slice(0, 80)}...`);
@@ -262,7 +284,7 @@ Environment:
             } else {
               try {
                 if (force) {
-                  // Upsert when force mode
+                  // Upsert when force mode — do NOT overwrite existing slug
                   await db.factCheck.upsert({
                     where: { sourceUrl: review.url },
                     update: {
@@ -272,7 +294,7 @@ Environment:
                       verdict: review.textualRating,
                       verdictRating,
                       source: review.publisher.name,
-                      publishedAt: review.reviewDate ? new Date(review.reviewDate) : new Date(),
+                      publishedAt: reviewDate,
                       claimDate: claim.claimDate ? new Date(claim.claimDate) : null,
                       languageCode: review.languageCode || null,
                       mentions: {
@@ -284,6 +306,7 @@ Environment:
                       },
                     },
                     create: {
+                      slug: await generateUniqueFactCheckSlug(reviewDate, review.title),
                       claimText: claim.text,
                       claimant: claim.claimant || null,
                       title: review.title,
@@ -291,7 +314,7 @@ Environment:
                       verdictRating,
                       source: review.publisher.name,
                       sourceUrl: review.url,
-                      publishedAt: review.reviewDate ? new Date(review.reviewDate) : new Date(),
+                      publishedAt: reviewDate,
                       claimDate: claim.claimDate ? new Date(claim.claimDate) : null,
                       languageCode: review.languageCode || null,
                       mentions: {
@@ -305,6 +328,7 @@ Environment:
                 } else {
                   await db.factCheck.create({
                     data: {
+                      slug: await generateUniqueFactCheckSlug(reviewDate, review.title),
                       claimText: claim.text,
                       claimant: claim.claimant || null,
                       title: review.title,
@@ -312,7 +336,7 @@ Environment:
                       verdictRating,
                       source: review.publisher.name,
                       sourceUrl: review.url,
-                      publishedAt: review.reviewDate ? new Date(review.reviewDate) : new Date(),
+                      publishedAt: reviewDate,
                       claimDate: claim.claimDate ? new Date(claim.claimDate) : null,
                       languageCode: review.languageCode || null,
                       mentions: {

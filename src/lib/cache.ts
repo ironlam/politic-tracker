@@ -29,6 +29,7 @@ export type EntityType =
   | "mandate"
   | "vote"
   | "dossier"
+  | "factcheck"
   | "stats";
 
 // Cache life profile used by "use cache" functions — must match cacheLife() calls
@@ -77,6 +78,13 @@ export function invalidateEntity(type: EntityType, slug?: string): void {
       revalidateTag("votes", CACHE_PROFILE);
       break;
 
+    case "factcheck":
+      if (slug) {
+        revalidateTag(`factcheck:${slug}`, CACHE_PROFILE);
+      }
+      revalidateTag("factchecks", CACHE_PROFILE);
+      break;
+
     case "dossier":
       revalidateTag("dossiers", CACHE_PROFILE);
       break;
@@ -91,7 +99,7 @@ export function invalidateEntity(type: EntityType, slug?: string): void {
 
 // ─── Global revalidation (post-sync) ─────────────────────────────
 
-const ALL_TAGS = ["politicians", "parties", "votes", "stats", "dossiers"];
+const ALL_TAGS = ["politicians", "parties", "votes", "stats", "dossiers", "factchecks"];
 
 /**
  * Purge all main cache tags. Call after full sync operations.

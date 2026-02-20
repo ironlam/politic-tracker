@@ -362,6 +362,89 @@ export function ArticleJsonLd({
   );
 }
 
+// ─── ClaimReview (Fact-check) ─────────────────────────────────
+
+type FactCheckRatingValue =
+  | "TRUE"
+  | "MOSTLY_TRUE"
+  | "HALF_TRUE"
+  | "MISLEADING"
+  | "OUT_OF_CONTEXT"
+  | "MOSTLY_FALSE"
+  | "FALSE"
+  | "UNVERIFIABLE";
+
+const VERDICT_RATING_VALUE: Record<FactCheckRatingValue, number> = {
+  FALSE: 1,
+  MOSTLY_FALSE: 2,
+  MISLEADING: 2,
+  OUT_OF_CONTEXT: 3,
+  HALF_TRUE: 3,
+  MOSTLY_TRUE: 4,
+  TRUE: 5,
+  UNVERIFIABLE: 3,
+};
+
+interface ClaimReviewJsonLdProps {
+  url: string;
+  claimText: string;
+  claimant?: string | null;
+  verdict: string;
+  verdictRating: FactCheckRatingValue;
+  reviewDate: string;
+  source: string;
+  sourceUrl: string;
+}
+
+export function ClaimReviewJsonLd({
+  url,
+  claimText,
+  claimant,
+  verdict,
+  verdictRating,
+  reviewDate,
+  source,
+  sourceUrl,
+}: ClaimReviewJsonLdProps) {
+  const ratingValue = VERDICT_RATING_VALUE[verdictRating];
+
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "ClaimReview",
+    url,
+    claimReviewed: claimText,
+    ...(claimant && {
+      itemReviewed: {
+        "@type": "Claim",
+        author: {
+          "@type": "Person",
+          name: claimant,
+        },
+      },
+    }),
+    reviewRating: {
+      "@type": "Rating",
+      ratingValue,
+      bestRating: 5,
+      worstRating: 1,
+      alternateName: verdict,
+    },
+    datePublished: reviewDate,
+    author: {
+      "@type": "Organization",
+      name: source,
+      url: sourceUrl,
+    },
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+    />
+  );
+}
+
 interface GovernmentOrganizationJsonLdProps {
   name: string;
   alternateName?: string;

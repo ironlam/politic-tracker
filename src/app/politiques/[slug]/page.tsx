@@ -81,6 +81,7 @@ async function getPolitician(slug: string) {
           factCheck: {
             select: {
               id: true,
+              slug: true,
               title: true,
               claimText: true,
               claimant: true,
@@ -583,14 +584,23 @@ export default async function PoliticianPage({ params }: PageProps) {
                                   {FACTCHECK_RATING_LABELS[mention.factCheck.verdictRating]}
                                 </Badge>
                                 <div className="min-w-0 flex-1">
-                                  <a
-                                    href={mention.factCheck.sourceUrl}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-sm font-medium hover:underline line-clamp-2"
-                                  >
-                                    {mention.factCheck.title}
-                                  </a>
+                                  {mention.factCheck.slug ? (
+                                    <Link
+                                      href={`/factchecks/${mention.factCheck.slug}`}
+                                      className="text-sm font-medium hover:underline"
+                                    >
+                                      {mention.factCheck.title}
+                                    </Link>
+                                  ) : (
+                                    <a
+                                      href={mention.factCheck.sourceUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-sm font-medium hover:underline"
+                                    >
+                                      {mention.factCheck.title}
+                                    </a>
+                                  )}
                                   {mention.factCheck.claimText && (
                                     <p className="text-sm text-muted-foreground mt-1 line-clamp-3">
                                       &laquo;&nbsp;{mention.factCheck.claimText}&nbsp;&raquo;
@@ -625,14 +635,23 @@ export default async function PoliticianPage({ params }: PageProps) {
                                   {FACTCHECK_RATING_LABELS[mention.factCheck.verdictRating]}
                                 </Badge>
                                 <div className="min-w-0 flex-1">
-                                  <a
-                                    href={mention.factCheck.sourceUrl}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-sm font-medium hover:underline line-clamp-2"
-                                  >
-                                    {mention.factCheck.title}
-                                  </a>
+                                  {mention.factCheck.slug ? (
+                                    <Link
+                                      href={`/factchecks/${mention.factCheck.slug}`}
+                                      className="text-sm font-medium hover:underline"
+                                    >
+                                      {mention.factCheck.title}
+                                    </Link>
+                                  ) : (
+                                    <a
+                                      href={mention.factCheck.sourceUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-sm font-medium hover:underline"
+                                    >
+                                      {mention.factCheck.title}
+                                    </a>
+                                  )}
                                   {mention.factCheck.claimText && (
                                     <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
                                       {mention.factCheck.claimant && (

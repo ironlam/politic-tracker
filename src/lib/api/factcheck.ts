@@ -8,8 +8,14 @@
 import type { FactCheckRating } from "@/generated/prisma";
 import { FACTCHECK_RATE_LIMIT_MS } from "@/config/rate-limits";
 import { HTTPClient } from "@/lib/api/http-client";
+import { JSDOM } from "jsdom";
 
 const client = new HTTPClient({ rateLimitMs: FACTCHECK_RATE_LIMIT_MS });
+const scraperClient = new HTTPClient({
+  rateLimitMs: 1000,
+  timeout: 10_000,
+  userAgent: "Mozilla/5.0 (compatible; Poligraph/1.0; +https://poligraph.fr)",
+});
 
 const API_BASE = "https://factchecktools.googleapis.com/v1alpha1/claims:search";
 
@@ -85,6 +91,35 @@ export async function searchClaims(
   }
 
   return allClaims;
+}
+
+/**
+ * Fetch the full page title from a fact-check article URL.
+ * Falls back to the original title if the page can't be fetched.
+ */
+export async function fetchPageTitle(url: string, fallbackTitle: string): Promise<string> {
+  try {
+    const { data: html } = await scraperClient.get<string>(url, {
+      headers: { Accept: "text/html" },
+    });
+
+    const dom = new JSDOM(html);
+    const doc = dom.window.document;
+
+    // Prefer og:title (usually cleaner), fall back to <title>
+    const ogTitle = doc.querySelector('meta[property="og:title"]')?.getAttribute("content");
+    const htmlTitle = doc.querySelector("title")?.textContent;
+
+    const fullTitle = ogTitle || htmlTitle;
+
+    if (fullTitle && fullTitle.trim().length > fallbackTitle.replace(/\.{3}$/, "").trim().length) {
+      return fullTitle.trim();
+    }
+
+    return fallbackTitle;
+  } catch {
+    return fallbackTitle;
+  }
 }
 
 /**

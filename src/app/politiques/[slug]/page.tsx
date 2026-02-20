@@ -28,6 +28,9 @@ import { SentenceDetails } from "@/components/affairs/SentenceDetails";
 import { AffairTimeline } from "@/components/affairs/AffairTimeline";
 import { VotePositionBadge } from "@/components/votes";
 
+// ISR: regenerate every hour
+export const revalidate = 3600;
+
 interface PageProps {
   params: Promise<{ slug: string }>;
 }

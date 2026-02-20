@@ -105,6 +105,7 @@
     "sync:judilibre:stats": "tsx scripts/sync-judilibre.ts --stats",
     "sync:press-analysis": "tsx scripts/sync-press-analysis.ts",
     "reconcile:affairs": "tsx scripts/reconcile-affairs.ts",
+    "discover:affairs": "tsx scripts/discover-affairs.ts",
     "sync:press-analysis:stats": "tsx scripts/sync-press-analysis.ts --stats",
     "classify:themes": "tsx scripts/classify-themes.ts",
     "classify:themes:stats": "tsx scripts/classify-themes.ts --stats",

@@ -55,6 +55,7 @@ function sourceTypeLabel(sourceType: SourceType): string {
     JUDILIBRE: "Judilibre",
     LEGIFRANCE: "Légifrance",
     PRESSE: "Presse",
+    WIKIPEDIA: "Wikipedia",
     MANUAL: "Manuel",
   };
   return labels[sourceType] ?? sourceType;

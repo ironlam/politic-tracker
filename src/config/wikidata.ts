@@ -46,6 +46,10 @@ export const WD_PROPS = {
   SENAT_ID: "P4324", // Sénat
   HATVP_ID: "P8919", // HATVP
   NOSDEPUTES_ID: "P7384", // NosDéputés.fr
+
+  // Judicial
+  CONVICTED_OF: "P1399", // convicted of (criminal offense)
+  CHARGE: "P1595", // charge (accusation)
 } as const;
 
 // ============================================================================

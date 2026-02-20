@@ -427,17 +427,21 @@ export async function enrichAffair(affairId: string): Promise<EnrichmentResult> 
     changes.push(`Tribunal: ${aiResult.court}`);
   }
 
-  // Add new sources
+  // Add new sources (validate dates to avoid Invalid Date errors)
   const sourcesToAdd = aiResult.sources_used
     .filter((s) => !existingUrls.has(s.url))
-    .map((s) => ({
-      url: s.url,
-      title: s.title,
-      publisher: s.publisher,
-      publishedAt: s.published_date ? new Date(s.published_date) : new Date(),
-      sourceType: "PRESSE" as const,
-      affairId,
-    }));
+    .map((s) => {
+      const parsedDate = s.published_date ? new Date(s.published_date) : null;
+      const publishedAt = parsedDate && !isNaN(parsedDate.getTime()) ? parsedDate : new Date();
+      return {
+        url: s.url,
+        title: s.title,
+        publisher: s.publisher,
+        publishedAt,
+        sourceType: "PRESSE" as const,
+        affairId,
+      };
+    });
 
   // Apply updates in a transaction
   await db.$transaction(async (tx) => {
@@ -512,7 +516,13 @@ export async function enrichAffair(affairId: string): Promise<EnrichmentResult> 
     });
   });
 
-  invalidateEntity("affair");
+  // invalidateEntity uses revalidatePath which only works inside Next.js server context.
+  // In standalone scripts, this is a no-op.
+  try {
+    invalidateEntity("affair");
+  } catch {
+    // Expected outside Next.js (e.g. in sync scripts)
+  }
 
   return {
     enriched: true,

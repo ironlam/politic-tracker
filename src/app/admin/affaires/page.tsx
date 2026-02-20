@@ -89,6 +89,7 @@ export default function AdminAffairsPage() {
   const [bulkLoading, setBulkLoading] = useState(false);
   const [showRejectPrompt, setShowRejectPrompt] = useState(false);
   const [applyingAI, setApplyingAI] = useState(false);
+  const [enrichingId, setEnrichingId] = useState<string | null>(null);
 
   // Read state from URL
   const activeTab = searchParams.get("status") || "all";
@@ -173,6 +174,25 @@ export default function AdminAffairsPage() {
       if (res.ok) fetchData();
     } finally {
       setApplyingAI(false);
+    }
+  }
+
+  async function handleEnrich(affairId: string) {
+    setEnrichingId(affairId);
+    try {
+      const res = await fetch("/api/admin/affaires/enrich", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ affairId }),
+      });
+      if (res.ok) {
+        const result = await res.json();
+        if (result.enriched) {
+          fetchData();
+        }
+      }
+    } finally {
+      setEnrichingId(null);
     }
   }
 
@@ -497,7 +517,25 @@ export default function AdminAffairsPage() {
                         </Badge>
                       </td>
                       <td className="px-4 py-3 text-center text-muted-foreground">
-                        {affair.sources.length}
+                        <div className="flex items-center justify-center gap-1">
+                          {affair.sources.length}
+                          {affair.moderationReviews[0]?.recommendation === "REJECT" && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 w-6 p-0"
+                              title="Enrichir via recherche web"
+                              onClick={() => handleEnrich(affair.id)}
+                              disabled={enrichingId === affair.id}
+                            >
+                              {enrichingId === affair.id ? (
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                              ) : (
+                                <Search className="w-3 h-3" />
+                              )}
+                            </Button>
+                          )}
+                        </div>
                       </td>
                       <td className="px-4 py-3 text-muted-foreground text-xs whitespace-nowrap">
                         {new Date(affair.createdAt).toLocaleDateString("fr-FR")}

@@ -127,3 +127,9 @@ export const applyModerationSchema = z.object({
 });
 
 export type ApplyModerationInput = z.infer<typeof applyModerationSchema>;
+
+// ─── Enrich affair via web search ────────────────────────────────
+
+export const enrichAffairSchema = z.object({
+  affairId: z.string().min(1),
+});

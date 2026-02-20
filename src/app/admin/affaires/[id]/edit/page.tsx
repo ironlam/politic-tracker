@@ -45,6 +45,17 @@ export default async function EditAffairPage({ params }: PageProps) {
     verdictDate: affair.verdictDate?.toISOString().split("T")[0],
     sentence: affair.sentence || undefined,
     appeal: affair.appeal,
+    prisonMonths: affair.prisonMonths ?? undefined,
+    prisonSuspended: affair.prisonSuspended ?? undefined,
+    fineAmount: affair.fineAmount != null ? Number(affair.fineAmount) : undefined,
+    ineligibilityMonths: affair.ineligibilityMonths ?? undefined,
+    communityService: affair.communityService ?? undefined,
+    otherSentence: affair.otherSentence || undefined,
+    court: affair.court || undefined,
+    chamber: affair.chamber || undefined,
+    caseNumber: affair.caseNumber || undefined,
+    ecli: affair.ecli || undefined,
+    pourvoiNumber: affair.pourvoiNumber || undefined,
     sources: affair.sources.map((s) => ({
       id: s.id,
       url: s.url,
@@ -52,6 +63,7 @@ export default async function EditAffairPage({ params }: PageProps) {
       publisher: s.publisher,
       publishedAt: s.publishedAt.toISOString().split("T")[0],
       excerpt: s.excerpt || "",
+      sourceType: s.sourceType || "MANUAL",
     })),
   };
 

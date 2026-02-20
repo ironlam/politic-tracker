@@ -118,3 +118,12 @@ export const bulkAffairActionSchema = z
   );
 
 export type BulkAffairActionInput = z.infer<typeof bulkAffairActionSchema>;
+
+// ─── Apply AI moderation ──────────────────────────────────────────
+
+export const applyModerationSchema = z.object({
+  reviewIds: z.array(z.string().min(1)).min(1),
+  action: z.enum(["apply", "dismiss"]),
+});
+
+export type ApplyModerationInput = z.infer<typeof applyModerationSchema>;

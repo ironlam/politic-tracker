@@ -14,7 +14,7 @@
 
 import "dotenv/config";
 import { createCLI, ProgressTracker, type SyncHandler, type SyncResult } from "../src/lib/sync";
-import { searchClaims, mapTextualRating } from "../src/lib/api";
+import { searchClaims, mapTextualRating, fetchPageTitle } from "../src/lib/api";
 import type { FactCheckClaim } from "../src/lib/api";
 import { FACTCHECK_RATE_LIMIT_MS } from "../src/config/rate-limits";
 import { db } from "../src/lib/db";
@@ -272,8 +272,14 @@ Environment:
 
             const reviewDate = review.reviewDate ? new Date(review.reviewDate) : new Date();
 
+            // Fetch full title from source page when Google API truncates it
+            let title = review.title;
+            if (title.endsWith("...") || title.endsWith("…")) {
+              title = await fetchPageTitle(review.url, title);
+            }
+
             if (dryRun) {
-              console.log(`\n[DRY-RUN] ${review.title.slice(0, 70)}...`);
+              console.log(`\n[DRY-RUN] ${title.slice(0, 70)}...`);
               console.log(`  Claim: ${claim.text.slice(0, 80)}...`);
               console.log(`  Verdict: ${review.textualRating} → ${verdictRating}`);
               console.log(`  Source: ${review.publisher.name}`);
@@ -290,7 +296,7 @@ Environment:
                     update: {
                       claimText: claim.text,
                       claimant: claim.claimant || null,
-                      title: review.title,
+                      title,
                       verdict: review.textualRating,
                       verdictRating,
                       source: review.publisher.name,
@@ -306,10 +312,10 @@ Environment:
                       },
                     },
                     create: {
-                      slug: await generateUniqueFactCheckSlug(reviewDate, review.title),
+                      slug: await generateUniqueFactCheckSlug(reviewDate, title),
                       claimText: claim.text,
                       claimant: claim.claimant || null,
-                      title: review.title,
+                      title,
                       verdict: review.textualRating,
                       verdictRating,
                       source: review.publisher.name,
@@ -328,10 +334,10 @@ Environment:
                 } else {
                   await db.factCheck.create({
                     data: {
-                      slug: await generateUniqueFactCheckSlug(reviewDate, review.title),
+                      slug: await generateUniqueFactCheckSlug(reviewDate, title),
                       claimText: claim.text,
                       claimant: claim.claimant || null,
-                      title: review.title,
+                      title,
                       verdict: review.textualRating,
                       verdictRating,
                       source: review.publisher.name,

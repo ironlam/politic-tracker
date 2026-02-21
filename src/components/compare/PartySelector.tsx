@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Search, X, Building2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -30,15 +30,10 @@ export function PartySelector({ position, selectedParty, otherPartyId }: PartySe
   const [isOpen, setIsOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
   const [activeOnly, setActiveOnly] = useState(true);
-  const [isNavigating, setIsNavigating] = useState(false);
+  const [isPending, startTransition] = useTransition();
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
-
-  // Reset navigating state when data arrives
-  useEffect(() => {
-    if (selectedParty) setIsNavigating(false);
-  }, [selectedParty]);
 
   // Search parties with debounce
   useEffect(() => {
@@ -71,7 +66,7 @@ export function PartySelector({ position, selectedParty, otherPartyId }: PartySe
       }
     };
 
-    const timeout = setTimeout(fetchResults, 400);
+    const timeout = setTimeout(fetchResults, 250);
     return () => {
       clearTimeout(timeout);
       controller.abort();
@@ -94,20 +89,23 @@ export function PartySelector({ position, selectedParty, otherPartyId }: PartySe
       const params = new URLSearchParams(searchParams.toString());
       params.set("mode", "partis");
       params.set(position, party.slug || party.id);
-      setIsNavigating(true);
-      router.push(`/comparer?${params.toString()}`);
       setQuery("");
       setIsOpen(false);
       setActiveIndex(-1);
+      startTransition(() => {
+        router.push(`/comparer?${params.toString()}`);
+      });
     },
     [position, router, searchParams]
   );
 
-  const clearSelection = () => {
+  const clearSelection = useCallback(() => {
     const params = new URLSearchParams(searchParams.toString());
     params.delete(position);
-    router.push(`/comparer?${params.toString()}`);
-  };
+    startTransition(() => {
+      router.push(`/comparer?${params.toString()}`);
+    });
+  }, [position, router, searchParams]);
 
   // Keyboard navigation
   const handleKeyDown = useCallback(
@@ -146,9 +144,9 @@ export function PartySelector({ position, selectedParty, otherPartyId }: PartySe
     }
   }, [activeIndex]);
 
-  if (isNavigating && !selectedParty) {
+  if (isPending && !selectedParty) {
     return (
-      <div className="bg-muted rounded-lg p-4 animate-pulse">
+      <div className="bg-muted rounded-lg p-4 animate-in fade-in-0 duration-200">
         <div className="flex items-center gap-4">
           <Skeleton className="h-12 w-12 rounded-lg shrink-0" />
           <div className="flex-1 space-y-2">
@@ -162,7 +160,7 @@ export function PartySelector({ position, selectedParty, otherPartyId }: PartySe
 
   if (selectedParty) {
     return (
-      <div className="bg-muted rounded-lg p-4">
+      <div className="bg-muted rounded-lg p-4 animate-in fade-in-0 duration-300">
         <div className="flex items-center gap-4">
           <div
             className="w-12 h-12 rounded-lg flex items-center justify-center text-white font-bold text-sm shrink-0"

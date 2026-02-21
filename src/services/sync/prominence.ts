@@ -195,18 +195,14 @@ export async function recalculateProminence(
     updates.push({ id: p.id, score: total });
   }
 
-  // 4. Batch update in chunks of 100
+  // 4. Batch update using raw SQL (avoids Prisma transaction timeout on serverless)
   if (!dryRun) {
-    const CHUNK_SIZE = 100;
+    const CHUNK_SIZE = 500;
     for (let i = 0; i < updates.length; i += CHUNK_SIZE) {
       const chunk = updates.slice(i, i + CHUNK_SIZE);
-      await db.$transaction(
-        chunk.map((u) =>
-          db.politician.update({
-            where: { id: u.id },
-            data: { prominenceScore: u.score },
-          })
-        )
+      const values = chunk.map((u) => `('${u.id}', ${u.score})`).join(", ");
+      await db.$executeRawUnsafe(
+        `UPDATE "Politician" p SET "prominenceScore" = c.score::int FROM (VALUES ${values}) AS c(id, score) WHERE p.id = c.id`
       );
     }
   }

@@ -17,7 +17,7 @@ export const getFeatureFlags = unstable_cache(
     );
   },
   ["feature-flags"],
-  { revalidate: 60 }
+  { revalidate: 60, tags: ["feature-flags"] }
 );
 
 export async function isFeatureEnabled(name: string): Promise<boolean> {

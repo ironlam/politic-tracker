@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { isAuthenticated } from "@/lib/auth";
 
-const STALE_JOB_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
+const STALE_JOB_TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes
 
 export async function GET(request: NextRequest) {
   const authenticated = await isAuthenticated();

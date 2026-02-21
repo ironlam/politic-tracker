@@ -12,9 +12,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Trigger MCP contract tests
+        env:
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
         run: |
-          curl -X POST \
-            -H "Accept: application/vnd.github+json" \
-            -H "Authorization: Bearer ${{ secrets.MCP_DISPATCH_TOKEN }}" \
-            https://api.github.com/repos/ironlam/poligraph-mcp/dispatches \
-            -d '{"event_type":"api-contract-check","client_payload":{"ref":"${{ github.sha }}","message":${{ toJSON(github.event.head_commit.message) }}}}'
+          jq -n \
+            --arg ref "${{ github.sha }}" \
+            --arg msg "$COMMIT_MESSAGE" \
+            '{"event_type":"api-contract-check","client_payload":{"ref":$ref,"message":$msg}}' \
+          | curl -X POST \
+              -H "Accept: application/vnd.github+json" \
+              -H "Authorization: Bearer ${{ secrets.MCP_DISPATCH_TOKEN }}" \
+              https://api.github.com/repos/ironlam/poligraph-mcp/dispatches \
+              -d @-

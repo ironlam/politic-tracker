@@ -15,6 +15,7 @@ import type { FactCheckRating, AffairStatus } from "@/types";
 
 interface FactCheckItem {
   id: string;
+  slug: string | null;
   title: string;
   source: string;
   sourceUrl: string;
@@ -142,16 +143,12 @@ function FactChecksContent({ factChecks }: { factChecks: FactCheckItem[] }) {
       <ul className="divide-y divide-border">
         {factChecks.map((fc) => (
           <li key={fc.id}>
-            <a
-              href={fc.sourceUrl}
-              target="_blank"
-              rel="noopener noreferrer"
+            <Link
+              href={`/factchecks/${fc.slug || fc.id}`}
               className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors group"
             >
               <div className="flex-1 min-w-0 mr-4">
-                <p className="font-medium truncate group-hover:text-primary transition-colors">
-                  {fc.title}
-                </p>
+                <p className="font-medium group-hover:text-primary transition-colors">{fc.title}</p>
                 <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
                   <span>{formatDate(fc.publishedAt)}</span>
                   <span>•</span>
@@ -169,7 +166,7 @@ function FactChecksContent({ factChecks }: { factChecks: FactCheckItem[] }) {
               >
                 {FACTCHECK_RATING_LABELS[fc.verdictRating as FactCheckRating] || fc.verdictRating}
               </Badge>
-            </a>
+            </Link>
           </li>
         ))}
       </ul>

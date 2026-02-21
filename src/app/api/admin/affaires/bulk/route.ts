@@ -19,6 +19,25 @@ export async function POST(request: NextRequest) {
     }
     const { ids, action, rejectionReason } = parsed.data;
 
+    if (action === "delete") {
+      const result = await db.affair.deleteMany({
+        where: { id: { in: ids } },
+      });
+
+      await db.auditLog.createMany({
+        data: ids.map((id) => ({
+          action: "DELETE" as const,
+          entityType: "Affair",
+          entityId: id,
+          changes: { bulkDelete: true },
+        })),
+      });
+
+      invalidateEntity("affair");
+
+      return NextResponse.json({ deleted: result.count });
+    }
+
     const publicationStatus = action === "publish" ? "PUBLISHED" : "REJECTED";
 
     const result = await db.affair.updateMany({
@@ -32,7 +51,7 @@ export async function POST(request: NextRequest) {
     // Audit log for each
     await db.auditLog.createMany({
       data: ids.map((id) => ({
-        action: "UPDATE",
+        action: "UPDATE" as const,
         entityType: "Affair",
         entityId: id,
         changes: { publicationStatus, ...(rejectionReason ? { rejectionReason } : {}) },

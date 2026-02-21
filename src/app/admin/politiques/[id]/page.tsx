@@ -14,6 +14,8 @@ import {
   MANDATE_TYPE_LABELS,
 } from "@/config/labels";
 import { MandateUrlEditor } from "@/components/admin/MandateUrlEditor";
+import { SyncPanel } from "@/components/admin/SyncPanel";
+import { DuplicateDetector } from "@/components/admin/DuplicateDetector";
 import { ensureContrast } from "@/lib/contrast";
 import type { AffairStatus, AffairCategory, MandateType } from "@/types";
 
@@ -341,6 +343,12 @@ export default async function AdminPoliticianPage({ params }: PageProps) {
           )}
         </CardContent>
       </Card>
+
+      {/* Détection de doublons */}
+      <DuplicateDetector politicianId={politician.id} affairCount={politician.affairs.length} />
+
+      {/* Synchronisation */}
+      <SyncPanel politicianId={politician.id} affairCount={politician.affairs.length} />
 
       {/* Actions rapides */}
       <Card>

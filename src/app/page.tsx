@@ -7,6 +7,7 @@ import { WebSiteJsonLd } from "@/components/seo/JsonLd";
 import { Heart } from "lucide-react";
 import { HexPattern } from "@/components/ui/HexPattern";
 import { FadeIn } from "@/components/motion";
+import { isFeatureEnabled } from "@/lib/feature-flags";
 
 async function getRecentFactChecks() {
   const factChecks = await db.factCheck.findMany({
@@ -170,6 +171,7 @@ export default async function HomePage() {
     getUpcomingElections(),
   ]);
 
+  const statsEnabled = await isFeatureEnabled("STATISTIQUES_SECTION");
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://poligraph.fr";
 
   return (
@@ -222,9 +224,11 @@ export default async function HomePage() {
                 <Button asChild size="lg" className="text-base px-8 shadow-lg shadow-primary/20">
                   <Link href="/politiques">Explorer les représentants</Link>
                 </Button>
-                <Button asChild size="lg" variant="outline" className="text-base px-8">
-                  <Link href="/statistiques">Voir les statistiques</Link>
-                </Button>
+                {statsEnabled && (
+                  <Button asChild size="lg" variant="outline" className="text-base px-8">
+                    <Link href="/statistiques">Voir les statistiques</Link>
+                  </Button>
+                )}
                 <Button asChild size="lg" variant="outline" className="text-base px-8">
                   <Link href="/comparer">Comparer</Link>
                 </Button>

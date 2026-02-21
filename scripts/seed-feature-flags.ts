@@ -14,7 +14,7 @@ const FLAGS = [
   { name: "CHATBOT_ENABLED", label: "Assistant IA", enabled: false },
   { name: "PRESS_SECTION", label: "Revue de presse", enabled: false },
   { name: "COMPARISON_TOOL", label: "Outil de comparaison", enabled: false },
-  { name: "STATISTIQUES_SECTION", label: "Statistiques", enabled: false },
+  { name: "STATISTIQUES_SECTION", label: "Statistiques", enabled: true },
   { name: "INSTITUTIONS_SECTION", label: "Institutions", enabled: false },
   { name: "ASSEMBLEE_SECTION", label: "Dossiers législatifs", enabled: false },
   // Enabled for launch — core features

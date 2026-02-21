@@ -1,7 +1,8 @@
-export { StatsTabs, type StatsTabType } from "./StatsTabs";
-export { StatsContent } from "./StatsContent";
 export { ProgressBar } from "./ProgressBar";
-export { AffairsTab } from "./AffairsTab";
-export { VotesTab } from "./VotesTab";
-export { FactChecksTab } from "./FactChecksTab";
-export { GeoTab } from "./GeoTab";
+export { DonutChart } from "./DonutChart";
+export { HorizontalBars } from "./HorizontalBars";
+export { MethodologyDisclaimer } from "./MethodologyDisclaimer";
+export { HeroKPIs } from "./HeroKPIs";
+export { LegislativeSection } from "./LegislativeSection";
+export { JudicialSection } from "./JudicialSection";
+export { FactCheckSection } from "./FactCheckSection";

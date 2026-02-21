@@ -94,7 +94,7 @@ async function queryPoliticians(
         some: {
           status: { in: CONVICTION_STATUSES },
           publicationStatus: "PUBLISHED",
-          involvement: { notIn: ["VICTIM", "PLAINTIFF"] },
+          involvement: "DIRECT",
         },
       },
     });
@@ -153,7 +153,7 @@ async function queryPoliticians(
             affairs: {
               where: {
                 publicationStatus: "PUBLISHED",
-                involvement: { notIn: ["VICTIM", "PLAINTIFF"] },
+                involvement: "DIRECT",
                 status: "CONDAMNATION_DEFINITIVE",
               },
             },
@@ -163,7 +163,7 @@ async function queryPoliticians(
           where: {
             status: { in: CONVICTION_STATUSES },
             publicationStatus: "PUBLISHED",
-            involvement: { notIn: ["VICTIM", "PLAINTIFF"] },
+            involvement: "DIRECT",
           },
           select: { id: true },
           take: 1,
@@ -344,7 +344,7 @@ async function getFilterCounts() {
           some: {
             status: { in: CONVICTION_STATUSES },
             publicationStatus: "PUBLISHED",
-            involvement: { notIn: ["VICTIM", "PLAINTIFF"] },
+            involvement: "DIRECT",
           },
         },
       },
@@ -353,7 +353,7 @@ async function getFilterCounts() {
       where: {
         publicationStatus: "PUBLISHED",
         status: { in: CONVICTION_STATUSES },
-        involvement: { notIn: ["VICTIM", "PLAINTIFF"] },
+        involvement: "DIRECT",
       },
     }),
     // Mandate counts (current mandates only)

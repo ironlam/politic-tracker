@@ -126,7 +126,7 @@ async function getUpcomingElections() {
 
 async function getRecentAffairs() {
   const affairs = await db.affair.findMany({
-    where: { publicationStatus: "PUBLISHED" },
+    where: { publicationStatus: "PUBLISHED", involvement: "DIRECT" },
     take: 5,
     orderBy: [
       { verdictDate: { sort: "desc", nulls: "last" } },

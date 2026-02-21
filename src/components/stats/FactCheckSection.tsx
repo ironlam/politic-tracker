@@ -5,7 +5,6 @@ import { HorizontalBars } from "./HorizontalBars";
 import { ProportionBar } from "./ProportionBar";
 import { MethodologyDisclaimer } from "./MethodologyDisclaimer";
 import { VERDICT_GROUP_COLORS, VERDICT_GROUP_LABELS } from "@/config/labels";
-import type { FactCheckRating } from "@/types";
 
 interface VerdictBreakdown {
   vrai: number;
@@ -40,7 +39,6 @@ interface FactCheckSectionProps {
   total: number;
   groups: VerdictBreakdown;
   bySource: { source: string; count: number }[];
-  byRating: { rating: FactCheckRating; count: number }[];
   mostReliablePoliticians: RankedPolitician[];
   leastReliablePoliticians: RankedPolitician[];
   mostReliableParties: RankedParty[];
@@ -174,6 +172,9 @@ export function FactCheckSection({
 
   return (
     <section aria-labelledby="factcheck-heading" className="py-8">
+      <h2 id="factcheck-heading" className="sr-only">
+        Fact-checking
+      </h2>
       {/* Methodology — top, before data */}
       <MethodologyDisclaimer
         details={
@@ -245,7 +246,7 @@ export function FactCheckSection({
       </div>
 
       {/* Politician rankings — 2 columns */}
-      <div className="grid md:grid-cols-2 gap-8 mb-8" id="factcheck-heading">
+      <div className="grid md:grid-cols-2 gap-8 mb-8">
         {mostReliablePoliticians.length > 0 && (
           <Card>
             <CardHeader>

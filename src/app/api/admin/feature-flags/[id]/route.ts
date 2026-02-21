@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { isAuthenticated } from "@/lib/auth";
 import { revalidateTags } from "@/lib/cache";
+import { revalidatePath } from "next/cache";
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -33,6 +34,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
   });
 
   revalidateTags(["feature-flags"]);
+  revalidatePath("/", "layout");
   return NextResponse.json(flag);
 }
 
@@ -45,6 +47,7 @@ export async function DELETE(_request: NextRequest, context: RouteContext) {
   const { id } = await context.params;
   await db.featureFlag.delete({ where: { id } });
   revalidateTags(["feature-flags"]);
+  revalidatePath("/", "layout");
 
   return NextResponse.json({ success: true });
 }

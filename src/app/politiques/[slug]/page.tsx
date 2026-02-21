@@ -362,11 +362,22 @@ export default async function PoliticianPage({ params }: PageProps) {
               <Card>
                 <CardContent className="pt-6">
                   <p className="text-muted-foreground leading-relaxed">{politician.biography}</p>
-                  <p className="text-xs text-muted-foreground/60 mt-3 italic">
-                    Résumé généré automatiquement à partir de données publiques
-                    {politician.biographyGeneratedAt &&
-                      ` — mis à jour le ${formatDate(politician.biographyGeneratedAt)}`}
-                  </p>
+                  <div className="flex items-center gap-2 mt-3 pt-3 border-t border-dashed text-xs text-muted-foreground">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 16 16"
+                      fill="currentColor"
+                      className="w-3.5 h-3.5 shrink-0 text-primary/50"
+                      aria-hidden="true"
+                    >
+                      <path d="M8 1a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0v-1.5A.75.75 0 0 1 8 1ZM10.5 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0ZM12.95 4.11a.75.75 0 1 0-1.06-1.06l-1.062 1.06a.75.75 0 0 0 1.061 1.062l1.06-1.062ZM15 8a.75.75 0 0 1-.75.75h-1.5a.75.75 0 0 1 0-1.5h1.5A.75.75 0 0 1 15 8ZM11.889 12.95a.75.75 0 0 0 1.06-1.06l-1.06-1.062a.75.75 0 0 0-1.062 1.061l1.062 1.06ZM8 12a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0v-1.5A.75.75 0 0 1 8 12ZM5.172 11.889a.75.75 0 0 0-1.061-1.062L3.05 11.89a.75.75 0 1 0 1.06 1.06l1.062-1.06ZM4 8a.75.75 0 0 1-.75.75h-1.5a.75.75 0 0 1 0-1.5h1.5A.75.75 0 0 1 4 8ZM4.11 5.172A.75.75 0 0 0 5.173 4.11L4.11 3.05a.75.75 0 1 0-1.06 1.06l1.06 1.062Z" />
+                    </svg>
+                    <span>
+                      Résumé généré automatiquement à partir de sources publiques
+                      {politician.biographyGeneratedAt &&
+                        ` — ${formatDate(politician.biographyGeneratedAt)}`}
+                    </span>
+                  </div>
                 </CardContent>
               </Card>
             )}
@@ -852,7 +863,15 @@ export default async function PoliticianPage({ params }: PageProps) {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-muted-foreground">Aucune affaire judiciaire documentée</p>
+                  <div>
+                    <p className="text-muted-foreground">
+                      Aucune affaire judiciaire documentée à ce jour.
+                    </p>
+                    <p className="text-xs text-muted-foreground/70 mt-1">
+                      Cela ne signifie pas l&apos;absence d&apos;affaire — nos données sont
+                      enrichies progressivement.
+                    </p>
+                  </div>
                 )}
               </CardContent>
             </Card>

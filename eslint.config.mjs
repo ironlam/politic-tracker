@@ -20,6 +20,8 @@ const eslintConfig = defineConfig([
     "scripts/**",
     // Worker (plain Node.js CommonJS, not TypeScript):
     "worker/**",
+    // Git worktrees (contain their own .next/build artifacts):
+    ".worktrees/**",
   ]),
   {
     rules: {

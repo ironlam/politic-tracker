@@ -196,11 +196,20 @@ export default async function HomePage() {
                   height={72}
                   className="w-14 h-14 md:w-[72px] md:h-[72px] drop-shadow-lg"
                 />
-                <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-extrabold tracking-tight">
-                  <span className="bg-gradient-to-r from-primary to-foreground bg-clip-text text-transparent">
-                    Poligraph
+                <div className="flex items-baseline gap-3">
+                  <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-extrabold tracking-tight">
+                    <span className="bg-gradient-to-r from-primary to-foreground bg-clip-text text-transparent">
+                      Poligraph
+                    </span>
+                  </h1>
+                  <span className="inline-flex items-center gap-1.5 px-2 py-0.5 text-xs font-semibold uppercase tracking-wider rounded-full border border-primary/30 text-primary bg-primary/5">
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary/40" />
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-primary/60" />
+                    </span>
+                    Beta
                   </span>
-                </h1>
+                </div>
               </div>
 
               <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed">

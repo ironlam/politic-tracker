@@ -35,18 +35,9 @@ export async function Header() {
               height={40}
               className="rounded-xl group-hover:scale-105 transition-transform duration-300"
             />
-            <div className="hidden sm:flex items-center gap-2">
-              <span className="text-xl font-display font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent group-hover:from-primary group-hover:to-brand transition-all duration-300">
-                Poligraph
-              </span>
-              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider rounded-full border border-primary/30 text-primary/70">
-                <span className="relative flex h-1.5 w-1.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary/40" />
-                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-primary/60" />
-                </span>
-                Beta
-              </span>
-            </div>
+            <span className="hidden sm:inline text-xl font-display font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent group-hover:from-primary group-hover:to-brand transition-all duration-300">
+              Poligraph
+            </span>
           </Link>
 
           {/* Desktop navigation */}

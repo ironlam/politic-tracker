@@ -1,4 +1,3 @@
-import { execSync } from "child_process";
 import { inngest } from "../client";
 import { markJobRunning, markJobCompleted, markJobFailed, updateJobProgress } from "../job-helper";
 
@@ -14,26 +13,24 @@ export const syncLegislation = inngest.createFunction(
     if (jobId) await markJobRunning(jobId);
 
     try {
-      await step.run("legislation", async () => {
-        execSync("npx tsx scripts/sync-legislation.ts --active", {
-          stdio: "inherit",
-          env: { ...process.env },
-          timeout: 5 * 60 * 1000,
-        });
+      const legStats = await step.run("legislation", async () => {
+        const { syncLegislation: syncLegislationService } =
+          await import("@/services/sync/legislation");
+        const result = await syncLegislationService({ activeOnly: true });
         if (jobId) await updateJobProgress(jobId, 50);
+        return result;
       });
 
-      await step.run("legislation-content", async () => {
-        execSync("npx tsx scripts/sync-legislation-content.ts --limit=20", {
-          stdio: "inherit",
-          env: { ...process.env },
-          timeout: 5 * 60 * 1000,
-        });
+      const contentStats = await step.run("legislation-content", async () => {
+        const { syncLegislationContent } = await import("@/services/sync/legislation-content");
+        return syncLegislationContent({ limit: 20 });
       });
 
       if (jobId)
         await markJobCompleted(jobId, {
           steps: ["legislation", "legislation-content"],
+          legStats,
+          contentStats,
         });
     } catch (err) {
       if (jobId) {

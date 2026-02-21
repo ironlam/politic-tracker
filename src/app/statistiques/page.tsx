@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import { cacheTag, cacheLife } from "next/cache";
 import { db } from "@/lib/db";
 import { isFeatureEnabled } from "@/lib/feature-flags";
-import { Card, CardContent } from "@/components/ui/card";
+import { BetaDisclaimer } from "@/components/BetaDisclaimer";
 import { StatsContent } from "@/components/stats";
 import { CATEGORY_TO_SUPER, type AffairSuperCategory } from "@/config/labels";
 import { DEPARTMENTS } from "@/config/departments";
@@ -441,18 +441,13 @@ export default async function StatistiquesPage() {
       </Suspense>
 
       {/* Disclaimer */}
-      <Card className="mt-8 bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800">
-        <CardContent className="pt-6">
-          <h2 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">
-            Note méthodologique
-          </h2>
-          <p className="text-sm text-blue-800 dark:text-blue-200">
-            Ces statistiques reflètent uniquement les données documentées dans notre base. Une
-            affaire en cours ne préjuge pas de la culpabilité (présomption d&apos;innocence). Les
-            données sont issues de sources publiques et journalistiques vérifiables.
-          </p>
-        </CardContent>
-      </Card>
+      <div className="mt-8 space-y-4">
+        <BetaDisclaimer variant="stats" />
+        <p className="text-xs text-muted-foreground pl-4">
+          Une affaire en cours ne préjuge pas de la culpabilité (présomption d&apos;innocence). Les
+          données sont issues de sources publiques et journalistiques vérifiables.
+        </p>
+      </div>
     </div>
   );
 }

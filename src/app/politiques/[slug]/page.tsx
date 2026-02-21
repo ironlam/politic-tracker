@@ -28,6 +28,7 @@ import { PersonJsonLd, BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 import { SentenceDetails } from "@/components/affairs/SentenceDetails";
 import { AffairTimeline } from "@/components/affairs/AffairTimeline";
 import { VotePositionBadge } from "@/components/votes";
+import { BetaDisclaimer } from "@/components/BetaDisclaimer";
 import { getPoliticianVotingStats } from "@/services/voteStats";
 
 export const revalidate = 3600; // ISR: revalidate every hour
@@ -1033,6 +1034,8 @@ export default async function PoliticianPage({ params }: PageProps) {
                 </CardContent>
               </Card>
             )}
+
+            <BetaDisclaimer variant="profile" />
 
             {/* Data source */}
             <Card className="bg-muted">

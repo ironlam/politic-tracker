@@ -17,6 +17,7 @@ export async function GET(request: NextRequest) {
     // Politicians: ILIKE on fullName/lastName/firstName
     db.politician.findMany({
       where: {
+        publicationStatus: "PUBLISHED",
         OR: [
           { fullName: { contains: query, mode: "insensitive" } },
           { lastName: { contains: query, mode: "insensitive" } },

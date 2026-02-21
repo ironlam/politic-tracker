@@ -97,7 +97,7 @@ export function AffairForm({ politicians, initialData }: AffairFormProps) {
       description: "",
       status: "ENQUETE_PRELIMINAIRE" as AffairStatus,
       category: "AUTRE" as AffairCategory,
-      involvement: "DIRECT" as Involvement,
+      involvement: "MENTIONED_ONLY" as Involvement,
       appeal: false,
       sources: [{ ...emptySource }],
     }

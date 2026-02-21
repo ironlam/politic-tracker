@@ -15,6 +15,7 @@ import {
   SOURCE_TYPE_LABELS,
 } from "@/config/labels";
 import type { AffairStatus, AffairCategory, Involvement, SourceType } from "@/types";
+import type { PublicationStatus } from "@/generated/prisma";
 
 interface Politician {
   id: string;
@@ -32,6 +33,14 @@ interface Source {
   sourceType?: SourceType;
 }
 
+const PUBLICATION_STATUS_OPTIONS: { value: PublicationStatus; label: string }[] = [
+  { value: "DRAFT", label: "Brouillon" },
+  { value: "PUBLISHED", label: "Publié" },
+  { value: "REJECTED", label: "Rejeté" },
+  { value: "ARCHIVED", label: "Archivé" },
+  { value: "EXCLUDED", label: "Exclu" },
+];
+
 interface AffairFormData {
   id?: string;
   politicianId: string;
@@ -40,6 +49,7 @@ interface AffairFormData {
   status: AffairStatus;
   category: AffairCategory;
   involvement?: Involvement;
+  publicationStatus?: PublicationStatus;
   factsDate?: string;
   startDate?: string;
   verdictDate?: string;
@@ -165,6 +175,17 @@ export function AffairForm({ politicians, initialData }: AffairFormProps) {
 
       if (!response.ok) {
         const data = await response.json();
+        // Handle Zod flattened errors (object) vs simple string errors
+        if (data.error && typeof data.error === "object") {
+          const flat = data.error;
+          const messages: string[] = [...(flat.formErrors || [])];
+          if (flat.fieldErrors) {
+            for (const [field, errs] of Object.entries(flat.fieldErrors)) {
+              if (Array.isArray(errs)) messages.push(`${field}: ${errs.join(", ")}`);
+            }
+          }
+          throw new Error(messages.join(" | ") || "Erreur de validation");
+        }
         throw new Error(data.error || "Erreur lors de la sauvegarde");
       }
 
@@ -230,7 +251,7 @@ export function AffairForm({ politicians, initialData }: AffairFormProps) {
             />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
               <Label htmlFor="category">Catégorie *</Label>
               <Select
@@ -277,6 +298,25 @@ export function AffairForm({ politicians, initialData }: AffairFormProps) {
                 ))}
               </Select>
             </div>
+
+            {isEditing && (
+              <div>
+                <Label htmlFor="publicationStatus">Publication</Label>
+                <Select
+                  id="publicationStatus"
+                  value={formData.publicationStatus || "DRAFT"}
+                  onChange={(e) =>
+                    updateField("publicationStatus", e.target.value as PublicationStatus)
+                  }
+                >
+                  {PUBLICATION_STATUS_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

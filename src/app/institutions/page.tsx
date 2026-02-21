@@ -16,6 +16,8 @@ import {
   Briefcase,
 } from "lucide-react";
 
+export const revalidate = 300; // ISR: re-check feature flag every 5 minutes
+
 export const metadata: Metadata = {
   title: "Comprendre les Institutions",
   description: "Guide simple pour comprendre les institutions politiques françaises et européennes",

@@ -105,21 +105,25 @@ function Row({
   rightHighlight?: boolean;
 }) {
   return (
-    <tr className="border-b border-background last:border-0">
-      <td className="p-3 text-center font-medium bg-background/50 w-1/3">{label}</td>
-      <td
-        className={`p-3 text-center w-1/3 ${leftHighlight ? "bg-red-500/10 text-red-700 dark:text-red-400 font-medium" : ""}`}
-        style={leftColor ? { borderLeft: `4px solid ${leftColor}` } : undefined}
-      >
-        {left}
-      </td>
-      <td
-        className={`p-3 text-center w-1/3 ${rightHighlight ? "bg-red-500/10 text-red-700 dark:text-red-400 font-medium" : ""}`}
-        style={rightColor ? { borderLeft: `4px solid ${rightColor}` } : undefined}
-      >
-        {right}
-      </td>
-    </tr>
+    <div className="border-b border-background last:border-0">
+      <div className="grid grid-cols-2 md:grid-cols-3">
+        <div className="col-span-2 md:col-span-1 px-3 pt-2 pb-0.5 md:py-3 text-xs md:text-sm text-center font-medium bg-background/50">
+          {label}
+        </div>
+        <div
+          className={`px-3 py-1.5 md:py-3 text-center text-sm break-words ${leftHighlight ? "bg-red-500/10 text-red-700 dark:text-red-400 font-medium" : ""}`}
+          style={leftColor ? { borderLeft: `4px solid ${leftColor}` } : undefined}
+        >
+          {left}
+        </div>
+        <div
+          className={`px-3 py-1.5 md:py-3 text-center text-sm break-words ${rightHighlight ? "bg-red-500/10 text-red-700 dark:text-red-400 font-medium" : ""}`}
+          style={rightColor ? { borderLeft: `4px solid ${rightColor}` } : undefined}
+        >
+          {right}
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -303,30 +307,26 @@ export function PartyComparisonTable({ left, right, voteComparison }: PartyCompa
       <section>
         <h2 className="text-xl font-semibold mb-4">Informations générales</h2>
         <div className="bg-muted rounded-lg overflow-hidden">
-          <table className="w-full">
-            <tbody>
-              <Row
-                label="Fondé en"
-                left={formatFoundedDate(lp.foundedDate)}
-                right={formatFoundedDate(rp.foundedDate)}
-              />
-              <Row
-                label="Position politique"
-                left={lp.politicalPosition ? POLITICAL_POSITION_LABELS[lp.politicalPosition] : "-"}
-                right={rp.politicalPosition ? POLITICAL_POSITION_LABELS[rp.politicalPosition] : "-"}
-                leftColor={lp.color}
-                rightColor={rp.color}
-              />
-              {(lp.ideology || rp.ideology) && (
-                <Row label="Idéologie" left={lp.ideology || "-"} right={rp.ideology || "-"} />
-              )}
-              <Row
-                label="Membres en base"
-                left={lp.memberCount.toString()}
-                right={rp.memberCount.toString()}
-              />
-            </tbody>
-          </table>
+          <Row
+            label="Fondé en"
+            left={formatFoundedDate(lp.foundedDate)}
+            right={formatFoundedDate(rp.foundedDate)}
+          />
+          <Row
+            label="Position politique"
+            left={lp.politicalPosition ? POLITICAL_POSITION_LABELS[lp.politicalPosition] : "-"}
+            right={rp.politicalPosition ? POLITICAL_POSITION_LABELS[rp.politicalPosition] : "-"}
+            leftColor={lp.color}
+            rightColor={rp.color}
+          />
+          {(lp.ideology || rp.ideology) && (
+            <Row label="Idéologie" left={lp.ideology || "-"} right={rp.ideology || "-"} />
+          )}
+          <Row
+            label="Membres en base"
+            left={lp.memberCount.toString()}
+            right={rp.memberCount.toString()}
+          />
         </div>
       </section>
 
@@ -335,23 +335,19 @@ export function PartyComparisonTable({ left, right, voteComparison }: PartyCompa
         <section>
           <h2 className="text-xl font-semibold mb-4">Représentants en exercice</h2>
           <div className="bg-muted rounded-lg overflow-hidden">
-            <table className="w-full">
-              <tbody>
-                {mandateTypes.map((type) => (
-                  <Row
-                    key={type}
-                    label={MANDATE_TYPE_LABELS_PLURAL[type]}
-                    left={(leftMandateMap.get(type) || 0).toString()}
-                    right={(rightMandateMap.get(type) || 0).toString()}
-                  />
-                ))}
-                <Row
-                  label="Total mandats actifs"
-                  left={leftTotalMandates.toString()}
-                  right={rightTotalMandates.toString()}
-                />
-              </tbody>
-            </table>
+            {mandateTypes.map((type) => (
+              <Row
+                key={type}
+                label={MANDATE_TYPE_LABELS_PLURAL[type]}
+                left={(leftMandateMap.get(type) || 0).toString()}
+                right={(rightMandateMap.get(type) || 0).toString()}
+              />
+            ))}
+            <Row
+              label="Total mandats actifs"
+              left={leftTotalMandates.toString()}
+              right={rightTotalMandates.toString()}
+            />
           </div>
         </section>
       )}
@@ -413,7 +409,7 @@ export function PartyComparisonTable({ left, right, voteComparison }: PartyCompa
                 title={`En désaccord: ${voteStats.disagree}`}
               />
             </div>
-            <div className="flex justify-between mt-2 text-xs text-muted-foreground">
+            <div className="flex flex-wrap justify-between gap-1 mt-2 text-xs text-muted-foreground">
               <span className="flex items-center gap-1">
                 <span className="w-3 h-3 rounded-full bg-green-500" /> D&apos;accord
               </span>
@@ -505,25 +501,21 @@ export function PartyComparisonTable({ left, right, voteComparison }: PartyCompa
         <section>
           <h2 className="text-xl font-semibold mb-4">Affaires judiciaires</h2>
           <div className="bg-muted rounded-lg overflow-hidden">
-            <table className="w-full">
-              <tbody>
-                <Row
-                  label="Nombre d'affaires"
-                  left={left.affairs.length.toString()}
-                  right={right.affairs.length.toString()}
-                  leftHighlight={left.affairs.length > 0}
-                  rightHighlight={right.affairs.length > 0}
-                />
-                {allStatuses.map((status) => (
-                  <Row
-                    key={status}
-                    label={AFFAIR_STATUS_LABELS[status]}
-                    left={(leftAffairsByStatus[status] || 0).toString()}
-                    right={(rightAffairsByStatus[status] || 0).toString()}
-                  />
-                ))}
-              </tbody>
-            </table>
+            <Row
+              label="Nombre d'affaires"
+              left={left.affairs.length.toString()}
+              right={right.affairs.length.toString()}
+              leftHighlight={left.affairs.length > 0}
+              rightHighlight={right.affairs.length > 0}
+            />
+            {allStatuses.map((status) => (
+              <Row
+                key={status}
+                label={AFFAIR_STATUS_LABELS[status]}
+                left={(leftAffairsByStatus[status] || 0).toString()}
+                right={(rightAffairsByStatus[status] || 0).toString()}
+              />
+            ))}
           </div>
         </section>
       )}
@@ -533,15 +525,11 @@ export function PartyComparisonTable({ left, right, voteComparison }: PartyCompa
         <section>
           <h2 className="text-xl font-semibold mb-4">Fact-checks</h2>
           <div className="bg-muted rounded-lg overflow-hidden">
-            <table className="w-full">
-              <tbody>
-                <Row
-                  label="Total fact-checks"
-                  left={left.factCheckMentions.length.toString()}
-                  right={right.factCheckMentions.length.toString()}
-                />
-              </tbody>
-            </table>
+            <Row
+              label="Total fact-checks"
+              left={left.factCheckMentions.length.toString()}
+              right={right.factCheckMentions.length.toString()}
+            />
           </div>
           <div className="grid md:grid-cols-2 gap-4 mt-4">
             <div>

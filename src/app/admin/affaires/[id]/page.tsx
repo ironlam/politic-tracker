@@ -11,6 +11,8 @@ import {
   AFFAIR_STATUS_NEEDS_PRESUMPTION,
 } from "@/config/labels";
 import { formatDate } from "@/lib/utils";
+import { PublicationStatusSelect } from "@/components/admin/PublicationStatusSelect";
+import { PublicationStatus } from "@/generated/prisma";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -24,6 +26,36 @@ async function getAffair(id: string) {
       sources: { orderBy: { publishedAt: "desc" } },
     },
   });
+}
+
+async function updatePublicationStatus(id: string, status: PublicationStatus) {
+  "use server";
+  const { isAuthenticated } = await import("@/lib/auth");
+  const { db } = await import("@/lib/db");
+  const { invalidateEntity } = await import("@/lib/cache");
+  const { revalidatePath } = await import("next/cache");
+
+  const authenticated = await isAuthenticated();
+  if (!authenticated) {
+    throw new Error("Non autorisé");
+  }
+
+  await db.affair.update({
+    where: { id },
+    data: { publicationStatus: status },
+  });
+
+  await db.auditLog.create({
+    data: {
+      action: "UPDATE",
+      entityType: "Affair",
+      entityId: id,
+      changes: { publicationStatus: status },
+    },
+  });
+
+  invalidateEntity("affair");
+  revalidatePath(`/admin/affaires/${id}`);
 }
 
 export default async function AdminAffairDetailPage({ params }: PageProps) {
@@ -46,7 +78,13 @@ export default async function AdminAffairDetailPage({ params }: PageProps) {
           </Link>
           <h1 className="text-2xl font-bold mt-2">{affair.title}</h1>
         </div>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
+          <PublicationStatusSelect
+            entityId={affair.id}
+            entityType="affair"
+            currentStatus={affair.publicationStatus}
+            onChange={updatePublicationStatus}
+          />
           <Button asChild>
             <Link href={`/admin/affaires/${affair.id}/edit`}>Modifier</Link>
           </Button>
@@ -84,6 +122,36 @@ export default async function AdminAffairDetailPage({ params }: PageProps) {
               <p className="font-mono text-sm">{affair.slug}</p>
             </div>
           </div>
+
+          {/* Judicial identifiers */}
+          {(affair.ecli || affair.pourvoiNumber || affair.caseNumber) && (
+            <div className="grid grid-cols-2 gap-4 pt-2 border-t">
+              {affair.ecli && (
+                <div>
+                  <p className="text-sm text-muted-foreground">ECLI</p>
+                  <p className="font-mono text-sm">{affair.ecli}</p>
+                </div>
+              )}
+              {affair.pourvoiNumber && (
+                <div>
+                  <p className="text-sm text-muted-foreground">N° de pourvoi</p>
+                  <p className="font-mono text-sm">{affair.pourvoiNumber}</p>
+                </div>
+              )}
+              {affair.caseNumber && (
+                <div>
+                  <p className="text-sm text-muted-foreground">N° de dossier</p>
+                  <p className="font-mono text-sm">{affair.caseNumber}</p>
+                </div>
+              )}
+              {affair.court && (
+                <div>
+                  <p className="text-sm text-muted-foreground">Juridiction</p>
+                  <p className="text-sm">{affair.court}</p>
+                </div>
+              )}
+            </div>
+          )}
 
           {AFFAIR_STATUS_NEEDS_PRESUMPTION[affair.status] && (
             <div className="bg-amber-50 text-amber-800 p-3 rounded-md text-sm">

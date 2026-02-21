@@ -109,7 +109,7 @@ export type UpdateAffairInput = z.infer<typeof updateAffairSchema>;
 export const bulkAffairActionSchema = z
   .object({
     ids: z.array(z.string().min(1)).min(1),
-    action: z.enum(["publish", "reject"]),
+    action: z.enum(["publish", "reject", "delete"]),
     rejectionReason: z.string().optional(),
   })
   .refine(

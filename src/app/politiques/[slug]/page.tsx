@@ -345,11 +345,11 @@ export default async function PoliticianPage({ params }: PageProps) {
           {/* Main content */}
           <div className="lg:col-span-2 space-y-8">
             {/* Interactive Timeline - Desktop only */}
-            {(hasMandates || politician.affairs.length > 0) && (
+            {(hasMandates || directAffairs.length > 0) && (
               <div className="hidden lg:block">
                 <InteractiveTimeline
                   mandates={politician.mandates}
-                  affairs={politician.affairs}
+                  affairs={directAffairs}
                   birthDate={politician.birthDate}
                   deathDate={politician.deathDate}
                 />
@@ -977,8 +977,14 @@ export default async function PoliticianPage({ params }: PageProps) {
                 )}
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Affaires</span>
-                  <span className="font-semibold">{politician.affairs.length}</span>
+                  <span className="font-semibold">{directAffairs.length}</span>
                 </div>
+                {victimAffairs.length > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Victime / Plaignant</span>
+                    <span className="font-semibold text-blue-600">{victimAffairs.length}</span>
+                  </div>
+                )}
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Déclarations HATVP</span>
                   <span className="font-semibold">{politician.declarations.length}</span>

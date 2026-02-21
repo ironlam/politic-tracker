@@ -97,6 +97,7 @@ async function queryPoliticians(
         some: {
           status: { in: CONVICTION_STATUSES },
           publicationStatus: "PUBLISHED",
+          involvement: { notIn: ["VICTIM", "PLAINTIFF"] },
         },
       },
     });
@@ -151,10 +152,21 @@ async function queryPoliticians(
       include: {
         currentParty: true,
         _count: {
-          select: { affairs: { where: { publicationStatus: "PUBLISHED" } } },
+          select: {
+            affairs: {
+              where: {
+                publicationStatus: "PUBLISHED",
+                involvement: { notIn: ["VICTIM", "PLAINTIFF"] },
+              },
+            },
+          },
         },
         affairs: {
-          where: { status: { in: CONVICTION_STATUSES }, publicationStatus: "PUBLISHED" },
+          where: {
+            status: { in: CONVICTION_STATUSES },
+            publicationStatus: "PUBLISHED",
+            involvement: { notIn: ["VICTIM", "PLAINTIFF"] },
+          },
           select: { id: true },
           take: 1,
         },
@@ -326,17 +338,25 @@ async function getFilterCounts() {
     active,
     former,
   ] = await Promise.all([
-    // Conviction counts
+    // Conviction counts (exclude victims/plaintiffs)
     db.politician.count({
       where: {
         publicationStatus: "PUBLISHED",
         affairs: {
-          some: { status: { in: CONVICTION_STATUSES }, publicationStatus: "PUBLISHED" },
+          some: {
+            status: { in: CONVICTION_STATUSES },
+            publicationStatus: "PUBLISHED",
+            involvement: { notIn: ["VICTIM", "PLAINTIFF"] },
+          },
         },
       },
     }),
     db.affair.count({
-      where: { publicationStatus: "PUBLISHED", status: { in: CONVICTION_STATUSES } },
+      where: {
+        publicationStatus: "PUBLISHED",
+        status: { in: CONVICTION_STATUSES },
+        involvement: { notIn: ["VICTIM", "PLAINTIFF"] },
+      },
     }),
     // Mandate counts (current mandates only)
     db.politician.count({

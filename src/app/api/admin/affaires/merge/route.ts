@@ -1,0 +1,128 @@
+import { NextRequest, NextResponse } from "next/server";
+import { db } from "@/lib/db";
+import { isAuthenticated } from "@/lib/auth";
+import { invalidateEntity } from "@/lib/cache";
+import { z } from "zod";
+
+const mergeSchema = z.object({
+  primaryId: z.string().min(1),
+  secondaryId: z.string().min(1),
+});
+
+export async function POST(request: NextRequest) {
+  const authenticated = await isAuthenticated();
+  if (!authenticated) {
+    return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+  }
+
+  try {
+    const body = await request.json();
+    const parsed = mergeSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+    }
+
+    const { primaryId, secondaryId } = parsed.data;
+
+    if (primaryId === secondaryId) {
+      return NextResponse.json({ error: "Les deux affaires sont identiques" }, { status: 400 });
+    }
+
+    const [primary, secondary] = await Promise.all([
+      db.affair.findUnique({
+        where: { id: primaryId },
+        include: {
+          sources: { select: { url: true } },
+          politician: { select: { slug: true } },
+        },
+      }),
+      db.affair.findUnique({
+        where: { id: secondaryId },
+        include: {
+          sources: true,
+          events: true,
+        },
+      }),
+    ]);
+
+    if (!primary || !secondary) {
+      return NextResponse.json({ error: "Affaire(s) non trouvée(s)" }, { status: 404 });
+    }
+
+    const existingUrls = new Set(primary.sources.map((s) => s.url));
+
+    // Move non-duplicate sources from secondary to primary
+    const sourcesToMove = secondary.sources.filter((s) => !existingUrls.has(s.url));
+    if (sourcesToMove.length > 0) {
+      await db.source.updateMany({
+        where: { id: { in: sourcesToMove.map((s) => s.id) } },
+        data: { affairId: primaryId },
+      });
+    }
+
+    // Move affair events from secondary to primary
+    if (secondary.events.length > 0) {
+      await db.affairEvent.updateMany({
+        where: { affairId: secondaryId },
+        data: { affairId: primaryId },
+      });
+    }
+
+    // Move press article links from secondary to primary
+    await db.pressArticleAffair.updateMany({
+      where: { affairId: secondaryId },
+      data: { affairId: primaryId },
+    });
+
+    // Merge judicial identifiers if primary is missing them
+    const updates: Record<string, unknown> = {};
+    if (!primary.ecli && secondary.ecli) updates.ecli = secondary.ecli;
+    if (!primary.pourvoiNumber && secondary.pourvoiNumber)
+      updates.pourvoiNumber = secondary.pourvoiNumber;
+    if (primary.caseNumbers.length === 0 && secondary.caseNumbers.length > 0)
+      updates.caseNumbers = secondary.caseNumbers;
+    if (!primary.court && secondary.court) updates.court = secondary.court;
+    if (!primary.chamber && secondary.chamber) updates.chamber = secondary.chamber;
+    if (!primary.caseNumber && secondary.caseNumber) updates.caseNumber = secondary.caseNumber;
+
+    if (Object.keys(updates).length > 0) {
+      await db.affair.update({
+        where: { id: primaryId },
+        data: updates,
+      });
+    }
+
+    // Delete secondary affair (remaining sources will cascade)
+    await db.affair.delete({ where: { id: secondaryId } });
+
+    // Audit log
+    await db.auditLog.create({
+      data: {
+        action: "UPDATE",
+        entityType: "Affair",
+        entityId: primaryId,
+        changes: {
+          merged: true,
+          deletedAffairId: secondaryId,
+          deletedAffairTitle: secondary.title,
+          sourcesMoved: sourcesToMove.length,
+          eventsMoved: secondary.events.length,
+          identifiersMerged: Object.keys(updates),
+        },
+      },
+    });
+
+    invalidateEntity("affair");
+    if (primary.politician?.slug) invalidateEntity("politician", primary.politician.slug);
+
+    return NextResponse.json({
+      success: true,
+      sourcesMoved: sourcesToMove.length,
+      eventsMoved: secondary.events.length,
+      identifiersMerged: Object.keys(updates),
+    });
+  } catch (error) {
+    console.error("Merge error:", error);
+    return NextResponse.json({ error: "Erreur lors de la fusion" }, { status: 500 });
+  }
+}

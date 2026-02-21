@@ -14,6 +14,7 @@ import {
 } from "@/components/compare";
 import type { PartyComparisonData } from "@/components/compare/PartyComparisonTable";
 import { MANDATE_TYPE_LABELS } from "@/config/labels";
+import { BetaDisclaimer } from "@/components/BetaDisclaimer";
 import type { MandateType, AffairStatus, FactCheckRating } from "@/types";
 
 export const metadata: Metadata = {
@@ -428,6 +429,10 @@ export default async function ComparerPage({ searchParams }: PageProps) {
             <p className="text-lg">Sélectionnez un deuxième parti pour lancer la comparaison</p>
           </div>
         )}
+
+        <div className="mt-8">
+          <BetaDisclaimer variant="compare" />
+        </div>
       </div>
     );
   }
@@ -575,6 +580,10 @@ export default async function ComparerPage({ searchParams }: PageProps) {
           <p className="text-lg">Sélectionnez un deuxième politique pour lancer la comparaison</p>
         </div>
       )}
+
+      <div className="mt-8">
+        <BetaDisclaimer variant="compare" />
+      </div>
     </div>
   );
 }

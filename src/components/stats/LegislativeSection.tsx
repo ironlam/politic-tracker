@@ -14,23 +14,41 @@ interface LegislativeSectionProps {
 export function LegislativeSection({ allData }: LegislativeSectionProps) {
   const { global, parties, divisiveScrutins } = allData;
 
-  const sortedByParticipation = [...parties]
-    .filter((p) => p.totalVotes >= 100)
-    .sort((a, b) => b.participationRate - a.participationRate);
-
-  const sortedByCohesion = [...parties]
-    .filter((p) => p.totalVotes >= 100)
-    .sort((a, b) => b.cohesionRate - a.cohesionRate);
+  const filteredParties = parties.filter((p) => p.totalVotes >= 100);
+  const sortedByParticipation = [...filteredParties].sort(
+    (a, b) => b.participationRate - a.participationRate
+  );
+  const sortedByCohesion = [...filteredParties].sort((a, b) => b.cohesionRate - a.cohesionRate);
+  const avgParticipation =
+    filteredParties.length > 0
+      ? filteredParties.reduce((sum, p) => sum + p.participationRate, 0) / filteredParties.length
+      : 0;
 
   return (
-    <section aria-labelledby="legislative-heading" className="py-12">
-      <h2 id="legislative-heading" className="text-2xl font-bold mb-2">
-        Travail législatif
-      </h2>
-      <p className="text-muted-foreground mb-8">
-        Participation et cohésion de vote par groupe parlementaire —{" "}
-        {global.totalScrutins.toLocaleString("fr-FR")} scrutins analysés
-      </p>
+    <section aria-labelledby="legislative-heading" className="py-8">
+      {/* Contextual KPIs */}
+      <div className="grid grid-cols-3 gap-4 mb-8">
+        <Card>
+          <CardContent className="pt-6 text-center">
+            <div className="text-3xl font-bold tabular-nums">
+              {global.totalScrutins.toLocaleString("fr-FR")}
+            </div>
+            <div className="text-sm text-muted-foreground mt-1">Scrutins analysés</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6 text-center">
+            <div className="text-3xl font-bold tabular-nums">{filteredParties.length}</div>
+            <div className="text-sm text-muted-foreground mt-1">Groupes représentés</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6 text-center">
+            <div className="text-3xl font-bold tabular-nums">{avgParticipation.toFixed(0)}%</div>
+            <div className="text-sm text-muted-foreground mt-1">Participation moyenne</div>
+          </CardContent>
+        </Card>
+      </div>
 
       <div className="grid md:grid-cols-2 gap-8">
         {/* Participation */}

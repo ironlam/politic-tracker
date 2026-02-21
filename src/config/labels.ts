@@ -200,6 +200,24 @@ export const CATEGORY_TO_SUPER: Record<AffairCategory, AffairSuperCategory> = {
   AUTRE: "AUTRE",
 };
 
+// Categories considered "grave" — selected for the stats page highlights
+export const GRAVE_CATEGORIES: AffairCategory[] = [
+  // Atteintes aux personnes
+  "VIOLENCE",
+  "AGRESSION_SEXUELLE",
+  "HARCELEMENT_SEXUEL",
+  "HARCELEMENT_MORAL",
+  "MENACE",
+  // Expression
+  "INCITATION_HAINE",
+  // Probité
+  "CORRUPTION",
+  // Finances
+  "FRAUDE_FISCALE",
+  "FINANCEMENT_ILLEGAL_CAMPAGNE",
+  "FINANCEMENT_ILLEGAL_PARTI",
+];
+
 // Get categories for a super-category
 export function getCategoriesForSuper(superCat: AffairSuperCategory): AffairCategory[] {
   return Object.entries(CATEGORY_TO_SUPER)

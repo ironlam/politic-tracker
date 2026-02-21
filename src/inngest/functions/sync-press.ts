@@ -1,6 +1,7 @@
-import { execSync } from "child_process";
 import { inngest } from "../client";
 import { markJobRunning, markJobCompleted, markJobFailed, updateJobProgress } from "../job-helper";
+import { syncPress as syncPressService } from "@/services/sync/press";
+import { syncPressAnalysis } from "@/services/sync/press-analysis";
 
 export const syncPress = inngest.createFunction(
   {
@@ -15,28 +16,23 @@ export const syncPress = inngest.createFunction(
 
     try {
       // Step 1: Parse RSS feeds
-      await step.run("parse-rss", async () => {
-        execSync("npx tsx scripts/sync-press.ts", {
-          stdio: "inherit",
-          env: { ...process.env },
-          timeout: 5 * 60 * 1000,
-        });
+      const rssStats = await step.run("parse-rss", async () => {
+        const stats = await syncPressService();
         if (jobId) await updateJobProgress(jobId, 50);
+        return stats;
       });
 
       // Step 2: AI analysis
-      await step.run("ai-analysis", async () => {
+      const analysisStats = await step.run("ai-analysis", async () => {
         const limit = (event.data.limit as number) || 100;
-        execSync(`npx tsx scripts/sync-press-analysis.ts --limit=${limit}`, {
-          stdio: "inherit",
-          env: { ...process.env },
-          timeout: 10 * 60 * 1000,
-        });
+        return syncPressAnalysis({ limit });
       });
 
       if (jobId)
         await markJobCompleted(jobId, {
           steps: ["parse-rss", "ai-analysis"],
+          rssStats,
+          analysisStats,
         });
     } catch (err) {
       if (jobId) {

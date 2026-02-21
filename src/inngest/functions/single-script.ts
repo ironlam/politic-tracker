@@ -1,12 +1,14 @@
-import { execSync } from "child_process";
 import { inngest } from "../client";
 import { markJobRunning, markJobCompleted, markJobFailed } from "../job-helper";
 
 /**
- * Factory to create an Inngest function wrapping a single sync script.
- * Used for every script in the admin SCRIPT_CATALOG.
+ * Factory to create an Inngest function wrapping a sync service.
+ * The handler receives event.data and returns any result.
  */
-export function createSyncFunction(scriptId: string, timeoutMinutes = 10) {
+export function createSyncFunction(
+  scriptId: string,
+  handler: (data: Record<string, unknown>) => Promise<unknown>
+) {
   return inngest.createFunction(
     {
       id: `script/${scriptId}`,
@@ -19,21 +21,37 @@ export function createSyncFunction(scriptId: string, timeoutMinutes = 10) {
       if (jobId) await markJobRunning(jobId);
 
       try {
-        await step.run(scriptId, async () => {
-          const flags = (event.data.flags as string) || "";
-          execSync(`npx tsx scripts/${scriptId}.ts ${flags}`.trim(), {
-            stdio: "inherit",
-            env: { ...process.env },
-            timeout: timeoutMinutes * 60 * 1000,
-          });
-        });
-
+        const result = await step.run(scriptId, () => handler(event.data));
         if (jobId) await markJobCompleted(jobId);
+        return result;
       } catch (err) {
         if (jobId) {
           await markJobFailed(jobId, err instanceof Error ? err.message : String(err));
         }
         throw err;
+      }
+    }
+  );
+}
+
+/**
+ * Factory for scripts not yet migrated to direct imports.
+ * Immediately marks the job as FAILED with a helpful message.
+ */
+export function createStubFunction(scriptId: string) {
+  return inngest.createFunction(
+    {
+      id: `script/${scriptId}`,
+      retries: 0,
+    },
+    { event: `sync/${scriptId}` },
+    async ({ event }) => {
+      const jobId = event.data.jobId as string | undefined;
+      if (jobId) {
+        await markJobFailed(
+          jobId,
+          `"${scriptId}" pas encore disponible via Inngest. Utiliser la CLI locale.`
+        );
       }
     }
   );

@@ -1,6 +1,7 @@
-import { execSync } from "child_process";
 import { inngest } from "../client";
 import { markJobRunning, markJobCompleted, markJobFailed, updateJobProgress } from "../job-helper";
+import { syncVotesAN } from "@/services/sync/votes-an";
+import { syncVotesSenat } from "@/services/sync/votes-senat";
 
 export const syncVotes = inngest.createFunction(
   {
@@ -14,26 +15,21 @@ export const syncVotes = inngest.createFunction(
     if (jobId) await markJobRunning(jobId);
 
     try {
-      await step.run("votes-an", async () => {
-        execSync("npx tsx scripts/sync-votes-an.ts --today", {
-          stdio: "inherit",
-          env: { ...process.env },
-          timeout: 5 * 60 * 1000,
-        });
+      const anStats = await step.run("votes-an", async () => {
+        const stats = await syncVotesAN(undefined, false, true);
         if (jobId) await updateJobProgress(jobId, 50);
+        return stats;
       });
 
-      await step.run("votes-senat", async () => {
-        execSync("npx tsx scripts/sync-votes-senat.ts --today", {
-          stdio: "inherit",
-          env: { ...process.env },
-          timeout: 5 * 60 * 1000,
-        });
+      const senatStats = await step.run("votes-senat", async () => {
+        return syncVotesSenat(null, false, true);
       });
 
       if (jobId)
         await markJobCompleted(jobId, {
           steps: ["votes-an", "votes-senat"],
+          anStats,
+          senatStats,
         });
     } catch (err) {
       if (jobId) {

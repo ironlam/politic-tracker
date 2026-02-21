@@ -899,3 +899,25 @@ export function isDirectPoliticianClaim(claimant: string | null): boolean {
   const lower = claimant.toLowerCase();
   return !GENERIC_CLAIMANT_PATTERNS.some((pattern) => lower.includes(pattern));
 }
+
+// Verdict groups for stats aggregation (strict false = only FALSE + MOSTLY_FALSE)
+export const VERDICT_GROUPS = {
+  vrai: ["TRUE", "MOSTLY_TRUE"] as FactCheckRating[],
+  trompeur: ["HALF_TRUE", "MISLEADING", "OUT_OF_CONTEXT"] as FactCheckRating[],
+  faux: ["FALSE", "MOSTLY_FALSE"] as FactCheckRating[],
+  inverifiable: ["UNVERIFIABLE"] as FactCheckRating[],
+} as const;
+
+export const VERDICT_GROUP_LABELS: Record<string, string> = {
+  vrai: "Vrai / Plutôt vrai",
+  trompeur: "Trompeur / Hors contexte",
+  faux: "Faux / Plutôt faux",
+  inverifiable: "Invérifiable",
+};
+
+export const VERDICT_GROUP_COLORS: Record<string, string> = {
+  vrai: "#2d6a4f",
+  trompeur: "#e9a825",
+  faux: "#c1121f",
+  inverifiable: "#6b7280",
+};

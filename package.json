@@ -145,6 +145,7 @@
     "d3-scale": "^4.0.2",
     "dotenv": "^17.2.3",
     "fast-xml-parser": "^5.3.6",
+    "inngest": "^3.52.3",
     "lucide-react": "^0.563.0",
     "mammoth": "^1.11.0",
     "motion": "^12.34.0",

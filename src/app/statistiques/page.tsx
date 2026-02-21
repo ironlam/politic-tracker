@@ -11,7 +11,7 @@ import {
   VERDICT_GROUPS,
   type AffairSuperCategory,
 } from "@/config/labels";
-import type { AffairStatus, AffairCategory, FactCheckRating } from "@/types";
+import type { AffairStatus, AffairCategory } from "@/types";
 import type { Chamber } from "@/generated/prisma";
 import { StatsTabs } from "@/components/stats/StatsTabs";
 import { LegislativeSection } from "@/components/stats/LegislativeSection";
@@ -382,10 +382,6 @@ async function getFactCheckData() {
   return {
     total,
     groups,
-    byRating: byRating.map((r) => ({
-      rating: r.verdictRating as FactCheckRating,
-      count: r._count,
-    })),
     bySource: bySource.map((s) => ({ source: s.source, count: s._count })),
     mostReliablePoliticians,
     leastReliablePoliticians,
@@ -443,7 +439,6 @@ export default async function StatistiquesPage() {
           <FactCheckSection
             total={factCheckData.total}
             groups={factCheckData.groups}
-            byRating={factCheckData.byRating}
             bySource={factCheckData.bySource}
             mostReliablePoliticians={factCheckData.mostReliablePoliticians}
             leastReliablePoliticians={factCheckData.leastReliablePoliticians}

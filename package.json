@@ -125,6 +125,7 @@
     "seed:parliamentary-groups": "tsx scripts/seed-parliamentary-groups.ts",
     "migrate:groups-to-parties": "tsx scripts/migrate-groups-to-parties.ts",
     "migrate:groups-to-parties:execute": "tsx scripts/migrate-groups-to-parties.ts --execute",
+    "trigger": "tsx scripts/trigger.ts",
     "prepare": "husky"
   },
   "dependencies": {

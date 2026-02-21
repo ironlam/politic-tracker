@@ -1,4 +1,3 @@
-import { execSync } from "child_process";
 import { inngest } from "../client";
 import { markJobRunning, markJobCompleted, markJobFailed } from "../job-helper";
 
@@ -14,17 +13,38 @@ export const indexEmbeddings = inngest.createFunction(
     if (jobId) await markJobRunning(jobId);
 
     try {
-      await step.run("embeddings", async () => {
-        execSync("npx tsx scripts/index-embeddings.ts", {
-          stdio: "inherit",
-          env: { ...process.env },
-          timeout: 10 * 60 * 1000,
-        });
+      const result = await step.run("embeddings", async () => {
+        const { indexAllOfType, indexGlobalStats } = await import("@/services/embeddings");
+        const types = [
+          "POLITICIAN",
+          "PARTY",
+          "AFFAIR",
+          "DOSSIER",
+          "SCRUTIN",
+          "FACTCHECK",
+          "PRESS_ARTICLE",
+        ] as const;
+
+        let totalIndexed = 0;
+        let totalErrors = 0;
+
+        for (const type of types) {
+          const { indexed, errors } = await indexAllOfType(type, {
+            deltaOnly: true,
+          });
+          totalIndexed += indexed;
+          totalErrors += errors;
+        }
+
+        await indexGlobalStats();
+
+        return { totalIndexed, totalErrors };
       });
 
       if (jobId)
         await markJobCompleted(jobId, {
           steps: ["embeddings"],
+          ...result,
         });
     } catch (err) {
       if (jobId) {

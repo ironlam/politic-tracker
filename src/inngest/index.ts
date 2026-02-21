@@ -1,4 +1,4 @@
-import { createSyncFunction, createStubFunction } from "./functions/single-script";
+import { createSyncFunction } from "./functions/single-script";
 import { discoverAffairs } from "./functions/discover-affairs";
 import { generateAi } from "./functions/generate-ai";
 import { indexEmbeddings } from "./functions/index-embeddings";
@@ -77,27 +77,76 @@ const migratedFunctions = [
   }),
 ];
 
-// Phase 2: Not yet migrated — stubs that fail with a helpful message
-// NOTE: Only scripts with NO grouped-function coverage go here.
-// Scripts handled by grouped functions (sync-legislation, index-embeddings,
-// generate-biographies/summaries/scrutin-summaries) are excluded — their
-// grouped function already handles the execSync call.
-const stubFunctions = [
-  // Politicians
-  "sync-assemblee",
-  "sync-senat",
-  "sync-gouvernement",
-  "sync-president",
-  "sync-europarl",
-  // Metadata
-  "sync-wikidata-ids",
-  "sync-photos",
-  "sync-birthdates",
-  "sync-careers",
-  "sync-parties",
-  "sync-mep-parties",
-  "sync-hatvp",
-  "sync-deceased",
-].map((id) => createStubFunction(id));
+// Phase 2a: Migrated — services already exist, just wire them up
+const phase2Migrated = [
+  createSyncFunction("sync-assemblee", async () => {
+    const { syncDeputies } = await import("@/services/sync/deputies");
+    return syncDeputies();
+  }),
+  createSyncFunction("sync-senat", async () => {
+    const { syncSenators } = await import("@/services/sync/senators");
+    return syncSenators();
+  }),
+  createSyncFunction("sync-gouvernement", async () => {
+    const { syncGovernment } = await import("@/services/sync/government");
+    return syncGovernment();
+  }),
+  createSyncFunction("sync-europarl", async () => {
+    const { syncEuroparl } = await import("@/services/sync/europarl");
+    return syncEuroparl();
+  }),
+  createSyncFunction("sync-photos", async () => {
+    const { syncPhotos } = await import("@/services/sync/photos");
+    return syncPhotos();
+  }),
+  createSyncFunction("sync-hatvp", async () => {
+    const { syncHATVP } = await import("@/services/sync/hatvp");
+    return syncHATVP();
+  }),
+  createSyncFunction("sync-deceased", async () => {
+    const { syncDeceasedFromWikidata } = await import("@/services/sync/deceased");
+    return syncDeceasedFromWikidata();
+  }),
+];
 
-export const functions = [...groupedFunctions, ...migratedFunctions, ...stubFunctions];
+// Phase 2b: Migrated — services extracted from CLI scripts
+const phase2Extracted = [
+  createSyncFunction("sync-president", async () => {
+    const { syncPresident } = await import("@/services/sync/president");
+    return syncPresident();
+  }),
+  createSyncFunction("sync-wikidata-ids", async (data) => {
+    const { syncWikidataIds } = await import("@/services/sync/wikidata-ids");
+    const limit = (data.limit as number) || undefined;
+    return syncWikidataIds({ limit });
+  }),
+  createSyncFunction("sync-birthdates", async (data) => {
+    const { syncBirthdates } = await import("@/services/sync/birthdates");
+    const limit = (data.limit as number) || undefined;
+    return syncBirthdates({ limit });
+  }),
+  createSyncFunction("sync-careers", async (data) => {
+    const { syncCareers } = await import("@/services/sync/careers");
+    const limit = (data.limit as number) || undefined;
+    const foundersOnly = Boolean(data.flags && (data.flags as string).includes("--founders-only"));
+    return syncCareers({ limit, foundersOnly });
+  }),
+  createSyncFunction("sync-parties", async (data) => {
+    const { syncParties } = await import("@/services/sync/parties");
+    const configOnly = Boolean(data.flags && (data.flags as string).includes("--config"));
+    return syncParties({ configOnly });
+  }),
+  createSyncFunction("sync-mep-parties", async (data) => {
+    const { syncMepParties } = await import("@/services/sync/mep-parties");
+    const limit = (data.limit as number) || undefined;
+    const force = Boolean(data.flags && (data.flags as string).includes("--force"));
+    return syncMepParties({ limit, force });
+  }),
+];
+
+export const functions = [
+  ...groupedFunctions,
+  ...migratedFunctions,
+  ...phase2Migrated,
+  ...phase2Extracted,
+];

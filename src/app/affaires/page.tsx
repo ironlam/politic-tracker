@@ -29,14 +29,27 @@ export const metadata: Metadata = {
 };
 
 interface PageProps {
-  searchParams: Promise<{ status?: string; supercat?: string; category?: string; page?: string }>;
+  searchParams: Promise<{
+    status?: string;
+    supercat?: string;
+    category?: string;
+    page?: string;
+    involvement?: string;
+  }>;
 }
+
+const INVOLVEMENT_FILTER_OPTIONS = [
+  { key: "DIRECT", label: "Mis en cause" },
+  { key: "INDIRECT", label: "Indirect" },
+  { key: "MENTIONED_ONLY", label: "Mentionné" },
+] as const;
 
 async function getAffairs(
   status?: string,
   superCategory?: AffairSuperCategory,
   category?: string,
-  page = 1
+  page = 1,
+  involvements: Involvement[] = ["DIRECT"]
 ) {
   "use cache";
   cacheTag("affairs");
@@ -55,6 +68,7 @@ async function getAffairs(
 
   const where = {
     publicationStatus: "PUBLISHED" as const,
+    involvement: { in: involvements },
     ...(status && { status: status as AffairStatus }),
     ...(categoryFilter && { category: { in: categoryFilter } }),
   };
@@ -96,7 +110,7 @@ async function getSuperCategoryCounts() {
 
   const categoryCounts = await db.affair.groupBy({
     by: ["category"],
-    where: { publicationStatus: "PUBLISHED" },
+    where: { publicationStatus: "PUBLISHED", involvement: "DIRECT" },
     _count: { category: true },
   });
 
@@ -126,7 +140,7 @@ async function getStatusCounts() {
 
   const statusCounts = await db.affair.groupBy({
     by: ["status"],
-    where: { publicationStatus: "PUBLISHED" },
+    where: { publicationStatus: "PUBLISHED", involvement: "DIRECT" },
     _count: { status: true },
   });
 
@@ -138,10 +152,25 @@ export default async function AffairesPage({ searchParams }: PageProps) {
   const statusFilter = params.status || "";
   const superCatFilter = (params.supercat || "") as AffairSuperCategory | "";
   const categoryFilter = params.category || "";
+  const involvementFilter = params.involvement || "";
   const page = parseInt(params.page || "1", 10);
 
+  // Parse involvement filter: default to DIRECT only
+  const VALID_INVOLVEMENTS: Involvement[] = [
+    "DIRECT",
+    "INDIRECT",
+    "MENTIONED_ONLY",
+    "VICTIM",
+    "PLAINTIFF",
+  ];
+  const activeInvolvements: Involvement[] = involvementFilter
+    ? (involvementFilter
+        .split(",")
+        .filter((v) => VALID_INVOLVEMENTS.includes(v as Involvement)) as Involvement[])
+    : ["DIRECT"];
+
   const [{ affairs, total, totalPages }, superCounts, statusCounts] = await Promise.all([
-    getAffairs(statusFilter, superCatFilter || undefined, categoryFilter, page),
+    getAffairs(statusFilter, superCatFilter || undefined, categoryFilter, page, activeInvolvements),
     getSuperCategoryCounts(),
     getStatusCounts(),
   ]);
@@ -153,6 +182,25 @@ export default async function AffairesPage({ searchParams }: PageProps) {
     const filtered = Object.entries(params).filter(([, v]) => v);
     if (filtered.length === 0) return "/affaires";
     return `/affaires?${filtered.map(([k, v]) => `${k}=${v}`).join("&")}`;
+  }
+
+  function toggleInvolvement(key: Involvement) {
+    const current = new Set(activeInvolvements);
+    if (current.has(key)) {
+      current.delete(key);
+    } else {
+      current.add(key);
+    }
+    // If empty, reset to DIRECT
+    if (current.size === 0) current.add("DIRECT");
+    const inv = [...current].join(",");
+    // Only include involvement param if not default (DIRECT only)
+    const isDefault = current.size === 1 && current.has("DIRECT");
+    return buildUrl({
+      status: statusFilter,
+      supercat: superCatFilter,
+      involvement: isDefault ? "" : inv,
+    });
   }
 
   return (
@@ -243,8 +291,29 @@ export default async function AffairesPage({ searchParams }: PageProps) {
         </div>
       </div>
 
+      {/* Involvement filter */}
+      <div className="mb-6">
+        <p className="text-sm font-medium mb-2">Implication du politicien</p>
+        <div className="flex flex-wrap gap-2">
+          {INVOLVEMENT_FILTER_OPTIONS.map(({ key, label }) => {
+            const isActive = activeInvolvements.includes(key);
+            return (
+              <Link key={key} href={toggleInvolvement(key)}>
+                <Badge
+                  variant={isActive ? "default" : "outline"}
+                  className={`cursor-pointer ${isActive ? INVOLVEMENT_COLORS[key as Involvement] : ""}`}
+                >
+                  {isActive ? "● " : "○ "}
+                  {label}
+                </Badge>
+              </Link>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Active filters summary */}
-      {(superCatFilter || statusFilter) && (
+      {(superCatFilter || statusFilter || involvementFilter) && (
         <div className="mb-6 flex items-center gap-2 text-sm">
           <span className="text-muted-foreground">Filtres actifs :</span>
           {superCatFilter && (
@@ -255,6 +324,12 @@ export default async function AffairesPage({ searchParams }: PageProps) {
           {statusFilter && (
             <Badge className={AFFAIR_STATUS_COLORS[statusFilter as AffairStatus]}>
               {AFFAIR_STATUS_LABELS[statusFilter as AffairStatus]}
+            </Badge>
+          )}
+          {involvementFilter && (
+            <Badge variant="outline">
+              Implication :{" "}
+              {activeInvolvements.map((i) => INVOLVEMENT_LABELS[i as Involvement]).join(", ")}
             </Badge>
           )}
           <Link href="/affaires" className="text-blue-600 hover:underline ml-2">
@@ -382,6 +457,7 @@ export default async function AffairesPage({ searchParams }: PageProps) {
                     page: String(page - 1),
                     status: statusFilter,
                     supercat: superCatFilter,
+                    involvement: involvementFilter,
                   })}
                   className="px-4 py-2 border rounded-md hover:bg-muted"
                 >
@@ -397,6 +473,7 @@ export default async function AffairesPage({ searchParams }: PageProps) {
                     page: String(page + 1),
                     status: statusFilter,
                     supercat: superCatFilter,
+                    involvement: involvementFilter,
                   })}
                   className="px-4 py-2 border rounded-md hover:bg-muted"
                 >

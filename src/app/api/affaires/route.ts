@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { AffairStatus, AffairCategory } from "@/generated/prisma";
+import { AffairStatus, AffairCategory, Involvement } from "@/generated/prisma";
 import { withCache } from "@/lib/cache";
 
 /**
@@ -23,6 +23,12 @@ import { withCache } from "@/lib/cache";
  *           type: string
  *           enum: [CORRUPTION, FRAUDE_FISCALE, BLANCHIMENT, TRAFIC_INFLUENCE, PRISE_ILLEGALE_INTERET, VIOLENCE, HARCELEMENT_SEXUEL, DIFFAMATION]
  *         description: Filtrer par catégorie d'infraction
+ *       - in: query
+ *         name: involvement
+ *         schema:
+ *           type: string
+ *           default: DIRECT
+ *         description: Filtrer par niveau d'implication (valeurs séparées par virgule). Défaut DIRECT.
  *       - in: query
  *         name: page
  *         schema:
@@ -64,12 +70,27 @@ export async function GET(request: NextRequest) {
 
   const status = searchParams.get("status");
   const category = searchParams.get("category");
+  const involvement = searchParams.get("involvement");
   const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
   const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") || "20", 10)));
   const skip = (page - 1) * limit;
 
+  const VALID_INVOLVEMENTS: Involvement[] = [
+    "DIRECT",
+    "INDIRECT",
+    "MENTIONED_ONLY",
+    "VICTIM",
+    "PLAINTIFF",
+  ];
+  const requestedInvolvements: Involvement[] = involvement
+    ? (involvement
+        .split(",")
+        .filter((v) => VALID_INVOLVEMENTS.includes(v as Involvement)) as Involvement[])
+    : ["DIRECT"];
+
   const where = {
     publicationStatus: "PUBLISHED" as const,
+    involvement: { in: requestedInvolvements },
     ...(status && { status: status as AffairStatus }),
     ...(category && { category: category as AffairCategory }),
   };

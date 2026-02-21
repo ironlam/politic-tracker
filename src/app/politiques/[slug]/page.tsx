@@ -223,16 +223,32 @@ export default async function PoliticianPage({ params }: PageProps) {
   const isDepute = currentMandate?.type === "DEPUTE";
   const voteData = isDepute ? await getVoteStats(politician.id) : null;
 
-  // Split affairs by involvement: accused vs victim
-  const directAffairs = politician.affairs.filter(
+  // Split affairs by involvement: direct (mis en cause) vs mentions vs victim
+  const STATUS_SEVERITY: Record<string, number> = {
+    CONDAMNATION_DEFINITIVE: 0,
+    CONDAMNATION_PREMIERE_INSTANCE: 1,
+    APPEL_EN_COURS: 2,
+    PROCES_EN_COURS: 3,
+    RENVOI_TRIBUNAL: 4,
+    MISE_EN_EXAMEN: 5,
+    INSTRUCTION: 6,
+    ENQUETE_PRELIMINAIRE: 7,
+    RELAXE: 8,
+    ACQUITTEMENT: 9,
+    NON_LIEU: 10,
+    PRESCRIPTION: 11,
+    CLASSEMENT_SANS_SUITE: 12,
+  };
+  const directAffairs = politician.affairs
+    .filter((a) => a.involvement === "DIRECT")
+    .sort((a, b) => (STATUS_SEVERITY[a.status] ?? 99) - (STATUS_SEVERITY[b.status] ?? 99));
+  const mentionAffairs = politician.affairs.filter(
     (a) =>
-      a.involvement === "DIRECT" ||
       a.involvement === "INDIRECT" ||
-      a.involvement === "MENTIONED_ONLY"
+      a.involvement === "MENTIONED_ONLY" ||
+      a.involvement === "PLAINTIFF"
   );
-  const victimAffairs = politician.affairs.filter(
-    (a) => a.involvement === "VICTIM" || a.involvement === "PLAINTIFF"
-  );
+  const victimAffairs = politician.affairs.filter((a) => a.involvement === "VICTIM");
 
   return (
     <>
@@ -766,13 +782,6 @@ export default async function PoliticianPage({ params }: PageProps) {
                                 {affair.partyAtTime.shortName} à l&apos;époque
                               </Badge>
                             )}
-                            {affair.involvement !== "DIRECT" && (
-                              <Badge
-                                className={INVOLVEMENT_COLORS[affair.involvement as Involvement]}
-                              >
-                                {INVOLVEMENT_LABELS[affair.involvement as Involvement]}
-                              </Badge>
-                            )}
                           </div>
                         </div>
 
@@ -885,7 +894,76 @@ export default async function PoliticianPage({ params }: PageProps) {
               </CardContent>
             </Card>
 
-            {/* Affairs — Victim / Plaintiff */}
+            {/* Affairs — Mentions (INDIRECT / MENTIONED_ONLY / PLAINTIFF) */}
+            {mentionAffairs.length > 0 && (
+              <Card className="border-dashed border-gray-300 dark:border-gray-700">
+                <CardHeader>
+                  <details>
+                    <summary className="cursor-pointer list-none flex items-center gap-2">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                        className="w-4 h-4 text-muted-foreground transition-transform [[open]>&]:rotate-90"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                      <h2 className="leading-none font-semibold text-muted-foreground">
+                        Mentions dans des affaires ({mentionAffairs.length})
+                      </h2>
+                    </summary>
+                    <p className="text-xs text-muted-foreground mt-2 ml-6">
+                      Affaires où {politician.civility === "MME" ? "elle" : "il"} est mentionné
+                      {politician.civility === "MME" ? "e" : ""} sans être directement mis
+                      {politician.civility === "MME" ? "e" : ""} en cause.
+                    </p>
+                    <div className="mt-4 space-y-4 ml-6">
+                      {mentionAffairs.map((affair) => (
+                        <div
+                          key={affair.id}
+                          className="border border-gray-200 dark:border-gray-700 rounded-lg p-3 bg-gray-50/50 dark:bg-gray-900/30"
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap mb-1">
+                                <Badge
+                                  className={INVOLVEMENT_COLORS[affair.involvement as Involvement]}
+                                >
+                                  {INVOLVEMENT_LABELS[affair.involvement as Involvement]}
+                                </Badge>
+                                <Link
+                                  href={`/affaires/${affair.slug || affair.id}`}
+                                  className="font-medium hover:underline"
+                                >
+                                  {affair.title}
+                                </Link>
+                              </div>
+                              {affair.description && (
+                                <p className="text-sm text-muted-foreground line-clamp-2">
+                                  {affair.description}
+                                </p>
+                              )}
+                            </div>
+                            <Badge
+                              variant="outline"
+                              className="text-xs self-start whitespace-nowrap"
+                            >
+                              {AFFAIR_STATUS_LABELS[affair.status]}
+                            </Badge>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </details>
+                </CardHeader>
+              </Card>
+            )}
+
+            {/* Affairs — Victim */}
             {victimAffairs.length > 0 && (
               <Card>
                 <CardHeader>
@@ -1005,12 +1083,18 @@ export default async function PoliticianPage({ params }: PageProps) {
                   </div>
                 )}
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Affaires</span>
+                  <span className="text-muted-foreground">Affaires (mis en cause)</span>
                   <span className="font-semibold">{directAffairs.length}</span>
                 </div>
+                {mentionAffairs.length > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Mentions</span>
+                    <span className="font-semibold text-gray-500">{mentionAffairs.length}</span>
+                  </div>
+                )}
                 {victimAffairs.length > 0 && (
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Victime / Plaignant</span>
+                    <span className="text-muted-foreground">Victime</span>
                     <span className="font-semibold text-blue-600">{victimAffairs.length}</span>
                   </div>
                 )}

@@ -37,6 +37,19 @@ const eslintConfig = defineConfig([
       ],
     },
   },
+  // Allow console in server-side code (API routes, sync services, CLI utilities)
+  {
+    files: [
+      "src/app/api/**/*.ts",
+      "src/services/**/*.ts",
+      "src/lib/sync/**/*.ts",
+      "src/lib/api/**/*.ts",
+      "src/lib/auth.ts",
+    ],
+    rules: {
+      "no-console": "off",
+    },
+  },
 ]);
 
 export default eslintConfig;

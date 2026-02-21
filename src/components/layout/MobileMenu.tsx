@@ -104,9 +104,8 @@ export function MobileMenu({ enabledFlags = [] }: MobileMenuProps) {
   }, [isOpen, handleKeyDown]);
 
   // Close menu on route change
-  useEffect(() => {
-    setIsOpen(false);
-  }, [pathname]);
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional sync with navigation
+  useEffect(() => setIsOpen(false), [pathname]);
 
   return (
     <div className="lg:hidden">

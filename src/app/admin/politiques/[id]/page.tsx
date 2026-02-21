@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { db } from "@/lib/db";
@@ -170,9 +171,11 @@ export default async function AdminPoliticianPage({ params }: PageProps) {
             </div>
             {politician.photoUrl && (
               <div className="mt-4">
-                <img
+                <Image
                   src={normalizeImageUrl(politician.photoUrl) || ""}
                   alt={politician.fullName}
+                  width={128}
+                  height={128}
                   className="w-32 h-32 object-cover rounded-lg border"
                 />
               </div>

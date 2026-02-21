@@ -139,7 +139,7 @@ export function AdminCommandPalette() {
   }, [handleClose]);
 
   // Debounced search
-
+  /* eslint-disable react-hooks/set-state-in-effect -- data fetching effect */
   useEffect(() => {
     if (query.length < 2) {
       setResults(null);
@@ -169,6 +169,7 @@ export function AdminCommandPalette() {
       controller.abort();
     };
   }, [query]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const items = results ? buildAdminItems(results) : [];
 

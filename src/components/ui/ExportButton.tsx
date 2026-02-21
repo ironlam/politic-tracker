@@ -58,8 +58,7 @@ export function ExportButton({
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(downloadUrl);
-    } catch (error) {
-      console.error("Export error:", error);
+    } catch {
       alert("Erreur lors de l'export. Veuillez réessayer.");
     } finally {
       setIsLoading(false);

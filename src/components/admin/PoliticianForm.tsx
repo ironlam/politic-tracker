@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -279,9 +280,11 @@ export function PoliticianForm({ initialData, parties }: PoliticianFormProps) {
 
           {formData.photoUrl && (
             <div className="flex items-center gap-4">
-              <img
+              <Image
                 src={normalizeImageUrl(formData.photoUrl) || ""}
                 alt="Aperçu"
+                width={96}
+                height={96}
                 className="w-24 h-24 object-cover rounded-lg border"
                 onError={(e) => {
                   (e.target as HTMLImageElement).style.display = "none";

@@ -76,7 +76,7 @@ export function AdvancedSearchClient() {
     fetch("/api/search/filters")
       .then((res) => res.json())
       .then(setFilterOptions)
-      .catch(console.error);
+      .catch(() => {});
   }, []);
 
   // Search function

@@ -37,10 +37,12 @@ function ResultAvatar({ photoUrl, fullName }: { photoUrl: string | null; fullNam
   };
 
   // Reset error and loaded state when photoUrl changes
+  /* eslint-disable react-hooks/set-state-in-effect -- reset on prop change */
   useEffect(() => {
     setHasError(false);
     setIsLoaded(false);
   }, [photoUrl]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const normalizedUrl = normalizeImageUrl(photoUrl);
 
@@ -100,8 +102,7 @@ export function SearchAutocomplete({
         setResults(data);
         setIsOpen(data.length > 0);
         setSelectedIndex(-1);
-      } catch (error) {
-        console.error("Search error:", error);
+      } catch {
         setResults([]);
       } finally {
         setIsLoading(false);

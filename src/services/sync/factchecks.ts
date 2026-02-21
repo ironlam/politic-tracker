@@ -156,6 +156,39 @@ export async function syncFactchecks(
             title = await fetchPageTitle(review.url, title);
           }
 
+          // Check for existing fact-check with same title (catch URL variants)
+          if (!force) {
+            const existingByTitle = await db.factCheck.findFirst({
+              where: { title: { equals: title, mode: "insensitive" } },
+            });
+            if (existingByTitle) {
+              // Merge mentions if needed
+              if (!dryRun) {
+                for (const m of mentions) {
+                  const mentionExists = await db.factCheckMention.findUnique({
+                    where: {
+                      factCheckId_politicianId: {
+                        factCheckId: existingByTitle.id,
+                        politicianId: m.politicianId,
+                      },
+                    },
+                  });
+                  if (!mentionExists) {
+                    await db.factCheckMention.create({
+                      data: {
+                        factCheckId: existingByTitle.id,
+                        politicianId: m.politicianId,
+                        matchedName: m.matchedName,
+                      },
+                    });
+                  }
+                }
+              }
+              stats.factChecksSkipped++;
+              continue;
+            }
+          }
+
           if (dryRun) {
             stats.factChecksCreated++;
             stats.mentionsCreated += mentions.length;

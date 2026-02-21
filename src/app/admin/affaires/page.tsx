@@ -13,6 +13,7 @@ import {
   AFFAIR_CATEGORY_LABELS,
 } from "@/config/labels";
 import { PromptDialog } from "@/components/ui/prompt-dialog";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   Plus,
   Search,
@@ -88,6 +89,7 @@ export default function AdminAffairsPage() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkLoading, setBulkLoading] = useState(false);
   const [showRejectPrompt, setShowRejectPrompt] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [applyingAI, setApplyingAI] = useState(false);
   const [enrichingId, setEnrichingId] = useState<string | null>(null);
 
@@ -139,7 +141,7 @@ export default function AdminAffairsPage() {
   }, [fetchData]);
 
   // Bulk actions
-  async function handleBulk(action: "publish" | "reject", rejectionReason?: string) {
+  async function handleBulk(action: "publish" | "reject" | "delete", rejectionReason?: string) {
     if (selected.size === 0) return;
     setBulkLoading(true);
     try {
@@ -324,6 +326,15 @@ export default function AdminAffairsPage() {
               disabled={bulkLoading}
             >
               Rejeter
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="text-red-600 border-red-200 hover:bg-red-50"
+              onClick={() => setShowDeleteConfirm(true)}
+              disabled={bulkLoading}
+            >
+              Supprimer
             </Button>
             <button
               className="text-sm text-muted-foreground hover:text-foreground ml-auto"
@@ -589,6 +600,18 @@ export default function AdminAffairsPage() {
         description={`${selected.size} affaire${selected.size > 1 ? "s" : ""} sélectionnée${selected.size > 1 ? "s" : ""}`}
         placeholder="Raison du rejet..."
         submitLabel="Rejeter"
+        variant="destructive"
+      />
+      <ConfirmDialog
+        open={showDeleteConfirm}
+        onOpenChange={setShowDeleteConfirm}
+        onConfirm={() => {
+          setShowDeleteConfirm(false);
+          handleBulk("delete");
+        }}
+        title="Supprimer les affaires"
+        description={`Supprimer définitivement ${selected.size} affaire${selected.size > 1 ? "s" : ""} ? Cette action est irréversible.`}
+        confirmLabel="Supprimer"
         variant="destructive"
       />
     </div>

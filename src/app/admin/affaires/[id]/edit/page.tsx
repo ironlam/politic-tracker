@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { db } from "@/lib/db";
 import { AffairForm } from "@/components/admin/AffairForm";
+import { Button } from "@/components/ui/button";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -70,14 +71,63 @@ export default async function EditAffairPage({ params }: PageProps) {
 
   return (
     <div className="max-w-3xl">
-      <Link
-        href={`/admin/affaires/${id}`}
-        className="text-sm text-muted-foreground hover:text-foreground"
-      >
-        &larr; Retour à l&apos;affaire
-      </Link>
-      <h1 className="text-2xl font-bold mt-2 mb-6">Modifier l&apos;affaire</h1>
+      <div className="flex items-center justify-between">
+        <div>
+          <Link
+            href={`/admin/affaires/${id}`}
+            className="text-sm text-muted-foreground hover:text-foreground"
+          >
+            &larr; Retour à l&apos;affaire
+          </Link>
+          <h1 className="text-2xl font-bold mt-2 mb-6">Modifier l&apos;affaire</h1>
+        </div>
+        <DeleteButton id={id} />
+      </div>
       <AffairForm politicians={politicians} initialData={initialData} />
     </div>
+  );
+}
+
+function DeleteButton({ id }: { id: string }) {
+  return (
+    <form
+      action={async () => {
+        "use server";
+        const { isAuthenticated } = await import("@/lib/auth");
+        const { db } = await import("@/lib/db");
+        const { invalidateEntity } = await import("@/lib/cache");
+        const { redirect } = await import("next/navigation");
+
+        const authenticated = await isAuthenticated();
+        if (!authenticated) {
+          redirect("/admin/login");
+        }
+
+        const affair = await db.affair.findUnique({
+          where: { id },
+          select: { title: true, politician: { select: { slug: true } } },
+        });
+
+        await db.affair.delete({ where: { id } });
+
+        await db.auditLog.create({
+          data: {
+            action: "DELETE",
+            entityType: "Affair",
+            entityId: id,
+            changes: { title: affair?.title },
+          },
+        });
+
+        invalidateEntity("affair");
+        if (affair?.politician?.slug) invalidateEntity("politician", affair.politician.slug);
+
+        redirect("/admin/affaires");
+      }}
+    >
+      <Button type="submit" variant="destructive">
+        Supprimer
+      </Button>
+    </form>
   );
 }

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { Involvement } from "@/generated/prisma";
 import { withCache } from "@/lib/cache";
 
 interface RouteContext {
@@ -48,6 +49,21 @@ interface RouteContext {
  */
 export async function GET(request: NextRequest, context: RouteContext) {
   const { slug } = await context.params;
+  const { searchParams } = new URL(request.url);
+  const involvement = searchParams.get("involvement");
+
+  const VALID_INVOLVEMENTS: Involvement[] = [
+    "DIRECT",
+    "INDIRECT",
+    "MENTIONED_ONLY",
+    "VICTIM",
+    "PLAINTIFF",
+  ];
+  const requestedInvolvements: Involvement[] = involvement
+    ? (involvement
+        .split(",")
+        .filter((v) => VALID_INVOLVEMENTS.includes(v as Involvement)) as Involvement[])
+    : ["DIRECT"];
 
   try {
     const politician = await db.politician.findUnique({
@@ -63,7 +79,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
           select: { shortName: true, name: true, color: true },
         },
         affairs: {
-          where: { publicationStatus: "PUBLISHED" },
+          where: { publicationStatus: "PUBLISHED", involvement: { in: requestedInvolvements } },
           select: {
             id: true,
             slug: true,

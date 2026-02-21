@@ -39,43 +39,62 @@ async function getJudicialData() {
     involvement: "DIRECT" as const,
   };
 
+  // Statuses that represent an actual condemnation (even if appeal is pending)
+  const CONDAMNATION_STATUSES = [
+    "CONDAMNATION_DEFINITIVE",
+    "CONDAMNATION_PREMIERE_INSTANCE",
+    "APPEL_EN_COURS",
+  ] as const;
+
+  const condamnationFilter = {
+    ...directFilter,
+    status: { in: [...CONDAMNATION_STATUSES] },
+  };
+
   // Single batch: counts + status breakdown + grave affairs with party info
-  const [totalDirect, condamnationsDefinitives, byStatusRaw, byCategoryRaw, graveAffairs] =
-    await Promise.all([
-      db.affair.count({ where: directFilter }),
-      db.affair.count({
-        where: { ...directFilter, status: "CONDAMNATION_DEFINITIVE" },
-      }),
-      db.affair.groupBy({
-        by: ["status"],
-        where: directFilter,
-        _count: { status: true },
-        orderBy: { _count: { status: "desc" } },
-      }),
-      db.affair.groupBy({
-        by: ["category"],
-        where: directFilter,
-        _count: { category: true },
-        orderBy: { _count: { category: "desc" } },
-      }),
-      // One query for all grave affairs — aggregate in JS
-      db.affair.findMany({
-        where: {
-          ...directFilter,
-          category: { in: GRAVE_CATEGORIES },
-        },
-        select: {
-          category: true,
-          politician: {
-            select: {
-              currentParty: {
-                select: { shortName: true, color: true, slug: true },
-              },
+  const [
+    totalDirect,
+    totalCondamnations,
+    condamnationsDefinitives,
+    byStatusRaw,
+    byCategoryRaw,
+    graveAffairs,
+  ] = await Promise.all([
+    db.affair.count({ where: directFilter }),
+    db.affair.count({ where: condamnationFilter }),
+    db.affair.count({
+      where: { ...directFilter, status: "CONDAMNATION_DEFINITIVE" },
+    }),
+    db.affair.groupBy({
+      by: ["status"],
+      where: directFilter,
+      _count: { status: true },
+      orderBy: { _count: { status: "desc" } },
+    }),
+    db.affair.groupBy({
+      by: ["category"],
+      where: condamnationFilter,
+      _count: { category: true },
+      orderBy: { _count: { category: "desc" } },
+    }),
+    // Grave affairs — only condemnations
+    db.affair.findMany({
+      where: {
+        ...condamnationFilter,
+        category: { in: GRAVE_CATEGORIES },
+      },
+      select: {
+        category: true,
+        politician: {
+          select: {
+            currentParty: {
+              select: { shortName: true, color: true, slug: true },
             },
           },
         },
-      }),
-    ]);
+      },
+    }),
+  ]);
 
   const byStatus = byStatusRaw.map((a) => ({
     status: a.status as AffairStatus,
@@ -143,15 +162,10 @@ async function getJudicialData() {
     .filter((c) => c.total > 0)
     .sort((a, b) => b.total - a.total);
 
-  // Count distinct parties with at least one grave affair
-  const partiesWithGrave = new Set(
-    graveAffairs.map((a) => a.politician.currentParty?.shortName).filter(Boolean)
-  );
-
   return {
     totalDirect,
+    totalCondamnations,
     condamnationsDefinitives,
-    partiesConcernees: partiesWithGrave.size,
     byStatus,
     byCategory,
     graveByCategory,
@@ -428,8 +442,8 @@ export default async function StatistiquesPage() {
         judicialContent={
           <JudicialSection
             totalDirect={judicialData.totalDirect}
+            totalCondamnations={judicialData.totalCondamnations}
             condamnationsDefinitives={judicialData.condamnationsDefinitives}
-            partiesConcernees={judicialData.partiesConcernees}
             byStatus={judicialData.byStatus}
             byCategory={judicialData.byCategory}
             graveByCategory={judicialData.graveByCategory}

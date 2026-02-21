@@ -36,8 +36,8 @@ interface GraveCategoryData {
 
 interface JudicialSectionProps {
   totalDirect: number;
+  totalCondamnations: number;
   condamnationsDefinitives: number;
-  partiesConcernees: number;
   byStatus: StatusCount[];
   byCategory: CategoryCount[];
   graveByCategory: GraveCategoryData[];
@@ -54,8 +54,8 @@ const ONGOING_STATUSES = new Set<AffairStatus>([
 
 export function JudicialSection({
   totalDirect,
+  totalCondamnations,
   condamnationsDefinitives,
-  partiesConcernees,
   byStatus,
   byCategory,
   graveByCategory,
@@ -74,9 +74,9 @@ export function JudicialSection({
         <Card>
           <CardContent className="pt-6 text-center">
             <div className="text-3xl font-bold tabular-nums">
-              {totalDirect.toLocaleString("fr-FR")}
+              {totalCondamnations.toLocaleString("fr-FR")}
             </div>
-            <div className="text-sm text-muted-foreground mt-1">Affaires documentées</div>
+            <div className="text-sm text-muted-foreground mt-1">Condamnations</div>
           </CardContent>
         </Card>
         <Card>
@@ -84,15 +84,15 @@ export function JudicialSection({
             <div className="text-3xl font-bold tabular-nums text-red-600">
               {condamnationsDefinitives.toLocaleString("fr-FR")}
             </div>
-            <div className="text-sm text-muted-foreground mt-1">Condamnations définitives</div>
+            <div className="text-sm text-muted-foreground mt-1">dont définitives</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6 text-center">
-            <div className="text-3xl font-bold tabular-nums">
-              {partiesConcernees.toLocaleString("fr-FR")}
+            <div className="text-3xl font-bold tabular-nums text-muted-foreground">
+              {totalDirect.toLocaleString("fr-FR")}
             </div>
-            <div className="text-sm text-muted-foreground mt-1">Partis concernés</div>
+            <div className="text-sm text-muted-foreground mt-1">Affaires documentées</div>
           </CardContent>
         </Card>
       </div>
@@ -101,10 +101,11 @@ export function JudicialSection({
       {graveByCategory.length > 0 && (
         <>
           <h2 id="judicial-heading" className="text-xl font-bold mb-2">
-            Affaires graves par parti
+            Condamnations graves par parti
           </h2>
           <p className="text-sm text-muted-foreground mb-6">
-            Nombre absolu d&apos;affaires avec implication directe, par catégorie et par parti
+            Condamnations (1ère instance, appel ou définitives) avec implication directe, par
+            catégorie et par parti
           </p>
 
           <div className="space-y-6 mb-8">
@@ -139,7 +140,7 @@ export function JudicialSection({
       <div className="grid md:grid-cols-2 gap-8">
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Par type d&apos;infraction</CardTitle>
+            <CardTitle className="text-lg">Condamnations par type</CardTitle>
           </CardHeader>
           <CardContent>
             <DonutChart
@@ -177,11 +178,13 @@ export function JudicialSection({
       </div>
 
       <MethodologyDisclaimer>
-        Seules les affaires où le politicien est directement mis en cause (involvement
-        &laquo;&nbsp;direct&nbsp;&raquo;) sont comptabilisées. Les mentions simples, rôles de
-        victime ou plaignant sont exclus. Les affaires &laquo;&nbsp;graves&nbsp;&raquo; regroupent :
-        violence, agression sexuelle, harcèlement, menace, incitation à la haine, corruption, fraude
-        fiscale et financement illégal.
+        Les graphiques &laquo;&nbsp;condamnations graves&nbsp;&raquo; et &laquo;&nbsp;par
+        type&nbsp;&raquo; ne comptabilisent que les condamnations (1ère instance, appel en cours ou
+        définitives) où le politicien est directement mis en cause. Les enquêtes préliminaires,
+        mises en examen, classements sans suite et relaxes sont exclus de ces comptages. Les
+        catégories &laquo;&nbsp;graves&nbsp;&raquo; regroupent : violence, agression sexuelle,
+        harcèlement, menace, incitation à la haine, corruption, fraude fiscale et financement
+        illégal.
       </MethodologyDisclaimer>
     </section>
   );

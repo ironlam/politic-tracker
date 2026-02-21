@@ -121,7 +121,7 @@ export async function POST(request: NextRequest) {
       if (review.recommendation === "PUBLISH") {
         affairUpdate.publicationStatus = "PUBLISHED";
         affairUpdate.verifiedAt = new Date();
-        affairUpdate.verifiedBy = "auto-moderation";
+        affairUpdate.verifiedBy = "Poligraph Moderation";
       } else if (review.recommendation === "REJECT") {
         affairUpdate.publicationStatus = "REJECTED";
         affairUpdate.rejectionReason = review.reasoning;

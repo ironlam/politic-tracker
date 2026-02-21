@@ -351,7 +351,7 @@ export default async function AffairDetailPage({ params }: PageProps) {
               </div>
               <p className="text-sm text-green-700 dark:text-green-300 mt-1">
                 Vérifié le {formatDate(affair.verifiedAt)}
-                {affair.verifiedBy && ` par ${affair.verifiedBy}`}
+                {affair.verifiedBy && ` par Poligraph Moderation`}
               </p>
             </CardContent>
           </Card>

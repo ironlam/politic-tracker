@@ -14,6 +14,7 @@ async function getRecentFactChecks() {
     orderBy: { publishedAt: "desc" },
     select: {
       id: true,
+      slug: true,
       title: true,
       source: true,
       sourceUrl: true,
@@ -32,6 +33,7 @@ async function getRecentFactChecks() {
 
   return factChecks.map((fc) => ({
     id: fc.id,
+    slug: fc.slug,
     title: fc.title,
     source: fc.source,
     sourceUrl: fc.sourceUrl,

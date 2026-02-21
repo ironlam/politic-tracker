@@ -172,7 +172,12 @@ const ENRICHMENT_TOOL = {
           type: "object",
           properties: {
             url: { type: "string" },
-            title: { type: "string" },
+            title: {
+              type: "string",
+              description:
+                "Le titre EXACT de l'article de presse (tel qu'affiché sur le site du journal), " +
+                "PAS le titre de l'affaire. Chaque article a un titre unique.",
+            },
             publisher: { type: "string" },
             published_date: {
               type: "string",
@@ -427,15 +432,28 @@ export async function enrichAffair(affairId: string): Promise<EnrichmentResult> 
     changes.push(`Tribunal: ${aiResult.court}`);
   }
 
+  // Build title lookup from scraped articles and Brave results (more reliable than AI-returned titles)
+  const titleByUrl = new Map<string, string>();
+  for (const article of scraped) {
+    titleByUrl.set(article.url, article.title);
+  }
+  for (const result of newResults) {
+    if (!titleByUrl.has(result.url)) {
+      titleByUrl.set(result.url, result.title);
+    }
+  }
+
   // Add new sources (validate dates to avoid Invalid Date errors)
   const sourcesToAdd = aiResult.sources_used
     .filter((s) => !existingUrls.has(s.url))
     .map((s) => {
       const parsedDate = s.published_date ? new Date(s.published_date) : null;
       const publishedAt = parsedDate && !isNaN(parsedDate.getTime()) ? parsedDate : new Date();
+      // Prefer real article title from scraping/Brave over AI-generated title
+      const realTitle = titleByUrl.get(s.url) || s.title;
       return {
         url: s.url,
-        title: s.title,
+        title: realTitle,
         publisher: s.publisher,
         publishedAt,
         sourceType: "PRESSE" as const,

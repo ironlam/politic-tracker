@@ -14,13 +14,15 @@ import {
   AFFAIR_SUPER_CATEGORY_LABELS,
   AFFAIR_SUPER_CATEGORY_COLORS,
   CATEGORY_TO_SUPER,
+  INVOLVEMENT_LABELS,
+  INVOLVEMENT_COLORS,
 } from "@/config/labels";
 import { SentenceDetails } from "@/components/affairs/SentenceDetails";
 import { StatusTooltip } from "@/components/affairs/StatusTooltip";
 import { AffairTimeline } from "@/components/affairs/AffairTimeline";
 import { PoliticianAvatar } from "@/components/politicians/PoliticianAvatar";
 import { ArticleJsonLd, BreadcrumbJsonLd } from "@/components/seo/JsonLd";
-import type { AffairCategory } from "@/types";
+import type { AffairCategory, Involvement } from "@/types";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -139,6 +141,11 @@ export default async function AffairDetailPage({ params }: PageProps) {
               colorClass={AFFAIR_STATUS_COLORS[affair.status]}
             />
             <Badge variant="outline">{AFFAIR_CATEGORY_LABELS[affair.category]}</Badge>
+            {affair.involvement !== "DIRECT" && (
+              <Badge className={INVOLVEMENT_COLORS[affair.involvement as Involvement]}>
+                {INVOLVEMENT_LABELS[affair.involvement as Involvement]}
+              </Badge>
+            )}
           </div>
 
           <h1 className="text-3xl font-bold mb-4">{affair.title}</h1>

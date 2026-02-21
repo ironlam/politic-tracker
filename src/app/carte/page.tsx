@@ -1,6 +1,10 @@
 import { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { CarteClient } from "./CarteClient";
 import { getElectionMapData } from "@/services/electionMap";
+import { isFeatureEnabled } from "@/lib/feature-flags";
+
+export const revalidate = 300; // ISR: re-check feature flag every 5 minutes
 
 export const metadata: Metadata = {
   title: "Carte des Résultats Électoraux | Poligraph",
@@ -15,6 +19,8 @@ export const metadata: Metadata = {
 };
 
 export default async function CartePage() {
+  if (!(await isFeatureEnabled("CARTE_SECTION"))) notFound();
+
   const { departments, totalSeats } = await getElectionMapData();
 
   return (

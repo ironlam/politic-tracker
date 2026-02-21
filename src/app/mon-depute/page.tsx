@@ -1,5 +1,9 @@
 import { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { PostalCodeSearch } from "@/components/politicians/PostalCodeSearch";
+import { isFeatureEnabled } from "@/lib/feature-flags";
+
+export const revalidate = 300; // ISR: re-check feature flag every 5 minutes
 
 export const metadata: Metadata = {
   title: "Qui est mon député ?",
@@ -7,7 +11,8 @@ export const metadata: Metadata = {
     "Trouvez votre député en entrant votre code postal. Accédez à sa fiche, ses mandats et ses déclarations.",
 };
 
-export default function MonDeputePage() {
+export default async function MonDeputePage() {
+  if (!(await isFeatureEnabled("MON_DEPUTE_SECTION"))) notFound();
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-2xl mx-auto">

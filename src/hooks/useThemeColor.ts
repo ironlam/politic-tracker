@@ -1,7 +1,7 @@
 "use client";
 
 import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
+import { useIsMounted } from "./useIsMounted";
 import { COLORS, getColor, getCategoryColors, ColorCategory } from "@/config/colors";
 
 /**
@@ -12,14 +12,8 @@ import { COLORS, getColor, getCategoryColors, ColorCategory } from "@/config/col
  */
 export function useThemeColor(category: ColorCategory, key: string): string {
   const { resolvedTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
+  const mounted = useIsMounted();
 
-  // Avoid hydration mismatch by waiting for mount
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  // Return light mode color during SSR and initial render
   if (!mounted) {
     return getColor(category, key, "light");
   }
@@ -35,11 +29,7 @@ export function useThemeColor(category: ColorCategory, key: string): string {
  */
 export function useThemeCategoryColors(category: ColorCategory): Record<string, string> {
   const { resolvedTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useIsMounted();
 
   if (!mounted) {
     return getCategoryColors(category, "light");
@@ -55,11 +45,7 @@ export function useThemeCategoryColors(category: ColorCategory): Record<string, 
  */
 export function useThemeMode(): "light" | "dark" {
   const { resolvedTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useIsMounted();
 
   if (!mounted) {
     return "light";

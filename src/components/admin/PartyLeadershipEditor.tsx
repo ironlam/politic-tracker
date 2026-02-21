@@ -68,7 +68,7 @@ export function PartyLeadershipEditor({ partyId, partyShortName }: PartyLeadersh
         setMandates(data);
       }
     } catch {
-      console.error("Failed to fetch mandates");
+      // Fetch error — silently keep previous state
     } finally {
       setLoading(false);
     }
@@ -94,7 +94,7 @@ export function PartyLeadershipEditor({ partyId, partyShortName }: PartyLeadersh
           setSearchResults(data);
         }
       } catch {
-        console.error("Search failed");
+        // Search error — silently keep previous results
       } finally {
         setSearching(false);
       }
@@ -192,7 +192,7 @@ export function PartyLeadershipEditor({ partyId, partyShortName }: PartyLeadersh
         await fetchMandates();
       }
     } catch {
-      console.error("Delete failed");
+      // Delete error — silently keep current state
     }
   }
 

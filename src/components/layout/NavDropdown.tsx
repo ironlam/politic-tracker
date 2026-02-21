@@ -82,9 +82,8 @@ export function NavDropdown({ group }: NavDropdownProps) {
   }, []);
 
   // Close dropdown when route changes
-  useEffect(() => {
-    setIsOpen(false);
-  }, [pathname]);
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional sync with navigation
+  useEffect(() => setIsOpen(false), [pathname]);
 
   // Clean up timeout on unmount
   useEffect(() => {

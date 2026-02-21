@@ -25,10 +25,11 @@ export function GlobalSearchProvider({ children }: { children: ReactNode }) {
   const closeSearch = useCallback(() => setIsOpen(false), []);
 
   // Close public search when navigating to admin
-
+  /* eslint-disable react-hooks/set-state-in-effect -- intentional sync with navigation */
   useEffect(() => {
     if (pathname?.startsWith("/admin")) setIsOpen(false);
   }, [pathname]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {

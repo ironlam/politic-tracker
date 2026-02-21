@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
@@ -221,7 +222,13 @@ export default async function PartyPage({ params }: PageProps) {
         <div className="mb-8">
           <div className="flex items-center gap-4 mb-4">
             {party.logoUrl ? (
-              <img src={party.logoUrl} alt={party.name} className="w-16 h-16 object-contain" />
+              <Image
+                src={party.logoUrl}
+                alt={party.name}
+                width={64}
+                height={64}
+                className="w-16 h-16 object-contain"
+              />
             ) : (
               <div
                 className="w-16 h-16 rounded-lg flex items-center justify-center text-2xl font-bold text-white"

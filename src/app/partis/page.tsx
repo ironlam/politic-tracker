@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { Metadata } from "next";
 import Link from "next/link";
 import { db } from "@/lib/db";
@@ -85,9 +86,11 @@ export default async function PartiesPage() {
                   <CardContent className="p-4">
                     <div className="flex items-start gap-3">
                       {party.logoUrl ? (
-                        <img
+                        <Image
                           src={party.logoUrl}
                           alt={party.name}
+                          width={48}
+                          height={48}
                           className="w-12 h-12 object-contain shrink-0"
                         />
                       ) : (
@@ -163,9 +166,11 @@ export default async function PartiesPage() {
                     <CardContent className="p-4">
                       <div className="flex items-start gap-3">
                         {party.logoUrl ? (
-                          <img
+                          <Image
                             src={party.logoUrl}
                             alt={party.name}
+                            width={40}
+                            height={40}
                             className="w-10 h-10 object-contain shrink-0"
                           />
                         ) : (

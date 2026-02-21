@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/utils";
+import { useIsMounted } from "@/hooks/useIsMounted";
 
 interface ElectionCountdownProps {
   targetDate: string;
@@ -30,12 +31,8 @@ export function ElectionCountdown({
   electionIcon,
   dateConfirmed,
 }: ElectionCountdownProps) {
-  const [mounted, setMounted] = useState(false);
+  const mounted = useIsMounted();
   const [timeLeft, setTimeLeft] = useState(() => computeTimeLeft(new Date(targetDate)));
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   useEffect(() => {
     const target = new Date(targetDate);

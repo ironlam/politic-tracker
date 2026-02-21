@@ -135,7 +135,7 @@ export function VoteAgreement({
             title={`En désaccord: ${stats.disagree}`}
           />
         </div>
-        <div className="flex justify-between mt-2 text-xs text-muted-foreground">
+        <div className="flex flex-wrap justify-between gap-1 mt-2 text-xs text-muted-foreground">
           <span className="flex items-center gap-1">
             <span className="w-3 h-3 rounded-full bg-green-500" /> D&apos;accord
           </span>

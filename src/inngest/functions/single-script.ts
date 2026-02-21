@@ -1,5 +1,5 @@
 import { inngest } from "../client";
-import { markJobRunning, markJobCompleted, markJobFailed } from "../job-helper";
+import { markJobRunning, markJobCompleted, markJobFailed, updateJobProgress } from "../job-helper";
 
 /**
  * Factory to create an Inngest function wrapping a sync service.
@@ -21,6 +21,7 @@ export function createSyncFunction(
       if (jobId) await markJobRunning(jobId);
 
       try {
+        if (jobId) await updateJobProgress(jobId, 10);
         const result = await step.run(scriptId, () => handler(event.data));
         if (jobId) await markJobCompleted(jobId);
         return result;

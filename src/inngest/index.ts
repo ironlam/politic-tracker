@@ -6,6 +6,7 @@ import { maintenance } from "./functions/maintenance";
 import { syncFactchecks } from "./functions/sync-factchecks";
 import { syncLegislation } from "./functions/sync-legislation";
 import { syncPoliticians } from "./functions/sync-politicians";
+import { syncDaily } from "./functions/sync-daily";
 import { syncPress } from "./functions/sync-press";
 import { syncVotes } from "./functions/sync-votes";
 
@@ -20,6 +21,7 @@ const groupedFunctions = [
   indexEmbeddings,
   syncPoliticians,
   maintenance,
+  syncDaily,
 ];
 
 // --- Individual script wrappers (admin SCRIPT_CATALOG) ---

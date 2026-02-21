@@ -71,30 +71,24 @@ export async function POST(request: NextRequest) {
     data: { script, status: "PENDING" },
   });
 
-  // Trigger the worker (Fly.io or local)
-  const workerUrl = process.env.SYNC_WORKER_URL;
-  if (workerUrl) {
-    try {
-      await fetch(`${workerUrl}/sync/${script}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${process.env.SYNC_WORKER_SECRET}`,
-        },
-        body: JSON.stringify({ jobId: job.id }),
-      });
-    } catch (err) {
-      console.error("Failed to trigger worker:", err);
-      await db.syncJob.update({
-        where: { id: job.id },
-        data: {
-          status: "FAILED",
-          error: "Impossible de contacter le worker",
-          completedAt: new Date(),
-        },
-      });
-      return NextResponse.json({ error: "Worker non disponible" }, { status: 503 });
-    }
+  // Trigger via Inngest
+  try {
+    const { inngest } = await import("@/inngest/client");
+    await inngest.send({
+      name: `sync/${script}`,
+      data: { jobId: job.id },
+    });
+  } catch (err) {
+    console.error("Failed to send Inngest event:", err);
+    await db.syncJob.update({
+      where: { id: job.id },
+      data: {
+        status: "FAILED",
+        error: "Impossible d'envoyer l'événement Inngest",
+        completedAt: new Date(),
+      },
+    });
+    return NextResponse.json({ error: "Erreur Inngest" }, { status: 503 });
   }
 
   return NextResponse.json(job, { status: 201 });

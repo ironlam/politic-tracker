@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Search, X } from "lucide-react";
 import { PoliticianAvatar } from "@/components/politicians/PoliticianAvatar";
@@ -38,15 +38,10 @@ export function PoliticianSelector({
   const [isOpen, setIsOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
   const [activeOnly, setActiveOnly] = useState(true);
-  const [isNavigating, setIsNavigating] = useState(false);
+  const [isPending, startTransition] = useTransition();
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
-
-  // Reset navigating state when data arrives
-  useEffect(() => {
-    if (selectedPolitician) setIsNavigating(false);
-  }, [selectedPolitician]);
 
   // Search politicians with debounce
   useEffect(() => {
@@ -102,7 +97,7 @@ export function PoliticianSelector({
       }
     };
 
-    const timeout = setTimeout(fetchResults, 400);
+    const timeout = setTimeout(fetchResults, 250);
     return () => {
       clearTimeout(timeout);
       controller.abort();
@@ -124,20 +119,23 @@ export function PoliticianSelector({
     (politician: Politician) => {
       const params = new URLSearchParams(searchParams.toString());
       params.set(position, politician.slug);
-      setIsNavigating(true);
-      router.push(`/comparer?${params.toString()}`);
       setQuery("");
       setIsOpen(false);
       setActiveIndex(-1);
+      startTransition(() => {
+        router.push(`/comparer?${params.toString()}`);
+      });
     },
     [position, router, searchParams]
   );
 
-  const clearSelection = () => {
+  const clearSelection = useCallback(() => {
     const params = new URLSearchParams(searchParams.toString());
     params.delete(position);
-    router.push(`/comparer?${params.toString()}`);
-  };
+    startTransition(() => {
+      router.push(`/comparer?${params.toString()}`);
+    });
+  }, [position, router, searchParams]);
 
   // Keyboard navigation
   const handleKeyDown = useCallback(
@@ -176,9 +174,9 @@ export function PoliticianSelector({
     }
   }, [activeIndex]);
 
-  if (isNavigating && !selectedPolitician) {
+  if (isPending && !selectedPolitician) {
     return (
-      <div className="bg-muted rounded-lg p-4 animate-pulse">
+      <div className="bg-muted rounded-lg p-4 animate-in fade-in-0 duration-200">
         <div className="flex items-center gap-4">
           <Skeleton className="h-12 w-12 rounded-full shrink-0" />
           <div className="flex-1 space-y-2">
@@ -192,7 +190,7 @@ export function PoliticianSelector({
 
   if (selectedPolitician) {
     return (
-      <div className="bg-muted rounded-lg p-4">
+      <div className="bg-muted rounded-lg p-4 animate-in fade-in-0 duration-300">
         <div className="flex items-center gap-4">
           <PoliticianAvatar
             photoUrl={selectedPolitician.photoUrl}

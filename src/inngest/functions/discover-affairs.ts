@@ -1,4 +1,3 @@
-import { execSync } from "child_process";
 import { inngest } from "../client";
 import { markJobRunning, markJobCompleted, markJobFailed, updateJobProgress } from "../job-helper";
 
@@ -14,26 +13,24 @@ export const discoverAffairs = inngest.createFunction(
     if (jobId) await markJobRunning(jobId);
 
     try {
-      await step.run("discover", async () => {
-        execSync("npx tsx scripts/discover-affairs.ts", {
-          stdio: "inherit",
-          env: { ...process.env },
-          timeout: 10 * 60 * 1000,
-        });
+      const discoverStats = await step.run("discover", async () => {
+        const { discoverAffairs: discoverAffairsService } =
+          await import("@/services/sync/discover-affairs");
+        const result = await discoverAffairsService();
         if (jobId) await updateJobProgress(jobId, 50);
+        return result;
       });
 
-      await step.run("reconcile", async () => {
-        execSync("npx tsx scripts/reconcile-affairs.ts --auto-merge", {
-          stdio: "inherit",
-          env: { ...process.env },
-          timeout: 5 * 60 * 1000,
-        });
+      const reconcileStats = await step.run("reconcile", async () => {
+        const { reconcileAffairs } = await import("@/services/sync/reconcile-affairs");
+        return reconcileAffairs({ autoMerge: true });
       });
 
       if (jobId)
         await markJobCompleted(jobId, {
           steps: ["discover", "reconcile"],
+          discoverStats,
+          reconcileStats,
         });
     } catch (err) {
       if (jobId) {

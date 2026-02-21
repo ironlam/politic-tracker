@@ -1,4 +1,3 @@
-import { execSync } from "child_process";
 import { inngest } from "../client";
 import { markJobRunning, markJobCompleted, markJobFailed, updateJobProgress } from "../job-helper";
 
@@ -14,44 +13,40 @@ export const generateAi = inngest.createFunction(
     if (jobId) await markJobRunning(jobId);
 
     try {
-      await step.run("biographies", async () => {
-        execSync("npx tsx scripts/generate-biographies.ts", {
-          stdio: "inherit",
-          env: { ...process.env },
-          timeout: 10 * 60 * 1000,
-        });
+      const bioStats = await step.run("biographies", async () => {
+        const { generateBiographies } = await import("@/services/sync/generate-biographies");
+        const result = await generateBiographies();
         if (jobId) await updateJobProgress(jobId, 25);
+        return result;
       });
 
-      await step.run("summaries", async () => {
-        execSync("npx tsx scripts/generate-summaries.ts", {
-          stdio: "inherit",
-          env: { ...process.env },
-          timeout: 10 * 60 * 1000,
-        });
+      const summaryStats = await step.run("summaries", async () => {
+        const { generateSummaries } = await import("@/services/sync/generate-summaries");
+        const result = await generateSummaries({ limit: 10 });
         if (jobId) await updateJobProgress(jobId, 50);
+        return result;
       });
 
-      await step.run("scrutin-summaries", async () => {
-        execSync("npx tsx scripts/generate-scrutin-summaries.ts", {
-          stdio: "inherit",
-          env: { ...process.env },
-          timeout: 10 * 60 * 1000,
-        });
+      const scrutinStats = await step.run("scrutin-summaries", async () => {
+        const { generateScrutinSummaries } =
+          await import("@/services/sync/generate-scrutin-summaries");
+        const result = await generateScrutinSummaries({ limit: 20 });
         if (jobId) await updateJobProgress(jobId, 75);
+        return result;
       });
 
-      await step.run("classify-themes", async () => {
-        execSync("npx tsx scripts/classify-themes.ts", {
-          stdio: "inherit",
-          env: { ...process.env },
-          timeout: 10 * 60 * 1000,
-        });
+      const themeStats = await step.run("classify-themes", async () => {
+        const { classifyThemes } = await import("@/services/sync/classify-themes");
+        return classifyThemes({ limit: 30 });
       });
 
       if (jobId)
         await markJobCompleted(jobId, {
           steps: ["biographies", "summaries", "scrutin-summaries", "classify-themes"],
+          bioStats,
+          summaryStats,
+          scrutinStats,
+          themeStats,
         });
     } catch (err) {
       if (jobId) {

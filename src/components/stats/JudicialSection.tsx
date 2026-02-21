@@ -4,7 +4,7 @@ import {
   AFFAIR_STATUS_LABELS,
   type AffairSuperCategory,
 } from "@/config/labels";
-import type { AffairStatus } from "@/types";
+import type { AffairCategory, AffairStatus } from "@/types";
 import { DonutChart } from "./DonutChart";
 import { HorizontalBars } from "./HorizontalBars";
 import { MethodologyDisclaimer } from "./MethodologyDisclaimer";
@@ -27,21 +27,20 @@ interface CategoryCount {
   count: number;
 }
 
-interface PartyAffairStats {
-  name: string;
-  shortName: string | null;
-  color: string | null;
-  slug: string | null;
-  directAffairs: number;
-  totalElected: number;
-  ratePer100: number;
+interface GraveCategoryData {
+  category: AffairCategory;
+  label: string;
+  total: number;
+  parties: { name: string; count: number; color: string | null; slug: string | null }[];
 }
 
 interface JudicialSectionProps {
   totalDirect: number;
+  condamnationsDefinitives: number;
+  partiesConcernees: number;
   byStatus: StatusCount[];
   byCategory: CategoryCount[];
-  byParty: PartyAffairStats[];
+  graveByCategory: GraveCategoryData[];
 }
 
 const ONGOING_STATUSES = new Set<AffairStatus>([
@@ -55,9 +54,11 @@ const ONGOING_STATUSES = new Set<AffairStatus>([
 
 export function JudicialSection({
   totalDirect,
+  condamnationsDefinitives,
+  partiesConcernees,
   byStatus,
   byCategory,
-  byParty,
+  graveByCategory,
 }: JudicialSectionProps) {
   const ongoing = byStatus
     .filter((s) => ONGOING_STATUSES.has(s.status))
@@ -67,17 +68,75 @@ export function JudicialSection({
     .reduce((sum, s) => sum + s.count, 0);
 
   return (
-    <section aria-labelledby="judicial-heading" className="py-12">
-      <h2 id="judicial-heading" className="text-2xl font-bold mb-2">
-        Transparence judiciaire
-      </h2>
-      <p className="text-muted-foreground mb-8">
-        {totalDirect} affaire{totalDirect !== 1 ? "s" : ""} documentée{totalDirect !== 1 ? "s" : ""}{" "}
-        avec implication directe
-      </p>
+    <section aria-labelledby="judicial-heading" className="py-8">
+      {/* Contextual KPIs */}
+      <div className="grid grid-cols-3 gap-4 mb-8">
+        <Card>
+          <CardContent className="pt-6 text-center">
+            <div className="text-3xl font-bold tabular-nums">
+              {totalDirect.toLocaleString("fr-FR")}
+            </div>
+            <div className="text-sm text-muted-foreground mt-1">Affaires documentées</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6 text-center">
+            <div className="text-3xl font-bold tabular-nums text-red-600">
+              {condamnationsDefinitives.toLocaleString("fr-FR")}
+            </div>
+            <div className="text-sm text-muted-foreground mt-1">Condamnations définitives</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6 text-center">
+            <div className="text-3xl font-bold tabular-nums">
+              {partiesConcernees.toLocaleString("fr-FR")}
+            </div>
+            <div className="text-sm text-muted-foreground mt-1">Partis concernés</div>
+          </CardContent>
+        </Card>
+      </div>
 
+      {/* Grave affairs by category → party */}
+      {graveByCategory.length > 0 && (
+        <>
+          <h2 id="judicial-heading" className="text-xl font-bold mb-2">
+            Affaires graves par parti
+          </h2>
+          <p className="text-sm text-muted-foreground mb-6">
+            Nombre absolu d&apos;affaires avec implication directe, par catégorie et par parti
+          </p>
+
+          <div className="space-y-6 mb-8">
+            {graveByCategory.map(({ category, label, total, parties }) => (
+              <Card key={category}>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base flex items-center justify-between">
+                    <span>{label}</span>
+                    <span className="text-sm font-normal text-muted-foreground">
+                      {total} affaire{total !== 1 ? "s" : ""}
+                    </span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <HorizontalBars
+                    title={`${label} par parti`}
+                    bars={parties.map((p) => ({
+                      label: p.name,
+                      value: p.count,
+                      color: p.color || undefined,
+                      href: p.slug ? `/partis/${p.slug}` : undefined,
+                    }))}
+                  />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </>
+      )}
+
+      {/* Status + Category overview */}
       <div className="grid md:grid-cols-2 gap-8">
-        {/* Donut par catégorie */}
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">Par type d&apos;infraction</CardTitle>
@@ -94,7 +153,6 @@ export function JudicialSection({
           </CardContent>
         </Card>
 
-        {/* Statut */}
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">Statut des procédures</CardTitle>
@@ -118,35 +176,12 @@ export function JudicialSection({
         </Card>
       </div>
 
-      {/* Par parti (normalisé) */}
-      {byParty.length > 0 && (
-        <Card className="mt-8">
-          <CardHeader>
-            <CardTitle className="text-lg">Par parti (normalisé)</CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Nombre d&apos;affaires directes pour 100 élus du parti. Seuls les partis avec au moins
-              5 élus sont affichés.
-            </p>
-          </CardHeader>
-          <CardContent>
-            <HorizontalBars
-              title="Affaires directes pour 100 élus par parti"
-              bars={byParty.map((p) => ({
-                label: p.shortName || p.name,
-                value: p.ratePer100,
-                color: p.color || undefined,
-                href: p.slug ? `/partis/${p.slug}` : undefined,
-              }))}
-            />
-          </CardContent>
-        </Card>
-      )}
-
       <MethodologyDisclaimer>
         Seules les affaires où le politicien est directement mis en cause (involvement
         &laquo;&nbsp;direct&nbsp;&raquo;) sont comptabilisées. Les mentions simples, rôles de
-        victime ou plaignant sont exclus. Les ratios par parti sont normalisés par le nombre total
-        d&apos;élus publiés dans notre base.
+        victime ou plaignant sont exclus. Les affaires &laquo;&nbsp;graves&nbsp;&raquo; regroupent :
+        violence, agression sexuelle, harcèlement, menace, incitation à la haine, corruption, fraude
+        fiscale et financement illégal.
       </MethodologyDisclaimer>
     </section>
   );

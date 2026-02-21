@@ -1,4 +1,3 @@
-import { execSync } from "child_process";
 import { inngest } from "../client";
 import { markJobRunning, markJobCompleted, markJobFailed, updateJobProgress } from "../job-helper";
 
@@ -14,53 +13,47 @@ export const syncPoliticians = inngest.createFunction(
     if (jobId) await markJobRunning(jobId);
 
     try {
-      await step.run("assemblee", async () => {
-        execSync("npx tsx scripts/sync-assemblee.ts", {
-          stdio: "inherit",
-          env: { ...process.env },
-          timeout: 5 * 60 * 1000,
-        });
+      const anStats = await step.run("assemblee", async () => {
+        const { syncDeputies } = await import("@/services/sync/deputies");
+        const result = await syncDeputies();
         if (jobId) await updateJobProgress(jobId, 20);
+        return result;
       });
 
-      await step.run("senat", async () => {
-        execSync("npx tsx scripts/sync-senat.ts", {
-          stdio: "inherit",
-          env: { ...process.env },
-          timeout: 5 * 60 * 1000,
-        });
+      const senatStats = await step.run("senat", async () => {
+        const { syncSenators } = await import("@/services/sync/senators");
+        const result = await syncSenators();
         if (jobId) await updateJobProgress(jobId, 40);
+        return result;
       });
 
-      await step.run("gouvernement", async () => {
-        execSync("npx tsx scripts/sync-gouvernement.ts", {
-          stdio: "inherit",
-          env: { ...process.env },
-          timeout: 5 * 60 * 1000,
-        });
+      const gouvStats = await step.run("gouvernement", async () => {
+        const { syncGovernment } = await import("@/services/sync/government");
+        const result = await syncGovernment();
         if (jobId) await updateJobProgress(jobId, 60);
+        return result;
       });
 
-      await step.run("europarl", async () => {
-        execSync("npx tsx scripts/sync-europarl.ts", {
-          stdio: "inherit",
-          env: { ...process.env },
-          timeout: 5 * 60 * 1000,
-        });
+      const euStats = await step.run("europarl", async () => {
+        const { syncEuroparl } = await import("@/services/sync/europarl");
+        const result = await syncEuroparl();
         if (jobId) await updateJobProgress(jobId, 80);
+        return result;
       });
 
-      await step.run("photos", async () => {
-        execSync("npx tsx scripts/sync-photos.ts", {
-          stdio: "inherit",
-          env: { ...process.env },
-          timeout: 5 * 60 * 1000,
-        });
+      const photoStats = await step.run("photos", async () => {
+        const { syncPhotos } = await import("@/services/sync/photos");
+        return syncPhotos();
       });
 
       if (jobId)
         await markJobCompleted(jobId, {
           steps: ["assemblee", "senat", "gouvernement", "europarl", "photos"],
+          anStats,
+          senatStats,
+          gouvStats,
+          euStats,
+          photoStats,
         });
     } catch (err) {
       if (jobId) {

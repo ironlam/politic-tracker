@@ -42,6 +42,7 @@ export default async function EditAffairPage({ params }: PageProps) {
     status: affair.status,
     category: affair.category,
     involvement: affair.involvement,
+    publicationStatus: affair.publicationStatus,
     factsDate: affair.factsDate?.toISOString().split("T")[0],
     startDate: affair.startDate?.toISOString().split("T")[0],
     verdictDate: affair.verdictDate?.toISOString().split("T")[0],

@@ -34,26 +34,3 @@ export function createSyncFunction(
     }
   );
 }
-
-/**
- * Factory for scripts not yet migrated to direct imports.
- * Immediately marks the job as FAILED with a helpful message.
- */
-export function createStubFunction(scriptId: string) {
-  return inngest.createFunction(
-    {
-      id: `script/${scriptId}`,
-      retries: 0,
-    },
-    { event: `sync/${scriptId}` },
-    async ({ event }) => {
-      const jobId = event.data.jobId as string | undefined;
-      if (jobId) {
-        await markJobFailed(
-          jobId,
-          `"${scriptId}" pas encore disponible via Inngest. Utiliser la CLI locale.`
-        );
-      }
-    }
-  );
-}

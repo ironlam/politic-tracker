@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { MessageSquare, X, Minimize2, Maximize2 } from "lucide-react";
@@ -69,7 +70,7 @@ export function ChatWidget() {
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b bg-muted/30">
             <div className="flex items-center gap-2">
-              <img
+              <Image
                 src="/logo.svg"
                 alt="Poligraph"
                 width={32}

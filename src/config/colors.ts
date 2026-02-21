@@ -131,7 +131,7 @@ export function getColor(
   const categoryColors = COLORS[category] as Record<string, ColorVariant>;
   const colorVariant = categoryColors?.[key];
   if (!colorVariant) {
-    console.warn(`Color not found: ${category}.${key}`);
+    // Missing color — return fallback
     return theme === "light" ? "#888888" : "#666666";
   }
   return colorVariant[theme];

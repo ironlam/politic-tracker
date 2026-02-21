@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -308,7 +309,13 @@ export function ChatInterface() {
       <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center space-y-6">
-            <img src="/logo.svg" alt="Poligraph" width={64} height={64} className="rounded-full" />
+            <Image
+              src="/logo.svg"
+              alt="Poligraph"
+              width={64}
+              height={64}
+              className="rounded-full"
+            />
             <div>
               <h2 className="text-xl font-semibold mb-2">Assistant Poligraph</h2>
               <p className="text-muted-foreground max-w-md">
@@ -340,7 +347,7 @@ export function ChatInterface() {
                 )}
               >
                 {message.role === "assistant" && (
-                  <img
+                  <Image
                     src="/logo.svg"
                     alt="Poligraph"
                     width={32}

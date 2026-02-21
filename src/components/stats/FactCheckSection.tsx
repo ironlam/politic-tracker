@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { HorizontalBars } from "./HorizontalBars";
@@ -134,7 +135,13 @@ export function FactCheckSection({
                     {i + 1}.
                   </span>
                   {pol.photoUrl ? (
-                    <img src={pol.photoUrl} alt="" className="w-8 h-8 rounded-full object-cover" />
+                    <Image
+                      src={pol.photoUrl}
+                      alt=""
+                      width={32}
+                      height={32}
+                      className="w-8 h-8 rounded-full object-cover"
+                    />
                   ) : (
                     <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-medium">
                       {pol.fullName

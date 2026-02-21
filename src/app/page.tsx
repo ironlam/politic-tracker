@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { db } from "@/lib/db";
 import { Button } from "@/components/ui/button";
@@ -192,7 +193,7 @@ export default async function HomePage() {
 
               {/* Brand lockup: owl + title */}
               <div className="flex items-center justify-center gap-4 md:gap-5 mb-6">
-                <img
+                <Image
                   src="/logo.svg"
                   alt=""
                   aria-hidden="true"

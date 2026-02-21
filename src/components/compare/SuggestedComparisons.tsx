@@ -70,6 +70,7 @@ export function SuggestedComparisons({ mode }: SuggestedComparisonsProps) {
   );
   const [isLoading, setIsLoading] = useState(mode === "politiciens");
 
+  /* eslint-disable react-hooks/set-state-in-effect -- data fetching effect */
   useEffect(() => {
     if (mode !== "politiciens") return;
 
@@ -86,6 +87,7 @@ export function SuggestedComparisons({ mode }: SuggestedComparisonsProps) {
       })
       .finally(() => setIsLoading(false));
   }, [mode]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   return (
     <div className="py-8">

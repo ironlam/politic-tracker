@@ -49,7 +49,16 @@ const AFFAIR_CATEGORIES = [
 
 const INVOLVEMENTS = ["DIRECT", "INDIRECT", "MENTIONED_ONLY", "VICTIM", "PLAINTIFF"] as const;
 
-const SOURCE_TYPES = ["WIKIDATA", "JUDILIBRE", "LEGIFRANCE", "PRESSE", "MANUAL"] as const;
+const PUBLICATION_STATUSES = ["DRAFT", "PUBLISHED", "REJECTED", "ARCHIVED", "EXCLUDED"] as const;
+
+const SOURCE_TYPES = [
+  "WIKIDATA",
+  "JUDILIBRE",
+  "LEGIFRANCE",
+  "PRESSE",
+  "WIKIPEDIA",
+  "MANUAL",
+] as const;
 
 // ─── Shared sub-schemas ────────────────────────────────────────────────
 
@@ -72,6 +81,7 @@ export const createAffairSchema = z.object({
   status: z.enum(AFFAIR_STATUSES),
   category: z.enum(AFFAIR_CATEGORIES),
   involvement: z.enum(INVOLVEMENTS).optional(),
+  publicationStatus: z.enum(PUBLICATION_STATUSES).optional(),
   factsDate: z.string().optional(),
   startDate: z.string().optional(),
   verdictDate: z.string().optional(),

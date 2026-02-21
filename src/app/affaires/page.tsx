@@ -414,7 +414,8 @@ export default async function AffairesPage({ searchParams }: PageProps) {
               {statusFilter || superCatFilter ? " avec ces filtres" : ""}
             </p>
             <p className="text-sm text-muted-foreground">
-              Les affaires sont ajoutées manuellement avec des sources vérifiables.
+              Les affaires sont ajoutées avec des sources vérifiables. Notre base est enrichie
+              régulièrement et ne prétend pas à l&apos;exhaustivité.
             </p>
           </CardContent>
         </Card>

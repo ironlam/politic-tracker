@@ -344,7 +344,7 @@ model Affair {
 
   status      AffairStatus
   category    AffairCategory
-  involvement Involvement    @default(DIRECT)
+  involvement Involvement    @default(MENTIONED_ONLY)
 
   // Dates
   factsDate   DateTime? // Date of alleged facts

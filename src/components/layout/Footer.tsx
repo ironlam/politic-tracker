@@ -74,8 +74,44 @@ export async function Footer() {
           </div>
         </div>
 
+        {/* Legal disclaimers */}
+        <div className="pt-6 border-t mb-6">
+          <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2 text-xs text-muted-foreground">
+            <li className="flex items-start gap-2">
+              <span
+                className="text-amber-600 dark:text-amber-400 mt-px shrink-0"
+                aria-hidden="true"
+              >
+                &#x2696;
+              </span>
+              La présomption d&apos;innocence s&apos;applique à toute personne mentionnée dans le
+              cadre d&apos;une procédure judiciaire en cours.
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-primary/60 mt-px shrink-0" aria-hidden="true">
+                &#x26A0;
+              </span>
+              Les données présentées peuvent être incomplètes. L&apos;absence d&apos;information ne
+              préjuge pas de la réalité.
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-primary/60 mt-px shrink-0" aria-hidden="true">
+                &#x2699;
+              </span>
+              Certains résumés sont générés automatiquement à partir de sources publiques.
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-primary/60 mt-px shrink-0" aria-hidden="true">
+                &#x2139;
+              </span>
+              Ce site est un outil d&apos;information citoyenne et ne constitue pas une source
+              juridique.
+            </li>
+          </ul>
+        </div>
+
         {/* Bottom bar */}
-        <div className="pt-6 border-t flex flex-col sm:flex-row justify-between items-center gap-4">
+        <div className="pt-4 border-t flex flex-col sm:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
             <a
               href="https://github.com/ironlam/politic-tracker"
@@ -90,10 +126,15 @@ export async function Footer() {
               <span className="sr-only">(ouvre un nouvel onglet)</span>
             </a>
           </div>
-          <p className="text-xs text-muted-foreground text-center sm:text-right max-w-lg">
-            La présomption d&apos;innocence s&apos;applique à toute personne mentionnée dans le
-            cadre d&apos;une procédure judiciaire en cours.
-          </p>
+          <a
+            href="https://github.com/ironlam/politic-tracker/issues"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Signaler une erreur
+            <span className="sr-only">(ouvre un nouvel onglet)</span>
+          </a>
         </div>
       </div>
     </footer>

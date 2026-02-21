@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { ensureContrast } from "@/lib/contrast";
 import { isFeatureEnabled } from "@/lib/feature-flags";
 
+export const revalidate = 300; // ISR: re-check feature flag every 5 minutes
+
 export const metadata: Metadata = {
   title: "Revue de presse",
   description:

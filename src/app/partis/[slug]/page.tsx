@@ -28,7 +28,15 @@ async function getParty(slug: string) {
             take: 1,
           },
           _count: {
-            select: { affairs: { where: { publicationStatus: "PUBLISHED" } } },
+            select: {
+              affairs: {
+                where: {
+                  publicationStatus: "PUBLISHED",
+                  involvement: { notIn: ["VICTIM", "PLAINTIFF"] },
+                  status: "CONDAMNATION_DEFINITIVE",
+                },
+              },
+            },
           },
         },
       },
@@ -389,7 +397,7 @@ export default async function PartyPage({ params }: PageProps) {
                           {politician._count.affairs > 0 && (
                             <div
                               className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center"
-                              title={`${politician._count.affairs} affaire(s)`}
+                              title={`${politician._count.affairs} condamnation(s) définitive(s)`}
                             >
                               <span className="text-white text-[10px] font-bold">
                                 {politician._count.affairs}

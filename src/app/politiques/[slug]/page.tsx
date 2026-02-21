@@ -12,6 +12,7 @@ import {
   AFFAIR_STATUS_NEEDS_PRESUMPTION,
   AFFAIR_CATEGORY_LABELS,
   INVOLVEMENT_LABELS,
+  INVOLVEMENT_COLORS,
   MANDATE_TYPE_LABELS,
   VOTE_POSITION_DOT_COLORS,
   FACTCHECK_RATING_LABELS,
@@ -21,6 +22,7 @@ import {
   feminizePartyRole,
 } from "@/config/labels";
 import { ensureContrast } from "@/lib/contrast";
+import type { Involvement } from "@/types";
 import { PoliticianAvatar } from "@/components/politicians/PoliticianAvatar";
 import { MandateTimeline } from "@/components/politicians/MandateTimeline";
 import { InteractiveTimeline } from "@/components/politicians/InteractiveTimeline";
@@ -762,6 +764,13 @@ export default async function PoliticianPage({ params }: PageProps) {
                                 }}
                               >
                                 {affair.partyAtTime.shortName} à l&apos;époque
+                              </Badge>
+                            )}
+                            {affair.involvement !== "DIRECT" && (
+                              <Badge
+                                className={INVOLVEMENT_COLORS[affair.involvement as Involvement]}
+                              >
+                                {INVOLVEMENT_LABELS[affair.involvement as Involvement]}
                               </Badge>
                             )}
                           </div>

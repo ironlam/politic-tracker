@@ -4,6 +4,8 @@ import { db } from "@/lib/db";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { PoliticalPositionBadge } from "@/components/parties/PoliticalPositionBadge";
+import { AFFAIR_STATUS_NEEDS_PRESUMPTION } from "@/config/labels";
+import type { AffairStatus } from "@/types";
 
 export const revalidate = 300; // 5 minutes, cohérent avec l'API
 
@@ -13,20 +15,44 @@ export const metadata: Metadata = {
 };
 
 async function getParties() {
-  return db.party.findMany({
+  const parties = await db.party.findMany({
     include: {
       _count: {
         select: {
           politicians: true,
           partyMemberships: true,
-          affairsAtTime: { where: { publicationStatus: "PUBLISHED" } },
         },
+      },
+      // Fetch lightweight affair data to compute differentiated counts in JS
+      affairsAtTime: {
+        where: {
+          publicationStatus: "PUBLISHED",
+          involvement: { notIn: ["VICTIM", "PLAINTIFF"] },
+        },
+        select: { id: true, status: true },
       },
       predecessor: {
         select: { shortName: true, slug: true },
       },
     },
     orderBy: [{ politicians: { _count: "desc" } }, { name: "asc" }],
+  });
+
+  // Compute affair counts by category
+  return parties.map((party) => {
+    const affairs = party.affairsAtTime;
+    const condamnations = affairs.filter((a) => a.status === "CONDAMNATION_DEFINITIVE").length;
+    const enCours = affairs.filter(
+      (a) => AFFAIR_STATUS_NEEDS_PRESUMPTION[a.status as AffairStatus]
+    ).length;
+    const total = affairs.length;
+
+    return {
+      ...party,
+      affairCounts: { condamnations, enCours, total },
+      // Remove raw affairs from the result to keep it clean
+      affairsAtTime: undefined,
+    };
   });
 }
 
@@ -37,7 +63,7 @@ export default async function PartiesPage() {
   const activeParties = parties.filter((p) => !p.dissolvedDate && p._count.politicians > 0);
   // Historical = dissolved AND has some history (members, memberships, or affairs)
   const historicalParties = parties.filter(
-    (p) => p.dissolvedDate && (p._count.partyMemberships > 0 || p._count.affairsAtTime > 0)
+    (p) => p.dissolvedDate && (p._count.partyMemberships > 0 || p.affairCounts.total > 0)
   );
 
   return (
@@ -86,11 +112,27 @@ export default async function PartiesPage() {
                             />
                           )}
                         </div>
-                        <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-3 mt-2 text-sm text-muted-foreground flex-wrap">
                           <span>{party._count.politicians} membres</span>
-                          {party._count.affairsAtTime > 0 && (
-                            <span>{party._count.affairsAtTime} affaires</span>
+                          {party.affairCounts.condamnations > 0 && (
+                            <span className="text-red-600 dark:text-red-400 font-medium">
+                              {party.affairCounts.condamnations} condamnation
+                              {party.affairCounts.condamnations > 1 ? "s" : ""}
+                            </span>
                           )}
+                          {party.affairCounts.enCours > 0 && (
+                            <span className="text-amber-600 dark:text-amber-400">
+                              {party.affairCounts.enCours} en cours
+                            </span>
+                          )}
+                          {party.affairCounts.total > 0 &&
+                            party.affairCounts.total !==
+                              party.affairCounts.condamnations + party.affairCounts.enCours && (
+                              <span>
+                                {party.affairCounts.total} affaire
+                                {party.affairCounts.total > 1 ? "s" : ""}
+                              </span>
+                            )}
                         </div>
                         {party.predecessor && (
                           <p className="text-xs text-muted-foreground mt-1">
@@ -146,11 +188,27 @@ export default async function PartiesPage() {
                               </Badge>
                             )}
                           </div>
-                          <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                          <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground flex-wrap">
                             <span>{party._count.partyMemberships} anciens membres</span>
-                            {party._count.affairsAtTime > 0 && (
-                              <span>{party._count.affairsAtTime} affaires</span>
+                            {party.affairCounts.condamnations > 0 && (
+                              <span className="text-red-600 dark:text-red-400 font-medium">
+                                {party.affairCounts.condamnations} condamnation
+                                {party.affairCounts.condamnations > 1 ? "s" : ""}
+                              </span>
                             )}
+                            {party.affairCounts.enCours > 0 && (
+                              <span className="text-amber-600 dark:text-amber-400">
+                                {party.affairCounts.enCours} en cours
+                              </span>
+                            )}
+                            {party.affairCounts.total > 0 &&
+                              party.affairCounts.total !==
+                                party.affairCounts.condamnations + party.affairCounts.enCours && (
+                                <span>
+                                  {party.affairCounts.total} affaire
+                                  {party.affairCounts.total > 1 ? "s" : ""}
+                                </span>
+                              )}
                           </div>
                         </div>
                       </div>

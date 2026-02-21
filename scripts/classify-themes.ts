@@ -16,239 +16,11 @@
 
 import "dotenv/config";
 import { db } from "../src/lib/db";
-import { classifyTheme, ThemeCategoryValue } from "../src/services/summarize";
-import type { ThemeCategory } from "../src/generated/prisma";
-import { AI_RATE_LIMIT_MS, AI_429_BACKOFF_MS } from "../src/config/rate-limits";
-
-// Pre-mapping: dossier category (procedure type) → theme
-const CATEGORY_TO_THEME: Record<string, ThemeCategory> = {
-  Budget: "ECONOMIE_BUDGET",
-  Économie: "ECONOMIE_BUDGET",
-  Santé: "SANTE",
-  International: "AFFAIRES_ETRANGERES_DEFENSE",
-  Institutionnel: "INSTITUTIONS",
-  Constitution: "INSTITUTIONS",
-};
-
-// Progress tracking
-const isTTY = process.stdout.isTTY === true;
-let lastMessageLength = 0;
-
-function updateLine(message: string): void {
-  if (isTTY) {
-    process.stdout.write(`\r\x1b[K${message}`);
-  } else {
-    const padding = " ".repeat(Math.max(0, lastMessageLength - message.length));
-    process.stdout.write(`\r${message}${padding}`);
-  }
-  lastMessageLength = message.length;
-}
-
-function renderProgressBar(current: number, total: number, width = 30): string {
-  const percent = Math.round((current / total) * 100);
-  const filled = Math.round((current / total) * width);
-  const empty = width - filled;
-  const bar = "\u2588".repeat(filled) + "\u2591".repeat(empty);
-  return `[${bar}] ${percent}%`;
-}
-
-interface ClassifyOptions {
-  target: "all" | "dossiers" | "scrutins";
-  force: boolean;
-  limit?: number;
-  dryRun: boolean;
-}
-
-async function classifyDossiers(options: ClassifyOptions) {
-  const { force, limit, dryRun } = options;
-
-  const stats = {
-    processed: 0,
-    premapped: 0,
-    aiClassified: 0,
-    errors: [] as string[],
-  };
-
-  // Fetch dossiers needing classification
-  const whereClause: Record<string, unknown> = {};
-  if (!force) {
-    whereClause.theme = null;
-  }
-
-  let dossiers = await db.legislativeDossier.findMany({
-    where: whereClause,
-    orderBy: { filingDate: "desc" },
-    select: {
-      id: true,
-      externalId: true,
-      title: true,
-      shortTitle: true,
-      category: true,
-      summary: true,
-      exposeDesMotifs: true,
-    },
-  });
-
-  if (limit) {
-    dossiers = dossiers.slice(0, limit);
-  }
-
-  const total = dossiers.length;
-  console.log(`\nDossiers: ${total} to process`);
-
-  if (total === 0) {
-    console.log("\u2713 All dossiers already classified");
-    return stats;
-  }
-
-  for (let i = 0; i < dossiers.length; i++) {
-    const dossier = dossiers[i];
-    const progressMsg = `${renderProgressBar(i + 1, total)} Dossiers ${i + 1}/${total}: ${dossier.externalId}`;
-    updateLine(progressMsg);
-
-    try {
-      let theme: ThemeCategoryValue | null = null;
-
-      // Phase 1: Try pre-mapping from category
-      if (dossier.category && CATEGORY_TO_THEME[dossier.category]) {
-        theme = CATEGORY_TO_THEME[dossier.category] as ThemeCategoryValue;
-        stats.premapped++;
-      }
-
-      // Phase 2: AI classification if pre-mapping failed
-      if (!theme) {
-        if (dryRun) {
-          stats.aiClassified++;
-          stats.processed++;
-          continue;
-        }
-
-        const context = dossier.exposeDesMotifs
-          ? dossier.exposeDesMotifs.substring(0, 500)
-          : undefined;
-
-        theme = await classifyTheme(dossier.shortTitle || dossier.title, dossier.summary, context);
-
-        if (theme) {
-          stats.aiClassified++;
-        }
-
-        // Rate limiting between AI requests
-        if (i < dossiers.length - 1) {
-          await new Promise((resolve) => setTimeout(resolve, AI_RATE_LIMIT_MS));
-        }
-      }
-
-      if (theme && !dryRun) {
-        await db.legislativeDossier.update({
-          where: { id: dossier.id },
-          data: { theme: theme as ThemeCategory },
-        });
-      }
-
-      stats.processed++;
-    } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : String(err);
-      stats.errors.push(`${dossier.externalId}: ${errorMsg}`);
-      stats.processed++;
-
-      if (errorMsg.includes("429") || errorMsg.includes("rate")) {
-        console.log("\n\u23f3 Rate limited, waiting 30s...");
-        await new Promise((resolve) => setTimeout(resolve, AI_429_BACKOFF_MS));
-      }
-    }
-  }
-
-  console.log(""); // newline after progress bar
-  return stats;
-}
-
-async function classifyScrutins(options: ClassifyOptions) {
-  const { force, limit, dryRun } = options;
-
-  const stats = {
-    processed: 0,
-    premapped: 0,
-    aiClassified: 0,
-    errors: [] as string[],
-  };
-
-  const whereClause: Record<string, unknown> = {};
-  if (!force) {
-    whereClause.theme = null;
-  }
-
-  let scrutins = await db.scrutin.findMany({
-    where: whereClause,
-    orderBy: { votingDate: "desc" },
-    select: {
-      id: true,
-      externalId: true,
-      title: true,
-      summary: true,
-    },
-  });
-
-  if (limit) {
-    scrutins = scrutins.slice(0, limit);
-  }
-
-  const total = scrutins.length;
-  console.log(`\nScrutins: ${total} to process`);
-
-  if (total === 0) {
-    console.log("\u2713 All scrutins already classified");
-    return stats;
-  }
-
-  for (let i = 0; i < scrutins.length; i++) {
-    const scrutin = scrutins[i];
-    const progressMsg = `${renderProgressBar(i + 1, total)} Scrutins ${i + 1}/${total}: ${scrutin.externalId}`;
-    updateLine(progressMsg);
-
-    try {
-      if (dryRun) {
-        stats.aiClassified++;
-        stats.processed++;
-        continue;
-      }
-
-      const theme = await classifyTheme(scrutin.title, scrutin.summary);
-
-      if (theme) {
-        await db.scrutin.update({
-          where: { id: scrutin.id },
-          data: { theme: theme as ThemeCategory },
-        });
-        stats.aiClassified++;
-      }
-
-      stats.processed++;
-
-      // Rate limiting between AI requests
-      if (i < scrutins.length - 1) {
-        await new Promise((resolve) => setTimeout(resolve, AI_RATE_LIMIT_MS));
-      }
-    } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : String(err);
-      stats.errors.push(`${scrutin.externalId}: ${errorMsg}`);
-      stats.processed++;
-
-      if (errorMsg.includes("429") || errorMsg.includes("rate")) {
-        console.log("\n\u23f3 Rate limited, waiting 30s...");
-        await new Promise((resolve) => setTimeout(resolve, AI_429_BACKOFF_MS));
-      }
-    }
-  }
-
-  console.log(""); // newline after progress bar
-  return stats;
-}
+import { classifyThemes } from "../src/services/sync/classify-themes";
 
 async function showStats() {
   console.log("Fetching theme classification stats...\n");
 
-  // Dossier stats
   const totalDossiers = await db.legislativeDossier.count();
   const dossiersWithTheme = await db.legislativeDossier.count({
     where: { theme: { not: null } },
@@ -273,7 +45,6 @@ async function showStats() {
     }
   }
 
-  // Scrutin stats
   const totalScrutins = await db.scrutin.count();
   const scrutinsWithTheme = await db.scrutin.count({
     where: { theme: { not: null } },
@@ -354,6 +125,12 @@ Features:
   const force = args.includes("--force");
   const dryRun = args.includes("--dry-run");
 
+  // Check API key
+  if (!process.env.ANTHROPIC_API_KEY && !dryRun) {
+    console.error("\u274c ANTHROPIC_API_KEY environment variable is not set");
+    process.exit(1);
+  }
+
   const startTime = Date.now();
 
   console.log("=".repeat(50));
@@ -365,67 +142,44 @@ Features:
   if (limit) console.log(`Limit: ${limit} items`);
   console.log(`Started at: ${new Date().toISOString()}`);
 
-  // Check API key
-  if (!process.env.ANTHROPIC_API_KEY && !dryRun) {
-    console.error("\u274c ANTHROPIC_API_KEY environment variable is not set");
-    process.exit(1);
-  }
-
-  const options: ClassifyOptions = { target, force, limit, dryRun };
-
-  let dossierStats = { processed: 0, premapped: 0, aiClassified: 0, errors: [] as string[] };
-  let scrutinStats = { processed: 0, premapped: 0, aiClassified: 0, errors: [] as string[] };
-
-  if (target === "all" || target === "dossiers") {
-    dossierStats = await classifyDossiers(options);
-  }
-
-  if (target === "all" || target === "scrutins") {
-    scrutinStats = await classifyScrutins(options);
-  }
+  const stats = await classifyThemes({ target, force, limit, dryRun });
 
   // Summary
   const duration = ((Date.now() - startTime) / 1000).toFixed(2);
-  const allErrors = [...dossierStats.errors, ...scrutinStats.errors];
+  const totalErrors = stats.dossiers.errors + stats.scrutins.errors;
 
   console.log("\n" + "=".repeat(50));
   console.log("Theme Classification Results:");
   console.log("=".repeat(50));
   console.log(
-    `Status: ${allErrors.length === 0 ? "\u2705 SUCCESS" : "\u26a0\ufe0f COMPLETED WITH ERRORS"}`
+    `Status: ${totalErrors === 0 ? "\u2705 SUCCESS" : "\u26a0\ufe0f COMPLETED WITH ERRORS"}`
   );
   console.log(`Duration: ${duration}s`);
   console.log(`Mode: ${dryRun ? "DRY RUN" : "LIVE"}`);
 
   if (target === "all" || target === "dossiers") {
     console.log(`\nDossiers:`);
-    console.log(`  Processed: ${dossierStats.processed}`);
-    console.log(`  Pre-mapped (no AI): ${dossierStats.premapped}`);
-    console.log(`  AI-classified: ${dossierStats.aiClassified}`);
+    console.log(`  Processed: ${stats.dossiers.processed}`);
+    console.log(`  Pre-mapped (no AI): ${stats.dossiers.premapped}`);
+    console.log(`  AI-classified: ${stats.dossiers.aiClassified}`);
+    if (stats.dossiers.errors > 0) console.log(`  Errors: ${stats.dossiers.errors}`);
   }
 
   if (target === "all" || target === "scrutins") {
     console.log(`\nScrutins:`);
-    console.log(`  Processed: ${scrutinStats.processed}`);
-    console.log(`  AI-classified: ${scrutinStats.aiClassified}`);
-  }
-
-  if (allErrors.length > 0) {
-    console.log(`\n\u26a0\ufe0f Errors (${allErrors.length}):`);
-    allErrors.slice(0, 5).forEach((e) => console.log(`  - ${e}`));
-    if (allErrors.length > 5) {
-      console.log(`  ... and ${allErrors.length - 5} more`);
-    }
+    console.log(`  Processed: ${stats.scrutins.processed}`);
+    console.log(`  AI-classified: ${stats.scrutins.aiClassified}`);
+    if (stats.scrutins.errors > 0) console.log(`  Errors: ${stats.scrutins.errors}`);
   }
 
   // Cost estimate
-  const totalAiCalls = dossierStats.aiClassified + scrutinStats.aiClassified;
-  const estimatedTokens = totalAiCalls * 200; // ~200 tokens per classification
-  const estimatedCost = (estimatedTokens / 1000000) * 0.25; // Haiku input pricing
+  const totalAiCalls = stats.dossiers.aiClassified + stats.scrutins.aiClassified;
+  const estimatedTokens = totalAiCalls * 200;
+  const estimatedCost = (estimatedTokens / 1000000) * 0.25;
   console.log(`\nEstimated cost: $${estimatedCost.toFixed(4)} (${totalAiCalls} AI calls)`);
 
   console.log("\n" + "=".repeat(50));
-  process.exit(allErrors.length > 0 ? 1 : 0);
+  process.exit(totalErrors > 0 ? 1 : 0);
 }
 
 main().catch((err) => {

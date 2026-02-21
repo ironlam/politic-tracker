@@ -13,15 +13,10 @@
 
 import "dotenv/config";
 import { createCLI, ProgressTracker, type SyncHandler, type SyncResult } from "../src/lib/sync";
-import { RSSClient, RSS_FEEDS, type RSSItem } from "../src/lib/api";
+import { RSS_FEEDS } from "../src/lib/api";
 import { db } from "../src/lib/db";
-import { RSS_RATE_LIMIT_MS } from "../src/config/rate-limits";
-import {
-  buildPoliticianIndex,
-  buildPartyIndex,
-  findMentions,
-  findPartyMentions,
-} from "../src/lib/name-matching";
+import { syncPress as syncPressService } from "../src/services/sync/press";
+import { buildPartyIndex, findPartyMentions } from "../src/lib/name-matching";
 
 // ============================================
 // SYNC HANDLER
@@ -159,35 +154,24 @@ Options:
       reindexParties?: boolean;
     };
 
-    const stats = {
-      feedsFetched: 0,
-      articlesTotal: 0,
-      articlesNew: 0,
-      articlesSkipped: 0,
-      articlesReindexed: 0,
-      mentionsCreated: 0,
-      partyMentionsCreated: 0,
-    };
-    const errors: string[] = [];
-
-    // Build party index (always needed)
-    console.log("Building party name index...");
-    const parties = await buildPartyIndex();
-    console.log(`Indexed ${parties.length} parties`);
-
-    // Handle reindex-parties mode
+    // Handle reindex-parties mode (CLI-only feature, not in the service)
     if (reindexParties) {
+      const reindexStats = {
+        articlesReindexed: 0,
+        partyMentionsCreated: 0,
+      };
+      const errors: string[] = [];
+
+      console.log("Building party name index...");
+      const parties = await buildPartyIndex();
+      console.log(`Indexed ${parties.length} parties`);
+
       console.log("\n=".repeat(50));
       console.log("Reindexing party mentions on existing articles");
       console.log("=".repeat(50) + "\n");
 
-      // Get all articles
       const articles = await db.pressArticle.findMany({
-        select: {
-          id: true,
-          title: true,
-          description: true,
-        },
+        select: { id: true, title: true, description: true },
       });
 
       console.log(`Found ${articles.length} articles to reindex\n`);
@@ -210,12 +194,9 @@ Options:
               console.log(`\n[DRY-RUN] ${article.title.slice(0, 50)}...`);
               console.log(`  Parties: ${partyMentions.map((m) => m.matchedName).join(", ")}`);
             } else {
-              // Delete existing party mentions for this article
               await db.pressArticlePartyMention.deleteMany({
                 where: { articleId: article.id },
               });
-
-              // Create new party mentions
               await db.pressArticlePartyMention.createMany({
                 data: partyMentions.map((m) => ({
                   articleId: article.id,
@@ -225,8 +206,8 @@ Options:
                 skipDuplicates: true,
               });
             }
-            stats.articlesReindexed++;
-            stats.partyMentionsCreated += partyMentions.length;
+            reindexStats.articlesReindexed++;
+            reindexStats.partyMentionsCreated += partyMentions.length;
           }
         } catch (error) {
           errors.push(`Error reindexing article ${article.id}: ${error}`);
@@ -239,131 +220,26 @@ Options:
       return {
         success: errors.length === 0,
         duration: 0,
-        stats,
+        stats: reindexStats,
         errors,
       };
     }
 
-    // Build politician index
-    console.log("Building politician name index...");
-    const politicians = await buildPoliticianIndex();
-    console.log(`Indexed ${politicians.length} politicians\n`);
-
-    // Fetch RSS feeds
-    const rssClient = new RSSClient({ rateLimitMs: RSS_RATE_LIMIT_MS });
-    const feedIds = feed ? [feed] : undefined;
-
-    console.log("Fetching RSS feeds...\n");
-    const feeds = await rssClient.fetchAllFeeds(feedIds);
-
-    for (const [sourceId, feedData] of feeds) {
-      const config = RSS_FEEDS.find((f) => f.id === sourceId);
-      console.log(`\n${"=".repeat(50)}`);
-      console.log(`Processing: ${config?.name || sourceId}`);
-      console.log(`${"=".repeat(50)}`);
-
-      stats.feedsFetched++;
-
-      const items = limit ? feedData.items.slice(0, limit) : feedData.items;
-      console.log(`Found ${items.length} articles\n`);
-
-      const progress = new ProgressTracker({
-        total: items.length,
-        label: `Processing ${sourceId}`,
-        showBar: true,
-        showETA: true,
-        logInterval: 10,
-      });
-
-      for (const item of items) {
-        stats.articlesTotal++;
-
-        try {
-          // Check if article already exists (by feed+guid, matching the unique constraint)
-          const existing = await db.pressArticle.findUnique({
-            where: {
-              feedSource_externalId: {
-                feedSource: sourceId,
-                externalId: item.guid,
-              },
-            },
-          });
-
-          if (existing) {
-            stats.articlesSkipped++;
-            progress.tick();
-            continue;
-          }
-
-          // Find politician and party mentions
-          const searchText = `${item.title} ${item.description || ""}`;
-          const mentions = findMentions(searchText, politicians);
-          const partyMentions = findPartyMentions(searchText, parties);
-
-          if (dryRun) {
-            console.log(`\n[DRY-RUN] ${item.title.slice(0, 60)}...`);
-            console.log(`  URL: ${item.link}`);
-            console.log(`  Published: ${item.pubDate.toISOString()}`);
-            console.log(`  Politicians: ${mentions.length}`);
-            if (mentions.length > 0) {
-              const names = mentions.map((m) => m.matchedName).join(", ");
-              console.log(`    -> ${names}`);
-            }
-            console.log(`  Parties: ${partyMentions.length}`);
-            if (partyMentions.length > 0) {
-              const names = partyMentions.map((m) => m.matchedName).join(", ");
-              console.log(`    -> ${names}`);
-            }
-            stats.articlesNew++;
-            stats.mentionsCreated += mentions.length;
-            stats.partyMentionsCreated += partyMentions.length;
-          } else {
-            // Create article with mentions
-            await db.pressArticle.create({
-              data: {
-                feedSource: sourceId,
-                externalId: item.guid,
-                title: item.title,
-                description: item.description,
-                url: item.link,
-                imageUrl: item.imageUrl,
-                publishedAt: item.pubDate,
-                mentions: {
-                  create: mentions.map((m) => ({
-                    politicianId: m.politicianId,
-                    matchedName: m.matchedName,
-                  })),
-                },
-                partyMentions: {
-                  create: partyMentions.map((m) => ({
-                    partyId: m.partyId,
-                    matchedName: m.matchedName,
-                  })),
-                },
-              },
-            });
-
-            stats.articlesNew++;
-            stats.mentionsCreated += mentions.length;
-            stats.partyMentionsCreated += partyMentions.length;
-          }
-        } catch (error) {
-          const errorMsg = `Error processing article "${item.title}": ${error}`;
-          errors.push(errorMsg);
-          console.error(`\n${errorMsg}`);
-        }
-
-        progress.tick();
-      }
-
-      progress.finish();
-    }
+    // Normal sync via service
+    const stats = await syncPressService({ dryRun, limit, feed });
 
     return {
-      success: errors.length === 0,
+      success: stats.errors.length === 0,
       duration: 0,
-      stats,
-      errors,
+      stats: {
+        feedsFetched: stats.feedsFetched,
+        articlesTotal: stats.articlesTotal,
+        articlesNew: stats.articlesNew,
+        articlesSkipped: stats.articlesSkipped,
+        mentionsCreated: stats.mentionsCreated,
+        partyMentionsCreated: stats.partyMentionsCreated,
+      },
+      errors: stats.errors,
     };
   },
 };

@@ -15,16 +15,15 @@ import "dotenv/config";
 import { db } from "../src/lib/db";
 import {
   findPotentialDuplicates,
-  mergeAffairs,
   getReconciliationStats,
   type PotentialDuplicate,
 } from "../src/services/affairs/reconciliation";
+import { reconcileAffairs } from "../src/services/sync/reconcile-affairs";
 
 const args = process.argv.slice(2);
 const DRY_RUN = args.includes("--dry-run");
 const AUTO_MERGE = args.includes("--auto-merge");
 const SHOW_STATS = args.includes("--stats");
-const VERBOSE = args.includes("--verbose");
 
 async function showStats() {
   const stats = await getReconciliationStats();
@@ -65,73 +64,22 @@ async function main() {
     return;
   }
 
-  // Find duplicates
-  console.log("\nRecherche de doublons potentiels...");
+  // Show full duplicate details for CLI output
   const duplicates = await findPotentialDuplicates();
-
-  if (duplicates.length === 0) {
-    console.log("\nAucun doublon potentiel détecté.");
-    await db.$disconnect();
-    return;
-  }
-
-  console.log(`\n${duplicates.length} doublon(s) potentiel(s) trouvé(s):`);
-
-  // Display all duplicates
-  for (let i = 0; i < duplicates.length; i++) {
-    displayDuplicate(duplicates[i], i);
-  }
-
-  // Auto-merge CERTAIN and HIGH confidence pairs
-  if (AUTO_MERGE) {
-    const mergeable = duplicates.filter(
-      (d) => d.confidence === "CERTAIN" || d.confidence === "HIGH"
-    );
-
-    if (mergeable.length === 0) {
-      console.log("\nAucun doublon avec confiance CERTAIN ou HIGH à fusionner.");
-    } else {
-      console.log(`\n${"─".repeat(50)}`);
-      console.log(
-        `${DRY_RUN ? "[DRY-RUN] " : ""}Fusion automatique de ${mergeable.length} paire(s)...`
-      );
-
-      let merged = 0;
-      let errors = 0;
-
-      for (const dup of mergeable) {
-        // Keep the affair with more sources, or the older one
-        const keepId =
-          dup.affairA.sources.length >= dup.affairB.sources.length
-            ? dup.affairA.id
-            : dup.affairB.id;
-        const removeId = keepId === dup.affairA.id ? dup.affairB.id : dup.affairA.id;
-
-        if (DRY_RUN) {
-          console.log(`  [DRY-RUN] Fusionnerait ${removeId} → ${keepId}`);
-          merged++;
-          continue;
-        }
-
-        try {
-          await mergeAffairs(keepId, removeId);
-          console.log(`  Fusionné: ${removeId} → ${keepId}`);
-          merged++;
-        } catch (error) {
-          const msg = error instanceof Error ? error.message : String(error);
-          console.error(`  Erreur fusion ${removeId} → ${keepId}: ${msg}`);
-          errors++;
-        }
-      }
-
-      console.log(`\nRésultat: ${merged} fusionné(s), ${errors} erreur(s)`);
+  if (duplicates.length > 0) {
+    console.log(`\n${duplicates.length} doublon(s) potentiel(s) trouvé(s):`);
+    for (let i = 0; i < duplicates.length; i++) {
+      displayDuplicate(duplicates[i], i);
     }
+  }
 
-    // Show remaining POSSIBLE duplicates
-    const remaining = duplicates.filter((d) => d.confidence === "POSSIBLE");
-    if (remaining.length > 0) {
+  // Run the actual merge via the service
+  if (AUTO_MERGE) {
+    const stats = await reconcileAffairs({ dryRun: DRY_RUN, autoMerge: true });
+    console.log(`\nRésultat: ${stats.merged} fusionné(s), ${stats.errors} erreur(s)`);
+    if (stats.remainingPossible > 0) {
       console.log(
-        `\n${remaining.length} doublon(s) POSSIBLE restant(s) (vérification manuelle requise)`
+        `${stats.remainingPossible} doublon(s) POSSIBLE restant(s) (vérification manuelle requise)`
       );
     }
   }

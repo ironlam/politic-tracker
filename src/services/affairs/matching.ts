@@ -29,6 +29,17 @@ export interface MatchCandidate {
 }
 
 /**
+ * Normalize affair title for deduplication.
+ * Strips common prefixes like "[À VÉRIFIER]" and normalizes whitespace.
+ */
+function normalizeAffairTitle(title: string): string {
+  return title
+    .replace(/^\[À VÉRIFIER\]\s*/i, "")
+    .trim()
+    .toLowerCase();
+}
+
+/**
  * Find existing affairs that match a candidate affair.
  * Returns matches ordered by confidence score (highest first).
  */
@@ -93,22 +104,44 @@ export async function findMatchingAffairs(candidate: MatchCandidate): Promise<Ma
     }
   }
 
-  // Priority 4: Title fuzzy match + same politician — POSSIBLE
+  // Priority 4: Normalized title matching — bidirectional
+  // Strips "[À VÉRIFIER]" prefix and compares both directions to catch
+  // duplicates from successive import waves with slightly different formats.
   if (candidate.title) {
-    const titleMatches = await db.affair.findMany({
-      where: {
-        politicianId: candidate.politicianId,
-        title: { contains: candidate.title, mode: "insensitive" },
-      },
-      select: { id: true },
+    const normalizedCandidate = normalizeAffairTitle(candidate.title);
+
+    const samePoliticianAffairs = await db.affair.findMany({
+      where: { politicianId: candidate.politicianId },
+      select: { id: true, title: true, category: true },
     });
-    for (const match of titleMatches) {
-      if (!matches.some((m) => m.affairId === match.id)) {
+
+    for (const existing of samePoliticianAffairs) {
+      if (matches.some((m) => m.affairId === existing.id)) continue;
+
+      const normalizedExisting = normalizeAffairTitle(existing.title);
+
+      // Exact normalized title → HIGH
+      if (normalizedExisting === normalizedCandidate) {
         matches.push({
-          affairId: match.id,
-          confidence: "POSSIBLE",
-          score: 0.5,
-          matchedBy: "title",
+          affairId: existing.id,
+          confidence: "HIGH",
+          score: 0.85,
+          matchedBy: "title-exact",
+        });
+        continue;
+      }
+
+      // One contains the other (bidirectional) → HIGH if same category, POSSIBLE otherwise
+      const aContainsB = normalizedExisting.includes(normalizedCandidate);
+      const bContainsA = normalizedCandidate.includes(normalizedExisting);
+
+      if (aContainsB || bContainsA) {
+        const sameCategory = candidate.category && existing.category === candidate.category;
+        matches.push({
+          affairId: existing.id,
+          confidence: sameCategory ? "HIGH" : "POSSIBLE",
+          score: sameCategory ? 0.75 : 0.5,
+          matchedBy: sameCategory ? "title+category" : "title-partial",
         });
       }
     }

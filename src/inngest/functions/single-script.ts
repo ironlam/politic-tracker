@@ -9,7 +9,7 @@ import { markJobRunning, markJobCompleted, markJobFailed } from "../job-helper";
 export function createSyncFunction(scriptId: string, timeoutMinutes = 10) {
   return inngest.createFunction(
     {
-      id: scriptId,
+      id: `script/${scriptId}`,
       retries: 2,
       concurrency: { limit: 1, key: `"${scriptId}"` },
     },

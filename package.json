@@ -111,6 +111,7 @@
     "sync:moderate:stats": "tsx scripts/sync-moderate-affairs.ts --stats",
     "sync:enrich": "tsx scripts/sync-enrich-affairs.ts",
     "sync:enrich:stats": "tsx scripts/sync-enrich-affairs.ts --stats",
+    "sync:target": "tsx scripts/sync-target.ts",
     "classify:themes": "tsx scripts/classify-themes.ts",
     "classify:themes:stats": "tsx scripts/classify-themes.ts --stats",
     "prominence:calculate": "npx tsx scripts/recalculate-prominence.ts",

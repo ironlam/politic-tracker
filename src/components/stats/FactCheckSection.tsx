@@ -2,172 +2,325 @@ import Image from "next/image";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { HorizontalBars } from "./HorizontalBars";
+import { ProportionBar } from "./ProportionBar";
 import { MethodologyDisclaimer } from "./MethodologyDisclaimer";
+import { VERDICT_GROUP_COLORS, VERDICT_GROUP_LABELS } from "@/config/labels";
 import type { FactCheckRating } from "@/types";
 
-const VERDICT_COLORS: Record<string, string> = {
-  vrai: "#2d6a4f",
-  mitige: "#e9c46a",
-  faux: "#c1121f",
-  inverifiable: "#6b7280",
-};
-
-const VERDICT_LABELS: Record<string, string> = {
-  vrai: "Vrai / Plutôt vrai",
-  mitige: "Mitigé",
-  faux: "Faux / Trompeur",
-  inverifiable: "Invérifiable",
-};
-
-interface PartyFalseStats {
-  name: string;
-  count: number;
-  color: string | null;
-  slug: string | null;
+interface VerdictBreakdown {
+  vrai: number;
+  trompeur: number;
+  faux: number;
+  inverifiable: number;
 }
 
-interface PoliticianFalseStats {
+interface RankedPolitician {
   fullName: string;
   slug: string;
   photoUrl: string | null;
   party: string | null;
   partyColor: string | null;
-  count: number;
+  totalMentions: number;
+  breakdown: VerdictBreakdown;
+  scoreVrai: number;
+  scoreFaux: number;
+}
+
+interface RankedParty {
+  name: string;
+  color: string | null;
+  slug: string | null;
+  totalMentions: number;
+  breakdown: VerdictBreakdown;
+  scoreVrai: number;
+  scoreFaux: number;
 }
 
 interface FactCheckSectionProps {
   total: number;
-  groups: { vrai: number; mitige: number; faux: number; inverifiable: number };
+  groups: VerdictBreakdown;
   bySource: { source: string; count: number }[];
   byRating: { rating: FactCheckRating; count: number }[];
-  falseByParty: PartyFalseStats[];
-  topPoliticians: PoliticianFalseStats[];
+  mostReliablePoliticians: RankedPolitician[];
+  leastReliablePoliticians: RankedPolitician[];
+  mostReliableParties: RankedParty[];
+  leastReliableParties: RankedParty[];
+}
+
+function PoliticianRankingItem({
+  pol,
+  rank,
+  mode,
+}: {
+  pol: RankedPolitician;
+  rank: number;
+  mode: "reliable" | "unreliable";
+}) {
+  const score = mode === "reliable" ? pol.scoreVrai : pol.scoreFaux;
+  return (
+    <Link
+      href={`/politiques/${pol.slug}`}
+      className="flex items-center gap-3 hover:bg-muted/50 rounded-lg p-2 -mx-2 transition-colors"
+    >
+      <span className="text-sm font-bold text-muted-foreground w-6 text-right tabular-nums shrink-0">
+        {rank}.
+      </span>
+      {pol.photoUrl ? (
+        <Image
+          src={pol.photoUrl}
+          alt=""
+          width={32}
+          height={32}
+          className="w-8 h-8 rounded-full object-cover shrink-0"
+        />
+      ) : (
+        <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-medium shrink-0">
+          {pol.fullName
+            .split(" ")
+            .map((n) => n[0])
+            .join("")
+            .slice(0, 2)}
+        </div>
+      )}
+      <div className="flex-1 min-w-0">
+        <div className="text-sm font-medium truncate">{pol.fullName}</div>
+        <div className="flex items-center gap-2">
+          {pol.party && <span className="text-xs text-muted-foreground">{pol.party}</span>}
+          <span className="text-xs text-muted-foreground">
+            · {pol.totalMentions} fact-check{pol.totalMentions > 1 ? "s" : ""}
+          </span>
+        </div>
+        <div className="mt-1">
+          <ProportionBar breakdown={pol.breakdown} />
+        </div>
+      </div>
+      <span
+        className="text-sm font-bold tabular-nums shrink-0"
+        style={{
+          color: mode === "reliable" ? VERDICT_GROUP_COLORS.vrai : VERDICT_GROUP_COLORS.faux,
+        }}
+      >
+        {(score * 100).toFixed(0)}%
+      </span>
+    </Link>
+  );
+}
+
+function PartyRankingItem({
+  party,
+  rank,
+  mode,
+}: {
+  party: RankedParty;
+  rank: number;
+  mode: "reliable" | "unreliable";
+}) {
+  const score = mode === "reliable" ? party.scoreVrai : party.scoreFaux;
+  return (
+    <Link
+      href={party.slug ? `/partis/${party.slug}` : "#"}
+      className="flex items-center gap-3 hover:bg-muted/50 rounded-lg p-2 -mx-2 transition-colors"
+    >
+      <span className="text-sm font-bold text-muted-foreground w-6 text-right tabular-nums shrink-0">
+        {rank}.
+      </span>
+      <div
+        className="w-8 h-8 rounded flex items-center justify-center text-white text-xs font-bold shrink-0"
+        style={{ backgroundColor: party.color || "#888" }}
+      >
+        {party.name.slice(0, 3)}
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="text-sm font-medium truncate">{party.name}</div>
+        <span className="text-xs text-muted-foreground">
+          {party.totalMentions} fact-check{party.totalMentions > 1 ? "s" : ""}
+        </span>
+        <div className="mt-1">
+          <ProportionBar breakdown={party.breakdown} />
+        </div>
+      </div>
+      <span
+        className="text-sm font-bold tabular-nums shrink-0"
+        style={{
+          color: mode === "reliable" ? VERDICT_GROUP_COLORS.vrai : VERDICT_GROUP_COLORS.faux,
+        }}
+      >
+        {(score * 100).toFixed(0)}%
+      </span>
+    </Link>
+  );
 }
 
 export function FactCheckSection({
   total,
   groups,
   bySource,
-  falseByParty,
-  topPoliticians,
+  mostReliablePoliticians,
+  leastReliablePoliticians,
+  mostReliableParties,
+  leastReliableParties,
 }: FactCheckSectionProps) {
+  const vraiPct = total > 0 ? ((groups.vrai / total) * 100).toFixed(0) : "0";
+  const trompeurPct = total > 0 ? ((groups.trompeur / total) * 100).toFixed(0) : "0";
   const fauxPct = total > 0 ? ((groups.faux / total) * 100).toFixed(0) : "0";
 
-  const verdictBars = (["vrai", "mitige", "faux", "inverifiable"] as const)
+  const verdictBars = (["vrai", "trompeur", "faux", "inverifiable"] as const)
     .filter((key) => groups[key] > 0)
     .map((key) => ({
-      label: VERDICT_LABELS[key],
+      label: VERDICT_GROUP_LABELS[key],
       value: groups[key],
-      color: VERDICT_COLORS[key],
+      color: VERDICT_GROUP_COLORS[key],
     }));
 
   return (
     <section aria-labelledby="factcheck-heading" className="py-8">
-      {/* Contextual KPIs */}
-      <div className="grid grid-cols-3 gap-4 mb-8">
+      {/* Methodology — top, before data */}
+      <MethodologyDisclaimer
+        details={
+          <ul className="list-disc list-inside space-y-1">
+            <li>
+              <strong>Biais de visibilité :</strong> les figures médiatiques sont plus scrutées par
+              les fact-checkeurs
+            </li>
+            <li>
+              <strong>Biais de sélection :</strong> les fact-checkeurs ciblent les propos douteux,
+              pas les évidences
+            </li>
+            <li>
+              <strong>Score pondéré :</strong> le classement utilise une moyenne pondérée qui réduit
+              l&apos;impact des petits échantillons (méthode bayésienne)
+            </li>
+            <li>
+              <strong>Seuil :</strong> minimum 5 propos vérifiés pour figurer dans les classements
+            </li>
+          </ul>
+        }
+      >
+        Le nombre de fact-checks reflète la place d&apos;un responsable politique dans le débat
+        public. Les proportions et le score pondéré permettent de comparer leur fiabilité
+        indépendamment de leur exposition médiatique.
+      </MethodologyDisclaimer>
+
+      {/* KPI cards — 4 columns */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 mb-8">
         <Card>
           <CardContent className="pt-6 text-center">
             <div className="text-3xl font-bold tabular-nums">{total.toLocaleString("fr-FR")}</div>
-            <div className="text-sm text-muted-foreground mt-1">Fact-checks analysés</div>
+            <div className="text-sm text-muted-foreground mt-1">Propos vérifiés</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6 text-center">
-            <div className="text-3xl font-bold tabular-nums text-red-600">
-              {groups.faux.toLocaleString("fr-FR")}
+            <div
+              className="text-3xl font-bold tabular-nums"
+              style={{ color: VERDICT_GROUP_COLORS.vrai }}
+            >
+              {vraiPct}%
             </div>
-            <div className="text-sm text-muted-foreground mt-1">Déclarations fausses</div>
+            <div className="text-sm text-muted-foreground mt-1">Vrai</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6 text-center">
-            <div className="text-3xl font-bold tabular-nums text-red-600">{fauxPct}%</div>
-            <div className="text-sm text-muted-foreground mt-1">Taux de fausseté</div>
+            <div
+              className="text-3xl font-bold tabular-nums"
+              style={{ color: VERDICT_GROUP_COLORS.trompeur }}
+            >
+              {trompeurPct}%
+            </div>
+            <div className="text-sm text-muted-foreground mt-1">Trompeur</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6 text-center">
+            <div
+              className="text-3xl font-bold tabular-nums"
+              style={{ color: VERDICT_GROUP_COLORS.faux }}
+            >
+              {fauxPct}%
+            </div>
+            <div className="text-sm text-muted-foreground mt-1">Faux</div>
           </CardContent>
         </Card>
       </div>
 
-      {/* False declarations by party */}
-      {falseByParty.length > 0 && (
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle className="text-lg" id="factcheck-heading">
-              Fausses déclarations par parti
-            </CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Nombre de fact-checks classés faux, trompeurs ou hors contexte par parti
-            </p>
-          </CardHeader>
-          <CardContent>
-            <HorizontalBars
-              title="Fausses déclarations par parti politique"
-              bars={falseByParty.map((p) => ({
-                label: p.name,
-                value: p.count,
-                color: p.color || undefined,
-                href: p.slug ? `/partis/${p.slug}` : undefined,
-              }))}
-            />
-          </CardContent>
-        </Card>
-      )}
+      {/* Politician rankings — 2 columns */}
+      <div className="grid md:grid-cols-2 gap-8 mb-8" id="factcheck-heading">
+        {mostReliablePoliticians.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Politiques les plus fiables</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Par proportion de propos vérifiés vrais (score pondéré)
+              </p>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-1">
+                {mostReliablePoliticians.map((pol, i) => (
+                  <PoliticianRankingItem key={pol.slug} pol={pol} rank={i + 1} mode="reliable" />
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
-      {/* Top 10 politicians */}
-      {topPoliticians.length > 0 && (
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle className="text-lg">
-              Politiciens avec le plus de fausses déclarations
-            </CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Classement par nombre de fact-checks classés faux ou trompeurs
-            </p>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {topPoliticians.map((pol, i) => (
-                <Link
-                  key={pol.slug}
-                  href={`/politiques/${pol.slug}`}
-                  className="flex items-center gap-3 hover:bg-muted/50 rounded-lg p-2 -mx-2 transition-colors"
-                >
-                  <span className="text-sm font-bold text-muted-foreground w-6 text-right tabular-nums">
-                    {i + 1}.
-                  </span>
-                  {pol.photoUrl ? (
-                    <Image
-                      src={pol.photoUrl}
-                      alt=""
-                      width={32}
-                      height={32}
-                      className="w-8 h-8 rounded-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-medium">
-                      {pol.fullName
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")
-                        .slice(0, 2)}
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium truncate">{pol.fullName}</div>
-                    {pol.party && <div className="text-xs text-muted-foreground">{pol.party}</div>}
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <span
-                      className="inline-block w-2 h-2 rounded-full"
-                      style={{ backgroundColor: pol.partyColor || "#6b7280" }}
-                    />
-                    <span className="text-sm font-bold tabular-nums">{pol.count}</span>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+        {leastReliablePoliticians.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Politiques les moins fiables</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Par proportion de propos vérifiés faux (score pondéré)
+              </p>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-1">
+                {leastReliablePoliticians.map((pol, i) => (
+                  <PoliticianRankingItem key={pol.slug} pol={pol} rank={i + 1} mode="unreliable" />
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
+      {/* Party rankings — 2 columns */}
+      <div className="grid md:grid-cols-2 gap-8 mb-8">
+        {mostReliableParties.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Partis les plus fiables</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Par proportion de propos vérifiés vrais (score pondéré)
+              </p>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-1">
+                {mostReliableParties.map((party, i) => (
+                  <PartyRankingItem key={party.name} party={party} rank={i + 1} mode="reliable" />
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {leastReliableParties.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Partis les moins fiables</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Par proportion de propos vérifiés faux (score pondéré)
+              </p>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-1">
+                {leastReliableParties.map((party, i) => (
+                  <PartyRankingItem key={party.name} party={party} rank={i + 1} mode="unreliable" />
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
 
       {/* Verdict distribution + sources */}
       <div className="grid md:grid-cols-2 gap-8">
@@ -178,15 +331,18 @@ export function FactCheckSection({
           <CardContent>
             <HorizontalBars title="Répartition des verdicts de fact-checking" bars={verdictBars} />
 
-            <div className="grid grid-cols-3 gap-4 mt-6 pt-4 border-t">
-              {(["vrai", "faux", "mitige"] as const).map((key) => {
+            <div className="grid grid-cols-4 gap-4 mt-6 pt-4 border-t">
+              {(["vrai", "trompeur", "faux", "inverifiable"] as const).map((key) => {
                 const pct = total > 0 ? ((groups[key] / total) * 100).toFixed(0) : "0";
                 return (
                   <div key={key} className="text-center">
-                    <div className="text-2xl font-bold" style={{ color: VERDICT_COLORS[key] }}>
+                    <div
+                      className="text-2xl font-bold"
+                      style={{ color: VERDICT_GROUP_COLORS[key] }}
+                    >
                       {pct}%
                     </div>
-                    <div className="text-xs text-muted-foreground">{VERDICT_LABELS[key]}</div>
+                    <div className="text-xs text-muted-foreground">{VERDICT_GROUP_LABELS[key]}</div>
                   </div>
                 );
               })}
@@ -211,13 +367,18 @@ export function FactCheckSection({
         </Card>
       </div>
 
-      <MethodologyDisclaimer>
-        Les fact-checks sont issus d&apos;organismes indépendants (AFP Factuel, Les Décodeurs,
-        etc.). Les verdicts sont classés selon l&apos;échelle de chaque source, harmonisée en 4
-        catégories. Un politicien est comptabilisé s&apos;il est mentionné dans le fact-check, même
-        s&apos;il n&apos;est pas l&apos;auteur de la déclaration vérifiée. Minimum 3 mentions par
-        parti pour apparaître dans le classement.
-      </MethodologyDisclaimer>
+      {/* Legend for proportion bars */}
+      <div className="flex items-center justify-center gap-4 mt-6 text-xs text-muted-foreground">
+        {(["vrai", "trompeur", "faux", "inverifiable"] as const).map((key) => (
+          <div key={key} className="flex items-center gap-1.5">
+            <span
+              className="inline-block w-3 h-3 rounded-sm"
+              style={{ backgroundColor: VERDICT_GROUP_COLORS[key] }}
+            />
+            {VERDICT_GROUP_LABELS[key]}
+          </div>
+        ))}
+      </div>
     </section>
   );
 }

@@ -1,8 +1,9 @@
-import { execSync } from "child_process";
 import { inngest } from "../client";
 import { markJobRunning, markJobCompleted, markJobFailed, updateJobProgress } from "../job-helper";
+import { syncFactchecks } from "@/services/sync/factchecks";
+import { syncJudilibre } from "@/services/sync/judilibre";
 
-export const syncFactchecks = inngest.createFunction(
+export const syncFactchecksGrouped = inngest.createFunction(
   {
     id: "sync-factchecks",
     retries: 2,
@@ -14,26 +15,21 @@ export const syncFactchecks = inngest.createFunction(
     if (jobId) await markJobRunning(jobId);
 
     try {
-      await step.run("factchecks", async () => {
-        execSync("npx tsx scripts/sync-factchecks.ts --limit=50", {
-          stdio: "inherit",
-          env: { ...process.env },
-          timeout: 5 * 60 * 1000,
-        });
+      const fcStats = await step.run("factchecks", async () => {
+        const stats = await syncFactchecks({ limit: 50 });
         if (jobId) await updateJobProgress(jobId, 50);
+        return stats;
       });
 
-      await step.run("judilibre", async () => {
-        execSync("npx tsx scripts/sync-judilibre.ts --limit=20", {
-          stdio: "inherit",
-          env: { ...process.env },
-          timeout: 5 * 60 * 1000,
-        });
+      const jStats = await step.run("judilibre", async () => {
+        return syncJudilibre({ limit: 20 });
       });
 
       if (jobId)
         await markJobCompleted(jobId, {
           steps: ["factchecks", "judilibre"],
+          factchecksStats: fcStats,
+          judilibreStats: jStats,
         });
     } catch (err) {
       if (jobId) {

@@ -1,6 +1,7 @@
-import { execSync } from "child_process";
 import { inngest } from "../client";
 import { markJobRunning, markJobCompleted, markJobFailed, updateJobProgress } from "../job-helper";
+import { recalculateProminence } from "@/services/sync/prominence";
+import { assignPublicationStatus } from "@/services/sync/publication-status";
 
 export const maintenance = inngest.createFunction(
   {
@@ -14,26 +15,21 @@ export const maintenance = inngest.createFunction(
     if (jobId) await markJobRunning(jobId);
 
     try {
-      await step.run("prominence", async () => {
-        execSync("npx tsx scripts/recalculate-prominence.ts", {
-          stdio: "inherit",
-          env: { ...process.env },
-          timeout: 5 * 60 * 1000,
-        });
+      const promStats = await step.run("prominence", async () => {
+        const stats = await recalculateProminence();
         if (jobId) await updateJobProgress(jobId, 50);
+        return stats;
       });
 
-      await step.run("publication-status", async () => {
-        execSync("npx tsx scripts/assign-publication-status.ts", {
-          stdio: "inherit",
-          env: { ...process.env },
-          timeout: 5 * 60 * 1000,
-        });
+      const pubStats = await step.run("publication-status", async () => {
+        return assignPublicationStatus();
       });
 
       if (jobId)
         await markJobCompleted(jobId, {
           steps: ["prominence", "publication-status"],
+          prominenceStats: promStats,
+          publicationStatusStats: pubStats,
         });
     } catch (err) {
       if (jobId) {

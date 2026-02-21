@@ -26,7 +26,8 @@ export const syncDaily = inngest.createFunction(
     retries: 0,
     concurrency: { limit: 1 },
   },
-  [{ cron: "0 5,11,19 * * *" }, { event: "sync/daily" }],
+  // Cron disabled — GitHub Actions handles daily scheduling until Phase 2 migration
+  { event: "sync/daily" },
   async ({ step }) => {
     const results: Array<{ name: string; success: boolean; error?: string }> = [];
 

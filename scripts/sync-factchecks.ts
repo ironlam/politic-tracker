@@ -13,40 +13,13 @@
  */
 
 import "dotenv/config";
-import { createCLI, ProgressTracker, type SyncHandler, type SyncResult } from "../src/lib/sync";
-import { searchClaims, mapTextualRating, fetchPageTitle } from "../src/lib/api";
-import type { FactCheckClaim } from "../src/lib/api";
-import { FACTCHECK_RATE_LIMIT_MS } from "../src/config/rate-limits";
+import { createCLI, type SyncHandler, type SyncResult } from "../src/lib/sync";
+import { syncFactchecks } from "../src/services/sync/factchecks";
 import { db } from "../src/lib/db";
-import { normalizeText, buildPoliticianIndex, findMentions } from "../src/lib/name-matching";
-import { generateDateSlug } from "../src/lib/utils";
-
-/**
- * Generate a unique slug for a fact-check, handling collisions.
- */
-async function generateUniqueFactCheckSlug(date: Date | null, title: string): Promise<string> {
-  const baseSlug = generateDateSlug(date, title);
-  let slug = baseSlug;
-  let counter = 2;
-
-  while (await db.factCheck.findUnique({ where: { slug } })) {
-    const suffix = `-${counter}`;
-    const maxBaseLength = 80 - suffix.length;
-    const truncatedBase = baseSlug.slice(0, maxBaseLength).replace(/-$/, "");
-    slug = `${truncatedBase}${suffix}`;
-    counter++;
-  }
-
-  return slug;
-}
 
 // ============================================
 // SYNC HANDLER
 // ============================================
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
 
 const handler: SyncHandler = {
   name: "Politic Tracker - Fact-Check Sync (Google API)",
@@ -164,7 +137,7 @@ Environment:
       dryRun = false,
       force = false,
       limit,
-      politician: politicianFilter,
+      politician,
       all = false,
     } = options as {
       dryRun?: boolean;
@@ -174,219 +147,20 @@ Environment:
       all?: boolean;
     };
 
-    const stats = {
-      politiciansSearched: 0,
-      claimsFound: 0,
-      factChecksCreated: 0,
-      factChecksSkipped: 0,
-      mentionsCreated: 0,
-      apiErrors: 0,
-    };
-    const errors: string[] = [];
-
-    // Build politician index for mention matching
-    console.log("Building politician name index...");
-    const allPoliticians = await buildPoliticianIndex();
-    console.log(`Indexed ${allPoliticians.length} politicians\n`);
-
-    // Determine which politicians to search
-    let searchTargets: Array<{ id: string; fullName: string }>;
-
-    if (politicianFilter) {
-      // Search specific politician(s) by name
-      const normalized = normalizeText(politicianFilter);
-      searchTargets = allPoliticians
-        .filter(
-          (p) =>
-            p.normalizedFullName.includes(normalized) || p.normalizedLastName.includes(normalized)
-        )
-        .map((p) => ({ id: p.id, fullName: p.fullName }));
-
-      if (searchTargets.length === 0) {
-        console.log(`No politician found matching "${politicianFilter}"`);
-        return { success: true, duration: 0, stats, errors };
-      }
-      console.log(
-        `Found ${searchTargets.length} matching politicians: ${searchTargets.map((p) => p.fullName).join(", ")}\n`
-      );
-    } else if (all) {
-      searchTargets = allPoliticians.map((p) => ({ id: p.id, fullName: p.fullName }));
-    } else {
-      // Default: only politicians with current mandates
-      const activePoliticians = await db.politician.findMany({
-        where: {
-          mandates: { some: { isCurrent: true } },
-        },
-        select: { id: true, fullName: true },
-      });
-      searchTargets = activePoliticians;
-    }
-
-    if (limit) {
-      searchTargets = searchTargets.slice(0, limit);
-    }
-
-    console.log(`Searching fact-checks for ${searchTargets.length} politicians\n`);
-
-    const progress = new ProgressTracker({
-      total: searchTargets.length,
-      label: "Searching fact-checks",
-      showBar: true,
-      showETA: true,
-      logInterval: 10,
-    });
-
-    for (const target of searchTargets) {
-      stats.politiciansSearched++;
-
-      try {
-        const claims = await searchClaims(target.fullName);
-        stats.claimsFound += claims.length;
-
-        for (const claim of claims) {
-          for (const review of claim.claimReview) {
-            // Check if already exists by URL
-            if (!force) {
-              const existing = await db.factCheck.findUnique({
-                where: { sourceUrl: review.url },
-              });
-              if (existing) {
-                stats.factChecksSkipped++;
-                continue;
-              }
-            }
-
-            // Find all politician mentions in the claim text + title
-            const searchText = `${claim.text} ${review.title} ${claim.claimant || ""}`;
-            const mentions = findMentions(searchText, allPoliticians);
-
-            // If no politician matched, at least link to the target
-            if (mentions.length === 0) {
-              mentions.push({
-                politicianId: target.id,
-                matchedName: target.fullName,
-              });
-            }
-
-            const verdictRating = mapTextualRating(review.textualRating);
-
-            const reviewDate = review.reviewDate ? new Date(review.reviewDate) : new Date();
-
-            // Fetch full title from source page when Google API truncates it
-            let title = review.title;
-            if (title.endsWith("...") || title.endsWith("…")) {
-              title = await fetchPageTitle(review.url, title);
-            }
-
-            if (dryRun) {
-              console.log(`\n[DRY-RUN] ${title.slice(0, 70)}...`);
-              console.log(`  Claim: ${claim.text.slice(0, 80)}...`);
-              console.log(`  Verdict: ${review.textualRating} → ${verdictRating}`);
-              console.log(`  Source: ${review.publisher.name}`);
-              console.log(`  URL: ${review.url}`);
-              console.log(`  Politicians: ${mentions.map((m) => m.matchedName).join(", ")}`);
-              stats.factChecksCreated++;
-              stats.mentionsCreated += mentions.length;
-            } else {
-              try {
-                if (force) {
-                  // Upsert when force mode — do NOT overwrite existing slug
-                  await db.factCheck.upsert({
-                    where: { sourceUrl: review.url },
-                    update: {
-                      claimText: claim.text,
-                      claimant: claim.claimant || null,
-                      title,
-                      verdict: review.textualRating,
-                      verdictRating,
-                      source: review.publisher.name,
-                      publishedAt: reviewDate,
-                      claimDate: claim.claimDate ? new Date(claim.claimDate) : null,
-                      languageCode: review.languageCode || null,
-                      mentions: {
-                        deleteMany: {},
-                        create: mentions.map((m) => ({
-                          politicianId: m.politicianId,
-                          matchedName: m.matchedName,
-                        })),
-                      },
-                    },
-                    create: {
-                      slug: await generateUniqueFactCheckSlug(reviewDate, title),
-                      claimText: claim.text,
-                      claimant: claim.claimant || null,
-                      title,
-                      verdict: review.textualRating,
-                      verdictRating,
-                      source: review.publisher.name,
-                      sourceUrl: review.url,
-                      publishedAt: reviewDate,
-                      claimDate: claim.claimDate ? new Date(claim.claimDate) : null,
-                      languageCode: review.languageCode || null,
-                      mentions: {
-                        create: mentions.map((m) => ({
-                          politicianId: m.politicianId,
-                          matchedName: m.matchedName,
-                        })),
-                      },
-                    },
-                  });
-                } else {
-                  await db.factCheck.create({
-                    data: {
-                      slug: await generateUniqueFactCheckSlug(reviewDate, title),
-                      claimText: claim.text,
-                      claimant: claim.claimant || null,
-                      title,
-                      verdict: review.textualRating,
-                      verdictRating,
-                      source: review.publisher.name,
-                      sourceUrl: review.url,
-                      publishedAt: reviewDate,
-                      claimDate: claim.claimDate ? new Date(claim.claimDate) : null,
-                      languageCode: review.languageCode || null,
-                      mentions: {
-                        create: mentions.map((m) => ({
-                          politicianId: m.politicianId,
-                          matchedName: m.matchedName,
-                        })),
-                      },
-                    },
-                  });
-                }
-
-                stats.factChecksCreated++;
-                stats.mentionsCreated += mentions.length;
-              } catch (error) {
-                // Skip duplicates silently
-                if (error instanceof Error && error.message.includes("Unique constraint")) {
-                  stats.factChecksSkipped++;
-                } else {
-                  throw error;
-                }
-              }
-            }
-          }
-        }
-      } catch (error) {
-        stats.apiErrors++;
-        const errorMsg = `Error searching "${target.fullName}": ${error}`;
-        errors.push(errorMsg);
-        console.error(`\n${errorMsg}`);
-      }
-
-      // Rate limiting between politician searches
-      await sleep(FACTCHECK_RATE_LIMIT_MS);
-      progress.tick();
-    }
-
-    progress.finish();
+    const stats = await syncFactchecks({ dryRun, force, limit, politician, all });
 
     return {
-      success: errors.length === 0,
+      success: stats.errors.length === 0,
       duration: 0,
-      stats,
-      errors,
+      stats: {
+        politiciansSearched: stats.politiciansSearched,
+        claimsFound: stats.claimsFound,
+        factChecksCreated: stats.factChecksCreated,
+        factChecksSkipped: stats.factChecksSkipped,
+        mentionsCreated: stats.mentionsCreated,
+        apiErrors: stats.apiErrors,
+      },
+      errors: stats.errors,
     };
   },
 };

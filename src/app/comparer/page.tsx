@@ -17,6 +17,8 @@ import { MANDATE_TYPE_LABELS } from "@/config/labels";
 import { BetaDisclaimer } from "@/components/BetaDisclaimer";
 import type { MandateType, AffairStatus, FactCheckRating } from "@/types";
 
+export const revalidate = 300; // ISR: re-check feature flag every 5 minutes
+
 export const metadata: Metadata = {
   title: "Comparer des politiques",
   description:

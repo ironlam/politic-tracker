@@ -18,6 +18,8 @@ import {
 import type { DossierStatus, ThemeCategory } from "@/generated/prisma";
 import { ExternalLink } from "lucide-react";
 
+export const revalidate = 300; // ISR: re-check feature flag every 5 minutes
+
 export const metadata: Metadata = {
   title: "En direct de l'Assemblée",
   description:

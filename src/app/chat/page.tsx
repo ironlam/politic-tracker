@@ -5,6 +5,8 @@ import { ChatInterface } from "@/components/chat/ChatInterface";
 import { MessageSquare, ShieldCheck, Database, Sparkles } from "lucide-react";
 import { isFeatureEnabled } from "@/lib/feature-flags";
 
+export const revalidate = 300; // ISR: re-check feature flag every 5 minutes
+
 export const metadata: Metadata = {
   title: "Assistant IA - Poligraph",
   description:

@@ -33,11 +33,8 @@ interface PageProps {
   }>;
 }
 
-// Statuses that count as convictions
-const CONVICTION_STATUSES: AffairStatus[] = [
-  "CONDAMNATION_PREMIERE_INSTANCE",
-  "CONDAMNATION_DEFINITIVE",
-];
+// Only definitive convictions trigger alerts (première instance can be overturned on appeal)
+const CONVICTION_STATUSES: AffairStatus[] = ["CONDAMNATION_DEFINITIVE"];
 
 // Mandate type groups
 const MANDATE_GROUPS: Record<string, MandateType[]> = {
@@ -157,6 +154,7 @@ async function queryPoliticians(
               where: {
                 publicationStatus: "PUBLISHED",
                 involvement: { notIn: ["VICTIM", "PLAINTIFF"] },
+                status: "CONDAMNATION_DEFINITIVE",
               },
             },
           },

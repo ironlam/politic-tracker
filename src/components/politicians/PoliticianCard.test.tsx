@@ -89,7 +89,7 @@ describe("PoliticianCard", () => {
       _count: { affairs: 2 },
     };
     render(<PoliticianCard politician={politicianWithConviction} showConvictionBadge />);
-    expect(screen.getByText("2 affaires")).toBeInTheDocument();
+    expect(screen.getByText("2 condamnations")).toBeInTheDocument();
   });
 
   it("should not show conviction indicator when disabled", () => {

@@ -35,12 +35,14 @@ export const NAV_GROUPS: NavGroup[] = [
         label: "Carte de France",
         icon: "map",
         description: "Visualisez les élus par département",
+        featureFlag: "CARTE_SECTION",
       },
       {
         href: "/mon-depute",
         label: "Mon député",
         icon: "mapPin",
         description: "Trouvez votre député par code postal",
+        featureFlag: "MON_DEPUTE_SECTION",
       },
     ],
   },
@@ -122,6 +124,7 @@ export const CTA_MON_DEPUTE: NavItem = {
   href: "/mon-depute",
   label: "Mon député",
   description: "Trouvez votre député par code postal",
+  featureFlag: "MON_DEPUTE_SECTION",
 };
 export const CHAT_LINK = CTA_ASSISTANT;
 export const CTA_LINK = CTA_MON_DEPUTE;
@@ -137,7 +140,7 @@ export const FOOTER_SECTIONS: FooterSection[] = [
     title: "Explorer",
     links: [
       { href: "/politiques", label: "Représentants" },
-      { href: "/carte", label: "Carte" },
+      { href: "/carte", label: "Carte", featureFlag: "CARTE_SECTION" },
       { href: "/votes", label: "Votes" },
       { href: "/affaires", label: "Affaires" },
       { href: "/factchecks", label: "Fact-checks" },
@@ -158,7 +161,7 @@ export const FOOTER_SECTIONS: FooterSection[] = [
     title: "Outils",
     links: [
       { href: "/comparer", label: "Comparer", featureFlag: "COMPARISON_TOOL" },
-      { href: "/mon-depute", label: "Mon député" },
+      { href: "/mon-depute", label: "Mon député", featureFlag: "MON_DEPUTE_SECTION" },
       { href: "/chat", label: "Assistant IA", featureFlag: "CHATBOT_ENABLED" },
       { href: "/soutenir", label: "Nous soutenir" },
     ],

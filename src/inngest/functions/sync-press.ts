@@ -1,7 +1,5 @@
 import { inngest } from "../client";
 import { markJobRunning, markJobCompleted, markJobFailed, updateJobProgress } from "../job-helper";
-import { syncPress as syncPressService } from "@/services/sync/press";
-import { syncPressAnalysis } from "@/services/sync/press-analysis";
 
 export const syncPress = inngest.createFunction(
   {
@@ -17,6 +15,7 @@ export const syncPress = inngest.createFunction(
     try {
       // Step 1: Parse RSS feeds
       const rssStats = await step.run("parse-rss", async () => {
+        const { syncPress: syncPressService } = await import("@/services/sync/press");
         const stats = await syncPressService();
         if (jobId) await updateJobProgress(jobId, 50);
         return stats;
@@ -24,6 +23,7 @@ export const syncPress = inngest.createFunction(
 
       // Step 2: AI analysis
       const analysisStats = await step.run("ai-analysis", async () => {
+        const { syncPressAnalysis } = await import("@/services/sync/press-analysis");
         const limit = (event.data.limit as number) || 100;
         return syncPressAnalysis({ limit });
       });

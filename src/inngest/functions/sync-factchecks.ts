@@ -1,7 +1,5 @@
 import { inngest } from "../client";
 import { markJobRunning, markJobCompleted, markJobFailed, updateJobProgress } from "../job-helper";
-import { syncFactchecks } from "@/services/sync/factchecks";
-import { syncJudilibre } from "@/services/sync/judilibre";
 
 export const syncFactchecksGrouped = inngest.createFunction(
   {
@@ -16,12 +14,14 @@ export const syncFactchecksGrouped = inngest.createFunction(
 
     try {
       const fcStats = await step.run("factchecks", async () => {
+        const { syncFactchecks } = await import("@/services/sync/factchecks");
         const stats = await syncFactchecks({ limit: 50 });
         if (jobId) await updateJobProgress(jobId, 50);
         return stats;
       });
 
       const jStats = await step.run("judilibre", async () => {
+        const { syncJudilibre } = await import("@/services/sync/judilibre");
         return syncJudilibre({ limit: 20 });
       });
 

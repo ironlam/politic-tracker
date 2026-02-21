@@ -1,7 +1,5 @@
 import { inngest } from "../client";
 import { markJobRunning, markJobCompleted, markJobFailed, updateJobProgress } from "../job-helper";
-import { recalculateProminence } from "@/services/sync/prominence";
-import { assignPublicationStatus } from "@/services/sync/publication-status";
 
 export const maintenance = inngest.createFunction(
   {
@@ -16,12 +14,14 @@ export const maintenance = inngest.createFunction(
 
     try {
       const promStats = await step.run("prominence", async () => {
+        const { recalculateProminence } = await import("@/services/sync/prominence");
         const stats = await recalculateProminence();
         if (jobId) await updateJobProgress(jobId, 50);
         return stats;
       });
 
       const pubStats = await step.run("publication-status", async () => {
+        const { assignPublicationStatus } = await import("@/services/sync/publication-status");
         return assignPublicationStatus();
       });
 

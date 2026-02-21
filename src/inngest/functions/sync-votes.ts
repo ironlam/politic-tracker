@@ -1,7 +1,5 @@
 import { inngest } from "../client";
 import { markJobRunning, markJobCompleted, markJobFailed, updateJobProgress } from "../job-helper";
-import { syncVotesAN } from "@/services/sync/votes-an";
-import { syncVotesSenat } from "@/services/sync/votes-senat";
 
 export const syncVotes = inngest.createFunction(
   {
@@ -16,12 +14,14 @@ export const syncVotes = inngest.createFunction(
 
     try {
       const anStats = await step.run("votes-an", async () => {
+        const { syncVotesAN } = await import("@/services/sync/votes-an");
         const stats = await syncVotesAN(undefined, false, true);
         if (jobId) await updateJobProgress(jobId, 50);
         return stats;
       });
 
       const senatStats = await step.run("votes-senat", async () => {
+        const { syncVotesSenat } = await import("@/services/sync/votes-senat");
         return syncVotesSenat(null, false, true);
       });
 

@@ -2,12 +2,18 @@
  * Seed feature flags for launch configuration.
  * Idempotent: only creates flags that don't already exist.
  *
- * Usage: npx tsx scripts/seed-feature-flags.ts
+ * Usage: npx dotenv -e .env -- npx tsx scripts/seed-feature-flags.ts
  */
 import "dotenv/config";
 import { PrismaClient } from "@/generated/prisma";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { Pool } from "pg";
 
-const db = new PrismaClient();
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false },
+});
+const db = new PrismaClient({ adapter: new PrismaPg(pool) });
 
 const FLAGS = [
   // Disabled for launch — non-core features
@@ -37,4 +43,7 @@ async function main() {
 
 main()
   .catch(console.error)
-  .finally(() => db.$disconnect());
+  .finally(async () => {
+    await db.$disconnect();
+    await pool.end();
+  });

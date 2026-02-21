@@ -8,7 +8,6 @@
 import type { FactCheckRating } from "@/generated/prisma";
 import { FACTCHECK_RATE_LIMIT_MS } from "@/config/rate-limits";
 import { HTTPClient } from "@/lib/api/http-client";
-import { JSDOM } from "jsdom";
 
 const client = new HTTPClient({ rateLimitMs: FACTCHECK_RATE_LIMIT_MS });
 const scraperClient = new HTTPClient({
@@ -103,12 +102,14 @@ export async function fetchPageTitle(url: string, fallbackTitle: string): Promis
       headers: { Accept: "text/html" },
     });
 
-    const dom = new JSDOM(html);
-    const doc = dom.window.document;
+    // Extract og:title and <title> with regex (avoids JSDOM dependency)
+    const ogMatch =
+      html.match(/<meta[^>]+property=["']og:title["'][^>]+content=["']([^"']+)["']/i) ??
+      html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:title["']/i);
+    const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
 
-    // Prefer og:title (usually cleaner), fall back to <title>
-    const ogTitle = doc.querySelector('meta[property="og:title"]')?.getAttribute("content");
-    const htmlTitle = doc.querySelector("title")?.textContent;
+    const ogTitle = ogMatch?.[1];
+    const htmlTitle = titleMatch?.[1];
 
     const fullTitle = ogTitle || htmlTitle;
 

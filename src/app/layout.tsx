@@ -8,6 +8,7 @@ import { ChatWidget } from "@/components/chat/ChatWidget";
 import { GlobalSearchProvider, GlobalSearchDialog } from "@/components/search";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { UmamiAnalytics } from "@/components/analytics/UmamiAnalytics";
+import { isFeatureEnabled } from "@/lib/feature-flags";
 import "./globals.css";
 
 const outfit = Outfit({
@@ -80,11 +81,13 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const chatEnabled = await isFeatureEnabled("CHATBOT_ENABLED");
+
   return (
     <html lang="fr" suppressHydrationWarning>
       <head>
@@ -118,7 +121,7 @@ export default function RootLayout({
                 {children}
               </main>
               <Footer />
-              <ChatWidget />
+              {chatEnabled && <ChatWidget />}
               <GlobalSearchDialog />
             </GlobalSearchProvider>
           </TooltipProvider>

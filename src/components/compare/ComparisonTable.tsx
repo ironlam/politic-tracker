@@ -135,39 +135,33 @@ export function ComparisonTable({
       <section>
         <h2 className="text-xl font-semibold mb-4">Informations générales</h2>
         <div className="bg-muted rounded-lg overflow-hidden">
-          <table className="w-full">
-            <tbody>
-              <Row
-                label="Date de naissance"
-                left={left.birthDate ? `${formatDate(left.birthDate)} (${leftAge} ans)` : "-"}
-                right={right.birthDate ? `${formatDate(right.birthDate)} (${rightAge} ans)` : "-"}
-              />
-              <Row
-                label="Lieu de naissance"
-                left={left.birthPlace || "-"}
-                right={right.birthPlace || "-"}
-              />
-              <Row
-                label="Parti actuel"
-                left={left.currentParty?.name || "Sans étiquette"}
-                right={right.currentParty?.name || "Sans étiquette"}
-                leftColor={left.currentParty?.color}
-                rightColor={right.currentParty?.color}
-              />
-              <Row
-                label="Mandat actuel"
-                left={leftMandate ? MANDATE_TYPE_LABELS[leftMandate.type as MandateType] : "Aucun"}
-                right={
-                  rightMandate ? MANDATE_TYPE_LABELS[rightMandate.type as MandateType] : "Aucun"
-                }
-              />
-              <Row
-                label="Circonscription"
-                left={leftMandate?.constituency || "-"}
-                right={rightMandate?.constituency || "-"}
-              />
-            </tbody>
-          </table>
+          <Row
+            label="Date de naissance"
+            left={left.birthDate ? `${formatDate(left.birthDate)} (${leftAge} ans)` : "-"}
+            right={right.birthDate ? `${formatDate(right.birthDate)} (${rightAge} ans)` : "-"}
+          />
+          <Row
+            label="Lieu de naissance"
+            left={left.birthPlace || "-"}
+            right={right.birthPlace || "-"}
+          />
+          <Row
+            label="Parti actuel"
+            left={left.currentParty?.name || "Sans étiquette"}
+            right={right.currentParty?.name || "Sans étiquette"}
+            leftColor={left.currentParty?.color}
+            rightColor={right.currentParty?.color}
+          />
+          <Row
+            label="Mandat actuel"
+            left={leftMandate ? MANDATE_TYPE_LABELS[leftMandate.type as MandateType] : "Aucun"}
+            right={rightMandate ? MANDATE_TYPE_LABELS[rightMandate.type as MandateType] : "Aucun"}
+          />
+          <Row
+            label="Circonscription"
+            left={leftMandate?.constituency || "-"}
+            right={rightMandate?.constituency || "-"}
+          />
         </div>
       </section>
 
@@ -191,35 +185,21 @@ export function ComparisonTable({
         <section>
           <h2 className="text-xl font-semibold mb-4">Statistiques de vote</h2>
           <div className="bg-muted rounded-lg overflow-hidden">
-            <table className="w-full">
-              <tbody>
-                <Row
-                  label="Total des votes"
-                  left={left.voteStats.total.toString()}
-                  right={right.voteStats.total.toString()}
-                />
-                <Row
-                  label="Votes Pour"
-                  left={left.voteStats.pour.toString()}
-                  right={right.voteStats.pour.toString()}
-                />
-                <Row
-                  label="Votes Contre"
-                  left={left.voteStats.contre.toString()}
-                  right={right.voteStats.contre.toString()}
-                />
-                <Row
-                  label="Abstentions"
-                  left={left.voteStats.abstention.toString()}
-                  right={right.voteStats.abstention.toString()}
-                />
-                <Row
-                  label="Taux de présence"
-                  left={`${left.voteStats.total > 0 ? Math.round(((left.voteStats.total - left.voteStats.absent) / left.voteStats.total) * 100) : 0}%`}
-                  right={`${right.voteStats.total > 0 ? Math.round(((right.voteStats.total - right.voteStats.absent) / right.voteStats.total) * 100) : 0}%`}
-                />
-              </tbody>
-            </table>
+            <Row
+              label="Scrutins"
+              left={left.voteStats.total.toString()}
+              right={right.voteStats.total.toString()}
+            />
+            <Row
+              label="Taux de présence"
+              left={`${left.voteStats.total > 0 ? Math.round(((left.voteStats.total - left.voteStats.absent) / left.voteStats.total) * 100) : 0}%`}
+              right={`${right.voteStats.total > 0 ? Math.round(((right.voteStats.total - right.voteStats.absent) / right.voteStats.total) * 100) : 0}%`}
+            />
+            <Row
+              label="Taux d'abstention"
+              left={`${left.voteStats.total > 0 ? Math.round((left.voteStats.abstention / left.voteStats.total) * 100) : 0}%`}
+              right={`${right.voteStats.total > 0 ? Math.round((right.voteStats.abstention / right.voteStats.total) * 100) : 0}%`}
+            />
           </div>
         </section>
       )}
@@ -229,20 +209,16 @@ export function ComparisonTable({
         <section>
           <h2 className="text-xl font-semibold mb-4">Patrimoine déclaré (HATVP)</h2>
           <div className="bg-muted rounded-lg overflow-hidden">
-            <table className="w-full">
-              <tbody>
-                <Row
-                  label="Patrimoine net"
-                  left={formatMoney(leftPatrimony)}
-                  right={formatMoney(rightPatrimony)}
-                />
-                <Row
-                  label="Déclarations"
-                  left={`${left.declarations.length} déclaration${left.declarations.length > 1 ? "s" : ""}`}
-                  right={`${right.declarations.length} déclaration${right.declarations.length > 1 ? "s" : ""}`}
-                />
-              </tbody>
-            </table>
+            <Row
+              label="Patrimoine net"
+              left={formatMoney(leftPatrimony)}
+              right={formatMoney(rightPatrimony)}
+            />
+            <Row
+              label="Déclarations"
+              left={`${left.declarations.length} déclaration${left.declarations.length > 1 ? "s" : ""}`}
+              right={`${right.declarations.length} déclaration${right.declarations.length > 1 ? "s" : ""}`}
+            />
           </div>
         </section>
       )}
@@ -268,25 +244,21 @@ export function ComparisonTable({
             return (
               <>
                 <div className="bg-muted rounded-lg overflow-hidden">
-                  <table className="w-full">
-                    <tbody>
-                      <Row
-                        label="Total fact-checks"
-                        left={left._count.factCheckMentions.toString()}
-                        right={right._count.factCheckMentions.toString()}
-                      />
-                      <Row
-                        label="Ses déclarations"
-                        left={leftDirect.length.toString()}
-                        right={rightDirect.length.toString()}
-                      />
-                      <Row
-                        label="Mentionné dans"
-                        left={leftOther.length.toString()}
-                        right={rightOther.length.toString()}
-                      />
-                    </tbody>
-                  </table>
+                  <Row
+                    label="Total fact-checks"
+                    left={left._count.factCheckMentions.toString()}
+                    right={right._count.factCheckMentions.toString()}
+                  />
+                  <Row
+                    label="Ses déclarations"
+                    left={leftDirect.length.toString()}
+                    right={rightDirect.length.toString()}
+                  />
+                  <Row
+                    label="Mentionné dans"
+                    left={leftOther.length.toString()}
+                    right={rightOther.length.toString()}
+                  />
                 </div>
 
                 {/* Verdict bars */}
@@ -337,17 +309,13 @@ export function ComparisonTable({
         <section>
           <h2 className="text-xl font-semibold mb-4">Affaires judiciaires</h2>
           <div className="bg-muted rounded-lg overflow-hidden">
-            <table className="w-full">
-              <tbody>
-                <Row
-                  label="Nombre d'affaires"
-                  left={left.affairs.length.toString()}
-                  right={right.affairs.length.toString()}
-                  leftHighlight={left.affairs.length > 0}
-                  rightHighlight={right.affairs.length > 0}
-                />
-              </tbody>
-            </table>
+            <Row
+              label="Nombre d'affaires"
+              left={left.affairs.length.toString()}
+              right={right.affairs.length.toString()}
+              leftHighlight={left.affairs.length > 0}
+              rightHighlight={right.affairs.length > 0}
+            />
           </div>
           {(left.affairs.length > 0 || right.affairs.length > 0) && (
             <div className="grid md:grid-cols-2 gap-4 mt-4">
@@ -385,21 +353,25 @@ function Row({
   rightHighlight?: boolean;
 }) {
   return (
-    <tr className="border-b border-background last:border-0">
-      <td className="p-3 text-center font-medium bg-background/50 w-1/3">{label}</td>
-      <td
-        className={`p-3 text-center w-1/3 ${leftHighlight ? "bg-red-500/10 text-red-700 dark:text-red-400 font-medium" : ""}`}
-        style={leftColor ? { borderLeft: `4px solid ${leftColor}` } : undefined}
-      >
-        {left}
-      </td>
-      <td
-        className={`p-3 text-center w-1/3 ${rightHighlight ? "bg-red-500/10 text-red-700 dark:text-red-400 font-medium" : ""}`}
-        style={rightColor ? { borderLeft: `4px solid ${rightColor}` } : undefined}
-      >
-        {right}
-      </td>
-    </tr>
+    <div className="border-b border-background last:border-0">
+      <div className="grid grid-cols-2 md:grid-cols-3">
+        <div className="col-span-2 md:col-span-1 px-3 pt-2 pb-0.5 md:py-3 text-xs md:text-sm text-center font-medium bg-background/50">
+          {label}
+        </div>
+        <div
+          className={`px-3 py-1.5 md:py-3 text-center text-sm break-words ${leftHighlight ? "bg-red-500/10 text-red-700 dark:text-red-400 font-medium" : ""}`}
+          style={leftColor ? { borderLeft: `4px solid ${leftColor}` } : undefined}
+        >
+          {left}
+        </div>
+        <div
+          className={`px-3 py-1.5 md:py-3 text-center text-sm break-words ${rightHighlight ? "bg-red-500/10 text-red-700 dark:text-red-400 font-medium" : ""}`}
+          style={rightColor ? { borderLeft: `4px solid ${rightColor}` } : undefined}
+        >
+          {right}
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -419,7 +391,7 @@ function MandateList({ mandates }: { mandates: Mandate[] }) {
           {sorted.slice(0, 5).map((m) => (
             <li
               key={m.id}
-              className={`text-sm ${m.isCurrent ? "font-medium" : "text-muted-foreground"}`}
+              className={`text-sm break-words ${m.isCurrent ? "font-medium" : "text-muted-foreground"}`}
             >
               {m.isCurrent && <span className="text-green-600 mr-1">●</span>}
               {MANDATE_TYPE_LABELS[m.type as MandateType]}

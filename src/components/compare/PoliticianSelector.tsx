@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Search, X } from "lucide-react";
 import { PoliticianAvatar } from "@/components/politicians/PoliticianAvatar";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface Politician {
   id: string;
@@ -37,9 +38,15 @@ export function PoliticianSelector({
   const [isOpen, setIsOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
   const [activeOnly, setActiveOnly] = useState(true);
+  const [isNavigating, setIsNavigating] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
+
+  // Reset navigating state when data arrives
+  useEffect(() => {
+    if (selectedPolitician) setIsNavigating(false);
+  }, [selectedPolitician]);
 
   // Search politicians with debounce
   useEffect(() => {
@@ -88,7 +95,7 @@ export function PoliticianSelector({
         setActiveIndex(-1);
       } catch (error) {
         if ((error as Error).name !== "AbortError") {
-          console.error("Search error:", error);
+          setResults([]);
         }
       } finally {
         setIsLoading(false);
@@ -117,6 +124,7 @@ export function PoliticianSelector({
     (politician: Politician) => {
       const params = new URLSearchParams(searchParams.toString());
       params.set(position, politician.slug);
+      setIsNavigating(true);
       router.push(`/comparer?${params.toString()}`);
       setQuery("");
       setIsOpen(false);
@@ -167,6 +175,20 @@ export function PoliticianSelector({
       items[activeIndex]?.scrollIntoView({ block: "nearest" });
     }
   }, [activeIndex]);
+
+  if (isNavigating && !selectedPolitician) {
+    return (
+      <div className="bg-muted rounded-lg p-4 animate-pulse">
+        <div className="flex items-center gap-4">
+          <Skeleton className="h-12 w-12 rounded-full shrink-0" />
+          <div className="flex-1 space-y-2">
+            <Skeleton className="h-4 w-3/4" />
+            <Skeleton className="h-3 w-1/2" />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (selectedPolitician) {
     return (

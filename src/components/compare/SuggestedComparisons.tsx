@@ -14,26 +14,32 @@ interface Suggestion {
 // Fallback for when API is unavailable
 const FALLBACK_SUGGESTIONS: Suggestion[] = [
   {
-    leftSlug: "emmanuel-macron",
-    leftName: "Emmanuel Macron",
-    rightSlug: "jordan-bardella",
-    rightName: "Jordan Bardella",
+    leftSlug: "jean-luc-melenchon",
+    leftName: "Jean-Luc Mélenchon",
+    rightSlug: "marine-le-pen",
+    rightName: "Marine Le Pen",
   },
   {
-    leftSlug: "marine-le-pen",
-    leftName: "Marine Le Pen",
-    rightSlug: "jean-luc-melenchon",
-    rightName: "Jean-Luc Mélenchon",
-  },
-  {
-    leftSlug: "gabriel-attal",
-    leftName: "Gabriel Attal",
+    leftSlug: "jordan-bardella",
+    leftName: "Jordan Bardella",
     rightSlug: "mathilde-panot",
     rightName: "Mathilde Panot",
+  },
+  {
+    leftSlug: "emmanuel-macron",
+    leftName: "Emmanuel Macron",
+    rightSlug: "jean-luc-melenchon",
+    rightName: "Jean-Luc Mélenchon",
   },
 ];
 
 const PARTY_SUGGESTIONS: Suggestion[] = [
+  {
+    leftSlug: "la-france-insoumise",
+    leftName: "La France Insoumise",
+    rightSlug: "rassemblement-national",
+    rightName: "Rassemblement National",
+  },
   {
     leftSlug: "renaissance",
     leftName: "Renaissance",
@@ -41,22 +47,16 @@ const PARTY_SUGGESTIONS: Suggestion[] = [
     rightName: "Rassemblement National",
   },
   {
-    leftSlug: "la-france-insoumise",
-    leftName: "La France Insoumise",
-    rightSlug: "les-republicains",
-    rightName: "Les Républicains",
-  },
-  {
     leftSlug: "socialistes-et-apparentes",
     leftName: "Parti Socialiste",
-    rightSlug: "renaissance",
-    rightName: "Renaissance",
-  },
-  {
-    leftSlug: "rassemblement-national",
-    leftName: "Rassemblement National",
     rightSlug: "les-republicains",
     rightName: "Les Républicains",
+  },
+  {
+    leftSlug: "ecologiste-et-social",
+    leftName: "Écologistes",
+    rightSlug: "rassemblement-national",
+    rightName: "Rassemblement National",
   },
 ];
 
@@ -68,14 +68,15 @@ export function SuggestedComparisons({ mode }: SuggestedComparisonsProps) {
   const [suggestions, setSuggestions] = useState<Suggestion[]>(
     mode === "partis" ? PARTY_SUGGESTIONS : FALLBACK_SUGGESTIONS
   );
-  const [isLoading, setIsLoading] = useState(mode === "politiciens");
+  const [isLoading, setIsLoading] = useState(true);
 
   /* eslint-disable react-hooks/set-state-in-effect -- data fetching effect */
   useEffect(() => {
-    if (mode !== "politiciens") return;
-
     setIsLoading(true);
-    fetch("/api/compare/suggestions")
+    const url =
+      mode === "partis" ? "/api/compare/suggestions?mode=partis" : "/api/compare/suggestions";
+
+    fetch(url)
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (data && data.length > 0) {

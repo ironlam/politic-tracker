@@ -840,13 +840,15 @@ export default async function PoliticianPage({ params }: PageProps) {
                           </div>
                         )}
 
-                        {/* Presumption of innocence */}
-                        {AFFAIR_STATUS_NEEDS_PRESUMPTION[affair.status] && (
-                          <p className="text-xs text-amber-700 bg-amber-50 p-2 rounded mb-3">
-                            Présomption d&apos;innocence : cette affaire est en cours, la personne
-                            est présumée innocente jusqu&apos;à condamnation définitive.
-                          </p>
-                        )}
+                        {/* Presumption of innocence — only for accused, not victims */}
+                        {AFFAIR_STATUS_NEEDS_PRESUMPTION[affair.status] &&
+                          (affair.involvement === "DIRECT" ||
+                            affair.involvement === "INDIRECT") && (
+                            <p className="text-xs text-amber-700 bg-amber-50 p-2 rounded mb-3">
+                              Présomption d&apos;innocence : cette affaire est en cours, la personne
+                              est présumée innocente jusqu&apos;à condamnation définitive.
+                            </p>
+                          )}
 
                         {/* Sources */}
                         {affair.sources.length > 0 && (

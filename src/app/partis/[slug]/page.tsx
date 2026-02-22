@@ -203,7 +203,7 @@ export default async function PartyPage({ params }: PageProps) {
       <OrganizationJsonLd
         name={party.name}
         alternateName={party.shortName}
-        description={party.description || undefined}
+        description={undefined}
         logo={party.logoUrl || undefined}
         url={`${siteUrl}/partis/${party.slug}`}
         foundingDate={party.foundedDate?.toISOString().split("T")[0]}
@@ -272,8 +272,6 @@ export default async function PartyPage({ params }: PageProps) {
               </div>
             </div>
           </div>
-
-          {party.description && <p className="text-muted-foreground">{party.description}</p>}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

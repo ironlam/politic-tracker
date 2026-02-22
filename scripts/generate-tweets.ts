@@ -344,8 +344,91 @@ async function elections(): Promise<TweetDraft[]> {
 
   return [];
 }
+const FEED_NAMES: Record<string, string> = {
+  lemonde: "Le Monde",
+  lefigaro: "Le Figaro",
+  mediapart: "Mediapart",
+  liberation: "Libération",
+  bfmtv: "BFMTV",
+  france24: "France 24",
+  politico: "Politico",
+  google: "Google News",
+  ouest_france: "Ouest-France",
+  la_depeche: "La Dépêche",
+  laprovence: "La Provence",
+  dernieresnouvellesalsace: "DNA",
+  contexte: "Contexte",
+  lcp: "LCP",
+};
+
 async function recentPress(): Promise<TweetDraft[]> {
-  return [];
+  const twoDaysAgo = new Date();
+  twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+
+  const mentions = await db.pressArticleMention.findMany({
+    where: {
+      article: { publishedAt: { gte: twoDaysAgo } },
+      politician: { publicationStatus: "PUBLISHED", prominenceScore: { gte: 200 } },
+    },
+    include: {
+      article: { select: { title: true, feedSource: true, publishedAt: true } },
+      politician: {
+        select: {
+          fullName: true,
+          slug: true,
+          currentParty: { select: { shortName: true } },
+        },
+      },
+    },
+    orderBy: { article: { publishedAt: "desc" } },
+    take: 20,
+  });
+
+  if (mentions.length === 0) return [];
+
+  // Group by politician, pick the one with most mentions
+  const byPolitician = new Map<string, typeof mentions>();
+  for (const m of mentions) {
+    const key = m.politician.slug;
+    const list = byPolitician.get(key) || [];
+    list.push(m);
+    byPolitician.set(key, list);
+  }
+
+  const topEntry = [...byPolitician.entries()].sort((a, b) => b[1].length - a[1].length)[0];
+
+  if (!topEntry) return [];
+
+  const [, pMentions] = topEntry;
+  const pol = pMentions[0].politician;
+  const party = pol.currentParty?.shortName ? ` (${pol.currentParty.shortName})` : "";
+
+  // Deduplicate by feedSource, take top 3
+  const seen = new Set<string>();
+  const uniqueArticles = pMentions
+    .filter((m) => {
+      if (seen.has(m.article.feedSource)) return false;
+      seen.add(m.article.feedSource);
+      return true;
+    })
+    .slice(0, 3);
+
+  const articleLines = uniqueArticles
+    .map((m) => {
+      const title =
+        m.article.title.length > 60 ? m.article.title.substring(0, 57) + "..." : m.article.title;
+      const source = FEED_NAMES[m.article.feedSource] || m.article.feedSource;
+      return `• "${title}" (${source})`;
+    })
+    .join("\n");
+
+  return [
+    {
+      category: "📰 Presse",
+      content: `Dans la presse sur ${pol.fullName}${party} :\n${articleLines}`,
+      link: `${SITE_URL}/politiques/${pol.slug}`,
+    },
+  ];
 }
 
 // --- Rendu Markdown ---

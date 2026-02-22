@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
     totalVotes: s.votesFor + s.votesAgainst + s.votesAbstain,
     result: VOTING_RESULT_LABELS[s.result],
     sourceUrl: s.sourceUrl || "",
-    pageUrl: `https://politic-tracker.vercel.app/votes/${s.slug || s.id}`,
+    pageUrl: `${process.env.NEXT_PUBLIC_SITE_URL || "https://poligraph.fr"}/votes/${s.slug || s.id}`,
   }));
 
   const columns = [

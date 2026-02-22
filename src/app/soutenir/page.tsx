@@ -186,7 +186,7 @@ export default function SoutenirPage() {
                 Le projet est open source. Développeurs, data scientists, designers : vos
                 contributions sont les bienvenues sur{" "}
                 <a
-                  href="https://github.com/ironlam/politic-tracker"
+                  href="https://github.com/ironlam/poligraph"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-blue-600 hover:underline"

@@ -12,8 +12,8 @@ Merci de votre intérêt pour Poligraph ! Ce guide explique comment contribuer a
 
 ```bash
 # Forker le repo sur GitHub, puis :
-git clone https://github.com/<votre-username>/politic-tracker.git
-cd politic-tracker
+git clone https://github.com/<votre-username>/poligraph.git
+cd poligraph
 npm install
 cp .env.example .env
 # Configurer .env avec votre URL PostgreSQL
@@ -69,7 +69,7 @@ scripts/           # Scripts de synchronisation
 
 ## Signaler un bug
 
-Ouvrir une [issue](https://github.com/ironlam/politic-tracker/issues/new?template=bug_report.md) en décrivant :
+Ouvrir une [issue](https://github.com/ironlam/poligraph/issues/new?template=bug_report.md) en décrivant :
 
 - Ce qui se passe
 - Ce qui devrait se passer
@@ -77,7 +77,7 @@ Ouvrir une [issue](https://github.com/ironlam/politic-tracker/issues/new?templat
 
 ## Proposer une fonctionnalité
 
-Ouvrir une [issue](https://github.com/ironlam/politic-tracker/issues/new?template=feature_request.md) en expliquant :
+Ouvrir une [issue](https://github.com/ironlam/poligraph/issues/new?template=feature_request.md) en expliquant :
 
 - Le besoin citoyen
 - La solution proposée

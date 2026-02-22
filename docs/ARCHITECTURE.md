@@ -22,7 +22,7 @@
 ## 2. Structure du projet
 
 ```
-politic-tracker/
+poligraph/
 ├── docs/                          # Documentation
 │   ├── ARCHITECTURE.md            # Ce document
 │   ├── DATASOURCES.md             # Sources de données

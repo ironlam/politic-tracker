@@ -50,8 +50,8 @@ Centraliser les informations publiques sur les responsables politiques français
 
 ```bash
 # 1. Cloner le repo
-git clone https://github.com/ironlam/politic-tracker.git
-cd politic-tracker
+git clone https://github.com/ironlam/poligraph.git
+cd poligraph
 
 # 2. Installer les dépendances
 npm install

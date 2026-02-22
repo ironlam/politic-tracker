@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
     constituency: p.mandates[0]?.constituency || "",
     affairsCount: p._count.affairs,
     photoUrl: p.photoUrl || "",
-    profileUrl: `https://politic-tracker.vercel.app/politiques/${p.slug}`,
+    profileUrl: `${process.env.NEXT_PUBLIC_SITE_URL || "https://poligraph.fr"}/politiques/${p.slug}`,
   }));
 
   const columns = [

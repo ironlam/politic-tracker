@@ -56,11 +56,11 @@ const nextConfig: NextConfig = {
         key: "Content-Security-Policy",
         value: [
           "default-src 'self'",
-          `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : ""} https://cloud.umami.is`,
+          `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : ""} https://cloud.umami.is https://vercel.live`,
           "style-src 'self' 'unsafe-inline'",
           "img-src 'self' https: data:",
           "font-src 'self'",
-          "connect-src 'self' https://cloud.umami.is https://api-gateway.umami.dev https://api.anthropic.com https://geo.api.gouv.fr",
+          "connect-src 'self' https://cloud.umami.is https://api-gateway.umami.dev https://vercel.live https://api.anthropic.com https://geo.api.gouv.fr",
           "frame-ancestors 'none'",
         ].join("; "),
       },

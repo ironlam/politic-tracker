@@ -18,6 +18,7 @@ import {
   CATEGORY_TO_SUPER,
   INVOLVEMENT_LABELS,
   INVOLVEMENT_COLORS,
+  STATUS_CERTAINTY_VALUES,
 } from "@/config/labels";
 import type { AffairCategory, AffairStatus, Involvement } from "@/types";
 
@@ -26,6 +27,9 @@ export const revalidate = 300;
 interface PageProps {
   params: Promise<{ slug: string }>;
 }
+
+const MIS_EN_CAUSE: Involvement[] = ["DIRECT", "INDIRECT"];
+const VICTIMS: Involvement[] = ["VICTIM", "PLAINTIFF"];
 
 async function getPartyAffairsData(slug: string) {
   "use cache";
@@ -65,51 +69,59 @@ async function getPartyAffairsData(slug: string) {
   if (!party) return null;
 
   const affairs = party.affairsAtTime;
-  const totalAffairs = affairs.length;
 
-  // Super-category breakdown
+  // Split by involvement role
+  const misEnCauseAffairs = affairs.filter((a) =>
+    MIS_EN_CAUSE.includes(a.involvement as Involvement)
+  );
+  const victimAffairs = affairs.filter((a) => VICTIMS.includes(a.involvement as Involvement));
+
+  // KPIs — only on mis-en-cause affairs
+  const condamnations = misEnCauseAffairs.filter((a) =>
+    STATUS_CERTAINTY_VALUES.condamnations.includes(a.status as AffairStatus)
+  ).length;
+  const procedures = misEnCauseAffairs.filter((a) =>
+    STATUS_CERTAINTY_VALUES.procedures.includes(a.status as AffairStatus)
+  ).length;
+  const enquetes = misEnCauseAffairs.filter((a) =>
+    STATUS_CERTAINTY_VALUES.enquetes.includes(a.status as AffairStatus)
+  ).length;
+  const closes = misEnCauseAffairs.filter((a) =>
+    STATUS_CERTAINTY_VALUES.closes.includes(a.status as AffairStatus)
+  ).length;
+
+  // Super-category breakdown (mis-en-cause only)
   const superCatCounts: Record<string, number> = {};
-  for (const a of affairs) {
+  for (const a of misEnCauseAffairs) {
     const sc = CATEGORY_TO_SUPER[a.category as AffairCategory];
     superCatCounts[sc] = (superCatCounts[sc] || 0) + 1;
   }
 
-  // Status counts
-  const condamnations = affairs.filter(
-    (a) => a.status === "CONDAMNATION_DEFINITIVE" || a.status === "CONDAMNATION_PREMIERE_INSTANCE"
-  ).length;
-  const enCours = affairs.filter((a) =>
-    [
-      "ENQUETE_PRELIMINAIRE",
-      "INSTRUCTION",
-      "MISE_EN_EXAMEN",
-      "RENVOI_TRIBUNAL",
-      "PROCES_EN_COURS",
-      "APPEL_EN_COURS",
-    ].includes(a.status)
-  ).length;
+  // Deduplicated politician lists
+  type PolEntry = {
+    id: string;
+    fullName: string;
+    slug: string;
+    photoUrl: string | null;
+    count: number;
+  };
 
-  // Involved politicians deduplicated
-  const polMap = new Map<
-    string,
-    {
-      id: string;
-      fullName: string;
-      slug: string;
-      photoUrl: string | null;
-      count: number;
+  function deduplicatePoliticians(list: typeof affairs): PolEntry[] {
+    const map = new Map<string, PolEntry>();
+    for (const a of list) {
+      const p = a.politician;
+      const existing = map.get(p.id);
+      if (existing) {
+        existing.count++;
+      } else {
+        map.set(p.id, { ...p, count: 1 });
+      }
     }
-  >();
-  for (const a of affairs) {
-    const p = a.politician;
-    const existing = polMap.get(p.id);
-    if (existing) {
-      existing.count++;
-    } else {
-      polMap.set(p.id, { ...p, count: 1 });
-    }
+    return [...map.values()].sort((a, b) => b.count - a.count);
   }
-  const involvedPoliticians = [...polMap.values()].sort((a, b) => b.count - a.count);
+
+  const misEnCausePoliticians = deduplicatePoliticians(misEnCauseAffairs);
+  const victimPoliticians = deduplicatePoliticians(victimAffairs);
 
   return {
     party: {
@@ -121,11 +133,15 @@ async function getPartyAffairsData(slug: string) {
       logoUrl: party.logoUrl,
     },
     affairs,
-    totalAffairs,
-    superCatCounts,
+    misEnCauseAffairs,
+    victimAffairs,
     condamnations,
-    enCours,
-    involvedPoliticians,
+    procedures,
+    enquetes,
+    closes,
+    superCatCounts,
+    misEnCausePoliticians,
+    victimPoliticians,
   };
 }
 
@@ -146,13 +162,17 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   if (!data) return { title: "Parti non trouvé" };
 
-  const { party, totalAffairs, condamnations, enCours } = data;
+  const { party, misEnCauseAffairs, condamnations, procedures, victimPoliticians } = data;
 
   const parts: string[] = [];
   if (condamnations > 0) parts.push(`${condamnations} condamnation${condamnations > 1 ? "s" : ""}`);
-  if (enCours > 0) parts.push(`${enCours} procédure${enCours > 1 ? "s" : ""} en cours`);
+  if (procedures > 0) parts.push(`${procedures} procédure${procedures > 1 ? "s" : ""} en cours`);
+  if (victimPoliticians.length > 0)
+    parts.push(
+      `${victimPoliticians.length} élu${victimPoliticians.length > 1 ? "s" : ""} victime${victimPoliticians.length > 1 ? "s" : ""}`
+    );
 
-  const description = `${totalAffairs} affaire${totalAffairs > 1 ? "s" : ""} judiciaire${totalAffairs > 1 ? "s" : ""} impliquant des élus ${party.name}${parts.length > 0 ? `. ${parts.join(", ")}.` : "."} Sources vérifiées.`;
+  const description = `${misEnCauseAffairs.length} affaire${misEnCauseAffairs.length > 1 ? "s" : ""} judiciaire${misEnCauseAffairs.length > 1 ? "s" : ""} impliquant des élus ${party.name} en tant que mis en cause${parts.length > 0 ? `. ${parts.join(", ")}.` : "."} Sources vérifiées.`;
 
   return {
     title: `Affaires judiciaires — ${party.name} (${party.shortName})`,
@@ -174,26 +194,38 @@ export default async function PartyAffairsPage({ params }: PageProps) {
   const {
     party,
     affairs,
-    totalAffairs,
-    superCatCounts,
+    misEnCauseAffairs,
+    victimAffairs,
     condamnations,
-    enCours,
-    involvedPoliticians,
+    procedures,
+    enquetes,
+    closes,
+    superCatCounts,
+    misEnCausePoliticians,
+    victimPoliticians,
   } = data;
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://poligraph.fr";
 
-  // Build factual summary
+  // Build factual summary (mis-en-cause focused)
   const summaryParts: string[] = [];
-  summaryParts.push(
-    `${party.name} est associé à ${totalAffairs} affaire${totalAffairs > 1 ? "s" : ""} judiciaire${totalAffairs > 1 ? "s" : ""} impliquant ${involvedPoliticians.length} élu${involvedPoliticians.length > 1 ? "s" : ""} ou ancien${involvedPoliticians.length > 1 ? "s" : ""} élu${involvedPoliticians.length > 1 ? "s" : ""}.`
-  );
-  if (condamnations > 0 || enCours > 0) {
+  if (misEnCauseAffairs.length > 0) {
+    summaryParts.push(
+      `${misEnCauseAffairs.length} affaire${misEnCauseAffairs.length > 1 ? "s" : ""} judiciaire${misEnCauseAffairs.length > 1 ? "s" : ""} où des élus ${party.name} sont mis en cause.`
+    );
     const statusParts: string[] = [];
     if (condamnations > 0)
       statusParts.push(`${condamnations} condamnation${condamnations > 1 ? "s" : ""}`);
-    if (enCours > 0) statusParts.push(`${enCours} procédure${enCours > 1 ? "s" : ""} en cours`);
-    summaryParts.push(statusParts.join(", ") + ".");
+    if (procedures > 0)
+      statusParts.push(
+        `${procedures} procédure${procedures > 1 ? "s" : ""} judiciaire${procedures > 1 ? "s" : ""}`
+      );
+    if (statusParts.length > 0) summaryParts.push(statusParts.join(", ") + ".");
+  }
+  if (victimAffairs.length > 0) {
+    summaryParts.push(
+      `${victimPoliticians.length} élu${victimPoliticians.length > 1 ? "s" : ""} du parti ${victimAffairs.length > 1 ? "sont" : "est"} victime${victimPoliticians.length > 1 ? "s" : ""} ou plaignant${victimPoliticians.length > 1 ? "s" : ""} dans ${victimAffairs.length} affaire${victimAffairs.length > 1 ? "s" : ""}.`
+    );
   }
 
   return (
@@ -212,7 +244,7 @@ export default async function PartyAffairsPage({ params }: PageProps) {
         name={`Affaires judiciaires — ${party.name}`}
         description={summaryParts.join(" ")}
         url={`${siteUrl}/affaires/parti/${party.slug}`}
-        numberOfItems={totalAffairs}
+        numberOfItems={affairs.length}
         about={{
           name: party.name,
           url: `${siteUrl}/partis/${party.slug}`,
@@ -282,85 +314,138 @@ export default async function PartyAffairsPage({ params }: PageProps) {
           <p className="text-muted-foreground">{summaryParts.join(" ")}</p>
         </div>
 
-        {/* KPI cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <Card>
-            <CardContent className="pt-6 text-center">
-              <div className="text-3xl font-bold tabular-nums">{totalAffairs}</div>
-              <div className="text-sm text-muted-foreground mt-1">Affaires</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6 text-center">
-              <div className="text-3xl font-bold tabular-nums">{involvedPoliticians.length}</div>
-              <div className="text-sm text-muted-foreground mt-1">Élus impliqués</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6 text-center">
-              <div className="text-3xl font-bold tabular-nums text-red-600">{condamnations}</div>
-              <div className="text-sm text-muted-foreground mt-1">Condamnations</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6 text-center">
-              <div className="text-3xl font-bold tabular-nums text-orange-600">{enCours}</div>
-              <div className="text-sm text-muted-foreground mt-1">En cours</div>
-            </CardContent>
-          </Card>
-        </div>
+        {/* KPI cards — mis-en-cause only */}
+        {misEnCauseAffairs.length > 0 && (
+          <>
+            <h2 className="text-xl font-semibold mb-4">Élus mis en cause</h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-2">
+              <Card>
+                <CardContent className="pt-6 text-center">
+                  <div className="text-3xl font-bold tabular-nums">
+                    {misEnCausePoliticians.length}
+                  </div>
+                  <div className="text-sm text-muted-foreground mt-1">Élus mis en cause</div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="pt-6 text-center">
+                  <div className="text-3xl font-bold tabular-nums text-red-600">
+                    {condamnations}
+                  </div>
+                  <div className="text-sm text-muted-foreground mt-1">Condamnations</div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="pt-6 text-center">
+                  <div className="text-3xl font-bold tabular-nums text-orange-600">
+                    {procedures}
+                  </div>
+                  <div className="text-sm text-muted-foreground mt-1">Procédures judiciaires</div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="pt-6 text-center">
+                  <div className="text-3xl font-bold tabular-nums text-green-600">{closes}</div>
+                  <div className="text-sm text-muted-foreground mt-1">Classées / Acquittées</div>
+                </CardContent>
+              </Card>
+            </div>
+            {enquetes > 0 && (
+              <p className="text-xs text-muted-foreground mb-6">
+                + {enquetes} enquête{enquetes > 1 ? "s" : ""} préliminaire
+                {enquetes > 1 ? "s" : ""} non comptabilisée{enquetes > 1 ? "s" : ""} (aucune mise en
+                cause formelle)
+              </p>
+            )}
+            {enquetes === 0 && <div className="mb-6" />}
 
-        {/* Super-category breakdown */}
-        {Object.keys(superCatCounts).length > 0 && (
-          <div className="flex flex-wrap gap-2 mb-8">
-            {Object.entries(superCatCounts)
-              .sort((a, b) => b[1] - a[1])
-              .map(([key, count]) => (
-                <Badge
-                  key={key}
-                  className={
-                    AFFAIR_SUPER_CATEGORY_COLORS[key as keyof typeof AFFAIR_SUPER_CATEGORY_COLORS]
-                  }
-                >
-                  {AFFAIR_SUPER_CATEGORY_LABELS[key as keyof typeof AFFAIR_SUPER_CATEGORY_LABELS]} (
-                  {count})
-                </Badge>
-              ))}
-          </div>
+            {/* Super-category breakdown */}
+            {Object.keys(superCatCounts).length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-8">
+                {Object.entries(superCatCounts)
+                  .sort((a, b) => b[1] - a[1])
+                  .map(([key, count]) => (
+                    <Badge
+                      key={key}
+                      className={
+                        AFFAIR_SUPER_CATEGORY_COLORS[
+                          key as keyof typeof AFFAIR_SUPER_CATEGORY_COLORS
+                        ]
+                      }
+                    >
+                      {
+                        AFFAIR_SUPER_CATEGORY_LABELS[
+                          key as keyof typeof AFFAIR_SUPER_CATEGORY_LABELS
+                        ]
+                      }{" "}
+                      ({count})
+                    </Badge>
+                  ))}
+              </div>
+            )}
+
+            {/* Mis-en-cause politicians */}
+            <Card className="mb-8">
+              <CardHeader>
+                <CardTitle>Élus mis en cause ({misEnCausePoliticians.length})</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                  {misEnCausePoliticians.map((pol) => (
+                    <Link
+                      key={pol.id}
+                      href={`/politiques/${pol.slug}`}
+                      className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors"
+                    >
+                      <PoliticianAvatar photoUrl={pol.photoUrl} fullName={pol.fullName} size="sm" />
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium truncate">{pol.fullName}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {pol.count} affaire{pol.count > 1 ? "s" : ""}
+                        </p>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </>
         )}
 
-        {/* Involved politicians */}
-        {involvedPoliticians.length > 0 && (
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle>Élus impliqués ({involvedPoliticians.length})</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                {involvedPoliticians.map((pol) => (
-                  <Link
-                    key={pol.id}
-                    href={`/politiques/${pol.slug}`}
-                    className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors"
-                  >
-                    <PoliticianAvatar photoUrl={pol.photoUrl} fullName={pol.fullName} size="sm" />
-                    <div className="min-w-0 flex-1">
-                      <p className="font-medium truncate">{pol.fullName}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {pol.count} affaire{pol.count > 1 ? "s" : ""}
-                      </p>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+        {/* Victim politicians section */}
+        {victimPoliticians.length > 0 && (
+          <>
+            <h2 className="text-xl font-semibold mb-4">
+              Élus victimes ou plaignants ({victimPoliticians.length})
+            </h2>
+            <Card className="mb-8">
+              <CardContent className="pt-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                  {victimPoliticians.map((pol) => (
+                    <Link
+                      key={pol.id}
+                      href={`/politiques/${pol.slug}`}
+                      className="flex items-center gap-3 p-3 rounded-lg border border-blue-200 dark:border-blue-800 hover:bg-blue-50/50 dark:hover:bg-blue-900/20 transition-colors"
+                    >
+                      <PoliticianAvatar photoUrl={pol.photoUrl} fullName={pol.fullName} size="sm" />
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium truncate">{pol.fullName}</p>
+                        <p className="text-xs text-blue-600 dark:text-blue-400">
+                          Victime dans {pol.count} affaire{pol.count > 1 ? "s" : ""}
+                        </p>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </>
         )}
 
         {/* Affairs list */}
         <Card>
           <CardHeader>
-            <CardTitle>Toutes les affaires ({totalAffairs})</CardTitle>
+            <CardTitle>Toutes les affaires ({affairs.length})</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -381,11 +466,9 @@ export default async function PartyAffairsPage({ params }: PageProps) {
                       <Badge className={AFFAIR_STATUS_COLORS[affair.status as AffairStatus]}>
                         {AFFAIR_STATUS_LABELS[affair.status as AffairStatus]}
                       </Badge>
-                      {affair.involvement !== "DIRECT" && (
-                        <Badge className={INVOLVEMENT_COLORS[affair.involvement as Involvement]}>
-                          {INVOLVEMENT_LABELS[affair.involvement as Involvement]}
-                        </Badge>
-                      )}
+                      <Badge className={INVOLVEMENT_COLORS[affair.involvement as Involvement]}>
+                        {INVOLVEMENT_LABELS[affair.involvement as Involvement]}
+                      </Badge>
                     </div>
                     <Link
                       href={`/affaires/${affair.slug}`}
@@ -404,17 +487,31 @@ export default async function PartyAffairsPage({ params }: PageProps) {
                     <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
                       {affair.description}
                     </p>
-                    {AFFAIR_STATUS_NEEDS_PRESUMPTION[affair.status as AffairStatus] && (
-                      <p className="text-xs text-amber-700 bg-amber-50 p-2 rounded mt-2 inline-block">
-                        Présomption d&apos;innocence : affaire en cours
-                      </p>
-                    )}
+                    {AFFAIR_STATUS_NEEDS_PRESUMPTION[affair.status as AffairStatus] &&
+                      MIS_EN_CAUSE.includes(affair.involvement as Involvement) && (
+                        <p className="text-xs text-amber-700 bg-amber-50 p-2 rounded mt-2 inline-block">
+                          Présomption d&apos;innocence : affaire en cours
+                        </p>
+                      )}
                   </div>
                 );
               })}
             </div>
           </CardContent>
         </Card>
+
+        {/* Methodology note */}
+        <div className="mt-6 p-4 bg-muted/50 rounded-lg text-sm text-muted-foreground">
+          <p className="font-medium mb-1">Méthodologie</p>
+          <p>
+            Les chiffres ci-dessus comptabilisent uniquement les affaires où des élus du parti sont{" "}
+            <strong>mis en cause</strong> (directement ou indirectement). Les enquêtes
+            préliminaires, qui ne constituent pas une mise en cause formelle, sont indiquées
+            séparément. Les affaires classées, acquittées ou prescrites sont incluses dans le
+            décompte. Les affaires où des élus sont victimes ou plaignants sont présentées dans une
+            section distincte.
+          </p>
+        </div>
 
         {/* Back links */}
         <div className="mt-8 flex flex-wrap gap-4">

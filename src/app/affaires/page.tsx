@@ -543,11 +543,13 @@ export default async function AffairesPage({ searchParams }: PageProps) {
                           {affair.description}
                         </p>
 
-                        {AFFAIR_STATUS_NEEDS_PRESUMPTION[affair.status] && (
-                          <p className="text-xs text-amber-700 bg-amber-50 p-2 rounded mt-3 inline-block">
-                            Présomption d&apos;innocence : affaire en cours
-                          </p>
-                        )}
+                        {AFFAIR_STATUS_NEEDS_PRESUMPTION[affair.status] &&
+                          (affair.involvement === "DIRECT" ||
+                            affair.involvement === "INDIRECT") && (
+                            <p className="text-xs text-amber-700 bg-amber-50 p-2 rounded mt-3 inline-block">
+                              Présomption d&apos;innocence : affaire en cours
+                            </p>
+                          )}
                       </div>
 
                       <div className="text-sm text-muted-foreground md:text-right md:min-w-[150px]">

@@ -126,7 +126,7 @@ export function JudicialSection({
                       label: p.name,
                       value: p.count,
                       color: p.color || undefined,
-                      href: p.slug ? `/partis/${p.slug}` : undefined,
+                      href: p.slug ? `/affaires/parti/${p.slug}` : undefined,
                     }))}
                   />
                 </CardContent>

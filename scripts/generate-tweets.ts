@@ -44,7 +44,13 @@ async function divisiveVotes(): Promise<TweetDraft[]> {
       votes: {
         include: {
           politician: {
-            select: { currentParty: { select: { shortName: true } } },
+            select: {
+              mandates: {
+                where: { isCurrent: true, parliamentaryGroupId: { not: null } },
+                take: 1,
+                select: { parliamentaryGroup: { select: { name: true, code: true } } },
+              },
+            },
           },
         },
       },
@@ -56,34 +62,36 @@ async function divisiveVotes(): Promise<TweetDraft[]> {
   for (const s of scrutins) {
     if (s.votes.length < 50) continue;
 
-    // Aggregate votes by party
-    const partyVotes = new Map<
+    // Aggregate votes by parliamentary group
+    const groupVotes = new Map<
       string,
-      { pour: number; contre: number; abstention: number; total: number }
+      { name: string; pour: number; contre: number; abstention: number; total: number }
     >();
     for (const v of s.votes) {
       if (v.position === "ABSENT" || v.position === "NON_VOTANT") continue;
-      const party = v.politician.currentParty?.shortName || "Sans parti";
-      const entry = partyVotes.get(party) || { pour: 0, contre: 0, abstention: 0, total: 0 };
+      const group = v.politician.mandates[0]?.parliamentaryGroup;
+      const code = group?.code || "NI";
+      const name = group?.name || "Non-inscrits";
+      const entry = groupVotes.get(code) || { name, pour: 0, contre: 0, abstention: 0, total: 0 };
       if (v.position === "POUR") entry.pour++;
       else if (v.position === "CONTRE") entry.contre++;
       else if (v.position === "ABSTENTION") entry.abstention++;
       entry.total++;
-      partyVotes.set(party, entry);
+      groupVotes.set(code, entry);
     }
 
-    // Find the most divided large party (>10 voters)
+    // Find the most divided large group (>10 voters)
     let maxDivision = 0;
-    let dividedParty = "";
-    let dividedStats = { pour: 0, contre: 0, abstention: 0, total: 0 };
+    let dividedGroup = { code: "", name: "" };
+    let dividedStats = { name: "", pour: 0, contre: 0, abstention: 0, total: 0 };
 
-    for (const [party, counts] of partyVotes) {
+    for (const [code, counts] of groupVotes) {
       if (counts.total < 10) continue;
       const pourPct = counts.pour / counts.total;
       const division = Math.min(pourPct, 1 - pourPct);
       if (division > maxDivision) {
         maxDivision = division;
-        dividedParty = party;
+        dividedGroup = { code, name: counts.name };
         dividedStats = counts;
       }
     }
@@ -103,10 +111,10 @@ async function divisiveVotes(): Promise<TweetDraft[]> {
       year: "numeric",
     });
 
-    let content = `🗳️ Le groupe ${dividedParty} se fracture\n\n`;
+    let content = `🗳️ Le groupe ${dividedGroup.name} se fracture\n\n`;
     content += `${s.title}\n\n`;
     content += `Résultat global : ${result} (${pourPct}% pour, ${contrePct}% contre) — scrutin du ${date}.\n\n`;
-    content += `Au sein du groupe ${dividedParty}, le vote était loin d'être unanime : ${pourPartyPct}% des députés ont voté pour, ${contrePartyPct}% contre`;
+    content += `Au sein du groupe ${dividedGroup.name} (${dividedGroup.code}), le vote était loin d'être unanime : ${pourPartyPct}% des députés ont voté pour, ${contrePartyPct}% contre`;
     if (dividedStats.abstention > 0) {
       content += `, ${Math.round((dividedStats.abstention / dividedStats.total) * 100)}% se sont abstenus`;
     }

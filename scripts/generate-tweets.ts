@@ -219,7 +219,29 @@ async function recentAffairs(): Promise<TweetDraft[]> {
   });
 }
 async function factchecks(): Promise<TweetDraft[]> {
-  return [];
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+  const recent = await db.factCheck.findMany({
+    where: { publishedAt: { gte: sevenDaysAgo } },
+    select: { verdictRating: true },
+  });
+
+  if (recent.length < 3) return [];
+
+  const truthy = recent.filter((f) => ["TRUE", "MOSTLY_TRUE"].includes(f.verdictRating)).length;
+  const misleading = recent.filter((f) =>
+    ["HALF_TRUE", "MISLEADING", "OUT_OF_CONTEXT"].includes(f.verdictRating)
+  ).length;
+  const falsy = recent.filter((f) => ["MOSTLY_FALSE", "FALSE"].includes(f.verdictRating)).length;
+
+  return [
+    {
+      category: "🔍 Fact-checks",
+      content: `Cette semaine, ${recent.length} déclarations de politiques vérifiées :\n✅ ${truthy} vraie(s) — ⚠️ ${misleading} trompeuse(s) — ❌ ${falsy} fausse(s)\nQui dit vrai ?`,
+      link: `${SITE_URL}/factchecks`,
+    },
+  ];
 }
 async function deputySpotlight(): Promise<TweetDraft[]> {
   return [];

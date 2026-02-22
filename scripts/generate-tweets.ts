@@ -102,7 +102,78 @@ async function divisiveVotes(): Promise<TweetDraft[]> {
   return drafts;
 }
 async function partyStats(): Promise<TweetDraft[]> {
-  return [];
+  // Top parties by published politician count
+  const parties = await db.party.findMany({
+    where: {
+      politicians: { some: { publicationStatus: "PUBLISHED" } },
+    },
+    select: {
+      shortName: true,
+      name: true,
+      _count: {
+        select: {
+          politicians: { where: { publicationStatus: "PUBLISHED" } },
+        },
+      },
+    },
+    orderBy: { politicians: { _count: "desc" } },
+    take: 8,
+  });
+
+  // Affair counts per party (PUBLISHED + DIRECT only)
+  const affairCounts = await db.affair.groupBy({
+    by: ["politicianId"],
+    where: {
+      publicationStatus: "PUBLISHED",
+      involvement: "DIRECT",
+    },
+    _count: true,
+  });
+
+  const politicianAffairs = new Map(affairCounts.map((a) => [a.politicianId, a._count]));
+
+  const politiciansWithParty = await db.politician.findMany({
+    where: {
+      publicationStatus: "PUBLISHED",
+      currentPartyId: { not: null },
+    },
+    select: { id: true, currentParty: { select: { shortName: true } } },
+  });
+
+  const partyAffairMap = new Map<string, number>();
+  for (const p of politiciansWithParty) {
+    const party = p.currentParty!.shortName;
+    const count = politicianAffairs.get(p.id) || 0;
+    partyAffairMap.set(party, (partyAffairMap.get(party) || 0) + count);
+  }
+
+  const topParties = parties
+    .slice(0, 5)
+    .map((p) => `${p.shortName} : ${p._count.politicians}`)
+    .join(" | ");
+
+  const drafts: TweetDraft[] = [
+    {
+      category: "📊 Stats",
+      content: `Politiques référencés sur Poligraph par parti :\n${topParties}\nExplorez toutes les données →`,
+      link: `${SITE_URL}/statistiques`,
+    },
+  ];
+
+  // Second tweet: affairs by party (top 5)
+  const sortedAffairs = [...partyAffairMap.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
+
+  if (sortedAffairs.length > 0) {
+    const affairLines = sortedAffairs.map(([party, count]) => `${party} : ${count}`).join(" | ");
+
+    drafts.push({
+      category: "📊 Stats",
+      content: `Affaires judiciaires documentées par parti :\n${affairLines}\nConsultez les détails →`,
+      link: `${SITE_URL}/affaires`,
+    });
+  }
+
+  return drafts;
 }
 async function recentAffairs(): Promise<TweetDraft[]> {
   return [];

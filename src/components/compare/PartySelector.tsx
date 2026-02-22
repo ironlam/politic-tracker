@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Search, X, Building2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useSearchIndex } from "@/hooks";
 
 interface Party {
   id: string;
@@ -31,11 +32,13 @@ export function PartySelector({ position, selectedParty, otherPartyId }: PartySe
   const [activeIndex, setActiveIndex] = useState(-1);
   const [activeOnly, setActiveOnly] = useState(true);
   const [isPending, startTransition] = useTransition();
+  const { isReady, searchParties } = useSearchIndex();
+  const [isNavigating, setIsNavigating] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
-  // Search parties with debounce
+  // Search parties — client-side when index ready, API fallback otherwise
   useEffect(() => {
     if (query.length < 2) {
       setResults([]);
@@ -43,6 +46,27 @@ export function PartySelector({ position, selectedParty, otherPartyId }: PartySe
       return;
     }
 
+    if (isReady) {
+      // Instant client-side search
+      const otherSlug = searchParams.get(position === "left" ? "right" : "left");
+      const matches = searchParties(query, otherSlug || undefined);
+      // Map to component's expected format
+      const mapped = matches.map((p) => ({
+        id: p.slug || "", // Use slug as ID for client-side results
+        slug: p.slug,
+        name: p.name,
+        shortName: p.shortName || p.name,
+        color: p.color,
+        logoUrl: p.logoUrl,
+        memberCount: p.memberCount,
+      }));
+      setResults(mapped);
+      setActiveIndex(-1);
+      setIsLoading(false);
+      return;
+    }
+
+    // Fallback: API search with debounce when index not ready
     const controller = new AbortController();
     const fetchResults = async () => {
       setIsLoading(true);
@@ -66,12 +90,12 @@ export function PartySelector({ position, selectedParty, otherPartyId }: PartySe
       }
     };
 
-    const timeout = setTimeout(fetchResults, 250);
+    const timeout = setTimeout(fetchResults, 150);
     return () => {
       clearTimeout(timeout);
       controller.abort();
     };
-  }, [query, otherPartyId, activeOnly]);
+  }, [query, otherPartyId, activeOnly, isReady, searchParties, searchParams, position]);
 
   // Close on click outside
   useEffect(() => {
@@ -92,6 +116,7 @@ export function PartySelector({ position, selectedParty, otherPartyId }: PartySe
       setQuery("");
       setIsOpen(false);
       setActiveIndex(-1);
+      setIsNavigating(true);
       startTransition(() => {
         router.push(`/comparer?${params.toString()}`);
       });
@@ -102,6 +127,7 @@ export function PartySelector({ position, selectedParty, otherPartyId }: PartySe
   const clearSelection = useCallback(() => {
     const params = new URLSearchParams(searchParams.toString());
     params.delete(position);
+    setIsNavigating(true);
     startTransition(() => {
       router.push(`/comparer?${params.toString()}`);
     });
@@ -144,7 +170,7 @@ export function PartySelector({ position, selectedParty, otherPartyId }: PartySe
     }
   }, [activeIndex]);
 
-  if (isPending && !selectedParty) {
+  if ((isPending || isNavigating) && !selectedParty) {
     return (
       <div className="bg-muted rounded-lg p-4 animate-in fade-in-0 duration-200">
         <div className="flex items-center gap-4">

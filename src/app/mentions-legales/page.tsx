@@ -217,7 +217,7 @@ export default function MentionsLegalesPage() {
           <p className="text-muted-foreground mt-2">
             Le code source de ce projet est disponible sous{" "}
             <a
-              href="https://github.com/ironlam/politic-tracker/blob/main/LICENSE"
+              href="https://github.com/ironlam/poligraph/blob/main/LICENSE"
               className="underline"
               target="_blank"
               rel="noopener noreferrer"

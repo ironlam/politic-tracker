@@ -62,7 +62,7 @@ const DEFAULT_OPTIONS: Required<HTTPClientOptions> = {
   retries: 3,
   retryDelay: 1000,
   rateLimitMs: 0,
-  userAgent: "TransparencePolitique/1.0 (https://politic-tracker.vercel.app)",
+  userAgent: "Poligraph/1.0 (https://poligraph.fr)",
   headers: {},
   enableCache: false,
   cacheTtlMs: 5 * 60 * 1000, // 5 minutes

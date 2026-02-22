@@ -114,7 +114,7 @@ export async function Footer() {
         <div className="pt-4 border-t flex flex-col sm:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
             <a
-              href="https://github.com/ironlam/politic-tracker"
+              href="https://github.com/ironlam/poligraph"
               target="_blank"
               rel="noopener noreferrer"
               className="hover:text-foreground transition-colors inline-flex items-center gap-1.5"
@@ -127,7 +127,7 @@ export async function Footer() {
             </a>
           </div>
           <a
-            href="https://github.com/ironlam/politic-tracker/issues"
+            href="https://github.com/ironlam/poligraph/issues"
             target="_blank"
             rel="noopener noreferrer"
             className="text-xs text-muted-foreground hover:text-foreground transition-colors"

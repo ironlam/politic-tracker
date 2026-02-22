@@ -8,7 +8,7 @@
 import * as fs from "fs";
 import * as path from "path";
 
-const CHECKPOINT_DIR = "/tmp/politic-tracker-checkpoints";
+const CHECKPOINT_DIR = "/tmp/poligraph-checkpoints";
 
 export interface Checkpoint {
   source: string;

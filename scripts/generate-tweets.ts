@@ -27,7 +27,79 @@ const MAX_CHARS = 280;
 // --- Générateurs ---
 
 async function divisiveVotes(): Promise<TweetDraft[]> {
-  return [];
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+  const scrutins = await db.scrutin.findMany({
+    where: { votingDate: { gte: thirtyDaysAgo } },
+    orderBy: { votingDate: "desc" },
+    take: 20,
+    include: {
+      votes: {
+        include: {
+          politician: {
+            select: { currentParty: { select: { shortName: true } } },
+          },
+        },
+      },
+    },
+  });
+
+  const drafts: TweetDraft[] = [];
+
+  for (const s of scrutins) {
+    if (s.votes.length < 50) continue;
+
+    // Aggregate votes by party
+    const partyVotes = new Map<string, { pour: number; contre: number; total: number }>();
+    for (const v of s.votes) {
+      if (v.position === "ABSENT" || v.position === "NON_VOTANT") continue;
+      const party = v.politician.currentParty?.shortName || "Sans parti";
+      const entry = partyVotes.get(party) || {
+        pour: 0,
+        contre: 0,
+        total: 0,
+      };
+      if (v.position === "POUR") entry.pour++;
+      else if (v.position === "CONTRE") entry.contre++;
+      entry.total++;
+      partyVotes.set(party, entry);
+    }
+
+    // Find the most divided large party (>10 voters)
+    let maxDivision = 0;
+    let dividedParty = "";
+    let dividedPct = 0;
+
+    for (const [party, counts] of partyVotes) {
+      if (counts.total < 10) continue;
+      const pourPct = counts.pour / counts.total;
+      const division = Math.min(pourPct, 1 - pourPct); // 0 = unanimous, 0.5 = split
+      if (division > maxDivision) {
+        maxDivision = division;
+        dividedParty = party;
+        dividedPct = Math.round(pourPct * 100);
+      }
+    }
+
+    // Only tweet if there's a meaningfully divided party (>25% minority)
+    if (maxDivision < 0.25) continue;
+
+    const total = s.votesFor + s.votesAgainst + s.votesAbstain;
+    const pourPct = Math.round((s.votesFor / total) * 100);
+    const result = VOTING_RESULT_LABELS[s.result].toLowerCase();
+    const title = s.title.length > 80 ? s.title.substring(0, 77) + "..." : s.title;
+
+    drafts.push({
+      category: "🗳️ Votes clivants",
+      content: `${title} : ${result} (${pourPct}% pour).\n${dividedParty} divisé : ${dividedPct}% pour, ${100 - dividedPct}% contre.`,
+      link: `${SITE_URL}/votes/${s.slug || s.id}`,
+    });
+
+    if (drafts.length >= 2) break;
+  }
+
+  return drafts;
 }
 async function partyStats(): Promise<TweetDraft[]> {
   return [];

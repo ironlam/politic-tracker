@@ -84,5 +84,9 @@ async function getSearchIndex() {
 
 export async function GET() {
   const data = await getSearchIndex();
-  return NextResponse.json(data);
+  return NextResponse.json(data, {
+    headers: {
+      "Cache-Control": "public, max-age=3600, stale-while-revalidate=7200",
+    },
+  });
 }

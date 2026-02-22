@@ -42,6 +42,14 @@ export function PoliticianSelector({
   const [isPending, startTransition] = useTransition();
   const { isReady, searchPoliticians } = useSearchIndex();
   const [isNavigating, setIsNavigating] = useState(false);
+
+  // Reset isNavigating when transition completes
+  useEffect(() => {
+    if (!isPending && isNavigating) {
+      setIsNavigating(false);
+    }
+  }, [isPending, isNavigating]);
+
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
@@ -57,7 +65,11 @@ export function PoliticianSelector({
     if (isReady) {
       // Instant client-side search
       const otherSlug = searchParams.get(position === "left" ? "right" : "left");
-      const matches = searchPoliticians(query, otherSlug || undefined);
+      let matches = searchPoliticians(query, otherSlug || undefined);
+      // Apply activeOnly filter: politicians with a current mandate have mandateType set
+      if (activeOnly) {
+        matches = matches.filter((p) => p.mandateType !== null);
+      }
       // Map to component's expected format
       const mapped = matches.map((p) => ({
         id: p.slug, // Use slug as ID for client-side results

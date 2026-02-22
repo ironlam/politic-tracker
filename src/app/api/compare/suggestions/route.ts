@@ -174,6 +174,7 @@ async function getPartySuggestions() {
   try {
     const parties = await db.party.findMany({
       where: {
+        slug: { not: null },
         dissolvedDate: null,
         politicians: { some: { mandates: { some: { isCurrent: true } } } },
       },
@@ -207,9 +208,9 @@ async function getPartySuggestions() {
         );
         const score = distance * 100 + a._count.politicians + b._count.politicians;
         candidates.push({
-          leftSlug: a.slug!,
+          leftSlug: a.slug as string,
           leftName: a.shortName || a.name,
-          rightSlug: b.slug!,
+          rightSlug: b.slug as string,
           rightName: b.shortName || b.name,
           score,
         });

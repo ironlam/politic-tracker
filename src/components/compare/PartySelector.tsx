@@ -34,6 +34,14 @@ export function PartySelector({ position, selectedParty, otherPartyId }: PartySe
   const [isPending, startTransition] = useTransition();
   const { isReady, searchParties } = useSearchIndex();
   const [isNavigating, setIsNavigating] = useState(false);
+
+  // Reset isNavigating when transition completes
+  useEffect(() => {
+    if (!isPending && isNavigating) {
+      setIsNavigating(false);
+    }
+  }, [isPending, isNavigating]);
+
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);

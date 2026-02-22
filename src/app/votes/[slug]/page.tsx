@@ -26,6 +26,13 @@ async function getScrutinWithRedirect(slugOrId: string) {
         politician: {
           include: {
             currentParty: true,
+            mandates: {
+              where: { isCurrent: true, parliamentaryGroupId: { not: null } },
+              take: 1,
+              select: {
+                parliamentaryGroup: { select: { code: true, name: true } },
+              },
+            },
           },
         },
       },
@@ -309,14 +316,30 @@ export default async function ScrutinPage({ params }: PageProps) {
                               <p className="text-sm font-medium truncate">
                                 {vote.politician.fullName}
                               </p>
-                              {vote.politician.currentParty && (
-                                <p
-                                  className="text-xs text-muted-foreground truncate"
-                                  title={vote.politician.currentParty.name}
-                                >
-                                  {vote.politician.currentParty.shortName}
-                                </p>
-                              )}
+                              {(() => {
+                                const group = vote.politician.mandates[0]?.parliamentaryGroup;
+                                if (group) {
+                                  return (
+                                    <p
+                                      className="text-xs text-muted-foreground truncate"
+                                      title={group.name}
+                                    >
+                                      {group.code}
+                                    </p>
+                                  );
+                                }
+                                if (vote.politician.currentParty) {
+                                  return (
+                                    <p
+                                      className="text-xs text-muted-foreground truncate"
+                                      title={vote.politician.currentParty.name}
+                                    >
+                                      {vote.politician.currentParty.shortName}
+                                    </p>
+                                  );
+                                }
+                                return null;
+                              })()}
                             </div>
                           </Link>
                         ))}

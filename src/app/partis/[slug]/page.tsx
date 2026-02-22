@@ -6,7 +6,16 @@ import { db } from "@/lib/db";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/utils";
-import { PARTY_ROLE_LABELS, feminizePartyRole } from "@/config/labels";
+import {
+  PARTY_ROLE_LABELS,
+  feminizePartyRole,
+  CATEGORY_TO_SUPER,
+  AFFAIR_SUPER_CATEGORY_LABELS,
+  AFFAIR_SUPER_CATEGORY_COLORS,
+  AFFAIR_STATUS_LABELS,
+  AFFAIR_STATUS_COLORS,
+} from "@/config/labels";
+import type { AffairCategory, AffairStatus } from "@/types";
 import { PoliticianAvatar } from "@/components/politicians/PoliticianAvatar";
 import { PoliticalPositionBadge } from "@/components/parties/PoliticalPositionBadge";
 import { OrganizationJsonLd, BreadcrumbJsonLd } from "@/components/seo/JsonLd";
@@ -90,7 +99,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 
   const memberCount = party.politicians.length;
-  const description = `${party.name} (${party.shortName}) - ${memberCount} membre${memberCount > 1 ? "s" : ""} actuels. Consultez la liste des élus et l'historique du parti.`;
+  const affairCount = party.affairsAtTime.length;
+  const description = `${party.name} (${party.shortName}) - ${memberCount} membre${memberCount > 1 ? "s" : ""} actuels.${affairCount > 0 ? ` ${affairCount} affaire${affairCount > 1 ? "s" : ""} judiciaire${affairCount > 1 ? "s" : ""} documentée${affairCount > 1 ? "s" : ""}.` : ""} Consultez la liste des élus et l'historique du parti.`;
 
   return {
     title: `${party.name} (${party.shortName})`,
@@ -478,17 +488,64 @@ export default async function PartyPage({ params }: PageProps) {
                   <p className="text-sm text-muted-foreground mb-4">
                     Affaires impliquant des membres du parti au moment des faits
                   </p>
+
+                  {/* Super-category breakdown badges */}
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {Object.entries(
+                      party.affairsAtTime.reduce(
+                        (acc, a) => {
+                          const sc = CATEGORY_TO_SUPER[a.category as AffairCategory];
+                          acc[sc] = (acc[sc] || 0) + 1;
+                          return acc;
+                        },
+                        {} as Record<string, number>
+                      )
+                    )
+                      .sort((a, b) => b[1] - a[1])
+                      .map(([key, count]) => (
+                        <Badge
+                          key={key}
+                          variant="outline"
+                          className={
+                            AFFAIR_SUPER_CATEGORY_COLORS[
+                              key as keyof typeof AFFAIR_SUPER_CATEGORY_COLORS
+                            ]
+                          }
+                        >
+                          {
+                            AFFAIR_SUPER_CATEGORY_LABELS[
+                              key as keyof typeof AFFAIR_SUPER_CATEGORY_LABELS
+                            ]
+                          }{" "}
+                          ({count})
+                        </Badge>
+                      ))}
+                  </div>
+
+                  {/* Top 5 affairs */}
                   <div className="space-y-3">
-                    {party.affairsAtTime.slice(0, 10).map((affair) => (
+                    {party.affairsAtTime.slice(0, 5).map((affair) => (
                       <Link
                         key={affair.id}
-                        href={`/politiques/${affair.politician.slug}`}
+                        href={`/affaires/${affair.slug}`}
                         className="block p-3 rounded-lg border hover:bg-muted transition-colors"
                       >
                         <div className="flex items-start justify-between gap-2">
-                          <div>
-                            <p className="font-medium">{affair.politician.fullName}</p>
-                            <p className="text-sm text-muted-foreground">{affair.title}</p>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <Badge
+                                variant="outline"
+                                className={AFFAIR_STATUS_COLORS[affair.status as AffairStatus]}
+                              >
+                                {AFFAIR_STATUS_LABELS[affair.status as AffairStatus]}
+                              </Badge>
+                              <span className="text-sm font-medium truncate">
+                                {affair.politician.fullName}
+                              </span>
+                            </div>
+                            <p className="text-sm text-muted-foreground line-clamp-1">
+                              {affair.title}
+                            </p>
                           </div>
                           {affair.verdictDate && (
                             <span className="text-xs text-muted-foreground whitespace-nowrap">
@@ -499,6 +556,29 @@ export default async function PartyPage({ params }: PageProps) {
                       </Link>
                     ))}
                   </div>
+
+                  {/* CTA to satellite page */}
+                  {party.slug && (
+                    <Link
+                      href={`/affaires/parti/${party.slug}`}
+                      className="inline-flex items-center gap-1 text-sm text-primary hover:underline mt-4"
+                    >
+                      Voir toutes les affaires ({party.affairsAtTime.length})
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 5l7 7-7 7"
+                        />
+                      </svg>
+                    </Link>
+                  )}
                 </CardContent>
               </Card>
             )}

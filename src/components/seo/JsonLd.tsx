@@ -486,3 +486,52 @@ export function GovernmentOrganizationJsonLd({
     />
   );
 }
+
+interface CollectionPageJsonLdProps {
+  name: string;
+  description: string;
+  url: string;
+  numberOfItems: number;
+  about?: {
+    name: string;
+    url: string;
+  };
+}
+
+export function CollectionPageJsonLd({
+  name,
+  description,
+  url,
+  numberOfItems,
+  about,
+}: CollectionPageJsonLdProps) {
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name,
+    description,
+    url,
+    mainEntity: {
+      "@type": "ItemList",
+      numberOfItems,
+    },
+    ...(about && {
+      about: {
+        "@type": "Organization",
+        name: about.name,
+        url: about.url,
+      },
+    }),
+    publisher: {
+      "@type": "Organization",
+      name: "Poligraph",
+    },
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+    />
+  );
+}

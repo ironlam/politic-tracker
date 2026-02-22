@@ -9,6 +9,7 @@ import {
   VOTING_RESULT_LABELS,
   MANDATE_TYPE_LABELS,
   ELECTION_TYPE_LABELS,
+  ELECTION_STATUS_LABELS,
 } from "../src/config/labels";
 
 // --- Types ---
@@ -20,7 +21,14 @@ interface TweetDraft {
 }
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://poligraph.fr";
-const MAX_CHARS = 280;
+const MAX_CHARS = 4000; // X Premium
+
+// --- Helpers ---
+
+function daysUntil(date: Date): number {
+  const now = new Date();
+  return Math.ceil((date.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+}
 
 // --- Générateurs ---
 
@@ -49,17 +57,17 @@ async function divisiveVotes(): Promise<TweetDraft[]> {
     if (s.votes.length < 50) continue;
 
     // Aggregate votes by party
-    const partyVotes = new Map<string, { pour: number; contre: number; total: number }>();
+    const partyVotes = new Map<
+      string,
+      { pour: number; contre: number; abstention: number; total: number }
+    >();
     for (const v of s.votes) {
       if (v.position === "ABSENT" || v.position === "NON_VOTANT") continue;
       const party = v.politician.currentParty?.shortName || "Sans parti";
-      const entry = partyVotes.get(party) || {
-        pour: 0,
-        contre: 0,
-        total: 0,
-      };
+      const entry = partyVotes.get(party) || { pour: 0, contre: 0, abstention: 0, total: 0 };
       if (v.position === "POUR") entry.pour++;
       else if (v.position === "CONTRE") entry.contre++;
+      else if (v.position === "ABSTENTION") entry.abstention++;
       entry.total++;
       partyVotes.set(party, entry);
     }
@@ -67,30 +75,50 @@ async function divisiveVotes(): Promise<TweetDraft[]> {
     // Find the most divided large party (>10 voters)
     let maxDivision = 0;
     let dividedParty = "";
-    let dividedPct = 0;
+    let dividedStats = { pour: 0, contre: 0, abstention: 0, total: 0 };
 
     for (const [party, counts] of partyVotes) {
       if (counts.total < 10) continue;
       const pourPct = counts.pour / counts.total;
-      const division = Math.min(pourPct, 1 - pourPct); // 0 = unanimous, 0.5 = split
+      const division = Math.min(pourPct, 1 - pourPct);
       if (division > maxDivision) {
         maxDivision = division;
         dividedParty = party;
-        dividedPct = Math.round(pourPct * 100);
+        dividedStats = counts;
       }
     }
 
-    // Only tweet if there's a meaningfully divided party (>25% minority)
     if (maxDivision < 0.25) continue;
 
     const total = s.votesFor + s.votesAgainst + s.votesAbstain;
     const pourPct = Math.round((s.votesFor / total) * 100);
+    const contrePct = Math.round((s.votesAgainst / total) * 100);
     const result = VOTING_RESULT_LABELS[s.result].toLowerCase();
-    const title = s.title.length > 80 ? s.title.substring(0, 77) + "..." : s.title;
+    const pourPartyPct = Math.round((dividedStats.pour / dividedStats.total) * 100);
+    const contrePartyPct = Math.round((dividedStats.contre / dividedStats.total) * 100);
+
+    const date = s.votingDate.toLocaleDateString("fr-FR", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+
+    let content = `🗳️ Le groupe ${dividedParty} se fracture\n\n`;
+    content += `${s.title}\n\n`;
+    content += `Résultat global : ${result} (${pourPct}% pour, ${contrePct}% contre) — scrutin du ${date}.\n\n`;
+    content += `Au sein du groupe ${dividedParty}, le vote était loin d'être unanime : ${pourPartyPct}% des députés ont voté pour, ${contrePartyPct}% contre`;
+    if (dividedStats.abstention > 0) {
+      content += `, ${Math.round((dividedStats.abstention / dividedStats.total) * 100)}% se sont abstenus`;
+    }
+    content += `.`;
+
+    if (s.summary) {
+      content += `\n\n${s.summary}`;
+    }
 
     drafts.push({
       category: "🗳️ Votes clivants",
-      content: `${title} : ${result} (${pourPct}% pour).\n${dividedParty} divisé : ${dividedPct}% pour, ${100 - dividedPct}% contre.`,
+      content,
       link: `${SITE_URL}/votes/${s.slug || s.id}`,
     });
 
@@ -99,8 +127,8 @@ async function divisiveVotes(): Promise<TweetDraft[]> {
 
   return drafts;
 }
+
 async function partyStats(): Promise<TweetDraft[]> {
-  // Top parties by published politician count
   const parties = await db.party.findMany({
     where: {
       politicians: { some: { publicationStatus: "PUBLISHED" } },
@@ -118,7 +146,6 @@ async function partyStats(): Promise<TweetDraft[]> {
     take: 8,
   });
 
-  // Affair counts per party (PUBLISHED + DIRECT only)
   const affairCounts = await db.affair.groupBy({
     by: ["politicianId"],
     where: {
@@ -138,41 +165,61 @@ async function partyStats(): Promise<TweetDraft[]> {
     select: { id: true, currentParty: { select: { shortName: true } } },
   });
 
-  const partyAffairMap = new Map<string, number>();
+  const partyAffairMap = new Map<string, { count: number; members: number }>();
   for (const p of politiciansWithParty) {
     const party = p.currentParty!.shortName;
-    const count = politicianAffairs.get(p.id) || 0;
-    partyAffairMap.set(party, (partyAffairMap.get(party) || 0) + count);
+    const entry = partyAffairMap.get(party) || { count: 0, members: 0 };
+    entry.count += politicianAffairs.get(p.id) || 0;
+    entry.members++;
+    partyAffairMap.set(party, entry);
   }
 
-  const topParties = parties
-    .slice(0, 5)
-    .map((p) => `${p.shortName} : ${p._count.politicians}`)
-    .join(" | ");
+  const totalPoliticians = parties.reduce((sum, p) => sum + p._count.politicians, 0);
+  const topParties = parties.slice(0, 6);
+
+  let content = `📊 Que surveille Poligraph ?\n\n`;
+  content += `${totalPoliticians} responsables politiques français sont documentés sur Poligraph, avec leurs votes, mandats et affaires judiciaires.\n\n`;
+  content += `Répartition par parti :\n`;
+  for (const p of topParties) {
+    content += `• ${p.name} (${p.shortName}) : ${p._count.politicians} élus\n`;
+  }
+  content += `\nCes données sont publiques et vérifiables — on ne fait que les rendre accessibles.`;
 
   const drafts: TweetDraft[] = [
     {
       category: "📊 Stats",
-      content: `Politiques référencés sur Poligraph par parti :\n${topParties}\nExplorez toutes les données →`,
+      content,
       link: `${SITE_URL}/statistiques`,
     },
   ];
 
-  // Second tweet: affairs by party (top 5)
-  const sortedAffairs = [...partyAffairMap.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
+  // Second tweet: affairs by party with ratio
+  const sortedAffairs = [...partyAffairMap.entries()]
+    .filter(([, v]) => v.count > 0)
+    .sort((a, b) => b[1].count - a[1].count)
+    .slice(0, 6);
 
   if (sortedAffairs.length > 0) {
-    const affairLines = sortedAffairs.map(([party, count]) => `${party} : ${count}`).join(" | ");
+    const totalAffairs = sortedAffairs.reduce((sum, [, v]) => sum + v.count, 0);
+
+    let affairContent = `⚖️ Affaires judiciaires : quel parti est le plus concerné ?\n\n`;
+    affairContent += `${totalAffairs} affaires documentées (implication directe uniquement) :\n\n`;
+    for (const [party, { count, members }] of sortedAffairs) {
+      const ratio = (count / members).toFixed(1);
+      affairContent += `• ${party} : ${count} affaires (${ratio} par élu référencé)\n`;
+    }
+    affairContent += `\nToutes les affaires sont sourcées et vérifiables. La présomption d'innocence s'applique tant qu'aucune condamnation définitive n'est prononcée.`;
 
     drafts.push({
       category: "📊 Stats",
-      content: `Affaires judiciaires documentées par parti :\n${affairLines}\nConsultez les détails →`,
+      content: affairContent,
       link: `${SITE_URL}/affaires`,
     });
   }
 
   return drafts;
 }
+
 async function recentAffairs(): Promise<TweetDraft[]> {
   const sevenDaysAgo = new Date();
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
@@ -188,7 +235,12 @@ async function recentAffairs(): Promise<TweetDraft[]> {
         select: {
           fullName: true,
           slug: true,
-          currentParty: { select: { shortName: true } },
+          currentParty: { select: { shortName: true, name: true } },
+          mandates: {
+            where: { isCurrent: true },
+            take: 1,
+            select: { type: true },
+          },
         },
       },
     },
@@ -200,13 +252,25 @@ async function recentAffairs(): Promise<TweetDraft[]> {
     const statusLabel = AFFAIR_STATUS_LABELS[a.status];
     const categoryLabel = AFFAIR_CATEGORY_LABELS[a.category];
     const needsPresumption = AFFAIR_STATUS_NEEDS_PRESUMPTION[a.status];
-    const party = a.politician.currentParty?.shortName
-      ? ` (${a.politician.currentParty.shortName})`
-      : "";
+    const party = a.politician.currentParty?.shortName || "";
+    const mandate = a.politician.mandates[0];
+    const mandateLabel = mandate ? MANDATE_TYPE_LABELS[mandate.type].toLowerCase() : "";
 
-    let content = `${a.politician.fullName}${party} — ${a.title}\nStatut : ${statusLabel} | ${categoryLabel}`;
+    let content = `⚖️ ${a.title}\n\n`;
+    content += `${a.politician.fullName}`;
+    if (party) content += ` (${party})`;
+    if (mandateLabel) content += `, ${mandateLabel}`;
+    content += `.\n\n`;
+    content += `Catégorie : ${categoryLabel}\nStatut : ${statusLabel}\n`;
+
+    if (a.description) {
+      const desc =
+        a.description.length > 500 ? a.description.substring(0, 497) + "..." : a.description;
+      content += `\n${desc}\n`;
+    }
+
     if (needsPresumption) {
-      content += "\n⚖️ Présomption d'innocence";
+      content += `\n⚖️ Rappel : la présomption d'innocence s'applique — aucune condamnation définitive n'a été prononcée à ce stade.`;
     }
 
     return {
@@ -216,13 +280,14 @@ async function recentAffairs(): Promise<TweetDraft[]> {
     };
   });
 }
+
 async function factchecks(): Promise<TweetDraft[]> {
   const sevenDaysAgo = new Date();
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
   const recent = await db.factCheck.findMany({
     where: { publishedAt: { gte: sevenDaysAgo } },
-    select: { verdictRating: true },
+    select: { verdictRating: true, claimant: true, title: true, source: true },
   });
 
   if (recent.length < 3) return [];
@@ -233,14 +298,34 @@ async function factchecks(): Promise<TweetDraft[]> {
   ).length;
   const falsy = recent.filter((f) => ["MOSTLY_FALSE", "FALSE"].includes(f.verdictRating)).length;
 
+  // Pick one notable false claim for the hook
+  const notableFalse = recent.find(
+    (f) => ["MOSTLY_FALSE", "FALSE"].includes(f.verdictRating) && f.claimant
+  );
+
+  let content = `🔍 Fact-checking de la semaine\n\n`;
+  content += `${recent.length} déclarations de responsables politiques passées au crible cette semaine :\n\n`;
+  content += `✅ ${truthy} vraie(s) ou plutôt vraie(s)\n`;
+  content += `⚠️ ${misleading} trompeuse(s) ou sortie(s) de contexte\n`;
+  content += `❌ ${falsy} fausse(s) ou plutôt fausse(s)\n`;
+
+  if (notableFalse) {
+    content += `\nExemple : "${notableFalse.title}"`;
+    if (notableFalse.claimant) content += ` (${notableFalse.claimant})`;
+    if (notableFalse.source) content += ` — vérifié par ${notableFalse.source}`;
+  }
+
+  content += `\n\nQui dit vrai ? Vérifiez par vous-même.`;
+
   return [
     {
       category: "🔍 Fact-checks",
-      content: `Cette semaine, ${recent.length} déclarations de politiques vérifiées :\n✅ ${truthy} vraie(s) — ⚠️ ${misleading} trompeuse(s) — ❌ ${falsy} fausse(s)\nQui dit vrai ?`,
+      content,
       link: `${SITE_URL}/factchecks`,
     },
   ];
 }
+
 async function deputySpotlight(): Promise<TweetDraft[]> {
   const count = await db.politician.count({
     where: {
@@ -261,7 +346,7 @@ async function deputySpotlight(): Promise<TweetDraft[]> {
       mandates: { some: { isCurrent: true } },
     },
     include: {
-      currentParty: { select: { shortName: true } },
+      currentParty: { select: { shortName: true, name: true } },
       mandates: {
         where: { isCurrent: true },
         take: 1,
@@ -280,11 +365,35 @@ async function deputySpotlight(): Promise<TweetDraft[]> {
   if (!politician) return [];
 
   const mandate = politician.mandates[0];
-  const mandateLabel = mandate ? MANDATE_TYPE_LABELS[mandate.type] : "";
-  const constituency = mandate?.constituency ? ` de ${mandate.constituency}` : "";
-  const party = politician.currentParty?.shortName ? ` (${politician.currentParty.shortName})` : "";
+  const mandateLabel = mandate ? MANDATE_TYPE_LABELS[mandate.type].toLowerCase() : "";
+  const constituency = mandate?.constituency ? ` (${mandate.constituency})` : "";
+  const partyName = politician.currentParty?.name || "";
 
-  const content = `${politician.fullName}${party}, ${mandateLabel.toLowerCase()}${constituency}.\n${politician._count.votes} votes enregistrés, ${politician._count.affairs} affaire(s) documentée(s).\nSa fiche complète →`;
+  let content = `👤 Connaissez-vous votre élu ?\n\n`;
+  content += `${politician.fullName}`;
+  if (partyName) content += `, ${partyName}`;
+  if (mandateLabel) content += `, ${mandateLabel}${constituency}`;
+  content += `.\n\n`;
+
+  if (politician._count.votes > 0) {
+    content += `📊 ${politician._count.votes.toLocaleString("fr-FR")} votes enregistrés au Parlement\n`;
+  }
+  if (politician._count.affairs > 0) {
+    content += `⚖️ ${politician._count.affairs} affaire(s) judiciaire(s) documentée(s)\n`;
+  }
+  if (politician._count.affairs === 0) {
+    content += `✅ Aucune affaire judiciaire documentée\n`;
+  }
+
+  if (politician.biography) {
+    const bio =
+      politician.biography.length > 400
+        ? politician.biography.substring(0, 397) + "..."
+        : politician.biography;
+    content += `\n${bio}\n`;
+  }
+
+  content += `\nRetrouvez sa fiche complète : votes, mandats, patrimoine déclaré.`;
 
   return [
     {
@@ -294,36 +403,59 @@ async function deputySpotlight(): Promise<TweetDraft[]> {
     },
   ];
 }
+
 async function elections(): Promise<TweetDraft[]> {
   const now = new Date();
 
-  // Find upcoming or active elections
   const upcoming = await db.election.findFirst({
     where: {
       status: { in: ["UPCOMING", "REGISTRATION", "CANDIDACIES", "CAMPAIGN"] },
       round1Date: { gte: now },
     },
     orderBy: { round1Date: "asc" },
+    include: {
+      _count: { select: { candidacies: true } },
+    },
   });
 
   if (upcoming) {
     const typeLabel = ELECTION_TYPE_LABELS[upcoming.type];
+    const statusLabel = ELECTION_STATUS_LABELS[upcoming.status];
     const date = upcoming.round1Date!.toLocaleDateString("fr-FR", {
       day: "numeric",
       month: "long",
       year: "numeric",
     });
+    const days = daysUntil(upcoming.round1Date!);
+
+    let content = `🗳️ ${typeLabel} : J-${days}\n\n`;
+    content += `${upcoming.title}\n`;
+    content += `📅 1er tour le ${date}\n`;
+    content += `📌 Statut : ${statusLabel}\n`;
+
+    if (upcoming._count.candidacies > 0) {
+      content += `👥 ${upcoming._count.candidacies} candidature(s) enregistrée(s)\n`;
+    }
+
+    if (upcoming.description) {
+      const desc =
+        upcoming.description.length > 300
+          ? upcoming.description.substring(0, 297) + "..."
+          : upcoming.description;
+      content += `\n${desc}\n`;
+    }
+
+    content += `\nSuivez les candidatures et résultats en temps réel.`;
 
     return [
       {
         category: "🗳️ Élections",
-        content: `${typeLabel} — 1er tour le ${date}.\n${upcoming.title}\nSuivez les candidatures →`,
+        content,
         link: `${SITE_URL}/elections/${upcoming.slug}`,
       },
     ];
   }
 
-  // Fallback: most recent completed election
   const recent = await db.election.findFirst({
     where: { status: "COMPLETED" },
     orderBy: { round1Date: "desc" },
@@ -331,10 +463,14 @@ async function elections(): Promise<TweetDraft[]> {
 
   if (recent) {
     const typeLabel = ELECTION_TYPE_LABELS[recent.type];
+    let content = `🗳️ Résultats : ${typeLabel.toLowerCase()}\n\n`;
+    content += `${recent.title}\n\n`;
+    content += `Retrouvez tous les résultats, les élus et les candidats.`;
+
     return [
       {
         category: "🗳️ Élections",
-        content: `Résultats des ${typeLabel.toLowerCase()} : ${recent.title}\nRetrouvez tous les résultats →`,
+        content,
         link: `${SITE_URL}/elections/${recent.slug}`,
       },
     ];
@@ -342,6 +478,7 @@ async function elections(): Promise<TweetDraft[]> {
 
   return [];
 }
+
 const FEED_NAMES: Record<string, string> = {
   lemonde: "Le Monde",
   lefigaro: "Le Figaro",
@@ -401,7 +538,7 @@ async function recentPress(): Promise<TweetDraft[]> {
   const pol = pMentions[0].politician;
   const party = pol.currentParty?.shortName ? ` (${pol.currentParty.shortName})` : "";
 
-  // Deduplicate by feedSource, take top 3
+  // Deduplicate by feedSource, take top 5
   const seen = new Set<string>();
   const uniqueArticles = pMentions
     .filter((m) => {
@@ -409,21 +546,22 @@ async function recentPress(): Promise<TweetDraft[]> {
       seen.add(m.article.feedSource);
       return true;
     })
-    .slice(0, 3);
+    .slice(0, 5);
 
-  const articleLines = uniqueArticles
-    .map((m) => {
-      const title =
-        m.article.title.length > 60 ? m.article.title.substring(0, 57) + "..." : m.article.title;
-      const source = FEED_NAMES[m.article.feedSource] || m.article.feedSource;
-      return `• "${title}" (${source})`;
-    })
-    .join("\n");
+  let content = `📰 ${pol.fullName}${party} dans la presse\n\n`;
+  content += `${pMentions.length} mention(s) dans les dernières 48h :\n\n`;
+
+  for (const m of uniqueArticles) {
+    const source = FEED_NAMES[m.article.feedSource] || m.article.feedSource;
+    content += `• ${m.article.title} (${source})\n`;
+  }
+
+  content += `\nRetrouvez toute la couverture presse sur sa fiche.`;
 
   return [
     {
       category: "📰 Presse",
-      content: `Dans la presse sur ${pol.fullName}${party} :\n${articleLines}`,
+      content,
       link: `${SITE_URL}/politiques/${pol.slug}`,
     },
   ];
@@ -451,7 +589,7 @@ function renderMarkdown(drafts: TweetDraft[]): string {
   for (const [category, tweets] of grouped) {
     md += `## ${category}\n\n`;
     for (const t of tweets) {
-      const fullText = t.link ? `${t.content}\n👉 ${t.link}` : t.content;
+      const fullText = t.link ? `${t.content}\n\n👉 ${t.link}` : t.content;
       const charCount = fullText.length;
       const status = charCount > MAX_CHARS ? "⚠️ TROP LONG" : "✅";
       md += `### Tweet ${tweetNum}\n\n`;

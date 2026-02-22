@@ -3,8 +3,8 @@ import Link from "next/link";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { MobileMenu } from "./MobileMenu";
 import { NavDropdown } from "./NavDropdown";
-import { NAV_GROUPS, CTA_COMPARER, CTA_ASSISTANT } from "@/config/navigation";
-import { GitCompare, Bot } from "lucide-react";
+import { NAV_GROUPS, NAV_TOP_LEVEL, CTA_COMPARER, CTA_ASSISTANT } from "@/config/navigation";
+import { GitCompare, Bot, Scale, ShieldCheck } from "lucide-react";
 import { GlobalSearchTrigger } from "@/components/search";
 import { getEnabledFlags } from "@/lib/feature-flags";
 
@@ -43,6 +43,21 @@ export async function Header() {
 
           {/* Desktop navigation */}
           <nav className="hidden lg:flex items-center gap-1" aria-label="Navigation principale">
+            {/* Top-level transparency links */}
+            {NAV_TOP_LEVEL.map((item) => {
+              const Icon = item.icon === "scale" ? Scale : ShieldCheck;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-foreground hover:text-primary rounded-lg hover:bg-muted/50 transition-colors"
+                >
+                  <Icon className="h-4 w-4" />
+                  {item.label}
+                </Link>
+              );
+            })}
+
             {/* Dropdown menus */}
             {filteredGroups.map((group) => (
               <NavDropdown key={group.label} group={group} />

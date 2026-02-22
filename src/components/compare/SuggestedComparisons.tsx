@@ -97,6 +97,8 @@ export function SuggestedComparisons({ mode }: SuggestedComparisonsProps) {
       mode === "partis"
         ? `/comparer?left=${s.leftSlug}&right=${s.rightSlug}&mode=partis`
         : `/comparer?left=${s.leftSlug}&right=${s.rightSlug}`;
+    // Notify selectors so they show skeleton immediately
+    window.dispatchEvent(new CustomEvent("compare-navigating"));
     startTransition(() => {
       router.push(href);
     });

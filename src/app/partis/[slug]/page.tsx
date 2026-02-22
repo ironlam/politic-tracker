@@ -397,40 +397,51 @@ export default async function PartyPage({ params }: PageProps) {
                 {party.politicians.length > 0 ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {party.politicians.map((politician) => (
-                      <Link
+                      <div
                         key={politician.id}
-                        href={`/politiques/${politician.slug}`}
-                        className={`flex items-center gap-3 p-2 rounded-lg hover:bg-muted transition-colors ${
-                          politician._count.affairs > 0 ? "ring-1 ring-red-200 bg-red-50/50" : ""
+                        className={`flex items-center gap-3 p-2 rounded-lg ${
+                          politician._count.affairs > 0
+                            ? "ring-1 ring-red-200 bg-red-50/50 dark:ring-red-900 dark:bg-red-950/30"
+                            : ""
                         }`}
                       >
-                        <div className="relative shrink-0">
+                        <Link
+                          href={`/politiques/${politician.slug}`}
+                          className="relative shrink-0 hover:opacity-80 transition-opacity"
+                        >
                           <PoliticianAvatar
                             photoUrl={politician.photoUrl}
                             firstName={politician.firstName}
                             lastName={politician.lastName}
                             size="sm"
                           />
-                          {politician._count.affairs > 0 && (
-                            <div
-                              className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center"
-                              title={`${politician._count.affairs} condamnation(s) définitive(s)`}
-                            >
-                              <span className="text-white text-[10px] font-bold">
-                                {politician._count.affairs}
-                              </span>
-                            </div>
-                          )}
-                        </div>
+                        </Link>
                         <div className="min-w-0 flex-1">
-                          <p className="font-medium truncate">{politician.fullName}</p>
+                          <Link
+                            href={`/politiques/${politician.slug}`}
+                            className="font-medium truncate block hover:text-primary transition-colors"
+                          >
+                            {politician.fullName}
+                          </Link>
                           {politician.mandates[0] && (
                             <p className="text-xs text-muted-foreground truncate">
                               {politician.mandates[0].title}
                             </p>
                           )}
                         </div>
-                      </Link>
+                        {politician._count.affairs > 0 && (
+                          <Link
+                            href={`/politiques/${politician.slug}/affaires`}
+                            className="shrink-0 flex items-center gap-1 px-2 py-1 text-xs font-medium text-red-700 dark:text-red-400 bg-red-100 dark:bg-red-950/50 rounded-full hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
+                            title={`${politician._count.affairs} condamnation(s) définitive(s)`}
+                          >
+                            <span>{politician._count.affairs}</span>
+                            <span className="hidden sm:inline">
+                              affaire{politician._count.affairs > 1 ? "s" : ""}
+                            </span>
+                          </Link>
+                        )}
+                      </div>
                     ))}
                   </div>
                 ) : (

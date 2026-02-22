@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
-import { NAV_GROUPS, CTA_COMPARER, CTA_ASSISTANT } from "@/config/navigation";
+import { NAV_GROUPS, NAV_TOP_LEVEL, CTA_COMPARER, CTA_ASSISTANT } from "@/config/navigation";
 import {
   GitCompare,
   Bot,
@@ -13,6 +13,7 @@ import {
   Radio,
   Newspaper,
   ShieldCheck,
+  Scale,
   type LucideIcon,
 } from "lucide-react";
 import { GlobalSearchTrigger } from "@/components/search";
@@ -23,6 +24,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
   live: Radio,
   newspaper: Newspaper,
   shieldCheck: ShieldCheck,
+  scale: Scale,
 };
 
 // Get all focusable elements within a container
@@ -171,6 +173,30 @@ export function MobileMenu({ enabledFlags = [] }: MobileMenuProps) {
             {/* Global search */}
             <div className="mb-4">
               <GlobalSearchTrigger variant="mobile" onBeforeOpen={() => setIsOpen(false)} />
+            </div>
+
+            {/* Transparency links (top priority) */}
+            <div className="flex gap-2 mb-4">
+              {NAV_TOP_LEVEL.map((item) => {
+                const Icon = item.icon ? ICON_MAP[item.icon] : null;
+                const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setIsOpen(false)}
+                    className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 font-medium rounded-lg transition-colors ${
+                      isActive
+                        ? "bg-primary text-primary-foreground"
+                        : "border border-border hover:bg-muted/50"
+                    }`}
+                    aria-current={isActive ? "page" : undefined}
+                  >
+                    {Icon && <Icon className="h-5 w-5" />}
+                    {item.label}
+                  </Link>
+                );
+              })}
             </div>
 
             {/* CTA Buttons */}

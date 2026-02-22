@@ -1,5 +1,5 @@
 // Navigation configuration
-// 3 thematic dropdowns + 2 standalone actions
+// 2 top-level transparency links + 2 thematic dropdowns + 2 standalone CTAs
 
 export interface NavItem {
   href: string;
@@ -15,10 +15,26 @@ export interface NavGroup {
   items: NavItem[];
 }
 
-// Main navigation groups (4 thematic dropdowns)
+// Top-level transparency links (displayed as direct links, not in a dropdown)
+export const NAV_TOP_LEVEL: NavItem[] = [
+  {
+    href: "/affaires",
+    label: "Affaires",
+    icon: "scale",
+    description: "Dossiers judiciaires documentés avec sources",
+  },
+  {
+    href: "/factchecks",
+    label: "Fact-checks",
+    icon: "shieldCheck",
+    description: "Vérification des déclarations politiques",
+  },
+];
+
+// Main navigation groups (2 thematic dropdowns)
 export const NAV_GROUPS: NavGroup[] = [
   {
-    label: "Élus",
+    label: "Politique",
     items: [
       {
         href: "/politiques",
@@ -29,6 +45,11 @@ export const NAV_GROUPS: NavGroup[] = [
         href: "/partis",
         label: "Partis politiques",
         description: "Les partis et leurs membres",
+      },
+      {
+        href: "/votes",
+        label: "Votes parlementaires",
+        description: "Scrutins et positions des élus",
       },
       {
         href: "/carte",
@@ -43,23 +64,6 @@ export const NAV_GROUPS: NavGroup[] = [
         icon: "mapPin",
         description: "Trouvez votre député par code postal",
         featureFlag: "MON_DEPUTE_SECTION",
-      },
-    ],
-  },
-  {
-    label: "Travail législatif",
-    items: [
-      {
-        href: "/assemblee",
-        label: "Dossiers législatifs",
-        icon: "live",
-        description: "Textes en discussion à l'Assemblée",
-        featureFlag: "ASSEMBLEE_SECTION",
-      },
-      {
-        href: "/votes",
-        label: "Votes parlementaires",
-        description: "Scrutins et positions des élus",
       },
     ],
   },
@@ -84,21 +88,12 @@ export const NAV_GROUPS: NavGroup[] = [
         description: "Articles Le Monde, Politico, Mediapart",
         featureFlag: "PRESS_SECTION",
       },
-    ],
-  },
-  {
-    label: "Transparence",
-    items: [
       {
-        href: "/affaires",
-        label: "Affaires judiciaires",
-        description: "Dossiers documentés avec sources",
-      },
-      {
-        href: "/factchecks",
-        label: "Fact-checks",
-        icon: "shieldCheck",
-        description: "Vérification des déclarations politiques",
+        href: "/assemblee",
+        label: "Dossiers législatifs",
+        icon: "live",
+        description: "Textes en discussion à l'Assemblée",
+        featureFlag: "ASSEMBLEE_SECTION",
       },
     ],
   },

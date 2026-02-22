@@ -3,6 +3,7 @@ import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { db } from "@/lib/db";
+import { isFeatureEnabled } from "@/lib/feature-flags";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/utils";
@@ -164,9 +165,10 @@ export default async function PartyPage({ params }: PageProps) {
     notFound();
   }
 
-  const [leadershipMandates, partyRoles] = await Promise.all([
+  const [leadershipMandates, partyRoles, pressEnabled] = await Promise.all([
     getPartyLeadership(party.id, party.name),
     getPartyRoles(party.id),
+    isFeatureEnabled("PRESS_SECTION"),
   ]);
   const currentLeaders = leadershipMandates.filter((m) => m.isCurrent);
   const pastLeaders = leadershipMandates.filter((m) => !m.isCurrent);
@@ -582,7 +584,7 @@ export default async function PartyPage({ params }: PageProps) {
             )}
 
             {/* Press mentions */}
-            {party.pressMentions.length > 0 && (
+            {pressEnabled && party.pressMentions.length > 0 && (
               <Card>
                 <CardHeader>
                   <CardTitle>Dans la presse</CardTitle>

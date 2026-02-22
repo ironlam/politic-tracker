@@ -270,7 +270,6 @@ export function statusesFromCertaintyGroups(groups: StatusCertaintyGroup[]): Aff
 // Categories considered "grave" — selected for the stats page highlights
 export const GRAVE_CATEGORIES: AffairCategory[] = [
   // Atteintes aux personnes
-  "VIOLENCE",
   "AGRESSION_SEXUELLE",
   "HARCELEMENT_SEXUEL",
   "HARCELEMENT_MORAL",

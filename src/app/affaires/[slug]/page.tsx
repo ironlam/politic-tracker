@@ -45,7 +45,7 @@ async function getAffair(slug: string) {
         },
       },
       partyAtTime: {
-        select: { id: true, shortName: true, name: true, color: true },
+        select: { id: true, slug: true, shortName: true, name: true, color: true },
       },
       sources: {
         orderBy: { publishedAt: "desc" },
@@ -164,7 +164,16 @@ export default async function AffairDetailPage({ params }: PageProps) {
               <p className="font-semibold">{affair.politician.fullName}</p>
               {partyToShow && (
                 <p className="text-sm text-muted-foreground">
-                  {partyToShow.name}
+                  {affair.partyAtTime?.slug ? (
+                    <Link
+                      href={`/affaires/parti/${affair.partyAtTime.slug}`}
+                      className="hover:underline hover:text-foreground"
+                    >
+                      {partyToShow.name}
+                    </Link>
+                  ) : (
+                    partyToShow.name
+                  )}
                   {affair.partyAtTime &&
                     affair.partyAtTime.id !== affair.politician.currentParty?.id && (
                       <span className="text-xs"> (à l&apos;époque)</span>
@@ -375,6 +384,14 @@ export default async function AffairDetailPage({ params }: PageProps) {
           <Link href="/affaires" className="text-sm text-blue-600 hover:underline">
             ← Retour à la liste des affaires
           </Link>
+          {affair.partyAtTime?.slug && (
+            <Link
+              href={`/affaires/parti/${affair.partyAtTime.slug}`}
+              className="text-sm text-blue-600 hover:underline"
+            >
+              ← Affaires {affair.partyAtTime.shortName}
+            </Link>
+          )}
         </div>
       </div>
     </>

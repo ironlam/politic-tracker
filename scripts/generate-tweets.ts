@@ -244,7 +244,57 @@ async function factchecks(): Promise<TweetDraft[]> {
   ];
 }
 async function deputySpotlight(): Promise<TweetDraft[]> {
-  return [];
+  const count = await db.politician.count({
+    where: {
+      publicationStatus: "PUBLISHED",
+      prominenceScore: { gte: 100 },
+      mandates: { some: { isCurrent: true } },
+    },
+  });
+
+  if (count === 0) return [];
+
+  const skip = Math.floor(Math.random() * count);
+
+  const politician = await db.politician.findFirst({
+    where: {
+      publicationStatus: "PUBLISHED",
+      prominenceScore: { gte: 100 },
+      mandates: { some: { isCurrent: true } },
+    },
+    include: {
+      currentParty: { select: { shortName: true } },
+      mandates: {
+        where: { isCurrent: true },
+        take: 1,
+        select: { type: true, constituency: true },
+      },
+      _count: {
+        select: {
+          votes: true,
+          affairs: { where: { publicationStatus: "PUBLISHED", involvement: "DIRECT" } },
+        },
+      },
+    },
+    skip,
+  });
+
+  if (!politician) return [];
+
+  const mandate = politician.mandates[0];
+  const mandateLabel = mandate ? MANDATE_TYPE_LABELS[mandate.type] : "";
+  const constituency = mandate?.constituency ? ` de ${mandate.constituency}` : "";
+  const party = politician.currentParty?.shortName ? ` (${politician.currentParty.shortName})` : "";
+
+  const content = `${politician.fullName}${party}, ${mandateLabel.toLowerCase()}${constituency}.\n${politician._count.votes} votes enregistrés, ${politician._count.affairs} affaire(s) documentée(s).\nSa fiche complète →`;
+
+  return [
+    {
+      category: "👤 Profil du jour",
+      content,
+      link: `${SITE_URL}/politiques/${politician.slug}`,
+    },
+  ];
 }
 async function elections(): Promise<TweetDraft[]> {
   return [];

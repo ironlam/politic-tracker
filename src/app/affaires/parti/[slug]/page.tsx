@@ -120,7 +120,22 @@ async function getPartyAffairsData(slug: string) {
     return [...map.values()].sort((a, b) => b.count - a.count);
   }
 
-  const misEnCausePoliticians = deduplicatePoliticians(misEnCauseAffairs);
+  // Split mis-en-cause affairs into active vs closed
+  const closedStatuses = STATUS_CERTAINTY_VALUES.closes;
+  const activeAffairs = misEnCauseAffairs.filter(
+    (a) => !closedStatuses.includes(a.status as AffairStatus)
+  );
+  const closedAffairs = misEnCauseAffairs.filter((a) =>
+    closedStatuses.includes(a.status as AffairStatus)
+  );
+
+  // Politicians with at least one active (non-closed) affair
+  const activePoliticians = deduplicatePoliticians(activeAffairs);
+  // Politicians whose ALL mis-en-cause affairs are closed
+  const activePoliticianIds = new Set(activePoliticians.map((p) => p.id));
+  const closedOnlyPoliticians = deduplicatePoliticians(closedAffairs).filter(
+    (p) => !activePoliticianIds.has(p.id)
+  );
   const victimPoliticians = deduplicatePoliticians(victimAffairs);
 
   return {
@@ -140,7 +155,8 @@ async function getPartyAffairsData(slug: string) {
     enquetes,
     closes,
     superCatCounts,
-    misEnCausePoliticians,
+    activePoliticians,
+    closedOnlyPoliticians,
     victimPoliticians,
   };
 }
@@ -162,7 +178,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   if (!data) return { title: "Parti non trouvé" };
 
-  const { party, misEnCauseAffairs, condamnations, procedures, victimPoliticians } = data;
+  const { party, condamnations, procedures, victimPoliticians, activePoliticians } = data;
 
   const parts: string[] = [];
   if (condamnations > 0) parts.push(`${condamnations} condamnation${condamnations > 1 ? "s" : ""}`);
@@ -172,7 +188,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       `${victimPoliticians.length} élu${victimPoliticians.length > 1 ? "s" : ""} victime${victimPoliticians.length > 1 ? "s" : ""}`
     );
 
-  const description = `${misEnCauseAffairs.length} affaire${misEnCauseAffairs.length > 1 ? "s" : ""} judiciaire${misEnCauseAffairs.length > 1 ? "s" : ""} impliquant des élus ${party.name} en tant que mis en cause${parts.length > 0 ? `. ${parts.join(", ")}.` : "."} Sources vérifiées.`;
+  const description = `${activePoliticians.length} élu${activePoliticians.length > 1 ? "s" : ""} ${party.name} mis en cause dans des affaires judiciaires${parts.length > 0 ? `. ${parts.join(", ")}.` : "."} Sources vérifiées.`;
 
   return {
     title: `Affaires judiciaires — ${party.name} (${party.shortName})`,
@@ -201,7 +217,8 @@ export default async function PartyAffairsPage({ params }: PageProps) {
     enquetes,
     closes,
     superCatCounts,
-    misEnCausePoliticians,
+    activePoliticians,
+    closedOnlyPoliticians,
     victimPoliticians,
   } = data;
 
@@ -209,9 +226,9 @@ export default async function PartyAffairsPage({ params }: PageProps) {
 
   // Build factual summary (mis-en-cause focused)
   const summaryParts: string[] = [];
-  if (misEnCauseAffairs.length > 0) {
+  if (activePoliticians.length > 0) {
     summaryParts.push(
-      `${misEnCauseAffairs.length} affaire${misEnCauseAffairs.length > 1 ? "s" : ""} judiciaire${misEnCauseAffairs.length > 1 ? "s" : ""} où des élus ${party.name} sont mis en cause.`
+      `${activePoliticians.length} élu${activePoliticians.length > 1 ? "s" : ""} ${party.name} mis en cause dans des affaires judiciaires.`
     );
     const statusParts: string[] = [];
     if (condamnations > 0)
@@ -221,6 +238,11 @@ export default async function PartyAffairsPage({ params }: PageProps) {
         `${procedures} procédure${procedures > 1 ? "s" : ""} judiciaire${procedures > 1 ? "s" : ""}`
       );
     if (statusParts.length > 0) summaryParts.push(statusParts.join(", ") + ".");
+  }
+  if (closes > 0) {
+    summaryParts.push(
+      `${closes} affaire${closes > 1 ? "s" : ""} classée${closes > 1 ? "s" : ""}, acquittée${closes > 1 ? "s" : ""} ou prescrite${closes > 1 ? "s" : ""}.`
+    );
   }
   if (victimAffairs.length > 0) {
     summaryParts.push(
@@ -321,9 +343,7 @@ export default async function PartyAffairsPage({ params }: PageProps) {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-2">
               <Card>
                 <CardContent className="pt-6 text-center">
-                  <div className="text-3xl font-bold tabular-nums">
-                    {misEnCausePoliticians.length}
-                  </div>
+                  <div className="text-3xl font-bold tabular-nums">{activePoliticians.length}</div>
                   <div className="text-sm text-muted-foreground mt-1">Élus mis en cause</div>
                 </CardContent>
               </Card>
@@ -384,31 +404,76 @@ export default async function PartyAffairsPage({ params }: PageProps) {
               </div>
             )}
 
-            {/* Mis-en-cause politicians */}
-            <Card className="mb-8">
-              <CardHeader>
-                <CardTitle>Élus mis en cause ({misEnCausePoliticians.length})</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                  {misEnCausePoliticians.map((pol) => (
-                    <Link
-                      key={pol.id}
-                      href={`/politiques/${pol.slug}`}
-                      className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors"
-                    >
-                      <PoliticianAvatar photoUrl={pol.photoUrl} fullName={pol.fullName} size="sm" />
-                      <div className="min-w-0 flex-1">
-                        <p className="font-medium truncate">{pol.fullName}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {pol.count} affaire{pol.count > 1 ? "s" : ""}
-                        </p>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+            {/* Active mis-en-cause politicians */}
+            {activePoliticians.length > 0 && (
+              <Card className="mb-8">
+                <CardHeader>
+                  <CardTitle>Élus mis en cause ({activePoliticians.length})</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                    {activePoliticians.map((pol) => (
+                      <Link
+                        key={pol.id}
+                        href={`/politiques/${pol.slug}`}
+                        className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors"
+                      >
+                        <PoliticianAvatar
+                          photoUrl={pol.photoUrl}
+                          fullName={pol.fullName}
+                          size="sm"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium truncate">{pol.fullName}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {pol.count} affaire{pol.count > 1 ? "s" : ""}
+                          </p>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Closed-only politicians */}
+            {closedOnlyPoliticians.length > 0 && (
+              <Card className="mb-8">
+                <CardHeader>
+                  <CardTitle>
+                    Affaires closes ({closedOnlyPoliticians.length} élu
+                    {closedOnlyPoliticians.length > 1 ? "s" : ""})
+                  </CardTitle>
+                  <p className="text-sm text-muted-foreground">
+                    Élus dont toutes les affaires ont été classées, acquittées ou prescrites
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                    {closedOnlyPoliticians.map((pol) => (
+                      <Link
+                        key={pol.id}
+                        href={`/politiques/${pol.slug}`}
+                        className="flex items-center gap-3 p-3 rounded-lg border border-green-200 dark:border-green-800 hover:bg-green-50/50 dark:hover:bg-green-900/20 transition-colors"
+                      >
+                        <PoliticianAvatar
+                          photoUrl={pol.photoUrl}
+                          fullName={pol.fullName}
+                          size="sm"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium truncate">{pol.fullName}</p>
+                          <p className="text-xs text-green-600 dark:text-green-400">
+                            {pol.count} affaire{pol.count > 1 ? "s" : ""} close
+                            {pol.count > 1 ? "s" : ""}
+                          </p>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </>
         )}
 
@@ -504,12 +569,13 @@ export default async function PartyAffairsPage({ params }: PageProps) {
         <div className="mt-6 p-4 bg-muted/50 rounded-lg text-sm text-muted-foreground">
           <p className="font-medium mb-1">Méthodologie</p>
           <p>
-            Les chiffres ci-dessus comptabilisent uniquement les affaires où des élus du parti sont{" "}
-            <strong>mis en cause</strong> (directement ou indirectement). Les enquêtes
-            préliminaires, qui ne constituent pas une mise en cause formelle, sont indiquées
-            séparément. Les affaires classées, acquittées ou prescrites sont incluses dans le
-            décompte. Les affaires où des élus sont victimes ou plaignants sont présentées dans une
-            section distincte.
+            La section « Élus mis en cause » comptabilise uniquement les élus ayant au moins une
+            affaire en cours ou une condamnation. Les élus dont{" "}
+            <strong>toutes les affaires sont closes</strong> (classement sans suite, relaxe,
+            acquittement, non-lieu, prescription) sont présentés dans une section distincte et ne
+            sont pas comptabilisés comme « mis en cause ». Les enquêtes préliminaires, qui ne
+            constituent pas une mise en cause formelle, sont indiquées séparément. Les affaires où
+            des élus sont victimes ou plaignants sont présentées à part.
           </p>
         </div>
 

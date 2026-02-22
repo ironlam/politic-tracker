@@ -35,12 +35,19 @@ export function PartySelector({ position, selectedParty, otherPartyId }: PartySe
   const { isReady, searchParties } = useSearchIndex();
   const [isNavigating, setIsNavigating] = useState(false);
 
-  // Reset isNavigating when transition completes
+  // Reset isNavigating when transition completes or data arrives
   useEffect(() => {
-    if (!isPending && isNavigating) {
+    if (isNavigating && (!isPending || selectedParty)) {
       setIsNavigating(false);
     }
-  }, [isPending, isNavigating]);
+  }, [isPending, isNavigating, selectedParty]);
+
+  // Listen for navigation events from SuggestedComparisons
+  useEffect(() => {
+    const handler = () => setIsNavigating(true);
+    window.addEventListener("compare-navigating", handler);
+    return () => window.removeEventListener("compare-navigating", handler);
+  }, []);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);

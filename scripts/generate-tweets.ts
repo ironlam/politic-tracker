@@ -297,6 +297,51 @@ async function deputySpotlight(): Promise<TweetDraft[]> {
   ];
 }
 async function elections(): Promise<TweetDraft[]> {
+  const now = new Date();
+
+  // Find upcoming or active elections
+  const upcoming = await db.election.findFirst({
+    where: {
+      status: { in: ["UPCOMING", "REGISTRATION", "CANDIDACIES", "CAMPAIGN"] },
+      round1Date: { gte: now },
+    },
+    orderBy: { round1Date: "asc" },
+  });
+
+  if (upcoming) {
+    const typeLabel = ELECTION_TYPE_LABELS[upcoming.type];
+    const date = upcoming.round1Date!.toLocaleDateString("fr-FR", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+
+    return [
+      {
+        category: "🗳️ Élections",
+        content: `${typeLabel} — 1er tour le ${date}.\n${upcoming.title}\nSuivez les candidatures →`,
+        link: `${SITE_URL}/elections/${upcoming.slug}`,
+      },
+    ];
+  }
+
+  // Fallback: most recent completed election
+  const recent = await db.election.findFirst({
+    where: { status: "COMPLETED" },
+    orderBy: { round1Date: "desc" },
+  });
+
+  if (recent) {
+    const typeLabel = ELECTION_TYPE_LABELS[recent.type];
+    return [
+      {
+        category: "🗳️ Élections",
+        content: `Résultats des ${typeLabel.toLowerCase()} : ${recent.title}\nRetrouvez tous les résultats →`,
+        link: `${SITE_URL}/elections/${recent.slug}`,
+      },
+    ];
+  }
+
   return [];
 }
 async function recentPress(): Promise<TweetDraft[]> {

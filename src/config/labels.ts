@@ -139,6 +139,34 @@ export const INVOLVEMENT_COLORS: Record<Involvement, string> = {
     "bg-indigo-100 text-indigo-800 border-indigo-300 dark:bg-indigo-900/40 dark:text-indigo-300 dark:border-indigo-700",
 };
 
+// Involvement filter groups for /affaires page
+export type InvolvementGroup = "mise-en-cause" | "victime" | "mentionne";
+
+export const INVOLVEMENT_GROUP_LABELS: Record<InvolvementGroup, string> = {
+  "mise-en-cause": "Mis en cause",
+  victime: "Victime / Plaignant",
+  mentionne: "Mentionné",
+};
+
+export const INVOLVEMENT_GROUP_VALUES: Record<InvolvementGroup, Involvement[]> = {
+  "mise-en-cause": ["DIRECT", "INDIRECT"],
+  victime: ["VICTIM", "PLAINTIFF"],
+  mentionne: ["MENTIONED_ONLY"],
+};
+
+export const INVOLVEMENT_GROUP_COLORS: Record<InvolvementGroup, string> = {
+  "mise-en-cause":
+    "bg-red-100 text-red-800 border-red-300 dark:bg-red-900/40 dark:text-red-300 dark:border-red-700",
+  victime:
+    "bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-900/40 dark:text-blue-300 dark:border-blue-700",
+  mentionne:
+    "bg-gray-100 text-gray-800 border-gray-300 dark:bg-gray-800/40 dark:text-gray-300 dark:border-gray-700",
+};
+
+export function involvementsFromGroups(groups: InvolvementGroup[]): Involvement[] {
+  return groups.flatMap((g) => INVOLVEMENT_GROUP_VALUES[g]);
+}
+
 // Super-categories for grouping
 export type AffairSuperCategory = "PROBITE" | "FINANCES" | "PERSONNES" | "EXPRESSION" | "AUTRE";
 

@@ -2,11 +2,10 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import Image from "next/image";
 import { Search, Loader2, Users, Building2, Vote } from "lucide-react";
 import { useGlobalSearch } from "./GlobalSearchProvider";
+import { PoliticianAvatar } from "@/components/politicians/PoliticianAvatar";
 import { MANDATE_TYPE_LABELS, CHAMBER_SHORT_LABELS } from "@/config/labels";
-import { normalizeImageUrl } from "@/lib/utils";
 import type { MandateType, Chamber } from "@/generated/prisma";
 
 interface PoliticianResult {
@@ -259,24 +258,12 @@ export function GlobalSearchDialog() {
                               onClick={() => navigate(`/politiques/${p.slug}`)}
                               onMouseEnter={() => setActiveIndex(idx)}
                             >
-                              {p.photoUrl ? (
-                                <Image
-                                  src={normalizeImageUrl(p.photoUrl)!}
-                                  alt=""
-                                  width={28}
-                                  height={28}
-                                  className="rounded-full object-cover shrink-0"
-                                  style={{ width: 28, height: 28 }}
-                                />
-                              ) : (
-                                <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center text-xs font-medium text-muted-foreground shrink-0">
-                                  {p.fullName
-                                    .split(" ")
-                                    .map((n) => n[0])
-                                    .join("")
-                                    .slice(0, 2)}
-                                </div>
-                              )}
+                              <PoliticianAvatar
+                                photoUrl={p.photoUrl}
+                                fullName={p.fullName}
+                                size="sm"
+                                className="w-7 h-7 text-xs"
+                              />
                               <span className="font-medium text-sm truncate">{p.fullName}</span>
                               {p.party && (
                                 <span

@@ -176,7 +176,47 @@ async function partyStats(): Promise<TweetDraft[]> {
   return drafts;
 }
 async function recentAffairs(): Promise<TweetDraft[]> {
-  return [];
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+  const affairs = await db.affair.findMany({
+    where: {
+      publicationStatus: "PUBLISHED",
+      involvement: "DIRECT",
+      updatedAt: { gte: sevenDaysAgo },
+    },
+    include: {
+      politician: {
+        select: {
+          fullName: true,
+          slug: true,
+          currentParty: { select: { shortName: true } },
+        },
+      },
+    },
+    orderBy: { updatedAt: "desc" },
+    take: 3,
+  });
+
+  return affairs.map((a) => {
+    const statusLabel = AFFAIR_STATUS_LABELS[a.status];
+    const categoryLabel = AFFAIR_CATEGORY_LABELS[a.category];
+    const needsPresumption = AFFAIR_STATUS_NEEDS_PRESUMPTION[a.status];
+    const party = a.politician.currentParty?.shortName
+      ? ` (${a.politician.currentParty.shortName})`
+      : "";
+
+    let content = `${a.politician.fullName}${party} — ${a.title}\nStatut : ${statusLabel} | ${categoryLabel}`;
+    if (needsPresumption) {
+      content += "\n⚖️ Présomption d'innocence";
+    }
+
+    return {
+      category: "⚖️ Affaires récentes",
+      content,
+      link: `${SITE_URL}/affaires/${a.slug}`,
+    };
+  });
 }
 async function factchecks(): Promise<TweetDraft[]> {
   return [];

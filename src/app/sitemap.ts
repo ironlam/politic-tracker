@@ -44,6 +44,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     orderBy: { updatedAt: "desc" },
   });
 
+  // Get parties with published affairs (for satellite pages)
+  const partiesWithAffairs = await db.party.findMany({
+    where: {
+      slug: { not: null },
+      affairsAtTime: { some: { publicationStatus: "PUBLISHED" } },
+    },
+    select: { slug: true, updatedAt: true },
+  });
+
   // Static pages
   const staticPages: MetadataRoute.Sitemap = [
     {
@@ -230,6 +239,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.5,
   }));
 
+  // Party-affair satellite pages
+  const partyAffairPages: MetadataRoute.Sitemap = partiesWithAffairs
+    .filter((p) => p.slug)
+    .map((p) => ({
+      url: `${baseUrl}/affaires/parti/${p.slug}`,
+      lastModified: p.updatedAt,
+      changeFrequency: "weekly" as const,
+      priority: 0.7,
+    }));
+
   return [
     ...staticPages,
     ...politicianPages,
@@ -239,5 +258,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...dossierPages,
     ...electionPages,
     ...affairPages,
+    ...partyAffairPages,
   ];
 }

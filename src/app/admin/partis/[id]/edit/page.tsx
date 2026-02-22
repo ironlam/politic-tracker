@@ -7,7 +7,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Select } from "@/components/ui/select";
 import { POLITICAL_POSITION_LABELS } from "@/config/labels";
 import { PoliticalPosition } from "@/generated/prisma";
@@ -17,7 +16,6 @@ interface PartyData {
   slug: string;
   name: string;
   shortName: string;
-  description: string | null;
   color: string | null;
   foundedDate: string | null;
   dissolvedDate: string | null;
@@ -87,7 +85,6 @@ export default function EditPartyPage() {
         slug: formData.get("slug"),
         name: formData.get("name"),
         shortName: formData.get("shortName"),
-        description: formData.get("description") || null,
         color: formData.get("color") || null,
         foundedDate: formData.get("foundedDate") || null,
         dissolvedDate: formData.get("dissolvedDate") || null,
@@ -161,16 +158,6 @@ export default function EditPartyPage() {
                   <Label htmlFor="slug">Slug *</Label>
                   <Input id="slug" name="slug" defaultValue={party.slug || ""} required />
                 </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  name="description"
-                  defaultValue={party.description || ""}
-                  rows={3}
-                />
               </div>
 
               <div className="grid grid-cols-2 gap-4">

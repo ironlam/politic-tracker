@@ -425,7 +425,7 @@ export default async function ComparerPage({ searchParams }: PageProps) {
             voteComparison={voteComparison}
           />
         ) : !leftPartyPreview && !rightPartyPreview ? (
-          <SuggestedComparisons mode="partis" />
+          <SuggestedComparisons mode="partis" key="partis" />
         ) : (
           <div className="text-center py-12 text-muted-foreground">
             <p className="text-lg">Sélectionnez un deuxième parti pour lancer la comparaison</p>
@@ -576,7 +576,7 @@ export default async function ComparerPage({ searchParams }: PageProps) {
           )}
         </div>
       ) : !leftPreview && !rightPreview ? (
-        <SuggestedComparisons mode="politiciens" />
+        <SuggestedComparisons mode="politiciens" key="politiciens" />
       ) : (
         <div className="text-center py-12 text-muted-foreground">
           <p className="text-lg">Sélectionnez un deuxième politique pour lancer la comparaison</p>

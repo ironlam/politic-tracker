@@ -17,6 +17,10 @@ import {
   getCategoriesForSuper,
   INVOLVEMENT_LABELS,
   INVOLVEMENT_COLORS,
+  INVOLVEMENT_GROUP_LABELS,
+  INVOLVEMENT_GROUP_COLORS,
+  involvementsFromGroups,
+  type InvolvementGroup,
   type AffairSuperCategory,
 } from "@/config/labels";
 import type { AffairStatus, AffairCategory, Involvement } from "@/types";
@@ -35,21 +39,44 @@ interface PageProps {
     category?: string;
     page?: string;
     involvement?: string;
+    parti?: string;
   }>;
 }
 
-const INVOLVEMENT_FILTER_OPTIONS = [
-  { key: "DIRECT", label: "Mis en cause" },
-  { key: "INDIRECT", label: "Indirect" },
-  { key: "MENTIONED_ONLY", label: "Mentionné" },
-] as const;
+async function getPartiesWithAffairs() {
+  "use cache";
+  cacheTag("affairs", "parties");
+  cacheLife("hours");
+
+  const parties = await db.party.findMany({
+    where: {
+      affairsAtTime: {
+        some: { publicationStatus: "PUBLISHED" },
+      },
+      slug: { not: null },
+    },
+    select: {
+      slug: true,
+      shortName: true,
+      name: true,
+      color: true,
+      _count: {
+        select: { affairsAtTime: { where: { publicationStatus: "PUBLISHED" } } },
+      },
+    },
+    orderBy: { shortName: "asc" },
+  });
+
+  return parties;
+}
 
 async function getAffairs(
   status?: string,
   superCategory?: AffairSuperCategory,
   category?: string,
   page = 1,
-  involvements: Involvement[] = ["DIRECT"]
+  involvements: Involvement[] = ["DIRECT"],
+  partySlug?: string
 ) {
   "use cache";
   cacheTag("affairs");
@@ -71,6 +98,7 @@ async function getAffairs(
     involvement: { in: involvements },
     ...(status && { status: status as AffairStatus }),
     ...(categoryFilter && { category: { in: categoryFilter } }),
+    ...(partySlug && { partyAtTime: { slug: partySlug } }),
   };
 
   const [affairs, total] = await Promise.all([
@@ -80,7 +108,9 @@ async function getAffairs(
         politician: {
           select: { id: true, fullName: true, slug: true, currentParty: true },
         },
-        partyAtTime: { select: { id: true, shortName: true, name: true } },
+        partyAtTime: {
+          select: { id: true, slug: true, shortName: true, name: true, color: true },
+        },
         sources: { select: { id: true }, take: 1 },
       },
       // Order by most relevant date: verdict > start > created
@@ -153,27 +183,32 @@ export default async function AffairesPage({ searchParams }: PageProps) {
   const superCatFilter = (params.supercat || "") as AffairSuperCategory | "";
   const categoryFilter = params.category || "";
   const involvementFilter = params.involvement || "";
+  const partiFilter = params.parti || "";
   const page = parseInt(params.page || "1", 10);
 
-  // Parse involvement filter: default to DIRECT only
-  const VALID_INVOLVEMENTS: Involvement[] = [
-    "DIRECT",
-    "INDIRECT",
-    "MENTIONED_ONLY",
-    "VICTIM",
-    "PLAINTIFF",
-  ];
-  const activeInvolvements: Involvement[] = involvementFilter
+  // Parse involvement filter: group-based (mise-en-cause, victime, mentionne)
+  const VALID_GROUPS: InvolvementGroup[] = ["mise-en-cause", "victime", "mentionne"];
+  const activeGroups: InvolvementGroup[] = involvementFilter
     ? (involvementFilter
         .split(",")
-        .filter((v) => VALID_INVOLVEMENTS.includes(v as Involvement)) as Involvement[])
-    : ["DIRECT"];
+        .filter((v) => VALID_GROUPS.includes(v as InvolvementGroup)) as InvolvementGroup[])
+    : ["mise-en-cause"];
+  const activeInvolvements = involvementsFromGroups(activeGroups);
 
-  const [{ affairs, total, totalPages }, superCounts, statusCounts] = await Promise.all([
-    getAffairs(statusFilter, superCatFilter || undefined, categoryFilter, page, activeInvolvements),
-    getSuperCategoryCounts(),
-    getStatusCounts(),
-  ]);
+  const [{ affairs, total, totalPages }, superCounts, statusCounts, partiesWithAffairs] =
+    await Promise.all([
+      getAffairs(
+        statusFilter,
+        superCatFilter || undefined,
+        categoryFilter,
+        page,
+        activeInvolvements,
+        partiFilter || undefined
+      ),
+      getSuperCategoryCounts(),
+      getStatusCounts(),
+      getPartiesWithAffairs(),
+    ]);
 
   const totalAffairs = Object.values(superCounts).reduce((a, b) => a + b, 0);
 
@@ -181,24 +216,25 @@ export default async function AffairesPage({ searchParams }: PageProps) {
   function buildUrl(params: Record<string, string>) {
     const filtered = Object.entries(params).filter(([, v]) => v);
     if (filtered.length === 0) return "/affaires";
-    return `/affaires?${filtered.map(([k, v]) => `${k}=${v}`).join("&")}`;
+    return `/affaires?${filtered.map(([k, v]) => `${k}=${encodeURIComponent(v)}`).join("&")}`;
   }
 
-  function toggleInvolvement(key: Involvement) {
-    const current = new Set(activeInvolvements);
+  function toggleGroup(key: InvolvementGroup) {
+    const current = new Set(activeGroups);
     if (current.has(key)) {
       current.delete(key);
     } else {
       current.add(key);
     }
-    // If empty, reset to DIRECT
-    if (current.size === 0) current.add("DIRECT");
+    // If empty, reset to mise-en-cause
+    if (current.size === 0) current.add("mise-en-cause");
     const inv = [...current].join(",");
-    // Only include involvement param if not default (DIRECT only)
-    const isDefault = current.size === 1 && current.has("DIRECT");
+    // Only include involvement param if not default (mise-en-cause only)
+    const isDefault = current.size === 1 && current.has("mise-en-cause");
     return buildUrl({
       status: statusFilter,
       supercat: superCatFilter,
+      parti: partiFilter,
       involvement: isDefault ? "" : inv,
     });
   }
@@ -256,6 +292,54 @@ export default async function AffairesPage({ searchParams }: PageProps) {
         })}
       </div>
 
+      {/* Party filter */}
+      <div className="mb-6">
+        <p className="text-sm font-medium mb-2">Filtrer par parti</p>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href={buildUrl({
+              status: statusFilter,
+              supercat: superCatFilter,
+              involvement: involvementFilter,
+            })}
+          >
+            <Badge variant={partiFilter === "" ? "default" : "outline"} className="cursor-pointer">
+              Tous les partis
+            </Badge>
+          </Link>
+          {partiesWithAffairs.map((p) => {
+            const isActive = partiFilter === p.slug;
+            return (
+              <Link
+                key={p.slug}
+                href={buildUrl({
+                  parti: isActive ? "" : (p.slug as string),
+                  status: statusFilter,
+                  supercat: superCatFilter,
+                  involvement: involvementFilter,
+                })}
+              >
+                <Badge
+                  variant={isActive ? "default" : "outline"}
+                  className="cursor-pointer"
+                  style={{
+                    ...(isActive && p.color
+                      ? {
+                          backgroundColor: `${p.color}20`,
+                          color: p.color,
+                          borderColor: p.color,
+                        }
+                      : {}),
+                  }}
+                >
+                  {p.shortName} ({p._count.affairsAtTime})
+                </Badge>
+              </Link>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Status filter */}
       <div className="mb-6">
         <p className="text-sm font-medium mb-2">Filtrer par statut</p>
@@ -291,20 +375,20 @@ export default async function AffairesPage({ searchParams }: PageProps) {
         </div>
       </div>
 
-      {/* Involvement filter */}
+      {/* Involvement filter — 3 groups */}
       <div className="mb-6">
         <p className="text-sm font-medium mb-2">Implication du politicien</p>
         <div className="flex flex-wrap gap-2">
-          {INVOLVEMENT_FILTER_OPTIONS.map(({ key, label }) => {
-            const isActive = activeInvolvements.includes(key);
+          {(Object.keys(INVOLVEMENT_GROUP_LABELS) as InvolvementGroup[]).map((group) => {
+            const isActive = activeGroups.includes(group);
             return (
-              <Link key={key} href={toggleInvolvement(key)}>
+              <Link key={group} href={toggleGroup(group)}>
                 <Badge
                   variant={isActive ? "default" : "outline"}
-                  className={`cursor-pointer ${isActive ? INVOLVEMENT_COLORS[key as Involvement] : ""}`}
+                  className={`cursor-pointer ${isActive ? INVOLVEMENT_GROUP_COLORS[group] : ""}`}
                 >
                   {isActive ? "● " : "○ "}
-                  {label}
+                  {INVOLVEMENT_GROUP_LABELS[group]}
                 </Badge>
               </Link>
             );
@@ -313,9 +397,15 @@ export default async function AffairesPage({ searchParams }: PageProps) {
       </div>
 
       {/* Active filters summary */}
-      {(superCatFilter || statusFilter || involvementFilter) && (
-        <div className="mb-6 flex items-center gap-2 text-sm">
+      {(superCatFilter || statusFilter || involvementFilter || partiFilter) && (
+        <div className="mb-6 flex items-center gap-2 text-sm flex-wrap">
           <span className="text-muted-foreground">Filtres actifs :</span>
+          {partiFilter && (
+            <Badge variant="outline">
+              Parti :{" "}
+              {partiesWithAffairs.find((p) => p.slug === partiFilter)?.shortName || partiFilter}
+            </Badge>
+          )}
           {superCatFilter && (
             <Badge className={AFFAIR_SUPER_CATEGORY_COLORS[superCatFilter]}>
               {AFFAIR_SUPER_CATEGORY_LABELS[superCatFilter]}
@@ -328,8 +418,7 @@ export default async function AffairesPage({ searchParams }: PageProps) {
           )}
           {involvementFilter && (
             <Badge variant="outline">
-              Implication :{" "}
-              {activeInvolvements.map((i) => INVOLVEMENT_LABELS[i as Involvement]).join(", ")}
+              Implication : {activeGroups.map((g) => INVOLVEMENT_GROUP_LABELS[g]).join(", ")}
             </Badge>
           )}
           <Link href="/affaires" className="text-blue-600 hover:underline ml-2">
@@ -395,25 +484,28 @@ export default async function AffairesPage({ searchParams }: PageProps) {
                           className="text-blue-600 hover:underline text-sm"
                         >
                           {affair.politician.fullName}
-                          {(affair.partyAtTime || affair.politician.currentParty) && (
-                            <span
-                              className="text-muted-foreground"
-                              title={
-                                affair.partyAtTime?.name || affair.politician.currentParty?.name
-                              }
-                            >
-                              {" "}
-                              (
-                              {affair.partyAtTime?.shortName ||
-                                affair.politician.currentParty?.shortName}
-                              )
-                              {affair.partyAtTime &&
-                                affair.partyAtTime.id !== affair.politician.currentParty?.id && (
-                                  <span className="text-xs"> à l&apos;époque</span>
-                                )}
-                            </span>
-                          )}
                         </Link>
+                        {(affair.partyAtTime || affair.politician.currentParty) && (
+                          <span className="text-sm text-muted-foreground">
+                            {" ("}
+                            {affair.partyAtTime?.slug ? (
+                              <Link
+                                href={`/affaires/parti/${affair.partyAtTime.slug}`}
+                                className="hover:underline hover:text-foreground"
+                              >
+                                {affair.partyAtTime.shortName}
+                              </Link>
+                            ) : (
+                              affair.partyAtTime?.shortName ||
+                              affair.politician.currentParty?.shortName
+                            )}
+                            {affair.partyAtTime &&
+                              affair.partyAtTime.id !== affair.politician.currentParty?.id && (
+                                <span className="text-xs"> à l&apos;époque</span>
+                              )}
+                            {")"}
+                          </span>
+                        )}
 
                         <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
                           {affair.description}
@@ -458,6 +550,7 @@ export default async function AffairesPage({ searchParams }: PageProps) {
                     status: statusFilter,
                     supercat: superCatFilter,
                     involvement: involvementFilter,
+                    parti: partiFilter,
                   })}
                   className="px-4 py-2 border rounded-md hover:bg-muted"
                 >
@@ -474,6 +567,7 @@ export default async function AffairesPage({ searchParams }: PageProps) {
                     status: statusFilter,
                     supercat: superCatFilter,
                     involvement: involvementFilter,
+                    parti: partiFilter,
                   })}
                   className="px-4 py-2 border rounded-md hover:bg-muted"
                 >

@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
+import { PoliticianAvatar } from "@/components/politicians/PoliticianAvatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -23,7 +23,6 @@ import {
   ChevronRight,
   Loader2,
 } from "lucide-react";
-import { normalizeImageUrl } from "@/lib/utils";
 import type { PublicationStatus } from "@/generated/prisma";
 
 interface AffairItem {
@@ -455,19 +454,12 @@ export default function AdminAffairsPage() {
                           href={`/admin/politiques/${affair.politician.id}`}
                           className="flex items-center gap-2 hover:text-foreground"
                         >
-                          {affair.politician.photoUrl ? (
-                            <Image
-                              src={normalizeImageUrl(affair.politician.photoUrl)!}
-                              alt=""
-                              width={24}
-                              height={24}
-                              className="rounded-full object-cover shrink-0"
-                              style={{ width: 24, height: 24 }}
-                              unoptimized
-                            />
-                          ) : (
-                            <div className="w-6 h-6 rounded-full bg-muted shrink-0" />
-                          )}
+                          <PoliticianAvatar
+                            photoUrl={affair.politician.photoUrl}
+                            fullName={affair.politician.fullName}
+                            size="sm"
+                            className="w-6 h-6 text-[10px]"
+                          />
                           <span className="truncate max-w-[120px]">
                             {affair.politician.fullName}
                           </span>

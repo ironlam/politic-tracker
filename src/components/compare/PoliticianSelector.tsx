@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Search, X } from "lucide-react";
 import { PoliticianAvatar } from "@/components/politicians/PoliticianAvatar";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useSearchIndex } from "@/hooks";
 
 interface Politician {
   id: string;
@@ -39,11 +40,13 @@ export function PoliticianSelector({
   const [activeIndex, setActiveIndex] = useState(-1);
   const [activeOnly, setActiveOnly] = useState(true);
   const [isPending, startTransition] = useTransition();
+  const { isReady, searchPoliticians } = useSearchIndex();
+  const [isNavigating, setIsNavigating] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
-  // Search politicians with debounce
+  // Search politicians — client-side when index ready, API fallback otherwise
   useEffect(() => {
     if (query.length < 2) {
       setResults([]);
@@ -51,6 +54,28 @@ export function PoliticianSelector({
       return;
     }
 
+    if (isReady) {
+      // Instant client-side search
+      const otherSlug = searchParams.get(position === "left" ? "right" : "left");
+      const matches = searchPoliticians(query, otherSlug || undefined);
+      // Map to component's expected format
+      const mapped = matches.map((p) => ({
+        id: p.slug, // Use slug as ID for client-side results
+        slug: p.slug,
+        fullName: p.fullName,
+        photoUrl: p.photoUrl,
+        currentParty: p.partyShortName
+          ? { name: p.partyShortName, shortName: p.partyShortName, color: p.partyColor }
+          : null,
+        currentMandate: p.mandateType || undefined,
+      }));
+      setResults(mapped);
+      setActiveIndex(-1);
+      setIsLoading(false);
+      return;
+    }
+
+    // Fallback: API search with debounce when index not ready
     const controller = new AbortController();
     const fetchResults = async () => {
       setIsLoading(true);
@@ -62,7 +87,6 @@ export function PoliticianSelector({
         );
         if (!response.ok) throw new Error("Search failed");
         const data = await response.json();
-        // Map API response to expected format and filter out the other selected politician
         const mapped = data
           .filter((p: { id: string }) => p.id !== otherPoliticianId)
           .map(
@@ -97,12 +121,12 @@ export function PoliticianSelector({
       }
     };
 
-    const timeout = setTimeout(fetchResults, 250);
+    const timeout = setTimeout(fetchResults, 150);
     return () => {
       clearTimeout(timeout);
       controller.abort();
     };
-  }, [query, otherPoliticianId, activeOnly]);
+  }, [query, otherPoliticianId, activeOnly, isReady, searchPoliticians, searchParams, position]);
 
   // Close on click outside
   useEffect(() => {
@@ -122,6 +146,7 @@ export function PoliticianSelector({
       setQuery("");
       setIsOpen(false);
       setActiveIndex(-1);
+      setIsNavigating(true);
       startTransition(() => {
         router.push(`/comparer?${params.toString()}`);
       });
@@ -132,6 +157,7 @@ export function PoliticianSelector({
   const clearSelection = useCallback(() => {
     const params = new URLSearchParams(searchParams.toString());
     params.delete(position);
+    setIsNavigating(true);
     startTransition(() => {
       router.push(`/comparer?${params.toString()}`);
     });
@@ -174,7 +200,7 @@ export function PoliticianSelector({
     }
   }, [activeIndex]);
 
-  if (isPending && !selectedPolitician) {
+  if ((isPending || isNavigating) && !selectedPolitician) {
     return (
       <div className="bg-muted rounded-lg p-4 animate-in fade-in-0 duration-200">
         <div className="flex items-center gap-4">

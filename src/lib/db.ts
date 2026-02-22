@@ -16,8 +16,12 @@ function createPrismaClient(): PrismaClient {
   }
 
   // Create a connection pool (SSL required by Supabase, rejectUnauthorized: false for pooler certs)
+  // Low max for serverless: each Vercel lambda gets its own pool
   const pool = new Pool({
     connectionString,
+    max: 3,
+    idleTimeoutMillis: 30_000,
+    connectionTimeoutMillis: 10_000,
     ssl: { rejectUnauthorized: false },
   });
   globalForPrisma.pool = pool;
@@ -34,9 +38,9 @@ function createPrismaClient(): PrismaClient {
 
 export const db = globalForPrisma.prisma ?? createPrismaClient();
 
-if (process.env.NODE_ENV !== "production") {
-  globalForPrisma.prisma = db;
-}
+// Cache in all environments — prevents duplicate pools in serverless (Vercel)
+// and avoids hot-reload duplication in dev
+globalForPrisma.prisma = db;
 
 // Graceful shutdown - only register once to avoid memory leak
 if (!globalForPrisma.shutdownRegistered) {

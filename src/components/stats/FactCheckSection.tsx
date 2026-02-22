@@ -1,6 +1,6 @@
-import Image from "next/image";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PoliticianAvatar } from "@/components/politicians/PoliticianAvatar";
 import { HorizontalBars } from "./HorizontalBars";
 import { ProportionBar } from "./ProportionBar";
 import { MethodologyDisclaimer } from "./MethodologyDisclaimer";
@@ -63,23 +63,7 @@ function PoliticianRankingItem({
       <span className="text-sm font-bold text-muted-foreground w-6 text-right tabular-nums shrink-0">
         {rank}.
       </span>
-      {pol.photoUrl ? (
-        <Image
-          src={pol.photoUrl}
-          alt=""
-          width={32}
-          height={32}
-          className="w-8 h-8 rounded-full object-cover shrink-0"
-        />
-      ) : (
-        <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-medium shrink-0">
-          {pol.fullName
-            .split(" ")
-            .map((n) => n[0])
-            .join("")
-            .slice(0, 2)}
-        </div>
-      )}
+      <PoliticianAvatar photoUrl={pol.photoUrl} fullName={pol.fullName} size="sm" />
       <div className="flex-1 min-w-0">
         <div className="text-sm font-medium truncate">{pol.fullName}</div>
         <div className="flex items-center gap-2">

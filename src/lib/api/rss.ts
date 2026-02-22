@@ -285,7 +285,7 @@ export class RSSClient {
       const response = await fetch(config.url, {
         headers: {
           Accept: "application/rss+xml, application/xml, text/xml, */*",
-          "User-Agent": "TransparencePolitique/1.0 (https://politic-tracker.vercel.app)",
+          "User-Agent": "Poligraph/1.0 (https://poligraph.fr)",
         },
         signal: AbortSignal.timeout(this.options.timeout),
       });

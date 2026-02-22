@@ -69,7 +69,7 @@ export async function GET(request: NextRequest) {
     description: a.description.substring(0, 500), // Truncate for CSV
     sourceUrl: a.sources[0]?.url || "",
     sourceTitle: a.sources[0]?.title || "",
-    pageUrl: `https://politic-tracker.vercel.app/affaires/${a.slug}`,
+    pageUrl: `${process.env.NEXT_PUBLIC_SITE_URL || "https://poligraph.fr"}/affaires/${a.slug}`,
   }));
 
   const columns = [

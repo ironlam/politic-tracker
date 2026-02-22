@@ -27,11 +27,6 @@ import type { AffairStatus, AffairCategory, Involvement } from "@/types";
 
 export const revalidate = 300; // 5 minutes — CDN edge cache with ISR
 
-export const metadata: Metadata = {
-  title: "Affaires judiciaires",
-  description: "Liste des affaires judiciaires impliquant des représentants politiques français",
-};
-
 interface PageProps {
   searchParams: Promise<{
     status?: string;
@@ -41,6 +36,43 @@ interface PageProps {
     involvement?: string;
     parti?: string;
   }>;
+}
+
+export async function generateMetadata({ searchParams }: PageProps): Promise<Metadata> {
+  const params = await searchParams;
+  const partiSlug = params.parti || "";
+  const statusKey = params.status || "";
+  const superCatKey = (params.supercat || "") as AffairSuperCategory | "";
+
+  let title = "Affaires judiciaires des responsables politiques français";
+  let description =
+    "Liste des affaires judiciaires impliquant des responsables politiques français. Sources vérifiées, présomption d'innocence respectée.";
+
+  if (partiSlug) {
+    const party = await db.party.findUnique({
+      where: { slug: partiSlug },
+      select: { name: true, shortName: true },
+    });
+    if (party) {
+      title = `Affaires judiciaires — ${party.name} (${party.shortName})`;
+      description = `Affaires judiciaires impliquant des élus ${party.name}. Filtrez par statut et catégorie. Sources vérifiées.`;
+    }
+  } else if (statusKey && AFFAIR_STATUS_LABELS[statusKey as AffairStatus]) {
+    title = `Affaires judiciaires : ${AFFAIR_STATUS_LABELS[statusKey as AffairStatus]}`;
+    description = `Responsables politiques français avec une affaire au statut "${AFFAIR_STATUS_LABELS[statusKey as AffairStatus]}".`;
+  } else if (superCatKey && AFFAIR_SUPER_CATEGORY_LABELS[superCatKey]) {
+    title = `Affaires judiciaires : ${AFFAIR_SUPER_CATEGORY_LABELS[superCatKey]}`;
+    description = `${AFFAIR_SUPER_CATEGORY_DESCRIPTIONS[superCatKey]}. Liste des responsables politiques concernés.`;
+  }
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title: `${title} | Poligraph`,
+      description,
+    },
+  };
 }
 
 async function getPartiesWithAffairs() {

@@ -341,13 +341,19 @@ export function FactCheckSection({
             <p className="text-sm text-muted-foreground">Organismes de fact-checking référencés</p>
           </CardHeader>
           <CardContent>
-            <HorizontalBars
-              title="Nombre de fact-checks par source"
-              bars={bySource.slice(0, 8).map((s) => ({
-                label: s.source,
-                value: s.count,
-              }))}
-            />
+            <ol className="space-y-2">
+              {bySource.slice(0, 8).map((s, i) => (
+                <li key={s.source} className="flex items-center justify-between">
+                  <span className="text-sm">
+                    <span className="text-muted-foreground mr-2 tabular-nums">{i + 1}.</span>
+                    {s.source}
+                  </span>
+                  <span className="text-sm font-medium tabular-nums">
+                    {s.count.toLocaleString("fr-FR")}
+                  </span>
+                </li>
+              ))}
+            </ol>
           </CardContent>
         </Card>
       </div>

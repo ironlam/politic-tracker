@@ -88,7 +88,7 @@ async function getJudicialData() {
         politician: {
           select: {
             currentParty: {
-              select: { shortName: true, color: true, slug: true },
+              select: { name: true, shortName: true, color: true, slug: true },
             },
           },
         },
@@ -130,7 +130,7 @@ async function getJudicialData() {
   for (const affair of graveAffairs) {
     const party = affair.politician.currentParty;
     if (!party) continue;
-    const partyKey = party.shortName || "Autre";
+    const partyKey = party.name || party.shortName || "Autre";
 
     if (!graveByCategoryParty.has(affair.category)) {
       graveByCategoryParty.set(affair.category, new Map());

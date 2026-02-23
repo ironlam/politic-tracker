@@ -240,7 +240,7 @@ async function getFactCheckData() {
             slug: true,
             photoUrl: true,
             currentParty: {
-              select: { shortName: true, color: true, slug: true },
+              select: { name: true, shortName: true, color: true, slug: true },
             },
           },
         },
@@ -288,7 +288,8 @@ async function getFactCheckData() {
   for (const mention of allMentions) {
     const pol = mention.politician;
     const verdict = classifyRating(mention.factCheck.verdictRating);
-    const partyName = pol.currentParty?.shortName || null;
+    const partyKey = pol.currentParty?.slug || null;
+    const partyDisplayName = pol.currentParty?.name || pol.currentParty?.shortName || null;
 
     // By politician
     if (!politicianMap.has(pol.id)) {
@@ -296,7 +297,7 @@ async function getFactCheckData() {
         fullName: pol.fullName,
         slug: pol.slug,
         photoUrl: pol.photoUrl,
-        party: partyName,
+        party: partyDisplayName,
         partyColor: pol.currentParty?.color || null,
         breakdown: { vrai: 0, trompeur: 0, faux: 0, inverifiable: 0 },
         total: 0,
@@ -307,17 +308,17 @@ async function getFactCheckData() {
     polEntry.total++;
 
     // By party
-    if (partyName) {
-      if (!partyMap.has(partyName)) {
-        partyMap.set(partyName, {
-          name: partyName,
+    if (partyKey) {
+      if (!partyMap.has(partyKey)) {
+        partyMap.set(partyKey, {
+          name: partyDisplayName!,
           color: pol.currentParty!.color,
           slug: pol.currentParty!.slug,
           breakdown: { vrai: 0, trompeur: 0, faux: 0, inverifiable: 0 },
           total: 0,
         });
       }
-      const partyEntry = partyMap.get(partyName)!;
+      const partyEntry = partyMap.get(partyKey)!;
       partyEntry.breakdown[verdict]++;
       partyEntry.total++;
     }

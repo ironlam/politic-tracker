@@ -78,7 +78,6 @@ export function PoliticianAvatar({
         onLoad={() => setImageLoaded(true)}
         loading={priority ? "eager" : "lazy"}
         priority={priority}
-        unoptimized
       />
     </div>
   );

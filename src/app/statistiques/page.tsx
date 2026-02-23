@@ -353,7 +353,9 @@ async function getFactCheckData() {
   const mostReliablePoliticians = [...rankedPoliticians]
     .sort((a, b) => b.scoreVrai - a.scoreVrai)
     .slice(0, 5);
+  const mostReliableSlugs = new Set(mostReliablePoliticians.map((p) => p.slug));
   const leastReliablePoliticians = [...rankedPoliticians]
+    .filter((p) => !mostReliableSlugs.has(p.slug))
     .sort((a, b) => b.scoreFaux - a.scoreFaux)
     .slice(0, 5);
 
@@ -389,7 +391,9 @@ async function getFactCheckData() {
   const mostReliableParties = [...rankedParties]
     .sort((a, b) => b.scoreVrai - a.scoreVrai)
     .slice(0, 5);
+  const mostReliablePartyNames = new Set(mostReliableParties.map((p) => p.name));
   const leastReliableParties = [...rankedParties]
+    .filter((p) => !mostReliablePartyNames.has(p.name))
     .sort((a, b) => b.scoreFaux - a.scoreFaux)
     .slice(0, 5);
 

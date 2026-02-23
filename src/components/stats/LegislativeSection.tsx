@@ -64,7 +64,7 @@ export function LegislativeSection({ allData }: LegislativeSectionProps) {
               title="Participation aux votes par parti"
               maxValue={100}
               bars={sortedByParticipation.slice(0, 12).map((p) => ({
-                label: p.partyShortName || p.partyName,
+                label: p.partyName || p.partyShortName,
                 value: p.participationRate,
                 color: p.partyColor || undefined,
                 suffix: "%",
@@ -87,7 +87,7 @@ export function LegislativeSection({ allData }: LegislativeSectionProps) {
               title="Cohésion de vote par parti"
               maxValue={100}
               bars={sortedByCohesion.slice(0, 12).map((p) => ({
-                label: p.partyShortName || p.partyName,
+                label: p.partyName || p.partyShortName,
                 value: p.cohesionRate,
                 color: p.partyColor || undefined,
                 suffix: "%",

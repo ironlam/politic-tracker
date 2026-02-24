@@ -94,7 +94,7 @@ export function MandateTimeline({ mandates, civility }: MandateTimelineProps) {
         })()
       : 0;
 
-  // Group past mandates by category
+  // Group past mandates by category, then by type within each category
   const pastByCategory = pastMandates.reduce(
     (acc, m) => {
       const cat = getMandateCategory(m.type);
@@ -104,6 +104,17 @@ export function MandateTimeline({ mandates, civility }: MandateTimelineProps) {
     },
     {} as Record<string, SerializedMandate[]>
   );
+
+  // Within each category, group mandates by type for compact display
+  function groupByType(mandates: SerializedMandate[]) {
+    const groups = new Map<MandateType, SerializedMandate[]>();
+    for (const m of mandates) {
+      const list = groups.get(m.type) || [];
+      list.push(m);
+      groups.set(m.type, list);
+    }
+    return groups;
+  }
 
   return (
     <div className="space-y-6">
@@ -188,6 +199,8 @@ export function MandateTimeline({ mandates, civility }: MandateTimelineProps) {
               const categoryMandates = pastByCategory[key];
               if (!categoryMandates?.length) return null;
 
+              const typeGroups = groupByType(categoryMandates);
+
               return (
                 <div key={key}>
                   <p className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1">
@@ -195,45 +208,49 @@ export function MandateTimeline({ mandates, civility }: MandateTimelineProps) {
                     {category.label}
                   </p>
                   <div className="space-y-2">
-                    {categoryMandates.map((mandate) => {
-                      const displayRole = mandate.role
-                        ? feminizeRole(mandate.role, civility)
-                        : null;
-                      return (
-                        <div
-                          key={mandate.id}
-                          className="relative pl-6 border-l border-muted-foreground/20"
-                        >
-                          <div className="absolute -left-[5px] top-2 w-2 h-2 rounded-full bg-muted-foreground/40" />
-                          <div className="py-2">
-                            <div className="flex items-start justify-between gap-2">
-                              <div className="min-w-0 flex-1">
-                                <p className="font-medium">
-                                  {displayRole || MANDATE_TYPE_LABELS[mandate.type] || mandate.type}
-                                </p>
-                                {displayRole && (
-                                  <span className="text-xs text-muted-foreground">
-                                    {MANDATE_TYPE_LABELS[mandate.type] || mandate.type}
+                    {[...typeGroups.entries()].map(([type, groupMandates]) => (
+                      <div key={type} className="relative pl-6 border-l border-muted-foreground/20">
+                        <div className="absolute -left-[5px] top-2 w-2 h-2 rounded-full bg-muted-foreground/40" />
+                        <div className="py-2">
+                          <div className="flex items-start justify-between gap-2">
+                            <p className="font-medium">{MANDATE_TYPE_LABELS[type] || type}</p>
+                            {groupMandates.length > 1 && (
+                              <Badge variant="outline" className="text-xs shrink-0">
+                                {groupMandates.length} mandats
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="mt-1 space-y-0.5">
+                            {groupMandates.map((mandate) => {
+                              const detail =
+                                mandate.title &&
+                                mandate.title !== MANDATE_TYPE_LABELS[type] &&
+                                mandate.title !==
+                                  `${(MANDATE_TYPE_LABELS[type] || "").toLowerCase()} français`
+                                  ? mandate.title
+                                  : mandate.institution || mandate.constituency || null;
+                              return (
+                                <div
+                                  key={mandate.id}
+                                  className="flex items-baseline gap-2 text-xs text-muted-foreground"
+                                >
+                                  <span className="shrink-0">
+                                    {formatYear(mandate.startDate)}
+                                    {mandate.endDate && ` - ${formatYear(mandate.endDate)}`}
                                   </span>
-                                )}
-                                {mandate.constituency && (
-                                  <p className="text-sm text-muted-foreground truncate">
-                                    {mandate.constituency}
-                                  </p>
-                                )}
-                              </div>
-                              <p className="text-xs text-muted-foreground shrink-0">
-                                {formatYear(mandate.startDate)}
-                                {mandate.endDate && ` - ${formatYear(mandate.endDate)}`}
-                              </p>
-                            </div>
-                            <p className="text-xs text-muted-foreground">
-                              {formatDuration(mandate.startDate, mandate.endDate)}
-                            </p>
+                                  <span>·</span>
+                                  <span className="truncate">
+                                    {detail
+                                      ? `${detail} · ${formatDuration(mandate.startDate, mandate.endDate)}`
+                                      : formatDuration(mandate.startDate, mandate.endDate)}
+                                  </span>
+                                </div>
+                              );
+                            })}
                           </div>
                         </div>
-                      );
-                    })}
+                      </div>
+                    ))}
                   </div>
                 </div>
               );

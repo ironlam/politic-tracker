@@ -6,7 +6,6 @@ import { isFeatureEnabled } from "@/lib/feature-flags";
 import { voteStatsService } from "@/services/voteStats";
 import {
   CATEGORY_TO_SUPER,
-  GRAVE_CATEGORIES,
   AFFAIR_CATEGORY_LABELS,
   VERDICT_GROUPS,
   type AffairSuperCategory,
@@ -51,14 +50,15 @@ async function getJudicialData() {
     status: { in: [...CONDAMNATION_STATUSES] },
   };
 
-  // Single batch: counts + status breakdown + grave affairs with party info
+  // Single batch: counts + status breakdown + severity + critique affairs by party
   const [
     totalDirect,
     totalCondamnations,
     condamnationsDefinitives,
     byStatusRaw,
     byCategoryRaw,
-    graveAffairs,
+    bySeverityRaw,
+    critiqueAffairs,
   ] = await Promise.all([
     db.affair.count({ where: directFilter }),
     db.affair.count({ where: condamnationFilter }),
@@ -77,11 +77,16 @@ async function getJudicialData() {
       _count: { category: true },
       orderBy: { _count: { category: "desc" } },
     }),
-    // Grave affairs — only condemnations
+    db.affair.groupBy({
+      by: ["severity"],
+      where: directFilter,
+      _count: { severity: true },
+    }),
+    // Critique affairs (atteintes à la probité) — all statuses
     db.affair.findMany({
       where: {
-        ...condamnationFilter,
-        category: { in: GRAVE_CATEGORIES },
+        ...directFilter,
+        severity: "CRITIQUE",
       },
       select: {
         category: true,
@@ -121,21 +126,26 @@ async function getJudicialData() {
       count,
     }));
 
-  // Aggregate grave affairs: category → party → count
-  const graveByCategoryParty = new Map<
+  // Severity breakdown
+  const bySeverity = Object.fromEntries(
+    bySeverityRaw.map((s) => [s.severity, s._count.severity])
+  ) as Record<string, number>;
+
+  // Aggregate critique affairs: category → party → count
+  const critiqueByCategoryParty = new Map<
     string,
     Map<string, { count: number; color: string | null; slug: string | null }>
   >();
 
-  for (const affair of graveAffairs) {
+  for (const affair of critiqueAffairs) {
     const party = affair.politician.currentParty;
     if (!party) continue;
     const partyKey = party.name || party.shortName || "Autre";
 
-    if (!graveByCategoryParty.has(affair.category)) {
-      graveByCategoryParty.set(affair.category, new Map());
+    if (!critiqueByCategoryParty.has(affair.category)) {
+      critiqueByCategoryParty.set(affair.category, new Map());
     }
-    const partyMap = graveByCategoryParty.get(affair.category)!;
+    const partyMap = critiqueByCategoryParty.get(affair.category)!;
     const existing = partyMap.get(partyKey);
     if (existing) {
       existing.count++;
@@ -145,7 +155,7 @@ async function getJudicialData() {
   }
 
   // Convert to sorted array: categories sorted by total desc, parties sorted by count desc
-  const graveByCategory = [...graveByCategoryParty.entries()]
+  const critiqueByCategory = [...critiqueByCategoryParty.entries()]
     .map(([category, partyMap]) => {
       const parties = [...partyMap.entries()]
         .map(([name, data]) => ({ name, ...data }))
@@ -166,9 +176,10 @@ async function getJudicialData() {
     totalDirect,
     totalCondamnations,
     condamnationsDefinitives,
+    bySeverity,
     byStatus,
     byCategory,
-    graveByCategory,
+    critiqueByCategory,
   };
 }
 
@@ -454,9 +465,10 @@ export default async function StatistiquesPage() {
             totalDirect={judicialData.totalDirect}
             totalCondamnations={judicialData.totalCondamnations}
             condamnationsDefinitives={judicialData.condamnationsDefinitives}
+            bySeverity={judicialData.bySeverity}
             byStatus={judicialData.byStatus}
             byCategory={judicialData.byCategory}
-            graveByCategory={judicialData.graveByCategory}
+            critiqueByCategory={judicialData.critiqueByCategory}
           />
         }
         factCheckContent={

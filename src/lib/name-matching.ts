@@ -224,14 +224,20 @@ function isPartOfAnotherPoliticianName(
 /**
  * Find politicians mentioned in text
  * Returns matches with the name that was found
+ *
+ * @param options.fullNameOnly  When true, only match on full name (no last-name
+ *   fallback). Use for short text like claimant fields where last-name-only
+ *   matching causes false positives (e.g. "Olivier Véran" → Philippe Olivier).
  */
 export function findMentions(
   text: string,
-  politicians: PoliticianName[]
+  politicians: PoliticianName[],
+  options?: { fullNameOnly?: boolean }
 ): Array<{ politicianId: string; matchedName: string }> {
   const normalizedText = normalizeText(text);
   const matches: Array<{ politicianId: string; matchedName: string }> = [];
   const seenIds = new Set<string>();
+  const fullNameOnly = options?.fullNameOnly ?? false;
 
   // Sort politicians by full name length (longer names first for more specific matches)
   const sortedPoliticians = [...politicians].sort(
@@ -253,6 +259,9 @@ export function findMentions(
     }
 
     // Try last name only (less specific, but catches more mentions)
+    // Skip in fullNameOnly mode to avoid false positives on short text
+    if (fullNameOnly) continue;
+
     // Only match if last name is at least 5 characters (avoid false positives)
     // AND last name is not a common word
     // AND the word is not part of a hyphenated compound in the original text

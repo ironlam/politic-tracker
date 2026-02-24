@@ -5,6 +5,7 @@ import { isAuthenticated } from "@/lib/auth";
 import { invalidateEntity } from "@/lib/cache";
 import { createAffairSchema } from "@/lib/validations/affairs";
 import type { AffairCategory, PublicationStatus, AffairStatus } from "@/generated/prisma";
+import { computeSeverity, isInherentlyMandateCategory } from "@/config/labels";
 
 export async function GET(request: NextRequest) {
   const authenticated = await isAuthenticated();
@@ -118,6 +119,10 @@ export async function POST(request: NextRequest) {
       counter++;
     }
 
+    // Compute severity
+    const mandateRelated = data.isRelatedToMandate ?? isInherentlyMandateCategory(data.category);
+    const severity = computeSeverity(data.category, mandateRelated);
+
     // Create affair with sources
     const affair = await db.affair.create({
       data: {
@@ -127,6 +132,8 @@ export async function POST(request: NextRequest) {
         description: data.description,
         status: data.status,
         category: data.category,
+        severity,
+        isRelatedToMandate: mandateRelated,
         involvement: data.involvement || "DIRECT",
         factsDate: data.factsDate ? new Date(data.factsDate) : null,
         startDate: data.startDate ? new Date(data.startDate) : null,

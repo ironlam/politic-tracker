@@ -16,6 +16,7 @@ import type {
   ElectionRound,
   AffairStatus,
   AffairCategory,
+  AffairSeverity,
   Involvement,
   AffairEventType,
   MandateType,
@@ -54,6 +55,7 @@ export type {
   ElectionRound,
   AffairStatus,
   AffairCategory,
+  AffairSeverity,
   Involvement,
   AffairEventType,
   MandateType,
@@ -98,7 +100,8 @@ export type PoliticianWithPartyAndCounts = Politician & {
   _count: {
     affairs: number;
   };
-  hasConviction?: boolean;
+  hasConviction?: boolean; // legacy — use hasCritiqueAffair
+  hasCritiqueAffair?: boolean;
   isDeceased?: boolean;
   // Current mandate info (for display on cards)
   currentMandate?: {
@@ -173,6 +176,7 @@ export type CreateAffairInput = {
   description: string;
   status: AffairStatus;
   category: AffairCategory;
+  isRelatedToMandate?: boolean;
   factsDate?: Date;
   startDate?: Date;
   verdictDate?: Date;

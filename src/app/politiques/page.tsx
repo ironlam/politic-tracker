@@ -6,7 +6,7 @@ import {
   type MandateFilter,
   type StatusFilter,
 } from "@/components/politicians/FilterBar";
-import { AffairStatus, MandateType } from "@/generated/prisma";
+import { MandateType } from "@/generated/prisma";
 import { SearchForm } from "@/components/politicians/SearchForm";
 import { PoliticiansGrid } from "@/components/politicians/PoliticiansGrid";
 import { ExportButton } from "@/components/ui/ExportButton";
@@ -33,8 +33,8 @@ interface PageProps {
   }>;
 }
 
-// Only definitive convictions trigger alerts (première instance can be overturned on appeal)
-const CONVICTION_STATUSES: AffairStatus[] = ["CONDAMNATION_DEFINITIVE"];
+// Badge triggers on severity=CRITIQUE (atteintes à la probité)
+// Replaced former CONVICTION_STATUSES = ["CONDAMNATION_DEFINITIVE"]
 
 // Mandate type groups
 const MANDATE_GROUPS: Record<string, MandateType[]> = {
@@ -92,7 +92,7 @@ async function queryPoliticians(
     conditions.push({
       affairs: {
         some: {
-          status: { in: CONVICTION_STATUSES },
+          severity: "CRITIQUE",
           publicationStatus: "PUBLISHED",
           involvement: "DIRECT",
         },
@@ -154,14 +154,14 @@ async function queryPoliticians(
               where: {
                 publicationStatus: "PUBLISHED",
                 involvement: "DIRECT",
-                status: "CONDAMNATION_DEFINITIVE",
+                severity: "CRITIQUE",
               },
             },
           },
         },
         affairs: {
           where: {
-            status: { in: CONVICTION_STATUSES },
+            severity: "CRITIQUE",
             publicationStatus: "PUBLISHED",
             involvement: "DIRECT",
           },
@@ -203,7 +203,7 @@ async function queryPoliticians(
     const significantRole = p.partyHistory[0] || null;
     return {
       ...p,
-      hasConviction: p.affairs.length > 0,
+      hasCritiqueAffair: p.affairs.length > 0,
       affairs: undefined,
       currentMandate: p.mandates[0] || null,
       mandates: undefined,
@@ -336,13 +336,13 @@ async function getFilterCounts() {
     active,
     former,
   ] = await Promise.all([
-    // Conviction counts (exclude victims/plaintiffs)
+    // Critique affair counts (atteintes à la probité)
     db.politician.count({
       where: {
         publicationStatus: "PUBLISHED",
         affairs: {
           some: {
-            status: { in: CONVICTION_STATUSES },
+            severity: "CRITIQUE",
             publicationStatus: "PUBLISHED",
             involvement: "DIRECT",
           },
@@ -352,7 +352,7 @@ async function getFilterCounts() {
     db.affair.count({
       where: {
         publicationStatus: "PUBLISHED",
-        status: { in: CONVICTION_STATUSES },
+        severity: "CRITIQUE",
         involvement: "DIRECT",
       },
     }),

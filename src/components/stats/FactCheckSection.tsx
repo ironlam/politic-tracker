@@ -27,6 +27,7 @@ interface RankedPolitician {
 
 interface RankedParty {
   name: string;
+  shortName: string | null;
   color: string | null;
   slug: string | null;
   totalMentions: number;
@@ -64,7 +65,7 @@ function PoliticianRankingItem({
   return (
     <Link
       href={`/politiques/${pol.slug}`}
-      className="flex items-center gap-3 hover:bg-muted/50 rounded-lg p-2 -mx-2 transition-colors"
+      className="flex items-center gap-3 hover:bg-muted/50 rounded-lg p-2 -mx-1 sm:-mx-2 transition-colors"
     >
       <span className="text-sm font-bold text-muted-foreground w-6 text-right tabular-nums shrink-0">
         {rank}.
@@ -113,7 +114,7 @@ function PartyRankingItem({
   return (
     <Link
       href={party.slug ? `/partis/${party.slug}` : "#"}
-      className="flex items-center gap-3 hover:bg-muted/50 rounded-lg p-2 -mx-2 transition-colors"
+      className="flex items-center gap-3 hover:bg-muted/50 rounded-lg p-2 -mx-1 sm:-mx-2 transition-colors"
     >
       <span className="text-sm font-bold text-muted-foreground w-6 text-right tabular-nums shrink-0">
         {rank}.
@@ -122,7 +123,7 @@ function PartyRankingItem({
         className="w-8 h-8 rounded flex items-center justify-center text-white text-xs font-bold shrink-0"
         style={{ backgroundColor: party.color || "#888" }}
       >
-        {party.name.slice(0, 3)}
+        {party.shortName || party.name.slice(0, 3)}
       </div>
       <div className="flex-1 min-w-0">
         <div className="text-sm font-medium truncate">{party.name}</div>

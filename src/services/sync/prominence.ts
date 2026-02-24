@@ -107,8 +107,13 @@ function calcMediaScore(recentMentionCount: number): number {
   return cap(recentMentionCount * MEDIA_CONFIG.pointsPerRecentMention, SCORE_CAPS.media);
 }
 
-function calcAffairsScore(affairCount: number): number {
-  return cap(affairCount * AFFAIRS_CONFIG.pointsPerAffair, SCORE_CAPS.affairs);
+function calcAffairsScore(severityCounts: Record<string, number>): number {
+  let total = 0;
+  for (const [severity, count] of Object.entries(severityCounts)) {
+    const points = AFFAIRS_CONFIG.pointsBySeverity[severity] ?? 5;
+    total += count * points;
+  }
+  return cap(total, SCORE_CAPS.affairs);
 }
 
 function calcRecencyBonus(p: PoliticianData): number {
@@ -163,17 +168,32 @@ export async function recalculateProminence(
   const threeMonthsAgo = new Date();
   threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - MEDIA_CONFIG.recentMonths);
 
-  const recentMentions = await db.pressArticleMention.groupBy({
-    by: ["politicianId"],
-    where: {
-      article: { publishedAt: { gte: threeMonthsAgo } },
-    },
-    _count: { politicianId: true },
-  });
+  const [recentMentions, affairsBySeverity] = await Promise.all([
+    db.pressArticleMention.groupBy({
+      by: ["politicianId"],
+      where: {
+        article: { publishedAt: { gte: threeMonthsAgo } },
+      },
+      _count: { politicianId: true },
+    }),
+    db.affair.groupBy({
+      by: ["politicianId", "severity"],
+      where: { publicationStatus: "PUBLISHED", involvement: "DIRECT" },
+      _count: true,
+    }),
+  ]);
 
   const recentMentionMap = new Map<string, number>();
   for (const r of recentMentions) {
     recentMentionMap.set(r.politicianId, r._count.politicianId);
+  }
+
+  // Build severity counts per politician
+  const affairSeverityMap = new Map<string, Record<string, number>>();
+  for (const row of affairsBySeverity) {
+    const existing = affairSeverityMap.get(row.politicianId) || {};
+    existing[row.severity] = row._count;
+    affairSeverityMap.set(row.politicianId, existing);
   }
 
   // 3. Calculate scores
@@ -184,7 +204,8 @@ export async function recalculateProminence(
     const activityScore = calcActivityScore(p);
     const recentCount = recentMentionMap.get(p.id) ?? 0;
     const mediaScore = calcMediaScore(recentCount);
-    const affairsScore = calcAffairsScore(p._count.affairs);
+    const severityCounts = affairSeverityMap.get(p.id) || {};
+    const affairsScore = calcAffairsScore(severityCounts);
     const recencyBonus = calcRecencyBonus(p);
 
     const total = cap(

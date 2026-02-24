@@ -64,14 +64,18 @@ async function generateScrutinSummaries(options: {
   limit?: number;
   dryRun?: boolean;
   chamber?: "AN" | "SENAT";
+  slug?: string;
+  scrutinId?: string;
 }) {
-  const { force = false, limit, dryRun = false, chamber } = options;
+  const { force = false, limit, dryRun = false, chamber, slug, scrutinId } = options;
 
   console.log("=".repeat(50));
   console.log("Poligraph - Scrutin Summary Generator");
   console.log("=".repeat(50));
   console.log(`Mode: ${dryRun ? "DRY RUN (no writes)" : "LIVE"}`);
   console.log(`Force regenerate: ${force ? "Yes" : "No"}`);
+  if (slug) console.log(`Slug: ${slug}`);
+  if (scrutinId) console.log(`Scrutin ID: ${scrutinId}`);
   if (chamber) console.log(`Chamber: ${chamber}`);
   if (limit) console.log(`Limit: ${limit} scrutins`);
   console.log(`Started at: ${new Date().toISOString()}`);
@@ -94,7 +98,15 @@ async function generateScrutinSummaries(options: {
   // Fetch scrutins needing summaries
   const whereClause: Record<string, unknown> = {};
 
-  if (!force) {
+  if (slug) {
+    whereClause.slug = slug;
+  } else if (scrutinId) {
+    // Accept "Scrutin n°VTANR5L17V5661" or just "VTANR5L17V5661"
+    const cleanId = scrutinId.replace(/^Scrutin\s*n°/i, "").trim();
+    whereClause.externalId = cleanId;
+  }
+
+  if (!force && !slug && !scrutinId) {
     whereClause.summary = null;
   }
 
@@ -278,14 +290,17 @@ async function main() {
 Poligraph - Scrutin Summary Generator
 
 Usage:
-  npx tsx scripts/generate-scrutin-summaries.ts              Generate missing summaries
-  npx tsx scripts/generate-scrutin-summaries.ts --force      Regenerate all summaries
-  npx tsx scripts/generate-scrutin-summaries.ts --limit=10   Limit to first N scrutins
-  npx tsx scripts/generate-scrutin-summaries.ts --chamber=AN Only AN scrutins
-  npx tsx scripts/generate-scrutin-summaries.ts --chamber=SENAT Only Sénat scrutins
-  npx tsx scripts/generate-scrutin-summaries.ts --dry-run    Preview without writing
-  npx tsx scripts/generate-scrutin-summaries.ts --stats      Show current stats
-  npx tsx scripts/generate-scrutin-summaries.ts --help       Show this help message
+  npx tsx scripts/generate-scrutin-summaries.ts                        Generate missing summaries
+  npx tsx scripts/generate-scrutin-summaries.ts --id=VTANR5L17V5661    Generate for a specific scrutin ID
+  npx tsx scripts/generate-scrutin-summaries.ts --id="Scrutin n°VTANR5L17V5661"  Also works with full label
+  npx tsx scripts/generate-scrutin-summaries.ts --slug=2026-02-23-...  Generate for a specific slug
+  npx tsx scripts/generate-scrutin-summaries.ts --force                Regenerate all summaries
+  npx tsx scripts/generate-scrutin-summaries.ts --limit=10             Limit to first N scrutins
+  npx tsx scripts/generate-scrutin-summaries.ts --chamber=AN           Only AN scrutins
+  npx tsx scripts/generate-scrutin-summaries.ts --chamber=SENAT        Only Sénat scrutins
+  npx tsx scripts/generate-scrutin-summaries.ts --dry-run              Preview without writing
+  npx tsx scripts/generate-scrutin-summaries.ts --stats                Show current stats
+  npx tsx scripts/generate-scrutin-summaries.ts --help                 Show this help message
 
 Requirements:
   ANTHROPIC_API_KEY environment variable must be set
@@ -326,10 +341,16 @@ Features:
     chamber = value;
   }
 
+  const slugArg = args.find((a) => a.startsWith("--slug="));
+  const slug = slugArg ? slugArg.split("=")[1] : undefined;
+
+  const idArg = args.find((a) => a.startsWith("--id="));
+  const scrutinId = idArg ? idArg.split("=").slice(1).join("=") : undefined;
+
   const force = args.includes("--force");
   const dryRun = args.includes("--dry-run");
 
-  await generateScrutinSummaries({ force, limit, dryRun, chamber });
+  await generateScrutinSummaries({ force, limit, dryRun, chamber, slug, scrutinId });
   process.exit(0);
 }
 

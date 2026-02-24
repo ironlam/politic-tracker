@@ -1,6 +1,7 @@
 import type {
   AffairStatus,
   AffairCategory,
+  AffairSeverity,
   Involvement,
   MandateType,
   DataSource,
@@ -290,6 +291,117 @@ export function getCategoriesForSuper(superCat: AffairSuperCategory): AffairCate
     .filter(([, sc]) => sc === superCat)
     .map(([cat]) => cat as AffairCategory);
 }
+
+// ─── Affair Severity Hierarchy ────────────────────────────────────────────
+
+export const AFFAIR_SEVERITY_LABELS: Record<AffairSeverity, string> = {
+  CRITIQUE: "Critique",
+  GRAVE: "Grave",
+  SIGNIFICATIF: "Significatif",
+};
+
+// Editorial labels (what the citizen sees in sections)
+export const AFFAIR_SEVERITY_EDITORIAL: Record<AffairSeverity, string> = {
+  CRITIQUE: "Atteinte à la probité",
+  GRAVE: "Infraction grave",
+  SIGNIFICATIF: "Autre infraction",
+};
+
+export const AFFAIR_SEVERITY_COLORS: Record<AffairSeverity, string> = {
+  CRITIQUE:
+    "bg-red-100 text-red-800 border-red-300 dark:bg-red-900/40 dark:text-red-300 dark:border-red-700",
+  GRAVE:
+    "bg-orange-100 text-orange-800 border-orange-300 dark:bg-orange-900/40 dark:text-orange-300 dark:border-orange-700",
+  SIGNIFICATIF:
+    "bg-gray-100 text-gray-800 border-gray-300 dark:bg-gray-800/40 dark:text-gray-300 dark:border-gray-700",
+};
+
+export const AFFAIR_SEVERITY_DESCRIPTIONS: Record<AffairSeverity, string> = {
+  CRITIQUE:
+    "Infractions liées à l'exercice du mandat public : corruption, détournement de fonds, financement illégal, trafic d'influence",
+  GRAVE:
+    "Infractions sérieuses : fraude fiscale, blanchiment, harcèlement, agressions",
+  SIGNIFICATIF:
+    "Infractions de droit commun : diffamation, injure, violence sans lien avec le mandat",
+};
+
+// Default severity per category (before isRelatedToMandate promotion)
+const CATEGORY_DEFAULT_SEVERITY: Record<AffairCategory, AffairSeverity> = {
+  // CRITIQUE — Probity violations (by definition linked to mandate)
+  CORRUPTION: "CRITIQUE",
+  CORRUPTION_PASSIVE: "CRITIQUE",
+  TRAFIC_INFLUENCE: "CRITIQUE",
+  PRISE_ILLEGALE_INTERETS: "CRITIQUE",
+  FAVORITISME: "CRITIQUE",
+  DETOURNEMENT_FONDS_PUBLICS: "CRITIQUE",
+  EMPLOI_FICTIF: "CRITIQUE",
+  FINANCEMENT_ILLEGAL_CAMPAGNE: "CRITIQUE",
+  FINANCEMENT_ILLEGAL_PARTI: "CRITIQUE",
+  INCITATION_HAINE: "CRITIQUE",
+  // GRAVE — Serious infractions
+  AGRESSION_SEXUELLE: "GRAVE",
+  HARCELEMENT_SEXUEL: "GRAVE",
+  HARCELEMENT_MORAL: "GRAVE",
+  FRAUDE_FISCALE: "GRAVE",
+  BLANCHIMENT: "GRAVE",
+  ABUS_BIENS_SOCIAUX: "GRAVE",
+  ABUS_CONFIANCE: "GRAVE",
+  FAUX_ET_USAGE_FAUX: "GRAVE",
+  RECEL: "GRAVE",
+  CONFLIT_INTERETS: "GRAVE",
+  MENACE: "GRAVE",
+  // SIGNIFICATIF — Common law infractions
+  VIOLENCE: "SIGNIFICATIF",
+  DIFFAMATION: "SIGNIFICATIF",
+  INJURE: "SIGNIFICATIF",
+  AUTRE: "SIGNIFICATIF",
+};
+
+// Categories inherently related to mandate (isRelatedToMandate forced true)
+const INHERENTLY_MANDATE_CATEGORIES: Set<AffairCategory> = new Set([
+  "CORRUPTION",
+  "CORRUPTION_PASSIVE",
+  "TRAFIC_INFLUENCE",
+  "PRISE_ILLEGALE_INTERETS",
+  "FAVORITISME",
+  "DETOURNEMENT_FONDS_PUBLICS",
+  "EMPLOI_FICTIF",
+  "FINANCEMENT_ILLEGAL_CAMPAGNE",
+  "FINANCEMENT_ILLEGAL_PARTI",
+  "INCITATION_HAINE",
+]);
+
+const SEVERITY_ORDER: AffairSeverity[] = ["CRITIQUE", "GRAVE", "SIGNIFICATIF"];
+
+/**
+ * Compute affair severity from category and mandate relation.
+ * Single source of truth — called on every affair creation/update.
+ */
+export function computeSeverity(
+  category: AffairCategory,
+  isRelatedToMandate: boolean,
+): AffairSeverity {
+  const base = CATEGORY_DEFAULT_SEVERITY[category] || "SIGNIFICATIF";
+  if (!isRelatedToMandate) return base;
+  // Promote by one tier
+  const idx = SEVERITY_ORDER.indexOf(base);
+  return idx > 0 ? SEVERITY_ORDER[idx - 1] : base;
+}
+
+/**
+ * Returns true if a category is inherently linked to the mandate.
+ * For these categories, isRelatedToMandate should always be true.
+ */
+export function isInherentlyMandateCategory(category: AffairCategory): boolean {
+  return INHERENTLY_MANDATE_CATEGORIES.has(category);
+}
+
+/** Numerical severity for sorting (lower = more severe). */
+export const SEVERITY_SORT_ORDER: Record<AffairSeverity, number> = {
+  CRITIQUE: 0,
+  GRAVE: 1,
+  SIGNIFICATIF: 2,
+};
 
 export const MANDATE_TYPE_LABELS: Record<MandateType, string> = {
   DEPUTE: "Député",

@@ -168,6 +168,7 @@ export default async function DepartmentPage({ params }: PageProps) {
                       firstName={deputy.firstName}
                       lastName={deputy.lastName}
                       size="sm"
+                      politicianId={deputy.id}
                     />
                     <div className="flex-1 min-w-0">
                       <p className="font-medium group-hover:text-primary transition-colors truncate">
@@ -227,6 +228,7 @@ export default async function DepartmentPage({ params }: PageProps) {
                       firstName={senator.firstName}
                       lastName={senator.lastName}
                       size="sm"
+                      politicianId={senator.id}
                     />
                     <div className="flex-1 min-w-0">
                       <p className="font-medium group-hover:text-primary transition-colors truncate">

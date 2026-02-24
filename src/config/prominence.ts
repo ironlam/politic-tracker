@@ -71,10 +71,14 @@ export const MEDIA_CONFIG = {
   recentMonths: 3,
 };
 
-// === Affairs scoring (newsworthy signal, not moral judgment) ===
+// === Affairs scoring (newsworthy signal, weighted by severity) ===
 
 export const AFFAIRS_CONFIG = {
-  pointsPerAffair: 15,
+  pointsBySeverity: {
+    CRITIQUE: 25, // Atteintes à la probité — most newsworthy
+    GRAVE: 15,
+    SIGNIFICATIF: 5,
+  } as Record<string, number>,
   maxAffairsPoints: 100,
 };
 

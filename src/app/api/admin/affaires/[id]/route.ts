@@ -5,6 +5,7 @@ import { invalidateEntity } from "@/lib/cache";
 import { generateSlug } from "@/lib/utils";
 import { trackStatusChange } from "@/services/affairs/status-tracking";
 import { updateAffairSchema } from "@/lib/validations/affairs";
+import { computeSeverity, isInherentlyMandateCategory } from "@/config/labels";
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -76,6 +77,10 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       }
     }
 
+    // Recompute severity on update
+    const mandateRelated = data.isRelatedToMandate ?? isInherentlyMandateCategory(data.category);
+    const severity = computeSeverity(data.category, mandateRelated);
+
     // Update affair
     const affair = await db.affair.update({
       where: { id },
@@ -86,6 +91,8 @@ export async function PUT(request: NextRequest, context: RouteContext) {
         description: data.description,
         status: data.status,
         category: data.category,
+        severity,
+        isRelatedToMandate: mandateRelated,
         involvement: data.involvement || "DIRECT",
         ...(data.publicationStatus && { publicationStatus: data.publicationStatus }),
         factsDate: data.factsDate ? new Date(data.factsDate) : null,

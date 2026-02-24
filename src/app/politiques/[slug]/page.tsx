@@ -19,7 +19,9 @@ import {
   FACTCHECK_RATING_COLORS,
   PARTY_ROLE_LABELS,
   feminizePartyRole,
+  SEVERITY_SORT_ORDER,
 } from "@/config/labels";
+import type { AffairSeverity, AffairStatus, AffairCategory } from "@/types";
 import { ensureContrast } from "@/lib/contrast";
 import type { Involvement } from "@/types";
 import { PoliticianAvatar } from "@/components/politicians/PoliticianAvatar";
@@ -201,6 +203,162 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
+// Affair card for the profile page — variant controls border color
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function AffairCard({ affair, variant }: { affair: any; variant: "critique" | "other" }) {
+  const borderClass =
+    variant === "critique"
+      ? "border-red-200 bg-red-50/30 dark:border-red-900/50 dark:bg-red-950/20"
+      : "border-gray-200 dark:border-gray-700";
+
+  return (
+    <div id={`affair-${affair.id}`} className={`border rounded-lg p-4 ${borderClass}`}>
+      {/* Header */}
+      <div className="mb-3">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-4">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1 flex-wrap">
+              {(affair.verdictDate || affair.startDate || affair.factsDate) && (
+                <Badge variant="secondary" className="font-mono text-base font-bold">
+                  {new Date(
+                    affair.verdictDate || affair.startDate || affair.factsDate!
+                  ).getFullYear()}
+                </Badge>
+              )}
+              <h3 className="font-semibold text-lg">{affair.title}</h3>
+            </div>
+          </div>
+          <Badge
+            className={`self-start whitespace-nowrap ${AFFAIR_STATUS_COLORS[affair.status as AffairStatus]}`}
+          >
+            {AFFAIR_STATUS_LABELS[affair.status as AffairStatus]}
+          </Badge>
+        </div>
+        <div className="flex flex-wrap items-center gap-2 mt-2">
+          <Badge variant="outline" className="text-xs">
+            {AFFAIR_CATEGORY_LABELS[affair.category as AffairCategory]}
+          </Badge>
+          {affair.partyAtTime && (
+            <Badge
+              variant="outline"
+              className="text-xs"
+              title={affair.partyAtTime.name}
+              style={{
+                borderColor: affair.partyAtTime.color || undefined,
+                color: affair.partyAtTime.color
+                  ? ensureContrast(affair.partyAtTime.color, "#ffffff")
+                  : undefined,
+              }}
+            >
+              {affair.partyAtTime.shortName} à l&apos;époque
+            </Badge>
+          )}
+        </div>
+      </div>
+
+      {/* Description */}
+      <p className="text-sm text-muted-foreground mb-3">{affair.description}</p>
+
+      {/* Dates & details */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs mb-3">
+        {affair.factsDate && (
+          <div>
+            <span className="text-muted-foreground">Faits :</span>{" "}
+            <span className="font-medium">{formatDate(affair.factsDate)}</span>
+          </div>
+        )}
+        {affair.startDate && (
+          <div>
+            <span className="text-muted-foreground">Révélation :</span>{" "}
+            <span className="font-medium">{formatDate(affair.startDate)}</span>
+          </div>
+        )}
+        {affair.verdictDate && (
+          <div>
+            <span className="text-muted-foreground">Verdict :</span>{" "}
+            <span className="font-medium">{formatDate(affair.verdictDate)}</span>
+          </div>
+        )}
+        {affair.appeal && (
+          <div>
+            <Badge variant="outline" className="text-xs bg-orange-50">
+              En appel
+            </Badge>
+          </div>
+        )}
+      </div>
+
+      {/* Jurisdiction info */}
+      {(affair.court || affair.caseNumber) && (
+        <div className="text-xs text-muted-foreground mb-3">
+          {affair.court && <span>{affair.court}</span>}
+          {affair.chamber && <span> - {affair.chamber}</span>}
+          {affair.caseNumber && <span className="ml-2 font-mono">({affair.caseNumber})</span>}
+        </div>
+      )}
+
+      {/* Sentence details */}
+      <div className="mb-3">
+        <SentenceDetails affair={affair} />
+      </div>
+
+      {/* Timeline */}
+      {affair.events && affair.events.length > 0 && (
+        <div className="mb-3 border-t pt-3">
+          <AffairTimeline events={affair.events} />
+        </div>
+      )}
+
+      {/* Presumption of innocence */}
+      {AFFAIR_STATUS_NEEDS_PRESUMPTION[affair.status as AffairStatus] &&
+        (affair.involvement === "DIRECT" || affair.involvement === "INDIRECT") && (
+          <p className="text-xs text-amber-700 bg-amber-50 p-2 rounded mb-3">
+            Présomption d&apos;innocence : cette affaire est en cours, la personne est présumée
+            innocente jusqu&apos;à condamnation définitive.
+          </p>
+        )}
+
+      {/* Sources */}
+      {affair.sources.length > 0 && (
+        <details className="text-xs">
+          <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
+            Sources ({affair.sources.length})
+          </summary>
+          <ul className="mt-2 space-y-1 pl-4">
+            {affair.sources.map(
+              (source: {
+                id: string;
+                url: string;
+                title: string;
+                publisher: string;
+                publishedAt: Date;
+              }) => (
+                <li key={source.id}>
+                  <a
+                    href={source.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:underline"
+                  >
+                    {source.title}
+                  </a>
+                  <span className="text-muted-foreground">
+                    {" "}
+                    — {source.publisher}
+                    {source.publisher.toLowerCase() === "wikidata"
+                      ? `, mis à jour le ${formatDate(source.publishedAt)}`
+                      : `, ${formatDate(source.publishedAt)}`}
+                  </span>
+                </li>
+              )
+            )}
+          </ul>
+        </details>
+      )}
+    </div>
+  );
+}
+
 export default async function PoliticianPage({ params }: PageProps) {
   const { slug } = await params;
   const politician = await getPolitician(slug);
@@ -240,7 +398,19 @@ export default async function PoliticianPage({ params }: PageProps) {
   };
   const directAffairs = politician.affairs
     .filter((a) => a.involvement === "DIRECT")
-    .sort((a, b) => (STATUS_SEVERITY[a.status] ?? 99) - (STATUS_SEVERITY[b.status] ?? 99));
+    .sort((a, b) => {
+      // Primary: severity (CRITIQUE first)
+      const sevDiff =
+        (SEVERITY_SORT_ORDER[a.severity as AffairSeverity] ?? 2) -
+        (SEVERITY_SORT_ORDER[b.severity as AffairSeverity] ?? 2);
+      if (sevDiff !== 0) return sevDiff;
+      // Secondary: status severity
+      return (STATUS_SEVERITY[a.status] ?? 99) - (STATUS_SEVERITY[b.status] ?? 99);
+    });
+
+  // Group direct affairs into editorial sections
+  const critiqueAffairs = directAffairs.filter((a) => a.severity === "CRITIQUE");
+  const otherDirectAffairs = directAffairs.filter((a) => a.severity !== "CRITIQUE");
   const mentionAffairs = politician.affairs.filter(
     (a) =>
       a.involvement === "INDIRECT" ||
@@ -722,161 +892,39 @@ export default async function PoliticianPage({ params }: PageProps) {
               </CardHeader>
               <CardContent>
                 {directAffairs.length > 0 ? (
-                  <div className="space-y-6">
-                    {directAffairs.map((affair) => (
-                      <div
-                        key={affair.id}
-                        id={`affair-${affair.id}`}
-                        className={`border rounded-lg p-4 transition-all ${
-                          affair.status === "CONDAMNATION_DEFINITIVE"
-                            ? "border-red-200 bg-red-50/30"
-                            : affair.status === "CONDAMNATION_PREMIERE_INSTANCE"
-                              ? "border-orange-200 bg-orange-50/30"
-                              : "border-gray-200"
-                        }`}
-                      >
-                        {/* Header */}
-                        <div className="mb-3">
-                          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-4">
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-1 flex-wrap">
-                                {(affair.verdictDate || affair.startDate || affair.factsDate) && (
-                                  <Badge
-                                    variant="secondary"
-                                    className="font-mono text-base font-bold"
-                                  >
-                                    {new Date(
-                                      affair.verdictDate || affair.startDate || affair.factsDate!
-                                    ).getFullYear()}
-                                  </Badge>
-                                )}
-                                <h3 className="font-semibold text-lg">{affair.title}</h3>
-                              </div>
-                            </div>
-                            <Badge
-                              className={`self-start whitespace-nowrap ${AFFAIR_STATUS_COLORS[affair.status]}`}
-                            >
-                              {AFFAIR_STATUS_LABELS[affair.status]}
-                            </Badge>
-                          </div>
-                          <div className="flex flex-wrap items-center gap-2 mt-2">
-                            <Badge variant="outline" className="text-xs">
-                              {AFFAIR_CATEGORY_LABELS[affair.category]}
-                            </Badge>
-                            {affair.partyAtTime && (
-                              <Badge
-                                variant="outline"
-                                className="text-xs"
-                                title={affair.partyAtTime.name}
-                                style={{
-                                  borderColor: affair.partyAtTime.color || undefined,
-                                  color: affair.partyAtTime.color
-                                    ? ensureContrast(affair.partyAtTime.color, "#ffffff")
-                                    : undefined,
-                                }}
-                              >
-                                {affair.partyAtTime.shortName} à l&apos;époque
-                              </Badge>
-                            )}
-                          </div>
+                  <div className="space-y-8">
+                    {/* Atteintes à la probité (CRITIQUE) */}
+                    {critiqueAffairs.length > 0 && (
+                      <div>
+                        <h3 className="text-lg font-semibold text-red-700 dark:text-red-400 mb-1">
+                          Atteintes à la probité ({critiqueAffairs.length})
+                        </h3>
+                        <p className="text-sm text-muted-foreground mb-4">
+                          Infractions liées à l&apos;exercice du mandat public
+                        </p>
+                        <div className="space-y-6">
+                          {critiqueAffairs.map((affair) => (
+                            <AffairCard key={affair.id} affair={affair} variant="critique" />
+                          ))}
                         </div>
-
-                        {/* Description */}
-                        <p className="text-sm text-muted-foreground mb-3">{affair.description}</p>
-
-                        {/* Dates & details */}
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs mb-3">
-                          {affair.factsDate && (
-                            <div>
-                              <span className="text-muted-foreground">Faits :</span>{" "}
-                              <span className="font-medium">{formatDate(affair.factsDate)}</span>
-                            </div>
-                          )}
-                          {affair.startDate && (
-                            <div>
-                              <span className="text-muted-foreground">Révélation :</span>{" "}
-                              <span className="font-medium">{formatDate(affair.startDate)}</span>
-                            </div>
-                          )}
-                          {affair.verdictDate && (
-                            <div>
-                              <span className="text-muted-foreground">Verdict :</span>{" "}
-                              <span className="font-medium">{formatDate(affair.verdictDate)}</span>
-                            </div>
-                          )}
-                          {affair.appeal && (
-                            <div>
-                              <Badge variant="outline" className="text-xs bg-orange-50">
-                                En appel
-                              </Badge>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Jurisdiction info */}
-                        {(affair.court || affair.caseNumber) && (
-                          <div className="text-xs text-muted-foreground mb-3">
-                            {affair.court && <span>{affair.court}</span>}
-                            {affair.chamber && <span> - {affair.chamber}</span>}
-                            {affair.caseNumber && (
-                              <span className="ml-2 font-mono">({affair.caseNumber})</span>
-                            )}
-                          </div>
-                        )}
-
-                        {/* Sentence details */}
-                        <div className="mb-3">
-                          <SentenceDetails affair={affair} />
-                        </div>
-
-                        {/* Timeline */}
-                        {affair.events && affair.events.length > 0 && (
-                          <div className="mb-3 border-t pt-3">
-                            <AffairTimeline events={affair.events} />
-                          </div>
-                        )}
-
-                        {/* Presumption of innocence — only for accused, not victims */}
-                        {AFFAIR_STATUS_NEEDS_PRESUMPTION[affair.status] &&
-                          (affair.involvement === "DIRECT" ||
-                            affair.involvement === "INDIRECT") && (
-                            <p className="text-xs text-amber-700 bg-amber-50 p-2 rounded mb-3">
-                              Présomption d&apos;innocence : cette affaire est en cours, la personne
-                              est présumée innocente jusqu&apos;à condamnation définitive.
-                            </p>
-                          )}
-
-                        {/* Sources */}
-                        {affair.sources.length > 0 && (
-                          <details className="text-xs">
-                            <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
-                              Sources ({affair.sources.length})
-                            </summary>
-                            <ul className="mt-2 space-y-1 pl-4">
-                              {affair.sources.map((source) => (
-                                <li key={source.id}>
-                                  <a
-                                    href={source.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-blue-600 hover:underline"
-                                  >
-                                    {source.title}
-                                  </a>
-                                  <span className="text-muted-foreground">
-                                    {" "}
-                                    — {source.publisher}
-                                    {source.publisher.toLowerCase() === "wikidata"
-                                      ? `, mis à jour le ${formatDate(source.publishedAt)}`
-                                      : `, ${formatDate(source.publishedAt)}`}
-                                  </span>
-                                </li>
-                              ))}
-                            </ul>
-                          </details>
-                        )}
                       </div>
-                    ))}
+                    )}
+
+                    {/* Autres affaires judiciaires (GRAVE + SIGNIFICATIF) */}
+                    {otherDirectAffairs.length > 0 && (
+                      <div>
+                        {critiqueAffairs.length > 0 && (
+                          <h3 className="text-lg font-semibold text-muted-foreground mb-4">
+                            Autres affaires judiciaires ({otherDirectAffairs.length})
+                          </h3>
+                        )}
+                        <div className="space-y-6">
+                          {otherDirectAffairs.map((affair) => (
+                            <AffairCard key={affair.id} affair={affair} variant="other" />
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div>

@@ -31,7 +31,9 @@ function formatMandateShort(
 }
 
 export function PoliticianCard({ politician, showConvictionBadge = false }: PoliticianCardProps) {
-  const hasConviction = "hasConviction" in politician && politician.hasConviction;
+  const hasCritiqueAffair =
+    ("hasCritiqueAffair" in politician && politician.hasCritiqueAffair) ||
+    ("hasCritiqueAffair" in politician && politician.hasCritiqueAffair);
   const affairCount = "_count" in politician ? politician._count.affairs : 0;
   const isDeceased = politician.deathDate !== null;
   const currentMandate = "currentMandate" in politician ? politician.currentMandate : null;
@@ -51,7 +53,7 @@ export function PoliticianCard({ politician, showConvictionBadge = false }: Poli
       className="block group focus-visible:outline-none"
     >
       <Card
-        className={`h-full transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-primary/30 focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2 ${hasConviction ? "ring-1 ring-red-200 dark:ring-red-900/50" : ""}`}
+        className={`h-full transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-primary/30 focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2 ${hasCritiqueAffair ? "ring-1 ring-red-200 dark:ring-red-900/50" : ""}`}
       >
         <CardContent className="pt-6">
           <div className="flex items-start gap-4">
@@ -65,11 +67,11 @@ export function PoliticianCard({ politician, showConvictionBadge = false }: Poli
                   politicianId={politician.id}
                 />
               </div>
-              {showConvictionBadge && hasConviction && (
+              {showConvictionBadge && hasCritiqueAffair && (
                 <div
                   className="absolute -top-1 -right-1 w-5 h-5 bg-destructive rounded-full flex items-center justify-center shadow-md animate-pulse"
-                  title="Condamnation définitive"
-                  aria-label="Ce représentant a une condamnation définitive"
+                  title="Atteinte à la probité"
+                  aria-label="Ce représentant a une atteinte à la probité documentée"
                 >
                   <span className="text-white text-xs font-bold">!</span>
                 </div>
@@ -115,7 +117,7 @@ export function PoliticianCard({ politician, showConvictionBadge = false }: Poli
                     variant="outline"
                     className="text-xs text-destructive/80 border-destructive/40 bg-destructive/5"
                   >
-                    {affairCount} condamnation{affairCount > 1 ? "s" : ""}
+                    {affairCount} atteinte{affairCount > 1 ? "s" : ""} à la probité
                   </Badge>
                 )}
               </div>

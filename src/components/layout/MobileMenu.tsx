@@ -14,6 +14,7 @@ import {
   Newspaper,
   ShieldCheck,
   Scale,
+  BookOpen,
   type LucideIcon,
 } from "lucide-react";
 import { GlobalSearchTrigger } from "@/components/search";
@@ -25,6 +26,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
   newspaper: Newspaper,
   shieldCheck: ShieldCheck,
   scale: Scale,
+  BookOpen: BookOpen,
 };
 
 // Get all focusable elements within a container

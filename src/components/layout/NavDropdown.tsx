@@ -10,6 +10,7 @@ import {
   Radio,
   Newspaper,
   ShieldCheck,
+  BookOpen,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -21,6 +22,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
   live: Radio,
   newspaper: Newspaper,
   shieldCheck: ShieldCheck,
+  BookOpen: BookOpen,
 };
 
 interface NavDropdownProps {

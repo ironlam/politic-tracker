@@ -422,6 +422,7 @@ export default async function PartyAffairsPage({ params }: PageProps) {
                           photoUrl={pol.photoUrl}
                           fullName={pol.fullName}
                           size="sm"
+                          politicianId={pol.id}
                         />
                         <div className="min-w-0 flex-1">
                           <p className="font-medium truncate">{pol.fullName}</p>
@@ -460,6 +461,7 @@ export default async function PartyAffairsPage({ params }: PageProps) {
                           photoUrl={pol.photoUrl}
                           fullName={pol.fullName}
                           size="sm"
+                          politicianId={pol.id}
                         />
                         <div className="min-w-0 flex-1">
                           <p className="font-medium truncate">{pol.fullName}</p>
@@ -492,7 +494,12 @@ export default async function PartyAffairsPage({ params }: PageProps) {
                       href={`/politiques/${pol.slug}`}
                       className="flex items-center gap-3 p-3 rounded-lg border border-blue-200 dark:border-blue-800 hover:bg-blue-50/50 dark:hover:bg-blue-900/20 transition-colors"
                     >
-                      <PoliticianAvatar photoUrl={pol.photoUrl} fullName={pol.fullName} size="sm" />
+                      <PoliticianAvatar
+                        photoUrl={pol.photoUrl}
+                        fullName={pol.fullName}
+                        size="sm"
+                        politicianId={pol.id}
+                      />
                       <div className="min-w-0 flex-1">
                         <p className="font-medium truncate">{pol.fullName}</p>
                         <p className="text-xs text-blue-600 dark:text-blue-400">

@@ -68,24 +68,20 @@ async function main() {
     // 1. Set isRelatedToMandate for inherent probity categories
     const inherentResult = await pool.query(
       `UPDATE "Affair" SET "isRelatedToMandate" = true WHERE category::text = ANY($1::text[])`,
-      [INHERENT_CATEGORIES],
+      [INHERENT_CATEGORIES]
     );
-    console.log(
-      `Set isRelatedToMandate=true for ${inherentResult.rowCount} probity affairs`,
-    );
+    console.log(`Set isRelatedToMandate=true for ${inherentResult.rowCount} probity affairs`);
 
     // 2. Compute severity for all affairs
-    const affairs = await pool.query(
-      `SELECT id, category, "isRelatedToMandate" FROM "Affair"`,
-    );
+    const affairs = await pool.query(`SELECT id, category, "isRelatedToMandate" FROM "Affair"`);
 
     let updated = 0;
     for (const affair of affairs.rows) {
       const severity = computeSeverity(affair.category, affair.isRelatedToMandate);
-      await pool.query(
-        `UPDATE "Affair" SET severity = $1::"AffairSeverity" WHERE id = $2`,
-        [severity, affair.id],
-      );
+      await pool.query(`UPDATE "Affair" SET severity = $1::"AffairSeverity" WHERE id = $2`, [
+        severity,
+        affair.id,
+      ]);
       updated++;
     }
 
@@ -93,7 +89,7 @@ async function main() {
 
     // 3. Verify
     const stats = await pool.query(
-      `SELECT severity, COUNT(*) as count FROM "Affair" GROUP BY severity ORDER BY severity`,
+      `SELECT severity, COUNT(*) as count FROM "Affair" GROUP BY severity ORDER BY severity`
     );
     console.log("\nSeverity distribution:");
     for (const row of stats.rows) {

@@ -1025,10 +1025,12 @@ model FactCheckMention {
   politicianId String
   politician   Politician @relation(fields: [politicianId], references: [id])
   matchedName  String?
+  isClaimant   Boolean    @default(false)
 
   @@unique([factCheckId, politicianId])
   @@index([politicianId])
   @@index([factCheckId])
+  @@index([politicianId, isClaimant])
 }
 
 enum FactCheckRating {

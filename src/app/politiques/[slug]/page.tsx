@@ -17,7 +17,6 @@ import {
   VOTE_POSITION_DOT_COLORS,
   FACTCHECK_RATING_LABELS,
   FACTCHECK_RATING_COLORS,
-  isDirectPoliticianClaim,
   PARTY_ROLE_LABELS,
   feminizePartyRole,
 } from "@/config/labels";
@@ -501,12 +500,8 @@ export default async function PoliticianPage({ params }: PageProps) {
             {/* Fact-checks */}
             {politician.factCheckMentions.length > 0 &&
               (() => {
-                const directClaims = politician.factCheckMentions.filter((m) =>
-                  isDirectPoliticianClaim(m.factCheck.claimant)
-                );
-                const otherMentions = politician.factCheckMentions.filter(
-                  (m) => !isDirectPoliticianClaim(m.factCheck.claimant)
-                );
+                const directClaims = politician.factCheckMentions.filter((m) => m.isClaimant);
+                const otherMentions = politician.factCheckMentions.filter((m) => !m.isClaimant);
 
                 // Verdict distribution for direct claims
                 const verdictCounts = directClaims.reduce(

@@ -211,7 +211,7 @@ function classifyRating(rating: string): keyof VerdictBreakdown {
   return "inverifiable";
 }
 
-const MIN_MENTIONS = 5;
+const MIN_MENTIONS = 3;
 
 async function getFactCheckData() {
   "use cache";
@@ -230,8 +230,9 @@ async function getFactCheckData() {
       _count: true,
       orderBy: { _count: { source: "desc" } },
     }),
-    // Fetch ALL mentions (not just false) with verdict + politician + party
+    // Fetch only claimant mentions (politician actually made the claim)
     db.factCheckMention.findMany({
+      where: { isClaimant: true },
       select: {
         factCheck: { select: { verdictRating: true } },
         politician: {

@@ -20,8 +20,8 @@ export async function GET(request: NextRequest) {
         publicationStatus: "PUBLISHED",
         OR: [
           { fullName: { contains: query, mode: "insensitive" } },
-          { lastName: { contains: query, mode: "insensitive" } },
-          { firstName: { contains: query, mode: "insensitive" } },
+          { lastName: { startsWith: query, mode: "insensitive" } },
+          { firstName: { startsWith: query, mode: "insensitive" } },
         ],
       },
       select: {
@@ -38,8 +38,8 @@ export async function GET(request: NextRequest) {
           take: 1,
         },
       },
-      orderBy: { lastName: "asc" },
-      take: 3,
+      orderBy: [{ prominenceScore: "desc" }, { lastName: "asc" }],
+      take: 5,
     }),
 
     // Parties: ILIKE on name/shortName
@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
       where: {
         OR: [
           { name: { contains: query, mode: "insensitive" } },
-          { shortName: { contains: query, mode: "insensitive" } },
+          { shortName: { equals: query, mode: "insensitive" } },
         ],
       },
       select: {
@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
         _count: { select: { politicians: true } },
       },
       orderBy: { name: "asc" },
-      take: 3,
+      take: 5,
     }),
 
     // Scrutins: ILIKE on title
@@ -74,7 +74,7 @@ export async function GET(request: NextRequest) {
         chamber: true,
       },
       orderBy: { votingDate: "desc" },
-      take: 3,
+      take: 5,
     }),
   ]);
 

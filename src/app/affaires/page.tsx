@@ -20,10 +20,14 @@ import {
   INVOLVEMENT_GROUP_LABELS,
   INVOLVEMENT_GROUP_COLORS,
   involvementsFromGroups,
+  AFFAIR_SEVERITY_LABELS,
+  AFFAIR_SEVERITY_COLORS,
+  AFFAIR_SEVERITY_EDITORIAL,
+  SEVERITY_SORT_ORDER,
   type InvolvementGroup,
   type AffairSuperCategory,
 } from "@/config/labels";
-import type { AffairStatus, AffairCategory, Involvement } from "@/types";
+import type { AffairStatus, AffairCategory, AffairSeverity, Involvement } from "@/types";
 
 export const revalidate = 300; // 5 minutes — CDN edge cache with ISR
 
@@ -32,6 +36,7 @@ interface PageProps {
     status?: string;
     supercat?: string;
     category?: string;
+    severity?: string;
     page?: string;
     involvement?: string;
     parti?: string;
@@ -106,6 +111,7 @@ async function getAffairs(
   status?: string,
   superCategory?: AffairSuperCategory,
   category?: string,
+  severity?: AffairSeverity,
   page = 1,
   involvements: Involvement[] = ["DIRECT"],
   partySlug?: string
@@ -130,6 +136,7 @@ async function getAffairs(
     involvement: { in: involvements },
     ...(status && { status: status as AffairStatus }),
     ...(categoryFilter && { category: { in: categoryFilter } }),
+    ...(severity && { severity }),
     ...(partySlug && { partyAtTime: { slug: partySlug } }),
   };
 
@@ -145,8 +152,9 @@ async function getAffairs(
         },
         sources: { select: { id: true }, take: 1 },
       },
-      // Order by most relevant date: verdict > start > created
+      // Order by severity (CRITIQUE first), then most relevant date
       orderBy: [
+        { severity: "asc" },
         { verdictDate: { sort: "desc", nulls: "last" } },
         { startDate: { sort: "desc", nulls: "last" } },
         { createdAt: "desc" },
@@ -209,11 +217,29 @@ async function getStatusCounts() {
   return Object.fromEntries(statusCounts.map((s) => [s.status, s._count.status]));
 }
 
+async function getSeverityCounts() {
+  "use cache";
+  cacheTag("affairs");
+  cacheLife("minutes");
+
+  const severityCounts = await db.affair.groupBy({
+    by: ["severity"],
+    where: { publicationStatus: "PUBLISHED", involvement: "DIRECT" },
+    _count: { severity: true },
+  });
+
+  return Object.fromEntries(severityCounts.map((s) => [s.severity, s._count.severity])) as Record<
+    string,
+    number
+  >;
+}
+
 export default async function AffairesPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const statusFilter = params.status || "";
   const superCatFilter = (params.supercat || "") as AffairSuperCategory | "";
   const categoryFilter = params.category || "";
+  const severityFilter = (params.severity || "") as AffairSeverity | "";
   const involvementFilter = params.involvement || "";
   const partiFilter = params.parti || "";
   const page = parseInt(params.page || "1", 10);
@@ -227,20 +253,27 @@ export default async function AffairesPage({ searchParams }: PageProps) {
     : ["mise-en-cause"];
   const activeInvolvements = involvementsFromGroups(activeGroups);
 
-  const [{ affairs, total, totalPages }, superCounts, statusCounts, partiesWithAffairs] =
-    await Promise.all([
-      getAffairs(
-        statusFilter,
-        superCatFilter || undefined,
-        categoryFilter,
-        page,
-        activeInvolvements,
-        partiFilter || undefined
-      ),
-      getSuperCategoryCounts(),
-      getStatusCounts(),
-      getPartiesWithAffairs(),
-    ]);
+  const [
+    { affairs, total, totalPages },
+    superCounts,
+    statusCounts,
+    severityCounts,
+    partiesWithAffairs,
+  ] = await Promise.all([
+    getAffairs(
+      statusFilter,
+      superCatFilter || undefined,
+      categoryFilter,
+      severityFilter || undefined,
+      page,
+      activeInvolvements,
+      partiFilter || undefined
+    ),
+    getSuperCategoryCounts(),
+    getStatusCounts(),
+    getSeverityCounts(),
+    getPartiesWithAffairs(),
+  ]);
 
   const totalAffairs = Object.values(superCounts).reduce((a, b) => a + b, 0);
 
@@ -266,6 +299,7 @@ export default async function AffairesPage({ searchParams }: PageProps) {
     return buildUrl({
       status: statusFilter,
       supercat: superCatFilter,
+      severity: severityFilter,
       parti: partiFilter,
       involvement: isDefault ? "" : inv,
     });
@@ -324,6 +358,51 @@ export default async function AffairesPage({ searchParams }: PageProps) {
         })}
       </div>
 
+      {/* Severity filter */}
+      <div className="mb-6">
+        <p className="text-sm font-medium mb-2">Niveau de gravité</p>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href={buildUrl({
+              status: statusFilter,
+              supercat: superCatFilter,
+              involvement: involvementFilter,
+              parti: partiFilter,
+            })}
+          >
+            <Badge
+              variant={severityFilter === "" ? "default" : "outline"}
+              className="cursor-pointer"
+            >
+              Tous
+            </Badge>
+          </Link>
+          {(Object.keys(AFFAIR_SEVERITY_LABELS) as AffairSeverity[]).map((sev) => {
+            const count = severityCounts[sev] || 0;
+            const isActive = severityFilter === sev;
+            return (
+              <Link
+                key={sev}
+                href={buildUrl({
+                  severity: isActive ? "" : sev,
+                  status: statusFilter,
+                  supercat: superCatFilter,
+                  involvement: involvementFilter,
+                  parti: partiFilter,
+                })}
+              >
+                <Badge
+                  variant={isActive ? "default" : "outline"}
+                  className={`cursor-pointer ${isActive ? AFFAIR_SEVERITY_COLORS[sev] : ""}`}
+                >
+                  {AFFAIR_SEVERITY_EDITORIAL[sev]} ({count})
+                </Badge>
+              </Link>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Party filter */}
       <div className="mb-6">
         <p className="text-sm font-medium mb-2">Filtrer par parti</p>
@@ -332,6 +411,7 @@ export default async function AffairesPage({ searchParams }: PageProps) {
             href={buildUrl({
               status: statusFilter,
               supercat: superCatFilter,
+              severity: severityFilter,
               involvement: involvementFilter,
             })}
           >
@@ -348,6 +428,7 @@ export default async function AffairesPage({ searchParams }: PageProps) {
                   parti: isActive ? "" : (p.slug as string),
                   status: statusFilter,
                   supercat: superCatFilter,
+                  severity: severityFilter,
                   involvement: involvementFilter,
                 })}
               >
@@ -376,7 +457,7 @@ export default async function AffairesPage({ searchParams }: PageProps) {
       <div className="mb-6">
         <p className="text-sm font-medium mb-2">Filtrer par statut</p>
         <div className="flex flex-wrap gap-2">
-          <Link href={buildUrl({ supercat: superCatFilter })}>
+          <Link href={buildUrl({ supercat: superCatFilter, severity: severityFilter })}>
             <Badge variant={statusFilter === "" ? "default" : "outline"} className="cursor-pointer">
               Tous
             </Badge>
@@ -391,6 +472,7 @@ export default async function AffairesPage({ searchParams }: PageProps) {
                 href={buildUrl({
                   status: isActive ? "" : key,
                   supercat: superCatFilter,
+                  severity: severityFilter,
                 })}
               >
                 <Badge
@@ -429,7 +511,7 @@ export default async function AffairesPage({ searchParams }: PageProps) {
       </div>
 
       {/* Active filters summary */}
-      {(superCatFilter || statusFilter || involvementFilter || partiFilter) && (
+      {(superCatFilter || statusFilter || severityFilter || involvementFilter || partiFilter) && (
         <div className="mb-6 flex items-center gap-2 text-sm flex-wrap">
           <span className="text-muted-foreground">Filtres actifs :</span>
           {partiFilter && (
@@ -441,6 +523,11 @@ export default async function AffairesPage({ searchParams }: PageProps) {
           {superCatFilter && (
             <Badge className={AFFAIR_SUPER_CATEGORY_COLORS[superCatFilter]}>
               {AFFAIR_SUPER_CATEGORY_LABELS[superCatFilter]}
+            </Badge>
+          )}
+          {severityFilter && (
+            <Badge className={AFFAIR_SEVERITY_COLORS[severityFilter as AffairSeverity]}>
+              {AFFAIR_SEVERITY_EDITORIAL[severityFilter as AffairSeverity]}
             </Badge>
           )}
           {statusFilter && (
@@ -495,6 +582,11 @@ export default async function AffairesPage({ searchParams }: PageProps) {
                           )}
                           <Badge className={AFFAIR_SUPER_CATEGORY_COLORS[superCat]}>
                             {AFFAIR_SUPER_CATEGORY_LABELS[superCat]}
+                          </Badge>
+                          <Badge
+                            className={AFFAIR_SEVERITY_COLORS[affair.severity as AffairSeverity]}
+                          >
+                            {AFFAIR_SEVERITY_EDITORIAL[affair.severity as AffairSeverity]}
                           </Badge>
                           <Badge className={AFFAIR_STATUS_COLORS[affair.status]}>
                             {AFFAIR_STATUS_LABELS[affair.status]}
@@ -583,6 +675,7 @@ export default async function AffairesPage({ searchParams }: PageProps) {
                     page: String(page - 1),
                     status: statusFilter,
                     supercat: superCatFilter,
+                    severity: severityFilter,
                     involvement: involvementFilter,
                     parti: partiFilter,
                   })}
@@ -600,6 +693,7 @@ export default async function AffairesPage({ searchParams }: PageProps) {
                     page: String(page + 1),
                     status: statusFilter,
                     supercat: superCatFilter,
+                    severity: severityFilter,
                     involvement: involvementFilter,
                     parti: partiFilter,
                   })}

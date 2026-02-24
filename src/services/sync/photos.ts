@@ -256,6 +256,7 @@ export async function syncPhotos(
               data: {
                 photoUrl: url,
                 photoSource: source,
+                blobPhotoUrl: null, // Force re-download on next access
               },
             });
             result.updated++;

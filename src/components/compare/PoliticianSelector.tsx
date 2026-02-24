@@ -241,6 +241,7 @@ export function PoliticianSelector({
             photoUrl={selectedPolitician.photoUrl}
             fullName={selectedPolitician.fullName}
             size="lg"
+            politicianId={selectedPolitician.id}
           />
           <div className="flex-1 min-w-0">
             <h3 className="font-semibold text-lg truncate">{selectedPolitician.fullName}</h3>
@@ -323,6 +324,7 @@ export function PoliticianSelector({
                 photoUrl={politician.photoUrl}
                 fullName={politician.fullName}
                 size="sm"
+                politicianId={politician.id}
               />
               <div className="flex-1 min-w-0">
                 <p className="font-medium truncate">{politician.fullName}</p>

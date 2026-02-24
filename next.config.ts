@@ -28,6 +28,8 @@ const nextConfig: NextConfig = {
       // data.gouv.fr (election photos)
       { protocol: "https", hostname: "www.data.gouv.fr" },
       { protocol: "https", hostname: "static.data.gouv.fr" },
+      // Vercel Blob (cached politician photos)
+      { protocol: "https", hostname: "*.public.blob.vercel-storage.com" },
     ],
   },
   async headers() {

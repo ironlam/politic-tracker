@@ -12,6 +12,7 @@ interface PoliticianAvatarProps {
   size?: "sm" | "md" | "lg" | "xl";
   className?: string;
   priority?: boolean; // Load immediately (above the fold)
+  politicianId?: string;
 }
 
 const sizeClasses = {
@@ -29,6 +30,7 @@ export function PoliticianAvatar({
   size = "md",
   className = "",
   priority = false,
+  politicianId,
 }: PoliticianAvatarProps) {
   const [imageError, setImageError] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -41,9 +43,10 @@ export function PoliticianAvatar({
   const sizeClass = sizeClasses[size];
 
   const normalizedUrl = normalizeImageUrl(photoUrl);
+  const imageSrc = politicianId ? `/api/images/${politicianId}` : normalizedUrl;
 
   // Fallback to initials if no photo or image fails to load
-  if (!normalizedUrl || imageError) {
+  if (!imageSrc || imageError) {
     return (
       <div
         role="img"
@@ -66,7 +69,7 @@ export function PoliticianAvatar({
       {/* Skeleton placeholder while image loads */}
       {!imageLoaded && <div className="absolute inset-0 animate-pulse rounded-full bg-muted" />}
       <Image
-        src={normalizedUrl}
+        src={imageSrc}
         alt={displayName}
         fill
         sizes={size === "sm" ? "40px" : size === "md" ? "56px" : size === "lg" ? "96px" : "128px"}

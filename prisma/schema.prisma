@@ -35,8 +35,9 @@ model Politician {
   birthDate   DateTime?
   deathDate   DateTime? // Date of death (if deceased)
   birthPlace  String?
-  photoUrl    String? // URL de la photo
-  photoSource String? // Source: "assemblee-nationale", "senat", "gouvernement", "hatvp", "manual"
+  photoUrl     String? // URL de la photo (source externe originale)
+  photoSource  String? // Source: "assemblee-nationale", "senat", "gouvernement", "hatvp", "manual"
+  blobPhotoUrl String? // Vercel Blob cached photo URL
   officialId  String?   @unique // DEPRECATED: use externalIds instead
 
   // AI-generated biography

@@ -62,6 +62,7 @@ export function PoliticianCard({ politician, showConvictionBadge = false }: Poli
                   firstName={politician.firstName}
                   lastName={politician.lastName}
                   size="md"
+                  politicianId={politician.id}
                 />
               </div>
               {showConvictionBadge && hasConviction && (

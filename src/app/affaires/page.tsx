@@ -23,7 +23,6 @@ import {
   AFFAIR_SEVERITY_LABELS,
   AFFAIR_SEVERITY_COLORS,
   AFFAIR_SEVERITY_EDITORIAL,
-  SEVERITY_SORT_ORDER,
   type InvolvementGroup,
   type AffairSuperCategory,
 } from "@/config/labels";

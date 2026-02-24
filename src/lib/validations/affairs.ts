@@ -81,6 +81,7 @@ export const createAffairSchema = z.object({
   status: z.enum(AFFAIR_STATUSES),
   category: z.enum(AFFAIR_CATEGORIES),
   involvement: z.enum(INVOLVEMENTS).optional(),
+  isRelatedToMandate: z.boolean().optional(),
   publicationStatus: z.enum(PUBLICATION_STATUSES).optional(),
   factsDate: z.string().optional(),
   startDate: z.string().optional(),

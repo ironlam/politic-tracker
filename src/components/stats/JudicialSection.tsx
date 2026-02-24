@@ -27,7 +27,7 @@ interface CategoryCount {
   count: number;
 }
 
-interface GraveCategoryData {
+interface CritiqueCategoryData {
   category: AffairCategory;
   label: string;
   total: number;
@@ -38,9 +38,10 @@ interface JudicialSectionProps {
   totalDirect: number;
   totalCondamnations: number;
   condamnationsDefinitives: number;
+  bySeverity: Record<string, number>;
   byStatus: StatusCount[];
   byCategory: CategoryCount[];
-  graveByCategory: GraveCategoryData[];
+  critiqueByCategory: CritiqueCategoryData[];
 }
 
 const ONGOING_STATUSES = new Set<AffairStatus>([
@@ -56,10 +57,12 @@ export function JudicialSection({
   totalDirect,
   totalCondamnations,
   condamnationsDefinitives,
+  bySeverity,
   byStatus,
   byCategory,
-  graveByCategory,
+  critiqueByCategory,
 }: JudicialSectionProps) {
+  const totalCritique = bySeverity["CRITIQUE"] || 0;
   const ongoing = byStatus
     .filter((s) => ONGOING_STATUSES.has(s.status))
     .reduce((sum, s) => sum + s.count, 0);
@@ -70,7 +73,15 @@ export function JudicialSection({
   return (
     <section aria-labelledby="judicial-heading" className="py-8">
       {/* Contextual KPIs */}
-      <div className="grid grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <Card>
+          <CardContent className="pt-6 text-center">
+            <div className="text-3xl font-bold tabular-nums text-red-600">
+              {totalCritique.toLocaleString("fr-FR")}
+            </div>
+            <div className="text-sm text-muted-foreground mt-1">Atteintes à la probité</div>
+          </CardContent>
+        </Card>
         <Card>
           <CardContent className="pt-6 text-center">
             <div className="text-3xl font-bold tabular-nums">
@@ -81,7 +92,7 @@ export function JudicialSection({
         </Card>
         <Card>
           <CardContent className="pt-6 text-center">
-            <div className="text-3xl font-bold tabular-nums text-red-600">
+            <div className="text-3xl font-bold tabular-nums">
               {condamnationsDefinitives.toLocaleString("fr-FR")}
             </div>
             <div className="text-sm text-muted-foreground mt-1">dont définitives</div>
@@ -97,19 +108,20 @@ export function JudicialSection({
         </Card>
       </div>
 
-      {/* Grave affairs by category → party */}
-      {graveByCategory.length > 0 && (
+      {/* Atteintes à la probité by category → party */}
+      {critiqueByCategory.length > 0 && (
         <>
           <h2 id="judicial-heading" className="text-xl font-bold mb-2">
-            Condamnations graves par parti
+            Atteintes à la probité par parti
           </h2>
           <p className="text-sm text-muted-foreground mb-6">
-            Condamnations (1ère instance, appel ou définitives) avec implication directe, par
-            catégorie et par parti
+            Affaires liées à l&apos;exercice du mandat public (corruption, détournement de fonds,
+            financement illégal, trafic d&apos;influence...) avec implication directe, par catégorie
+            et par parti
           </p>
 
           <div className="space-y-6 mb-8">
-            {graveByCategory.map(({ category, label, total, parties }) => (
+            {critiqueByCategory.map(({ category, label, total, parties }) => (
               <Card key={category}>
                 <CardHeader className="pb-2">
                   <CardTitle className="text-base flex items-center justify-between">
@@ -178,13 +190,12 @@ export function JudicialSection({
       </div>
 
       <MethodologyDisclaimer>
-        Les graphiques &laquo;&nbsp;condamnations graves&nbsp;&raquo; et &laquo;&nbsp;par
-        type&nbsp;&raquo; ne comptabilisent que les condamnations (1ère instance, appel en cours ou
-        définitives) où le politicien est directement mis en cause. Les enquêtes préliminaires,
-        mises en examen, classements sans suite et relaxes sont exclus de ces comptages. Les
-        catégories &laquo;&nbsp;graves&nbsp;&raquo; regroupent : violence, agression sexuelle,
-        harcèlement, menace, incitation à la haine, corruption, fraude fiscale et financement
-        illégal.
+        Les &laquo;&nbsp;atteintes à la probité&nbsp;&raquo; regroupent les infractions liées à
+        l&apos;exercice du mandat public : corruption, trafic d&apos;influence, détournement de
+        fonds publics, prise illégale d&apos;intérêts, emplois fictifs, financement illégal de
+        campagne ou de parti, et incitation à la haine. Le graphique &laquo;&nbsp;par
+        type&nbsp;&raquo; ne comptabilise que les condamnations (1ère instance, appel en cours ou
+        définitives) où le politicien est directement mis en cause.
       </MethodologyDisclaimer>
     </section>
   );

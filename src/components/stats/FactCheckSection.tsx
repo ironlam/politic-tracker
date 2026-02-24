@@ -54,7 +54,13 @@ function PoliticianRankingItem({
   rank: number;
   mode: "reliable" | "unreliable";
 }) {
-  const score = mode === "reliable" ? pol.scoreVrai : pol.scoreFaux;
+  const scorable = pol.totalMentions - pol.breakdown.inverifiable;
+  const rawPct =
+    scorable > 0
+      ? mode === "reliable"
+        ? pol.breakdown.vrai / scorable
+        : pol.breakdown.faux / scorable
+      : 0;
   return (
     <Link
       href={`/politiques/${pol.slug}`}
@@ -82,7 +88,7 @@ function PoliticianRankingItem({
           color: mode === "reliable" ? VERDICT_GROUP_COLORS.vrai : VERDICT_GROUP_COLORS.faux,
         }}
       >
-        {(score * 100).toFixed(0)}%
+        {(rawPct * 100).toFixed(0)}%
       </span>
     </Link>
   );
@@ -97,7 +103,13 @@ function PartyRankingItem({
   rank: number;
   mode: "reliable" | "unreliable";
 }) {
-  const score = mode === "reliable" ? party.scoreVrai : party.scoreFaux;
+  const scorable = party.totalMentions - party.breakdown.inverifiable;
+  const rawPct =
+    scorable > 0
+      ? mode === "reliable"
+        ? party.breakdown.vrai / scorable
+        : party.breakdown.faux / scorable
+      : 0;
   return (
     <Link
       href={party.slug ? `/partis/${party.slug}` : "#"}
@@ -127,7 +139,7 @@ function PartyRankingItem({
           color: mode === "reliable" ? VERDICT_GROUP_COLORS.vrai : VERDICT_GROUP_COLORS.faux,
         }}
       >
-        {(score * 100).toFixed(0)}%
+        {(rawPct * 100).toFixed(0)}%
       </span>
     </Link>
   );
@@ -236,7 +248,7 @@ export function FactCheckSection({
             <CardHeader>
               <CardTitle className="text-lg">Politiques les plus fiables</CardTitle>
               <p className="text-sm text-muted-foreground">
-                Par proportion de propos vérifiés vrais (score pondéré)
+                Par proportion de propos vérifiés vrais (classement pondéré)
               </p>
             </CardHeader>
             <CardContent>
@@ -254,7 +266,7 @@ export function FactCheckSection({
             <CardHeader>
               <CardTitle className="text-lg">Politiques les moins fiables</CardTitle>
               <p className="text-sm text-muted-foreground">
-                Par proportion de propos vérifiés faux (score pondéré)
+                Par proportion de propos vérifiés faux (classement pondéré)
               </p>
             </CardHeader>
             <CardContent>
@@ -275,7 +287,7 @@ export function FactCheckSection({
             <CardHeader>
               <CardTitle className="text-lg">Partis les plus fiables</CardTitle>
               <p className="text-sm text-muted-foreground">
-                Par proportion de propos vérifiés vrais (score pondéré)
+                Par proportion de propos vérifiés vrais (classement pondéré)
               </p>
             </CardHeader>
             <CardContent>
@@ -293,7 +305,7 @@ export function FactCheckSection({
             <CardHeader>
               <CardTitle className="text-lg">Partis les moins fiables</CardTitle>
               <p className="text-sm text-muted-foreground">
-                Par proportion de propos vérifiés faux (score pondéré)
+                Par proportion de propos vérifiés faux (classement pondéré)
               </p>
             </CardHeader>
             <CardContent>

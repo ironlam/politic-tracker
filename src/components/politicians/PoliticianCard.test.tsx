@@ -14,6 +14,7 @@ const mockPolitician = {
   birthPlace: "Paris",
   photoUrl: null,
   photoSource: null,
+  blobPhotoUrl: null,
   officialId: null,
   biography: null,
   biographyGeneratedAt: null,

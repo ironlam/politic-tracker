@@ -120,8 +120,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Compute severity
-    const mandateRelated =
-      data.isRelatedToMandate ?? isInherentlyMandateCategory(data.category);
+    const mandateRelated = data.isRelatedToMandate ?? isInherentlyMandateCategory(data.category);
     const severity = computeSeverity(data.category, mandateRelated);
 
     // Create affair with sources

@@ -78,8 +78,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     }
 
     // Recompute severity on update
-    const mandateRelated =
-      data.isRelatedToMandate ?? isInherentlyMandateCategory(data.category);
+    const mandateRelated = data.isRelatedToMandate ?? isInherentlyMandateCategory(data.category);
     const severity = computeSeverity(data.category, mandateRelated);
 
     // Update affair

@@ -8,7 +8,13 @@
 import { db } from "@/lib/db";
 import { searchClaims, mapTextualRating, fetchPageTitle } from "@/lib/api";
 import { FACTCHECK_RATE_LIMIT_MS } from "@/config/rate-limits";
-import { normalizeText, buildPoliticianIndex, findMentions } from "@/lib/name-matching";
+import {
+  normalizeText,
+  buildPoliticianIndex,
+  findMentions,
+  type PoliticianName,
+} from "@/lib/name-matching";
+import { isDirectPoliticianClaim } from "@/config/labels";
 import { generateDateSlug } from "@/lib/utils";
 
 // ---------------------------------------------------------------------------
@@ -55,6 +61,21 @@ async function generateUniqueFactCheckSlug(date: Date | null, title: string): Pr
   }
 
   return slug;
+}
+
+/**
+ * Given a claimant string, return the set of politician IDs that match it.
+ * Uses fullNameOnly mode to avoid false positives on short claimant strings
+ * (e.g. "Olivier Véran" should NOT match Philippe Olivier).
+ */
+function computeClaimantIds(
+  claimant: string | null | undefined,
+  allPoliticians: PoliticianName[]
+): Set<string> {
+  if (!claimant || !isDirectPoliticianClaim(claimant)) return new Set();
+  return new Set(
+    findMentions(claimant, allPoliticians, { fullNameOnly: true }).map((m) => m.politicianId)
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -147,6 +168,9 @@ export async function syncFactchecks(
             });
           }
 
+          // Determine which mentioned politicians are the actual claimant
+          const claimantIds = computeClaimantIds(claim.claimant, allPoliticians);
+
           const verdictRating = mapTextualRating(review.textualRating);
           const reviewDate = review.reviewDate ? new Date(review.reviewDate) : new Date();
 
@@ -179,6 +203,7 @@ export async function syncFactchecks(
                         factCheckId: existingByTitle.id,
                         politicianId: m.politicianId,
                         matchedName: m.matchedName,
+                        isClaimant: claimantIds.has(m.politicianId),
                       },
                     });
                   }
@@ -212,6 +237,7 @@ export async function syncFactchecks(
                       create: mentions.map((m) => ({
                         politicianId: m.politicianId,
                         matchedName: m.matchedName,
+                        isClaimant: claimantIds.has(m.politicianId),
                       })),
                     },
                   },
@@ -231,6 +257,7 @@ export async function syncFactchecks(
                       create: mentions.map((m) => ({
                         politicianId: m.politicianId,
                         matchedName: m.matchedName,
+                        isClaimant: claimantIds.has(m.politicianId),
                       })),
                     },
                   },
@@ -253,6 +280,7 @@ export async function syncFactchecks(
                       create: mentions.map((m) => ({
                         politicianId: m.politicianId,
                         matchedName: m.matchedName,
+                        isClaimant: claimantIds.has(m.politicianId),
                       })),
                     },
                   },

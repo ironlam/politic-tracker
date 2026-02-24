@@ -311,6 +311,7 @@ export default async function ScrutinPage({ params }: PageProps) {
                               firstName={vote.politician.firstName}
                               lastName={vote.politician.lastName}
                               size="sm"
+                              politicianId={vote.politician.id}
                             />
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-medium truncate">

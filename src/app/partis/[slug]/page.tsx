@@ -10,9 +10,6 @@ import { formatDate } from "@/lib/utils";
 import {
   PARTY_ROLE_LABELS,
   feminizePartyRole,
-  CATEGORY_TO_SUPER,
-  AFFAIR_SUPER_CATEGORY_LABELS,
-  AFFAIR_SUPER_CATEGORY_COLORS,
   AFFAIR_STATUS_LABELS,
   AFFAIR_STATUS_COLORS,
   AFFAIR_SEVERITY_LABELS,
@@ -20,7 +17,7 @@ import {
   AFFAIR_SEVERITY_EDITORIAL,
   SEVERITY_SORT_ORDER,
 } from "@/config/labels";
-import type { AffairCategory, AffairStatus, AffairSeverity } from "@/types";
+import type { AffairStatus, AffairSeverity } from "@/types";
 import { PoliticianAvatar } from "@/components/politicians/PoliticianAvatar";
 import { PoliticalPositionBadge } from "@/components/parties/PoliticalPositionBadge";
 import { OrganizationJsonLd, BreadcrumbJsonLd } from "@/components/seo/JsonLd";

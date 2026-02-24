@@ -111,14 +111,13 @@ async function divisiveVotes(): Promise<TweetDraft[]> {
       year: "numeric",
     });
 
-    let content = `🗳️ Le groupe ${dividedGroup.name} vote en ordre dispersé\n\n`;
-    content += `${s.title}\n\n`;
-    content += `Résultat global : ${result} (${pourPct}% pour, ${contrePct}% contre) — scrutin du ${date}.\n\n`;
-    content += `Au sein du groupe ${dividedGroup.name} (${dividedGroup.code}), le vote était loin d'être unanime : ${pourPartyPct}% des députés ont voté pour, ${contrePartyPct}% contre`;
+    let content = `🗳️ ${pourPartyPct}% pour, ${contrePartyPct}% contre — au sein du même groupe.\n\n`;
+    content += `Sur le scrutin « ${s.title} », le groupe ${dividedGroup.name} (${dividedGroup.code}) a voté en ordre dispersé`;
     if (dividedStats.abstention > 0) {
-      content += `, ${Math.round((dividedStats.abstention / dividedStats.total) * 100)}% se sont abstenus`;
+      content += ` (${Math.round((dividedStats.abstention / dividedStats.total) * 100)}% d'abstentions)`;
     }
-    content += `.`;
+    content += `.\n\n`;
+    content += `Résultat global : ${result} — ${pourPct}% pour, ${contrePct}% contre. Scrutin du ${date}.`;
 
     if (s.summary) {
       content += `\n\n${s.summary}`;
@@ -154,16 +153,21 @@ async function partyStats(): Promise<TweetDraft[]> {
     take: 8,
   });
 
-  const affairCounts = await db.affair.groupBy({
+  const condamnationCounts = await db.affair.groupBy({
     by: ["politicianId"],
     where: {
       publicationStatus: "PUBLISHED",
       involvement: "DIRECT",
+      status: {
+        in: ["CONDAMNATION_DEFINITIVE", "CONDAMNATION_PREMIERE_INSTANCE", "APPEL_EN_COURS"],
+      },
     },
     _count: true,
   });
 
-  const politicianAffairs = new Map(affairCounts.map((a) => [a.politicianId, a._count]));
+  const politicianCondamnations = new Map(
+    condamnationCounts.map((a) => [a.politicianId, a._count])
+  );
 
   const politiciansWithParty = await db.politician.findMany({
     where: {
@@ -173,25 +177,25 @@ async function partyStats(): Promise<TweetDraft[]> {
     select: { id: true, currentParty: { select: { shortName: true } } },
   });
 
-  const partyAffairMap = new Map<string, { count: number; members: number }>();
+  const partyCondamnationMap = new Map<string, { count: number; members: number }>();
   for (const p of politiciansWithParty) {
     const party = p.currentParty!.shortName;
-    const entry = partyAffairMap.get(party) || { count: 0, members: 0 };
-    entry.count += politicianAffairs.get(p.id) || 0;
+    const entry = partyCondamnationMap.get(party) || { count: 0, members: 0 };
+    entry.count += politicianCondamnations.get(p.id) || 0;
     entry.members++;
-    partyAffairMap.set(party, entry);
+    partyCondamnationMap.set(party, entry);
   }
 
   const totalPoliticians = parties.reduce((sum, p) => sum + p._count.politicians, 0);
   const topParties = parties.slice(0, 6);
 
-  let content = `📊 Que surveille Poligraph ?\n\n`;
-  content += `${totalPoliticians} responsables politiques français sont documentés sur Poligraph, avec leurs votes, mandats et affaires judiciaires.\n\n`;
-  content += `Répartition par parti :\n`;
+  let content = `📊 ${totalPoliticians} responsables politiques français, un seul endroit pour tout savoir.\n\n`;
+  content += `Votes, mandats, affaires judiciaires, patrimoine — tout est documenté sur Poligraph.\n\n`;
+  content += `Les partis les plus représentés :\n`;
   for (const p of topParties) {
-    content += `• ${p.name} (${p.shortName}) : ${p._count.politicians} élus\n`;
+    content += `• ${p.shortName} : ${p._count.politicians} élus\n`;
   }
-  content += `\nCes données sont publiques et vérifiables — on ne fait que les rendre accessibles.`;
+  content += `\nDonnées publiques, vérifiables, mêmes règles pour tous.`;
 
   const drafts: TweetDraft[] = [
     {
@@ -201,26 +205,26 @@ async function partyStats(): Promise<TweetDraft[]> {
     },
   ];
 
-  // Second tweet: affairs by party with ratio
-  const sortedAffairs = [...partyAffairMap.entries()]
+  // Second tweet: condamnations by party with ratio
+  const sortedCondamnations = [...partyCondamnationMap.entries()]
     .filter(([, v]) => v.count > 0)
     .sort((a, b) => b[1].count - a[1].count)
     .slice(0, 6);
 
-  if (sortedAffairs.length > 0) {
-    const totalAffairs = sortedAffairs.reduce((sum, [, v]) => sum + v.count, 0);
+  if (sortedCondamnations.length > 0) {
+    const totalCondamnations = sortedCondamnations.reduce((sum, [, v]) => sum + v.count, 0);
 
-    let affairContent = `⚖️ Affaires judiciaires : quel parti est le plus concerné ?\n\n`;
-    affairContent += `${totalAffairs} affaires documentées (implication directe uniquement) :\n\n`;
-    for (const [party, { count, members }] of sortedAffairs) {
+    let condContent = `⚖️ ${totalCondamnations} condamnations d'élus documentées sur Poligraph. Quel parti en compte le plus ?\n\n`;
+    for (const [party, { count, members }] of sortedCondamnations) {
       const ratio = (count / members).toFixed(1);
-      affairContent += `• ${party} : ${count} affaires (${ratio} par élu référencé)\n`;
+      condContent += `• ${party} : ${count} condamnation(s) — ratio ${ratio} par élu\n`;
     }
-    affairContent += `\nToutes les affaires sont sourcées et vérifiables. La présomption d'innocence s'applique tant qu'aucune condamnation définitive n'est prononcée.`;
+    condContent += `\n(1ère instance, appel ou définitive — implication directe uniquement)\n`;
+    condContent += `\nTout est sourcé et vérifiable. Mêmes critères pour tous.`;
 
     drafts.push({
       category: "📊 Stats",
-      content: affairContent,
+      content: condContent,
       link: `${SITE_URL}/affaires`,
     });
   }
@@ -264,12 +268,11 @@ async function recentAffairs(): Promise<TweetDraft[]> {
     const mandate = a.politician.mandates[0];
     const mandateLabel = mandate ? MANDATE_TYPE_LABELS[mandate.type].toLowerCase() : "";
 
-    let content = `⚖️ ${a.title}\n\n`;
-    content += `${a.politician.fullName}`;
+    let content = `⚖️ ${a.politician.fullName}`;
     if (party) content += ` (${party})`;
     if (mandateLabel) content += `, ${mandateLabel}`;
-    content += `.\n\n`;
-    content += `Catégorie : ${categoryLabel}\nStatut : ${statusLabel}\n`;
+    content += ` — ${statusLabel.toLowerCase()} pour ${categoryLabel.toLowerCase()}.\n\n`;
+    content += `${a.title}\n`;
 
     if (a.description) {
       const desc =
@@ -278,7 +281,7 @@ async function recentAffairs(): Promise<TweetDraft[]> {
     }
 
     if (needsPresumption) {
-      content += `\n⚖️ Rappel : la présomption d'innocence s'applique — aucune condamnation définitive n'a été prononcée à ce stade.`;
+      content += `\nPrésomption d'innocence : aucune condamnation définitive à ce stade.`;
     }
 
     return {
@@ -311,19 +314,21 @@ async function factchecks(): Promise<TweetDraft[]> {
     (f) => ["MOSTLY_FALSE", "FALSE"].includes(f.verdictRating) && f.claimant
   );
 
-  let content = `🔍 Fact-checking de la semaine\n\n`;
-  content += `${recent.length} déclarations de responsables politiques passées au crible cette semaine :\n\n`;
-  content += `✅ ${truthy} vraie(s) ou plutôt vraie(s)\n`;
-  content += `⚠️ ${misleading} trompeuse(s) ou sortie(s) de contexte\n`;
-  content += `❌ ${falsy} fausse(s) ou plutôt fausse(s)\n`;
-
+  let content = `🔍 `;
   if (notableFalse) {
-    content += `\nExemple : "${notableFalse.title}"`;
-    if (notableFalse.claimant) content += ` (${notableFalse.claimant})`;
-    if (notableFalse.source) content += ` — vérifié par ${notableFalse.source}`;
+    content += `« ${notableFalse.title} »`;
+    if (notableFalse.claimant) content += ` — ${notableFalse.claimant}`;
+    content += `.\n\nVrai ou faux ? ❌ Faux`;
+    if (notableFalse.source) content += `, selon ${notableFalse.source}`;
+    content += `.\n\n`;
+  } else {
+    content += `Cette semaine, ${falsy} déclaration(s) politique(s) épinglée(s) comme fausse(s).\n\n`;
   }
-
-  content += `\n\nQui dit vrai ? Vérifiez par vous-même.`;
+  content += `Sur ${recent.length} déclarations vérifiées cette semaine :\n`;
+  content += `✅ ${truthy} vraie(s)\n`;
+  content += `⚠️ ${misleading} trompeuse(s)\n`;
+  content += `❌ ${falsy} fausse(s)\n`;
+  content += `\nQui dit vrai, qui dit faux ? Vérifiez par vous-même.`;
 
   return [
     {
@@ -377,21 +382,22 @@ async function deputySpotlight(): Promise<TweetDraft[]> {
   const constituency = mandate?.constituency ? ` (${mandate.constituency})` : "";
   const partyName = politician.currentParty?.name || "";
 
-  let content = `👤 Connaissez-vous votre élu ?\n\n`;
-  content += `${politician.fullName}`;
-  if (partyName) content += `, ${partyName}`;
-  if (mandateLabel) content += `, ${mandateLabel}${constituency}`;
-  content += `.\n\n`;
+  // Build the hook with one striking stat
+  let hook = "";
+  if (politician._count.votes > 0 && politician._count.affairs > 0) {
+    hook = `${politician._count.votes.toLocaleString("fr-FR")} votes au Parlement, ${politician._count.affairs} affaire(s) judiciaire(s)`;
+  } else if (politician._count.votes > 0) {
+    hook = `${politician._count.votes.toLocaleString("fr-FR")} votes au Parlement, aucune affaire judiciaire`;
+  } else {
+    hook = `élu en exercice`;
+  }
 
-  if (politician._count.votes > 0) {
-    content += `📊 ${politician._count.votes.toLocaleString("fr-FR")} votes enregistrés au Parlement\n`;
-  }
-  if (politician._count.affairs > 0) {
-    content += `⚖️ ${politician._count.affairs} affaire(s) judiciaire(s) documentée(s)\n`;
-  }
-  if (politician._count.affairs === 0) {
-    content += `✅ Aucune affaire judiciaire documentée\n`;
-  }
+  let content = `👤 ${politician.fullName} — ${hook}.\n\n`;
+  content += `Savez-vous ce que fait votre élu ?\n\n`;
+  const details = [partyName, mandateLabel ? `${mandateLabel}${constituency}` : ""]
+    .filter(Boolean)
+    .join(", ");
+  if (details) content += `🏛️ ${details}\n`;
 
   if (politician.biography) {
     const bio =
@@ -401,7 +407,7 @@ async function deputySpotlight(): Promise<TweetDraft[]> {
     content += `\n${bio}\n`;
   }
 
-  content += `\nRetrouvez sa fiche complète : votes, mandats, patrimoine déclaré.`;
+  content += `\nVotes, mandats, patrimoine — sa fiche complète sur Poligraph.`;
 
   return [
     {
@@ -436,13 +442,11 @@ async function elections(): Promise<TweetDraft[]> {
     });
     const days = daysUntil(upcoming.round1Date!);
 
-    let content = `🗳️ ${typeLabel} : J-${days}\n\n`;
-    content += `${upcoming.title}\n`;
-    content += `📅 1er tour le ${date}\n`;
-    content += `📌 Statut : ${statusLabel}\n`;
+    let content = `🗳️ Dans ${days} jours, vous votez.\n\n`;
+    content += `${upcoming.title} — 1er tour le ${date}.\n`;
 
     if (upcoming._count.candidacies > 0) {
-      content += `👥 ${upcoming._count.candidacies} candidature(s) enregistrée(s)\n`;
+      content += `${upcoming._count.candidacies} candidature(s) déjà enregistrée(s).\n`;
     }
 
     if (upcoming.description) {
@@ -453,7 +457,7 @@ async function elections(): Promise<TweetDraft[]> {
       content += `\n${desc}\n`;
     }
 
-    content += `\nSuivez les candidatures et résultats en temps réel.`;
+    content += `\nQui se présente chez vous ? Suivez les candidatures sur Poligraph.`;
 
     return [
       {
@@ -556,15 +560,23 @@ async function recentPress(): Promise<TweetDraft[]> {
     })
     .slice(0, 5);
 
-  let content = `📰 ${pol.fullName}${party} dans la presse\n\n`;
-  content += `${pMentions.length} mention(s) dans les dernières 48h :\n\n`;
+  // Lead with the first headline as hook
+  const firstArticle = uniqueArticles[0];
+  const firstSource =
+    FEED_NAMES[firstArticle.article.feedSource] || firstArticle.article.feedSource;
 
-  for (const m of uniqueArticles) {
-    const source = FEED_NAMES[m.article.feedSource] || m.article.feedSource;
-    content += `• ${m.article.title} (${source})\n`;
+  let content = `📰 « ${firstArticle.article.title} » (${firstSource})\n\n`;
+  content += `${pol.fullName}${party} : ${pMentions.length} mention(s) presse en 48h.\n`;
+
+  if (uniqueArticles.length > 1) {
+    content += `\nÉgalement :\n`;
+    for (const m of uniqueArticles.slice(1)) {
+      const source = FEED_NAMES[m.article.feedSource] || m.article.feedSource;
+      content += `• ${m.article.title} (${source})\n`;
+    }
   }
 
-  content += `\nRetrouvez toute la couverture presse sur sa fiche.`;
+  content += `\nToute la couverture presse sur sa fiche Poligraph.`;
 
   return [
     {

@@ -319,8 +319,7 @@ export const AFFAIR_SEVERITY_COLORS: Record<AffairSeverity, string> = {
 export const AFFAIR_SEVERITY_DESCRIPTIONS: Record<AffairSeverity, string> = {
   CRITIQUE:
     "Infractions liées à l'exercice du mandat public : corruption, détournement de fonds, financement illégal, trafic d'influence",
-  GRAVE:
-    "Infractions sérieuses : fraude fiscale, blanchiment, harcèlement, agressions",
+  GRAVE: "Infractions sérieuses : fraude fiscale, blanchiment, harcèlement, agressions",
   SIGNIFICATIF:
     "Infractions de droit commun : diffamation, injure, violence sans lien avec le mandat",
 };
@@ -379,7 +378,7 @@ const SEVERITY_ORDER: AffairSeverity[] = ["CRITIQUE", "GRAVE", "SIGNIFICATIF"];
  */
 export function computeSeverity(
   category: AffairCategory,
-  isRelatedToMandate: boolean,
+  isRelatedToMandate: boolean
 ): AffairSeverity {
   const base = CATEGORY_DEFAULT_SEVERITY[category] || "SIGNIFICATIF";
   if (!isRelatedToMandate) return base;

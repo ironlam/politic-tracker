@@ -94,8 +94,7 @@ export async function createAffair(input: CreateAffairInput): Promise<AffairWith
   const slug = generateSlug(input.title);
 
   // Compute severity from category and mandate relation
-  const mandateRelated =
-    input.isRelatedToMandate ?? isInherentlyMandateCategory(input.category);
+  const mandateRelated = input.isRelatedToMandate ?? isInherentlyMandateCategory(input.category);
   const severity = computeSeverity(input.category, mandateRelated);
 
   return db.affair.create({

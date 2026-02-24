@@ -111,7 +111,7 @@ async function divisiveVotes(): Promise<TweetDraft[]> {
       year: "numeric",
     });
 
-    let content = `🗳️ Le groupe ${dividedGroup.name} se fracture\n\n`;
+    let content = `🗳️ Le groupe ${dividedGroup.name} vote en ordre dispersé\n\n`;
     content += `${s.title}\n\n`;
     content += `Résultat global : ${result} (${pourPct}% pour, ${contrePct}% contre) — scrutin du ${date}.\n\n`;
     content += `Au sein du groupe ${dividedGroup.name} (${dividedGroup.code}), le vote était loin d'être unanime : ${pourPartyPct}% des députés ont voté pour, ${contrePartyPct}% contre`;

@@ -347,6 +347,10 @@ model Affair {
   category    AffairCategory
   involvement Involvement    @default(MENTIONED_ONLY)
 
+  // Severity hierarchy (computed from category + isRelatedToMandate)
+  severity           AffairSeverity @default(SIGNIFICATIF)
+  isRelatedToMandate Boolean        @default(false)
+
   // Dates
   factsDate   DateTime? // Date of alleged facts
   startDate   DateTime? // When affair became public
@@ -407,6 +411,8 @@ model Affair {
   @@index([category])
   @@index([pourvoiNumber])
   @@index([publicationStatus])
+  @@index([severity])
+  @@index([publicationStatus, severity])
 }
 
 // Timeline events for an affair
@@ -508,6 +514,12 @@ enum AffairCategory {
   RECEL
   CONFLIT_INTERETS
   AUTRE
+}
+
+enum AffairSeverity {
+  CRITIQUE     // Atteintes graves aux personnes ou à la démocratie
+  GRAVE        // Atteintes significatives à la probité publique
+  SIGNIFICATIF // Autres infractions et manquements
 }
 
 enum SourceType {

@@ -195,6 +195,7 @@ interface RankedPolitician {
 
 interface RankedParty {
   name: string;
+  shortName: string | null;
   color: string | null;
   slug: string | null;
   totalMentions: number;
@@ -278,6 +279,7 @@ async function getFactCheckData() {
     string,
     {
       name: string;
+      shortName: string | null;
       color: string | null;
       slug: string | null;
       breakdown: VerdictBreakdown;
@@ -312,6 +314,7 @@ async function getFactCheckData() {
       if (!partyMap.has(partyKey)) {
         partyMap.set(partyKey, {
           name: partyDisplayName!,
+          shortName: pol.currentParty!.shortName,
           color: pol.currentParty!.color,
           slug: pol.currentParty!.slug,
           breakdown: { vrai: 0, trompeur: 0, faux: 0, inverifiable: 0 },
@@ -379,6 +382,7 @@ async function getFactCheckData() {
     const pFaux = scorable > 0 ? p.breakdown.faux / scorable : 0;
     return {
       name: p.name,
+      shortName: p.shortName,
       color: p.color,
       slug: p.slug,
       totalMentions: p.total,

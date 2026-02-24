@@ -128,6 +128,54 @@ describe("findMentions", () => {
       normalizedFullName: "jean noir",
       normalizedLastName: "noir",
     },
+    {
+      id: "7",
+      fullName: "Laurent Wauquiez",
+      firstName: "Laurent",
+      lastName: "Wauquiez",
+      normalizedFullName: "laurent wauquiez",
+      normalizedLastName: "wauquiez",
+    },
+    {
+      id: "8",
+      fullName: "Daniel Laurent",
+      firstName: "Daniel",
+      lastName: "Laurent",
+      normalizedFullName: "daniel laurent",
+      normalizedLastName: "laurent",
+    },
+    {
+      id: "9",
+      fullName: "Sandrine Rousseau",
+      firstName: "Sandrine",
+      lastName: "Rousseau",
+      normalizedFullName: "sandrine rousseau",
+      normalizedLastName: "rousseau",
+    },
+    {
+      id: "10",
+      fullName: "Aurélien Rousseau",
+      firstName: "Aurélien",
+      lastName: "Rousseau",
+      normalizedFullName: "aurelien rousseau",
+      normalizedLastName: "rousseau",
+    },
+    {
+      id: "11",
+      fullName: "Christophe Marion",
+      firstName: "Christophe",
+      lastName: "Marion",
+      normalizedFullName: "christophe marion",
+      normalizedLastName: "marion",
+    },
+    {
+      id: "12",
+      fullName: "Marion Maréchal",
+      firstName: "Marion",
+      lastName: "Maréchal",
+      normalizedFullName: "marion marechal",
+      normalizedLastName: "marechal",
+    },
   ];
 
   it("should match full name", () => {
@@ -200,6 +248,37 @@ describe("findMentions", () => {
   it("should respect word boundaries", () => {
     const result = findMentions("Le macronisme est un mouvement", politicians);
     expect(result).toEqual([]);
+  });
+
+  // Adjacent context check — false positive prevention
+  it("should not match last name when it is another politician's first name in context", () => {
+    // "Laurent Wauquiez" → "Laurent" is Wauquiez's first name, not Daniel Laurent's last name
+    const result = findMentions("Laurent Wauquiez a déclaré...", politicians);
+    expect(result).toEqual([{ politicianId: "7", matchedName: "Laurent Wauquiez" }]);
+    // Daniel Laurent (id=8) should NOT be in results
+    expect(result.find((r) => r.politicianId === "8")).toBeUndefined();
+  });
+
+  it("should not cross-match when last name appears as first name of another politician", () => {
+    // "Sandrine Rousseau" should match Sandrine Rousseau, NOT Aurélien Rousseau
+    const result = findMentions("Sandrine Rousseau a répondu", politicians);
+    expect(result).toEqual([{ politicianId: "9", matchedName: "Sandrine Rousseau" }]);
+    expect(result.find((r) => r.politicianId === "10")).toBeUndefined();
+  });
+
+  it("should still match last name alone when no adjacent context conflict", () => {
+    // "Rousseau a répondu" — no first name before → valid last-name match
+    const result = findMentions("Rousseau a répondu", politicians);
+    expect(result.length).toBeGreaterThanOrEqual(1);
+    // Should match one of the Rousseaus (whichever comes first by name length)
+    expect(["9", "10"]).toContain(result[0].politicianId);
+  });
+
+  it("should match both politicians by full name even when names overlap", () => {
+    const result = findMentions("Marion Maréchal et Christophe Marion ont débattu", politicians);
+    expect(result).toHaveLength(2);
+    const ids = result.map((r) => r.politicianId).sort();
+    expect(ids).toEqual(["11", "12"]);
   });
 });
 

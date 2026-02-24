@@ -198,6 +198,30 @@ function isPartOfHyphenatedWord(originalText: string, normalizedWord: string): b
 }
 
 /**
+ * Check if a last-name-only match is actually part of another politician's full name.
+ * e.g. "Laurent" in "Laurent Wauquiez" is Wauquiez's first name, not Daniel Laurent's last name.
+ */
+function isPartOfAnotherPoliticianName(
+  normalizedText: string,
+  normalizedLastName: string,
+  candidateId: string,
+  allPoliticians: PoliticianName[]
+): boolean {
+  // Build a set of all full names except the candidate's
+  for (const other of allPoliticians) {
+    if (other.id === candidateId) continue;
+    // Check if this other politician's full name appears in the text AND contains the last name
+    if (
+      other.normalizedFullName.includes(normalizedLastName) &&
+      new RegExp(`\\b${escapeRegex(other.normalizedFullName)}\\b`).test(normalizedText)
+    ) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
  * Find politicians mentioned in text
  * Returns matches with the name that was found
  */
@@ -232,6 +256,7 @@ export function findMentions(
     // Only match if last name is at least 5 characters (avoid false positives)
     // AND last name is not a common word
     // AND the word is not part of a hyphenated compound in the original text
+    // AND the last name is not part of another politician's full name in the text
     if (
       politician.normalizedLastName.length >= 5 &&
       !EXCLUDED_NAMES.has(politician.normalizedLastName)
@@ -239,7 +264,13 @@ export function findMentions(
       const lastNameRegex = new RegExp(`\\b${escapeRegex(politician.normalizedLastName)}\\b`);
       if (
         lastNameRegex.test(normalizedText) &&
-        !isPartOfHyphenatedWord(text, politician.normalizedLastName)
+        !isPartOfHyphenatedWord(text, politician.normalizedLastName) &&
+        !isPartOfAnotherPoliticianName(
+          normalizedText,
+          politician.normalizedLastName,
+          politician.id,
+          politicians
+        )
       ) {
         matches.push({
           politicianId: politician.id,

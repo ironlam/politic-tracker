@@ -118,11 +118,8 @@ export default async function FactCheckDetailPage({ params }: PageProps) {
         ← Tous les fact-checks
       </Link>
 
-      {/* Verdict badge + source */}
-      <div className="flex items-center gap-3 mb-4">
-        <Badge className={`text-sm px-3 py-1 ${ratingColor}`}>{ratingLabel}</Badge>
-        <span className="text-sm text-muted-foreground">{factCheck.source}</span>
-      </div>
+      {/* Source */}
+      <p className="text-sm text-muted-foreground mb-4">{factCheck.source}</p>
 
       {/* Title */}
       <h1 className="text-2xl font-bold mb-2">{factCheck.title}</h1>
@@ -162,7 +159,9 @@ export default async function FactCheckDetailPage({ params }: PageProps) {
         <CardContent>
           <div className="flex items-center gap-3">
             <Badge className={`text-base px-4 py-1.5 ${ratingColor}`}>{ratingLabel}</Badge>
-            <span className="text-sm text-muted-foreground">{factCheck.verdict}</span>
+            {factCheck.verdict && factCheck.verdict.toLowerCase() !== ratingLabel.toLowerCase() && (
+              <span className="text-sm text-muted-foreground">{factCheck.verdict}</span>
+            )}
           </div>
         </CardContent>
       </Card>

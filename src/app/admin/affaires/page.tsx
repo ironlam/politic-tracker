@@ -459,6 +459,7 @@ export default function AdminAffairsPage() {
                             fullName={affair.politician.fullName}
                             size="sm"
                             className="w-6 h-6 text-[10px]"
+                            politicianId={affair.politician.id}
                           />
                           <span className="truncate max-w-[120px]">
                             {affair.politician.fullName}

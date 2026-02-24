@@ -233,6 +233,7 @@ export function PostalCodeSearch() {
                           firstName={deputy.fullName.split(" ")[0]}
                           lastName={deputy.fullName.split(" ").slice(1).join(" ")}
                           size="md"
+                          politicianId={deputy.id}
                         />
                       </div>
                       <div className="flex-1 min-w-0">

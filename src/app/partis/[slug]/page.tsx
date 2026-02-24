@@ -15,8 +15,12 @@ import {
   AFFAIR_SUPER_CATEGORY_COLORS,
   AFFAIR_STATUS_LABELS,
   AFFAIR_STATUS_COLORS,
+  AFFAIR_SEVERITY_LABELS,
+  AFFAIR_SEVERITY_COLORS,
+  AFFAIR_SEVERITY_EDITORIAL,
+  SEVERITY_SORT_ORDER,
 } from "@/config/labels";
-import type { AffairCategory, AffairStatus } from "@/types";
+import type { AffairCategory, AffairStatus, AffairSeverity } from "@/types";
 import { PoliticianAvatar } from "@/components/politicians/PoliticianAvatar";
 import { PoliticalPositionBadge } from "@/components/parties/PoliticalPositionBadge";
 import { OrganizationJsonLd, BreadcrumbJsonLd } from "@/components/seo/JsonLd";
@@ -505,72 +509,70 @@ export default async function PartyPage({ params }: PageProps) {
                     Affaires impliquant des membres du parti au moment des faits
                   </p>
 
-                  {/* Super-category breakdown badges */}
+                  {/* Severity breakdown badges */}
                   <div className="flex flex-wrap gap-2 mb-4">
-                    {Object.entries(
-                      party.affairsAtTime.reduce(
-                        (acc, a) => {
-                          const sc = CATEGORY_TO_SUPER[a.category as AffairCategory];
-                          acc[sc] = (acc[sc] || 0) + 1;
-                          return acc;
-                        },
-                        {} as Record<string, number>
-                      )
-                    )
-                      .sort((a, b) => b[1] - a[1])
-                      .map(([key, count]) => (
-                        <Badge
-                          key={key}
-                          variant="outline"
-                          className={
-                            AFFAIR_SUPER_CATEGORY_COLORS[
-                              key as keyof typeof AFFAIR_SUPER_CATEGORY_COLORS
-                            ]
-                          }
-                        >
-                          {
-                            AFFAIR_SUPER_CATEGORY_LABELS[
-                              key as keyof typeof AFFAIR_SUPER_CATEGORY_LABELS
-                            ]
-                          }{" "}
-                          ({count})
+                    {(Object.keys(AFFAIR_SEVERITY_LABELS) as AffairSeverity[]).map((sev) => {
+                      const count = party.affairsAtTime.filter((a) => a.severity === sev).length;
+                      if (count === 0) return null;
+                      return (
+                        <Badge key={sev} variant="outline" className={AFFAIR_SEVERITY_COLORS[sev]}>
+                          {AFFAIR_SEVERITY_EDITORIAL[sev]} ({count})
                         </Badge>
-                      ))}
+                      );
+                    })}
                   </div>
 
-                  {/* Top 5 affairs */}
+                  {/* Top 5 affairs sorted by severity */}
                   <div className="space-y-3">
-                    {party.affairsAtTime.slice(0, 5).map((affair) => (
-                      <Link
-                        key={affair.id}
-                        href={`/affaires/${affair.slug}`}
-                        className="block p-3 rounded-lg border hover:bg-muted transition-colors"
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <Badge
-                                variant="outline"
-                                className={AFFAIR_STATUS_COLORS[affair.status as AffairStatus]}
-                              >
-                                {AFFAIR_STATUS_LABELS[affair.status as AffairStatus]}
-                              </Badge>
-                              <span className="text-sm font-medium truncate">
-                                {affair.politician.fullName}
-                              </span>
+                    {[...party.affairsAtTime]
+                      .sort(
+                        (a, b) =>
+                          (SEVERITY_SORT_ORDER[a.severity as AffairSeverity] ?? 2) -
+                          (SEVERITY_SORT_ORDER[b.severity as AffairSeverity] ?? 2)
+                      )
+                      .slice(0, 5)
+                      .map((affair) => (
+                        <Link
+                          key={affair.id}
+                          href={`/affaires/${affair.slug}`}
+                          className={`block p-3 rounded-lg border hover:bg-muted transition-colors ${
+                            affair.severity === "CRITIQUE"
+                              ? "border-red-200 dark:border-red-900/50"
+                              : ""
+                          }`}
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                <Badge
+                                  className={
+                                    AFFAIR_SEVERITY_COLORS[affair.severity as AffairSeverity]
+                                  }
+                                >
+                                  {AFFAIR_SEVERITY_EDITORIAL[affair.severity as AffairSeverity]}
+                                </Badge>
+                                <Badge
+                                  variant="outline"
+                                  className={AFFAIR_STATUS_COLORS[affair.status as AffairStatus]}
+                                >
+                                  {AFFAIR_STATUS_LABELS[affair.status as AffairStatus]}
+                                </Badge>
+                                <span className="text-sm font-medium truncate">
+                                  {affair.politician.fullName}
+                                </span>
+                              </div>
+                              <p className="text-sm text-muted-foreground line-clamp-1">
+                                {affair.title}
+                              </p>
                             </div>
-                            <p className="text-sm text-muted-foreground line-clamp-1">
-                              {affair.title}
-                            </p>
+                            {affair.verdictDate && (
+                              <span className="text-xs text-muted-foreground whitespace-nowrap">
+                                {formatDate(affair.verdictDate)}
+                              </span>
+                            )}
                           </div>
-                          {affair.verdictDate && (
-                            <span className="text-xs text-muted-foreground whitespace-nowrap">
-                              {formatDate(affair.verdictDate)}
-                            </span>
-                          )}
-                        </div>
-                      </Link>
-                    ))}
+                        </Link>
+                      ))}
                   </div>
 
                   {/* CTA to satellite page */}

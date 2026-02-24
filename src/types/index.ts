@@ -100,7 +100,8 @@ export type PoliticianWithPartyAndCounts = Politician & {
   _count: {
     affairs: number;
   };
-  hasConviction?: boolean;
+  hasConviction?: boolean; // legacy — use hasCritiqueAffair
+  hasCritiqueAffair?: boolean;
   isDeceased?: boolean;
   // Current mandate info (for display on cards)
   currentMandate?: {

@@ -82,6 +82,12 @@ export const NAV_GROUPS: NavGroup[] = [
         description: "Dates et compte à rebours des prochaines élections",
       },
       {
+        href: "/sources",
+        label: "Sources et méthodologie",
+        icon: "BookOpen",
+        description: "Nos sources de données et notre approche",
+      },
+      {
         href: "/presse",
         label: "Revue de presse",
         icon: "newspaper",
@@ -94,12 +100,6 @@ export const NAV_GROUPS: NavGroup[] = [
         icon: "live",
         description: "Textes en discussion à l'Assemblée",
         featureFlag: "ASSEMBLEE_SECTION",
-      },
-      {
-        href: "/sources",
-        label: "Sources et méthodologie",
-        icon: "BookOpen",
-        description: "Nos sources de données et notre approche",
       },
     ],
   },

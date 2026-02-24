@@ -175,6 +175,7 @@ export type CreateAffairInput = {
   description: string;
   status: AffairStatus;
   category: AffairCategory;
+  isRelatedToMandate?: boolean;
   factsDate?: Date;
   startDate?: Date;
   verdictDate?: Date;

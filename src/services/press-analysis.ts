@@ -12,6 +12,7 @@
  */
 
 import { AI_RATE_LIMIT_MS } from "@/config/rate-limits";
+import { clampConfidenceScore } from "@/services/affairs/confidence";
 
 const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
 
@@ -328,7 +329,9 @@ export async function analyzeArticle(input: ArticleAnalysisInput): Promise<Artic
       charges: Array.isArray(a.charges) ? a.charges.map(String) : [],
       excerpts: Array.isArray(a.excerpts) ? a.excerpts.map(String).slice(0, 3) : [],
       isNewRevelation: Boolean(a.is_new_revelation),
-      confidenceScore: typeof a.confidence_score === "number" ? a.confidence_score : 50,
+      confidenceScore: clampConfidenceScore(
+        typeof a.confidence_score === "number" ? a.confidence_score : 50
+      ),
     };
   });
 

@@ -15,6 +15,7 @@ import { mapWikidataOffense, getOffenseLabel } from "@/config/wikidata-affairs";
 import { wikipediaService } from "@/lib/api/wikipedia";
 import { extractAffairsFromWikipedia } from "@/services/wikipedia-affair-extraction";
 import { findMatchingAffairs } from "@/services/affairs/matching";
+import { clampConfidenceScore } from "@/services/affairs/confidence";
 import type { AffairCategory, AffairStatus, Involvement } from "@/generated/prisma";
 
 interface DiscoveredAffair {
@@ -220,7 +221,7 @@ async function runPhase1Wikidata(
             factsDate: null,
             court: null,
             charges: [label],
-            confidenceScore: confidence,
+            confidenceScore: clampConfidenceScore(confidence),
             publicationStatus: publicationStatus as "PUBLISHED" | "DRAFT",
             sources: [
               {
@@ -317,7 +318,7 @@ async function runPhase2Wikipedia(
             factsDate: extracted.factsDate ? new Date(extracted.factsDate) : null,
             court: extracted.court,
             charges: extracted.charges,
-            confidenceScore: extracted.confidenceScore,
+            confidenceScore: clampConfidenceScore(extracted.confidenceScore),
             publicationStatus: "DRAFT",
             sources,
             phase: "wikipedia",

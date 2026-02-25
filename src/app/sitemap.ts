@@ -1,6 +1,7 @@
 import { MetadataRoute } from "next";
 import { db } from "@/lib/db";
 import { DEPARTMENTS, getDepartmentSlug } from "@/config/departments";
+import { getAllThemeSlugs } from "@/lib/theme-utils";
 
 const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://poligraph.fr";
 
@@ -224,7 +225,29 @@ async function buildAffairsPartiesElectionsDepartmentsSitemap(): Promise<Metadat
     priority: 0.6,
   }));
 
-  return [...affairPages, ...partyPages, ...partyAffairPages, ...electionPages, ...departmentPages];
+  const themePages: MetadataRoute.Sitemap = [
+    {
+      url: `${baseUrl}/votes/themes`,
+      lastModified: new Date(),
+      changeFrequency: "weekly",
+      priority: 0.7,
+    },
+    ...getAllThemeSlugs().map((slug) => ({
+      url: `${baseUrl}/votes/themes/${slug}`,
+      lastModified: new Date(),
+      changeFrequency: "weekly" as const,
+      priority: 0.6,
+    })),
+  ];
+
+  return [
+    ...affairPages,
+    ...partyPages,
+    ...partyAffairPages,
+    ...electionPages,
+    ...departmentPages,
+    ...themePages,
+  ];
 }
 
 // Sitemap 2: Legislative dossiers (priority 0.5-0.6)

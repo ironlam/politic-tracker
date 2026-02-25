@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ExportButton } from "@/components/ui/ExportButton";
 import { AffairesFilterBar } from "@/components/affairs/AffairesFilterBar";
+import { SeoIntro } from "@/components/seo/SeoIntro";
 import {
   AFFAIR_STATUS_LABELS,
   AFFAIR_STATUS_COLORS,
@@ -309,6 +310,9 @@ export default async function AffairesPage({ searchParams }: PageProps) {
             {totalAffairs} affaire{totalAffairs !== 1 ? "s" : ""} documentée
             {totalAffairs !== 1 ? "s" : ""} avec sources vérifiables
           </p>
+          <SeoIntro
+            text={`${totalAffairs} affaires judiciaires impliquant des responsables politiques, documentées avec sources vérifiables. Mises en examen, procès, condamnations et relaxes.`}
+          />
         </div>
         <ExportButton
           endpoint="/api/export/affaires"

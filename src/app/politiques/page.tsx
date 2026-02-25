@@ -10,6 +10,7 @@ import { MandateType } from "@/generated/prisma";
 import { SearchForm } from "@/components/politicians/SearchForm";
 import { PoliticiansGrid } from "@/components/politicians/PoliticiansGrid";
 import { ExportButton } from "@/components/ui/ExportButton";
+import { SeoIntro } from "@/components/seo/SeoIntro";
 
 // Minimum members to show a party in filters (avoid cluttering with old/small parties)
 const MIN_PARTY_MEMBERS = 2;
@@ -476,6 +477,9 @@ export default async function PolitiquesPage({ searchParams }: PageProps) {
             {activeFilterCount > 0 &&
               ` (${activeFilterCount} filtre${activeFilterCount > 1 ? "s" : ""} actif${activeFilterCount > 1 ? "s" : ""})`}
           </p>
+          <SeoIntro
+            text={`Poligraph référence ${total.toLocaleString("fr-FR")} responsables politiques français : députés, sénateurs, membres du gouvernement et dirigeants de partis. Données issues de sources officielles.`}
+          />
         </div>
         <ExportButton
           endpoint="/api/export/politiques"

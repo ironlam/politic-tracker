@@ -2,17 +2,18 @@ name: Sync Wikidata Affairs
 
 on:
   schedule:
-    # Run every Wednesday at 4:00 AM UTC (~5h Paris winter / ~6h summer)
-    - cron: "0 4 * * 3"
+    # Run every Sunday at 2:00 AM UTC (~3h Paris winter / ~4h summer)
+    - cron: "0 2 * * 0"
   workflow_dispatch:
 
 env:
   DATABASE_URL: ${{ secrets.DATABASE_URL }}
+  ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
 
 jobs:
   sync-wikidata-affairs:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     environment: production
 
     steps:
@@ -31,8 +32,17 @@ jobs:
       - name: Generate Prisma Client
         run: npx prisma generate
 
-      - name: Import Wikidata affairs
+      - name: Import Wikidata convictions (SPARQL)
         run: npm run import:wikidata
+        continue-on-error: true
+
+      - name: Discover affairs (Wikidata + Wikipedia AI)
+        run: npm run discover:affairs -- --wikidata-only --limit=50
+        continue-on-error: true
+
+      - name: Reconcile duplicate affairs
+        run: npm run reconcile:affairs -- --auto-merge
+        continue-on-error: true
 
       - name: Show stats
         if: always()

@@ -16,7 +16,9 @@ import {
   ChevronRight,
   Loader2,
   Zap,
+  History,
 } from "lucide-react";
+import { SyncsPageSkeleton } from "./_components/SyncsPageSkeleton";
 
 // ─── Types ───────────────────────────────────────────────
 
@@ -305,9 +307,7 @@ export default function SyncsPage() {
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center py-16">
-          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-        </div>
+        <SyncsPageSkeleton />
       ) : (
         <>
           {/* Running jobs */}
@@ -473,8 +473,12 @@ export default function SyncsPage() {
             </h2>
             {historyJobs.length === 0 ? (
               <Card>
-                <CardContent className="p-8 text-center text-sm text-muted-foreground">
-                  Aucun job de synchronisation
+                <CardContent className="p-12 text-center">
+                  <History
+                    className="w-10 h-10 text-muted-foreground/40 mx-auto mb-3"
+                    aria-hidden="true"
+                  />
+                  <p className="text-sm text-muted-foreground">Aucune synchronisation lancée</p>
                 </CardContent>
               </Card>
             ) : (

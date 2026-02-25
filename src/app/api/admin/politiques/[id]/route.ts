@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { isAuthenticated } from "@/lib/auth";
 import { generateSlug } from "@/lib/utils";
 import { invalidateEntity } from "@/lib/cache";
-import type { DataSource } from "@/generated/prisma";
+import type { DataSource, PublicationStatus } from "@/generated/prisma";
 
 interface ExternalIdInput {
   id?: string;
@@ -24,6 +24,9 @@ interface PoliticianInput {
   photoUrl: string | null;
   photoSource: string | null;
   currentPartyId: string | null;
+  deathDate: string | null;
+  biography: string | null;
+  publicationStatus: string;
   externalIds: ExternalIdInput[];
 }
 
@@ -113,6 +116,10 @@ export async function PUT(request: NextRequest, context: RouteContext) {
         photoUrl: data.photoUrl || null,
         photoSource: data.photoSource || null,
         currentPartyId: data.currentPartyId || null,
+        deathDate: data.deathDate ? new Date(data.deathDate) : null,
+        biography: data.biography || null,
+        publicationStatus:
+          (data.publicationStatus as PublicationStatus) || existing.publicationStatus,
       },
     });
 
@@ -186,6 +193,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
         changes: {
           fullName: politician.fullName,
           photoUrl: politician.photoUrl,
+          publicationStatus: politician.publicationStatus,
           externalIdsCount: data.externalIds.length,
         },
       },

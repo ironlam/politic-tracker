@@ -1,26 +1,36 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
+import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { HexPattern } from "@/components/ui/HexPattern";
+import { useGlobalSearch } from "@/components/search/GlobalSearchProvider";
 
 export default function NotFound() {
+  const { openSearch } = useGlobalSearch();
   return (
-    <main
-      role="main"
-      className="flex flex-col items-center justify-center min-h-[70vh] px-4 text-center bg-gradient-to-br from-primary/5 via-background to-accent/10"
-    >
-      <Image src="/logo.svg" alt="Poligraph" width={80} height={80} className="mb-6" />
-      <h1 className="text-4xl font-bold mb-3">Page introuvable</h1>
-      <p className="text-muted-foreground max-w-md mb-8">
-        La page que vous recherchez n&apos;existe pas ou a été déplacée.
-      </p>
-      <div className="flex flex-col sm:flex-row gap-3">
-        <Button asChild>
-          <Link href="/">Retour à l&apos;accueil</Link>
-        </Button>
-        <Button variant="link" asChild>
-          <Link href="/politiques">Explorer les représentants</Link>
-        </Button>
+    <div className="relative flex flex-col items-center justify-center min-h-[70vh] px-4 text-center bg-gradient-to-br from-primary/5 via-background to-accent/10">
+      <HexPattern className="absolute inset-0 text-primary opacity-[0.03] dark:opacity-[0.05] pointer-events-none" />
+      <div className="relative z-10 flex flex-col items-center">
+        <Image src="/logo.svg" alt="Poligraph" width={80} height={80} className="mb-6" />
+        <h1 className="text-4xl font-display font-bold mb-3">Page introuvable</h1>
+        <p className="text-muted-foreground max-w-md mb-8">
+          La page que vous recherchez n&apos;existe pas ou a été déplacée.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-3 items-center">
+          <Button asChild>
+            <Link href="/">Retour à l&apos;accueil</Link>
+          </Button>
+          <Button variant="outline" onClick={openSearch}>
+            <Search className="h-4 w-4 mr-2" aria-hidden="true" />
+            Rechercher
+          </Button>
+          <Button variant="link" asChild>
+            <Link href="/politiques">Explorer les représentants</Link>
+          </Button>
+        </div>
       </div>
-    </main>
+    </div>
   );
 }

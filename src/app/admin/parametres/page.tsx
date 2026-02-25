@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { toast } from "sonner";
-import { LogOut, AlertTriangle, ToggleLeft, Trash2, Loader2, RefreshCw } from "lucide-react";
+import { LogOut, AlertTriangle, ToggleLeft, Trash2, Loader2, RefreshCw, Bell } from "lucide-react";
 import type { CacheTag } from "@/lib/cache";
 
 const TAG_LABELS: Record<CacheTag, string> = {
@@ -32,6 +32,20 @@ export default function SettingsPage() {
   const [confirmInvalidate, setConfirmInvalidate] = useState(false);
   const [invalidateMode, setInvalidateMode] = useState<"all" | "selective">("all");
   const [selectedTags, setSelectedTags] = useState<CacheTag[]>([]);
+  const [testingWebhook, setTestingWebhook] = useState(false);
+  const [webhookStatus, setWebhookStatus] = useState<{
+    configured: boolean;
+    hint: string | null;
+  } | null>(null);
+
+  useEffect(() => {
+    fetch("/api/admin/webhook/test")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data) setWebhookStatus(data);
+      })
+      .catch(() => {});
+  }, []);
 
   async function handleLogout() {
     setLoggingOut(true);
@@ -81,6 +95,23 @@ export default function SettingsPage() {
     setSelectedTags((prev) =>
       prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
     );
+  }
+
+  async function handleTestWebhook() {
+    setTestingWebhook(true);
+    try {
+      const res = await fetch("/api/admin/webhook/test", { method: "POST" });
+      const data = await res.json();
+      if (data.success) {
+        toast.success("Webhook envoyé avec succès.");
+      } else {
+        toast.error(`Échec du webhook : ${data.error}`);
+      }
+    } catch {
+      toast.error("Erreur réseau lors du test.");
+    } finally {
+      setTestingWebhook(false);
+    }
   }
 
   async function handleInvalidateCache() {
@@ -246,6 +277,55 @@ export default function SettingsPage() {
                   <RefreshCw className="w-4 h-4 mr-2" aria-hidden="true" />
                 )}
                 Invalider le cache
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Webhook */}
+      <div>
+        <h2 className="text-sm font-medium mb-3">Notifications</h2>
+        <Card>
+          <CardContent className="p-4 space-y-4">
+            <div className="flex items-center justify-between gap-4">
+              <div className="min-w-0">
+                <p className="text-sm font-medium">Webhook</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Notification envoyée sur échec des syncs critiques et détection de nouvelles
+                  affaires.
+                </p>
+                {webhookStatus && (
+                  <p className="text-xs mt-1">
+                    {webhookStatus.configured ? (
+                      <span className="text-emerald-600">
+                        Configuré :{" "}
+                        <code className="bg-muted px-1 py-0.5 rounded font-mono">
+                          {webhookStatus.hint}
+                        </code>
+                      </span>
+                    ) : (
+                      <span className="text-muted-foreground">
+                        Non configuré — définir{" "}
+                        <code className="bg-muted px-1 py-0.5 rounded font-mono">
+                          ADMIN_WEBHOOK_URL
+                        </code>
+                      </span>
+                    )}
+                  </p>
+                )}
+              </div>
+              <Button
+                variant="outline"
+                onClick={handleTestWebhook}
+                disabled={testingWebhook || !webhookStatus?.configured}
+              >
+                {testingWebhook ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Bell className="w-4 h-4 mr-2" aria-hidden="true" />
+                )}
+                Tester
               </Button>
             </div>
           </CardContent>

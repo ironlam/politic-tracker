@@ -187,6 +187,7 @@
     "@types/react-simple-maps": "^3.0.6",
     "@types/swagger-jsdoc": "^6.0.4",
     "@vitejs/plugin-react": "^5.1.2",
+    "an-array-of-french-words": "^2.0.0",
     "eslint": "^9",
     "eslint-config-next": "^16.1.4",
     "eslint-config-prettier": "^10.1.8",

@@ -14,6 +14,14 @@ export default function robots(): MetadataRoute.Robots {
         disallow: isProduction ? ["/admin/", "/api/admin/"] : ["/"],
       },
     ],
-    sitemap: isProduction ? `${baseUrl}/sitemap.xml` : undefined,
+    sitemap: isProduction
+      ? [
+          `${baseUrl}/sitemap/0.xml`,
+          `${baseUrl}/sitemap/1.xml`,
+          `${baseUrl}/sitemap/2.xml`,
+          `${baseUrl}/sitemap/3.xml`,
+          `${baseUrl}/sitemap/4.xml`,
+        ]
+      : undefined,
   };
 }

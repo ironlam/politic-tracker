@@ -7,7 +7,19 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { toast } from "sonner";
-import { LogOut, AlertTriangle, ToggleLeft, Trash2, Loader2 } from "lucide-react";
+import { LogOut, AlertTriangle, ToggleLeft, Trash2, Loader2, RefreshCw } from "lucide-react";
+import type { CacheTag } from "@/lib/cache";
+
+const TAG_LABELS: Record<CacheTag, string> = {
+  politicians: "Politiques",
+  parties: "Partis",
+  votes: "Votes",
+  stats: "Statistiques",
+  dossiers: "Dossiers",
+  factchecks: "Fact-checks",
+};
+
+const ALL_CACHE_TAGS = Object.keys(TAG_LABELS) as CacheTag[];
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -16,6 +28,10 @@ export default function SettingsPage() {
   const [purgingAudit, setPurgingAudit] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
   const [confirmPurge, setConfirmPurge] = useState(false);
+  const [invalidatingCache, setInvalidatingCache] = useState(false);
+  const [confirmInvalidate, setConfirmInvalidate] = useState(false);
+  const [invalidateMode, setInvalidateMode] = useState<"all" | "selective">("all");
+  const [selectedTags, setSelectedTags] = useState<CacheTag[]>([]);
 
   async function handleLogout() {
     setLoggingOut(true);
@@ -58,6 +74,38 @@ export default function SettingsPage() {
       }
     } finally {
       setPurgingAudit(false);
+    }
+  }
+
+  function toggleTag(tag: CacheTag) {
+    setSelectedTags((prev) =>
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+    );
+  }
+
+  async function handleInvalidateCache() {
+    setInvalidatingCache(true);
+    try {
+      const body = invalidateMode === "all" ? { all: true } : { tags: selectedTags };
+      const res = await fetch("/api/admin/cache/revalidate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const label =
+          data.revalidated === "all"
+            ? "tout le cache"
+            : (data.revalidated as string[])
+                .map((t: string) => TAG_LABELS[t as CacheTag] ?? t)
+                .join(", ");
+        toast.success(`Cache invalidé : ${label}.`);
+      } else {
+        toast.error("Erreur lors de l'invalidation du cache.");
+      }
+    } finally {
+      setInvalidatingCache(false);
     }
   }
 
@@ -129,6 +177,81 @@ export default function SettingsPage() {
         </Card>
       </div>
 
+      {/* Cache */}
+      <div>
+        <h2 className="text-sm font-medium mb-3">Cache</h2>
+        <Card>
+          <CardContent className="p-4 space-y-4">
+            <div>
+              <p className="text-sm font-medium">Invalidation du cache</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Force le rafraîchissement des données mises en cache par Next.js.
+              </p>
+            </div>
+
+            <fieldset className="space-y-2">
+              <legend className="sr-only">Mode d&apos;invalidation</legend>
+              <label className="flex items-center gap-2 text-sm cursor-pointer">
+                <input
+                  type="radio"
+                  name="invalidateMode"
+                  value="all"
+                  checked={invalidateMode === "all"}
+                  onChange={() => setInvalidateMode("all")}
+                  className="accent-primary"
+                />
+                Tout invalider
+              </label>
+              <label className="flex items-center gap-2 text-sm cursor-pointer">
+                <input
+                  type="radio"
+                  name="invalidateMode"
+                  value="selective"
+                  checked={invalidateMode === "selective"}
+                  onChange={() => setInvalidateMode("selective")}
+                  className="accent-primary"
+                />
+                Sélection par tag
+              </label>
+            </fieldset>
+
+            {invalidateMode === "selective" && (
+              <fieldset className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                <legend className="sr-only">Tags à invalider</legend>
+                {ALL_CACHE_TAGS.map((tag) => (
+                  <label key={tag} className="flex items-center gap-2 text-sm cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={selectedTags.includes(tag)}
+                      onChange={() => toggleTag(tag)}
+                      className="accent-primary"
+                    />
+                    {TAG_LABELS[tag]}
+                  </label>
+                ))}
+              </fieldset>
+            )}
+
+            <div className="flex justify-end">
+              <Button
+                variant="outline"
+                onClick={() => setConfirmInvalidate(true)}
+                disabled={
+                  invalidatingCache || (invalidateMode === "selective" && selectedTags.length === 0)
+                }
+              >
+                {invalidatingCache ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <RefreshCw className="w-4 h-4 mr-2" aria-hidden="true" />
+                )}
+                Invalider le cache
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Danger zone */}
       <div>
         <h2 className="text-sm font-medium mb-3 flex items-center gap-2">
@@ -187,6 +310,18 @@ export default function SettingsPage() {
         </Card>
       </div>
 
+      <ConfirmDialog
+        open={confirmInvalidate}
+        onOpenChange={setConfirmInvalidate}
+        onConfirm={handleInvalidateCache}
+        title="Invalider le cache ?"
+        description={
+          invalidateMode === "all"
+            ? "Tout le cache Next.js sera invalidé. Les prochaines requêtes seront recalculées."
+            : `Les tags suivants seront invalidés : ${selectedTags.map((t) => TAG_LABELS[t]).join(", ")}.`
+        }
+        confirmLabel="Invalider"
+      />
       <ConfirmDialog
         open={confirmReset}
         onOpenChange={setConfirmReset}

@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ExportButton } from "@/components/ui/ExportButton";
+import { SeoIntro } from "@/components/seo/SeoIntro";
 import {
   AFFAIR_STATUS_LABELS,
   AFFAIR_STATUS_COLORS,
@@ -313,6 +314,9 @@ export default async function AffairesPage({ searchParams }: PageProps) {
             {totalAffairs} affaire{totalAffairs !== 1 ? "s" : ""} documentée
             {totalAffairs !== 1 ? "s" : ""} avec sources vérifiables
           </p>
+          <SeoIntro
+            text={`${totalAffairs} affaires judiciaires impliquant des responsables politiques, documentées avec sources vérifiables. Mises en examen, procès, condamnations et relaxes.`}
+          />
         </div>
         <ExportButton
           endpoint="/api/export/affaires"
@@ -582,14 +586,18 @@ export default async function AffairesPage({ searchParams }: PageProps) {
                           <Badge className={AFFAIR_SUPER_CATEGORY_COLORS[superCat]}>
                             {AFFAIR_SUPER_CATEGORY_LABELS[superCat]}
                           </Badge>
-                          <Badge
-                            className={AFFAIR_SEVERITY_COLORS[affair.severity as AffairSeverity]}
-                          >
-                            {AFFAIR_SEVERITY_EDITORIAL[affair.severity as AffairSeverity]}
-                          </Badge>
-                          <Badge className={AFFAIR_STATUS_COLORS[affair.status]}>
-                            {AFFAIR_STATUS_LABELS[affair.status]}
-                          </Badge>
+                          {affair.severity === "CRITIQUE" && (
+                            <Badge
+                              className={AFFAIR_SEVERITY_COLORS[affair.severity as AffairSeverity]}
+                            >
+                              {AFFAIR_SEVERITY_EDITORIAL[affair.severity as AffairSeverity]}
+                            </Badge>
+                          )}
+                          {affair.status === "CONDAMNATION_DEFINITIVE" && (
+                            <Badge className={AFFAIR_STATUS_COLORS[affair.status]}>
+                              {AFFAIR_STATUS_LABELS[affair.status]}
+                            </Badge>
+                          )}
                           <Badge variant="outline">{AFFAIR_CATEGORY_LABELS[affair.category]}</Badge>
                           {affair.involvement !== "DIRECT" && (
                             <Badge

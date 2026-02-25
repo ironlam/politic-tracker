@@ -99,9 +99,13 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     summaryFirstLine ||
     `Scrutin du ${formatDate(scrutin.votingDate)} - ${scrutin.result === "ADOPTED" ? "Adopté" : "Rejeté"} avec ${scrutin.votesFor} pour, ${scrutin.votesAgainst} contre et ${scrutin.votesAbstain} abstentions.`;
 
+  const total = scrutin.votesFor + scrutin.votesAgainst + scrutin.votesAbstain;
+  const isThinContent = !scrutin.summary && total === 0;
+
   return {
     title: scrutin.title,
     description,
+    ...(isThinContent && { robots: { index: false, follow: true } }),
   };
 }
 

@@ -1,4 +1,5 @@
 import { db } from "./db";
+import { FRENCH_COMMON_WORDS } from "@/data/french-common-words";
 
 // ============================================
 // TYPES
@@ -50,71 +51,21 @@ export function escapeRegex(str: string): string {
 // ============================================
 
 /**
- * Common French words to exclude from matching (avoid false positives)
+ * Additional words to exclude that are not in the French dictionary
+ * (proper nouns, geographic terms, etc. that cause false positives).
+ * The main exclusion is handled by FRENCH_COMMON_WORDS (30k+ entries).
  */
-export const EXCLUDED_NAMES = new Set([
-  // Common first names
-  "paul",
-  "jean",
-  "pierre",
-  "louis",
-  "charles",
-  "marie",
-  "anne",
-  // Political / geographic terms
-  "fait",
-  "gauche",
-  "droite",
-  "maire",
-  "parti",
-  "france",
-  "etat",
-  "nord",
-  "sud",
-  "est",
-  "ouest",
-  // Adjectives (colors, size, position)
-  "grand",
-  "petit",
-  "blanc",
-  "noir",
-  "rouge",
-  "vert",
-  "bleu",
-  "rose",
-  "brun",
-  "long",
-  "court",
-  "haut",
-  "bas",
-  // Nationalities / demonyms (common as adjectives in articles)
-  "allemand",
-  "anglais",
-  "francais",
-  "europeen",
-  "americain",
-  "italien",
-  "espagnol",
-  // Common verbs / past participles that are also surnames
-  "frappe",
-  "prevost",
-  "marchand",
-  "berger",
-  "chevalier",
-  "fontaine",
-  "moulin",
-  "richard",
-  "martin",
-  "moreau",
-  "bernard",
-  "thomas",
-  "robert",
-  "simon",
-  "michel",
-  "laurent",
-  "daniel",
-  "david",
+const ADDITIONAL_EXCLUDED_NAMES = new Set([
+  "france", // Proper noun, not in dictionary but common in articles
 ]);
+
+/**
+ * Check if a normalized word is a common French word.
+ * Uses a 30k+ word set from OpenSubtitles frequency data × French dictionary.
+ */
+export function isCommonFrenchWord(normalizedWord: string): boolean {
+  return FRENCH_COMMON_WORDS.has(normalizedWord) || ADDITIONAL_EXCLUDED_NAMES.has(normalizedWord);
+}
 
 /**
  * Party short names to exclude (too common or ambiguous)
@@ -268,7 +219,7 @@ export function findMentions(
     // AND the last name is not part of another politician's full name in the text
     if (
       politician.normalizedLastName.length >= 5 &&
-      !EXCLUDED_NAMES.has(politician.normalizedLastName)
+      !isCommonFrenchWord(politician.normalizedLastName)
     ) {
       const lastNameRegex = new RegExp(`\\b${escapeRegex(politician.normalizedLastName)}\\b`);
       if (

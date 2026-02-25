@@ -7,6 +7,7 @@ import {
   escapeRegex,
   findMentions,
   findPartyMentions,
+  isCommonFrenchWord,
   type PoliticianName,
   type PartyName,
 } from "./name-matching";
@@ -176,6 +177,22 @@ describe("findMentions", () => {
       normalizedFullName: "marion marechal",
       normalizedLastName: "marechal",
     },
+    {
+      id: "13",
+      fullName: "Denis Marchand",
+      firstName: "Denis",
+      lastName: "Marchand",
+      normalizedFullName: "denis marchand",
+      normalizedLastName: "marchand",
+    },
+    {
+      id: "14",
+      fullName: "Claire Fontaine",
+      firstName: "Claire",
+      lastName: "Fontaine",
+      normalizedFullName: "claire fontaine",
+      normalizedLastName: "fontaine",
+    },
   ];
 
   it("should match full name", () => {
@@ -196,15 +213,32 @@ describe("findMentions", () => {
     expect(result).toEqual([{ politicianId: "2", matchedName: "Le Pen" }]);
   });
 
-  it("should exclude common French names from last-name matching", () => {
-    // "noir" is in EXCLUDED_NAMES, so "Jean Noir" should not match on last name alone
+  it("should exclude short last names from last-name matching", () => {
+    // "noir" is only 4 chars, excluded by the length check (< 5)
     const result = findMentions("Le ciel est noir ce soir", politicians);
     expect(result).toEqual([]);
   });
 
-  it("should still match excluded names via full name", () => {
+  it("should still match short last names via full name", () => {
     const result = findMentions("Jean Noir a pris la parole", politicians);
     expect(result).toEqual([{ politicianId: "6", matchedName: "Jean Noir" }]);
+  });
+
+  it("should exclude common French words from last-name matching", () => {
+    // "marchand" is a common French word (>= 5 chars), should not match by last name alone
+    const result = findMentions("Le marchand du quartier vend des fruits", politicians);
+    expect(result).toEqual([]);
+  });
+
+  it("should exclude 'fontaine' as a common word from last-name matching", () => {
+    const result = findMentions("La fontaine du village est magnifique", politicians);
+    expect(result).toEqual([]);
+  });
+
+  it("should still match common French words via full name", () => {
+    // "Denis Marchand" full name should match even though "marchand" is a common word
+    const result = findMentions("Denis Marchand a pris la parole", politicians);
+    expect(result).toEqual([{ politicianId: "13", matchedName: "Denis Marchand" }]);
   });
 
   it("should not produce duplicate matches", () => {
@@ -266,12 +300,16 @@ describe("findMentions", () => {
     expect(result.find((r) => r.politicianId === "10")).toBeUndefined();
   });
 
-  it("should still match last name alone when no adjacent context conflict", () => {
-    // "Rousseau a répondu" — no first name before → valid last-name match
+  it("should not match common-word surname alone without context", () => {
+    // "rousseau" is a French adjective (reddish/ruddy), so last-name-only matching is excluded
     const result = findMentions("Rousseau a répondu", politicians);
-    expect(result.length).toBeGreaterThanOrEqual(1);
-    // Should match one of the Rousseaus (whichever comes first by name length)
-    expect(["9", "10"]).toContain(result[0].politicianId);
+    expect(result).toEqual([]);
+  });
+
+  it("should still match non-dictionary last name alone", () => {
+    // "Dupont" is NOT a common French word, so last-name matching works
+    const result = findMentions("Dupont a répondu", politicians);
+    expect(result).toEqual([{ politicianId: "4", matchedName: "Dupont" }]);
   });
 
   it("should match both politicians by full name even when names overlap", () => {
@@ -279,6 +317,49 @@ describe("findMentions", () => {
     expect(result).toHaveLength(2);
     const ids = result.map((r) => r.politicianId).sort();
     expect(ids).toEqual(["11", "12"]);
+  });
+});
+
+// ============================================
+// isCommonFrenchWord
+// ============================================
+
+describe("isCommonFrenchWord", () => {
+  it("should identify common French words", () => {
+    expect(isCommonFrenchWord("marchand")).toBe(true);
+    expect(isCommonFrenchWord("fontaine")).toBe(true);
+    expect(isCommonFrenchWord("chevalier")).toBe(true);
+    expect(isCommonFrenchWord("berger")).toBe(true);
+    expect(isCommonFrenchWord("baron")).toBe(true);
+    expect(isCommonFrenchWord("moulin")).toBe(true);
+  });
+
+  it("should identify adjectives and nationalities", () => {
+    expect(isCommonFrenchWord("allemand")).toBe(true);
+    expect(isCommonFrenchWord("anglais")).toBe(true);
+    expect(isCommonFrenchWord("grand")).toBe(true);
+    expect(isCommonFrenchWord("petit")).toBe(true);
+    expect(isCommonFrenchWord("rouge")).toBe(true);
+    expect(isCommonFrenchWord("blanc")).toBe(true);
+  });
+
+  it("should identify political terms", () => {
+    expect(isCommonFrenchWord("gauche")).toBe(true);
+    expect(isCommonFrenchWord("droite")).toBe(true);
+    expect(isCommonFrenchWord("maire")).toBe(true);
+  });
+
+  it("should identify 'france' via additional exclusions", () => {
+    expect(isCommonFrenchWord("france")).toBe(true);
+  });
+
+  it("should NOT identify politician-only surnames as common words", () => {
+    expect(isCommonFrenchWord("macron")).toBe(false);
+    expect(isCommonFrenchWord("melenchon")).toBe(false);
+    expect(isCommonFrenchWord("dupont")).toBe(false);
+    expect(isCommonFrenchWord("attal")).toBe(false);
+    expect(isCommonFrenchWord("wauquiez")).toBe(false);
+    expect(isCommonFrenchWord("darmanin")).toBe(false);
   });
 });
 

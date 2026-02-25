@@ -577,6 +577,7 @@ model Declaration {
   // Source
   hatvpUrl String // Link to HATVP page
   pdfUrl   String? // Direct PDF link
+  details  Json?   // Structured data parsed from HATVP XML (DIA)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

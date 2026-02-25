@@ -21,6 +21,18 @@ interface FactCheckCardProps {
   }>;
 }
 
+// Accent border color per rating (matches VERDICT_GROUP_COLORS from labels.ts)
+const RATING_BORDER_ACCENT: Record<string, string> = {
+  FALSE: "#c1121f",
+  MOSTLY_FALSE: "#c1121f",
+  MISLEADING: "#e9a825",
+  OUT_OF_CONTEXT: "#e9a825",
+  HALF_TRUE: "#e9a825",
+  MOSTLY_TRUE: "#2d6a4f",
+  TRUE: "#2d6a4f",
+  UNVERIFIABLE: "#6b7280",
+};
+
 export function FactCheckCard({
   slug,
   title,
@@ -33,13 +45,17 @@ export function FactCheckCard({
 }: FactCheckCardProps) {
   const ratingLabel = FACTCHECK_RATING_LABELS[verdictRating];
   const ratingColor = FACTCHECK_RATING_COLORS[verdictRating];
+  const borderAccent = RATING_BORDER_ACCENT[verdictRating] || "#6b7280";
 
   const maxPoliticians = 3;
   const visiblePoliticians = mentions.slice(0, maxPoliticians);
   const hiddenCount = mentions.length - maxPoliticians;
 
   return (
-    <article className="group bg-card border rounded-lg p-4 hover:shadow-md transition-shadow">
+    <article
+      className="group bg-card border border-l-4 rounded-lg p-4 hover:shadow-md transition-shadow"
+      style={{ borderLeftColor: borderAccent }}
+    >
       {/* Header: verdict + source */}
       <div className="flex items-start justify-between gap-2 mb-2">
         <Badge className={ratingColor}>{ratingLabel}</Badge>

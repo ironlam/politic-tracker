@@ -1,8 +1,10 @@
 import { Metadata } from "next";
 import Link from "next/link";
 import { db } from "@/lib/db";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { FactCheckCard } from "@/components/factchecks/FactCheckCard";
+import { FactChecksFilterBar } from "@/components/factchecks/FactChecksFilterBar";
 import { SeoIntro } from "@/components/seo/SeoIntro";
 import {
   FACTCHECK_RATING_LABELS,
@@ -38,6 +40,14 @@ const RATING_OPTIONS: FactCheckRating[] = [
   "TRUE",
   "UNVERIFIABLE",
 ];
+
+// Hex accent colors for verdict groups (inline styles per CLAUDE.md convention)
+const VERDICT_ACCENT: Record<string, { border: string; bg: string }> = {
+  total: { border: "#2563eb", bg: "#2563eb0a" },
+  faux: { border: "#c1121f", bg: "#c1121f0a" },
+  trompeur: { border: "#e9a825", bg: "#e9a8250a" },
+  vrai: { border: "#2d6a4f", bg: "#2d6a4f0a" },
+};
 
 /** Generic claimant patterns — must match GENERIC_CLAIMANT_PATTERNS in labels.ts */
 const GENERIC_CLAIMANT_PATTERNS = [
@@ -227,51 +237,86 @@ export default async function FactChecksPage({ searchParams }: PageProps) {
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Fact-checks</h1>
-        <p className="text-muted-foreground">
-          Vérification des déclarations des responsables politiques français par des sources
-          reconnues (AFP Factuel, Les Décodeurs, etc.).
+      <div className="mb-6">
+        <h1 className="text-3xl font-display font-extrabold tracking-tight mb-1">Fact-checks</h1>
+        <p className="text-sm text-muted-foreground">
+          {stats.totalFactChecks} vérification{stats.totalFactChecks !== 1 ? "s" : ""} issue
+          {stats.totalFactChecks !== 1 ? "s" : ""} de {sources.length} sources reconnues
         </p>
-        <p className="text-xs text-muted-foreground mt-2">
-          Les verdicts ci-dessous proviennent des organismes de fact-checking cités. Transparence
-          Politique ne produit pas ses propres vérifications.
+        <p className="text-xs text-muted-foreground mt-1">
+          Les verdicts proviennent des organismes de fact-checking cités, pas de Poligraph.
         </p>
-        <SeoIntro
-          text={`${stats.totalFactChecks.toLocaleString("fr-FR")} vérifications de déclarations politiques, issues de ${sources.length} médias partenaires reconnus.`}
-        />
+        <div className="sr-only">
+          <SeoIntro
+            text={`${stats.totalFactChecks.toLocaleString("fr-FR")} vérifications de déclarations politiques, issues de ${sources.length} médias partenaires reconnus.`}
+          />
+        </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        <div className="bg-muted rounded-lg p-4 text-center">
-          <p className="text-2xl font-bold">{stats.totalFactChecks}</p>
-          <p className="text-sm text-muted-foreground">Fact-checks</p>
-        </div>
-        <div className="bg-red-50 rounded-lg p-4 text-center">
-          <p className="text-2xl font-bold text-red-600">
-            {(stats.byRating["FALSE"] || 0) + (stats.byRating["MOSTLY_FALSE"] || 0)}
-          </p>
-          <p className="text-sm text-muted-foreground">Faux / Plutôt faux</p>
-        </div>
-        <div className="bg-yellow-50 rounded-lg p-4 text-center">
-          <p className="text-2xl font-bold text-yellow-600">
-            {(stats.byRating["HALF_TRUE"] || 0) +
-              (stats.byRating["MISLEADING"] || 0) +
-              (stats.byRating["OUT_OF_CONTEXT"] || 0)}
-          </p>
-          <p className="text-sm text-muted-foreground">Trompeur / Partiel</p>
-        </div>
-        <div className="bg-green-50 rounded-lg p-4 text-center">
-          <p className="text-2xl font-bold text-green-600">
-            {(stats.byRating["TRUE"] || 0) + (stats.byRating["MOSTLY_TRUE"] || 0)}
-          </p>
-          <p className="text-sm text-muted-foreground">Vrai / Plutôt vrai</p>
-        </div>
+      {/* Stats cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+        <Card className="border-l-4" style={{ borderLeftColor: VERDICT_ACCENT.total.border }}>
+          <CardContent className="p-3 py-3">
+            <div
+              className="text-3xl font-display font-extrabold tracking-tight"
+              style={{ color: VERDICT_ACCENT.total.border }}
+            >
+              {stats.totalFactChecks}
+            </div>
+            <div className="text-sm font-semibold mt-0.5 leading-tight">Fact-checks</div>
+            <div className="text-xs text-muted-foreground mt-1 leading-snug">
+              Total des vérifications
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-l-4" style={{ borderLeftColor: VERDICT_ACCENT.faux.border }}>
+          <CardContent className="p-3 py-3">
+            <div
+              className="text-3xl font-display font-extrabold tracking-tight"
+              style={{ color: VERDICT_ACCENT.faux.border }}
+            >
+              {(stats.byRating["FALSE"] || 0) + (stats.byRating["MOSTLY_FALSE"] || 0)}
+            </div>
+            <div className="text-sm font-semibold mt-0.5 leading-tight">Faux / Plutôt faux</div>
+            <div className="text-xs text-muted-foreground mt-1 leading-snug">
+              Déclarations réfutées
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-l-4" style={{ borderLeftColor: VERDICT_ACCENT.trompeur.border }}>
+          <CardContent className="p-3 py-3">
+            <div
+              className="text-3xl font-display font-extrabold tracking-tight"
+              style={{ color: VERDICT_ACCENT.trompeur.border }}
+            >
+              {(stats.byRating["HALF_TRUE"] || 0) +
+                (stats.byRating["MISLEADING"] || 0) +
+                (stats.byRating["OUT_OF_CONTEXT"] || 0)}
+            </div>
+            <div className="text-sm font-semibold mt-0.5 leading-tight">Trompeur / Partiel</div>
+            <div className="text-xs text-muted-foreground mt-1 leading-snug">
+              Contexte incomplet
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-l-4" style={{ borderLeftColor: VERDICT_ACCENT.vrai.border }}>
+          <CardContent className="p-3 py-3">
+            <div
+              className="text-3xl font-display font-extrabold tracking-tight"
+              style={{ color: VERDICT_ACCENT.vrai.border }}
+            >
+              {(stats.byRating["TRUE"] || 0) + (stats.byRating["MOSTLY_TRUE"] || 0)}
+            </div>
+            <div className="text-sm font-semibold mt-0.5 leading-tight">Vrai / Plutôt vrai</div>
+            <div className="text-xs text-muted-foreground mt-1 leading-snug">
+              Déclarations vérifiées
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Verdict legend */}
-      <details className="mb-8 bg-muted/50 rounded-lg border">
+      <details className="mb-6 bg-muted/50 rounded-lg border">
         <summary className="px-4 py-3 cursor-pointer text-sm font-medium hover:bg-muted/80 rounded-lg transition-colors">
           Comprendre les verdicts
         </summary>
@@ -289,95 +334,17 @@ export default async function FactChecksPage({ searchParams }: PageProps) {
         </div>
       </details>
 
-      {/* Filters */}
-      <div className="flex flex-wrap gap-4 mb-6">
-        {/* Search */}
-        <form className="flex-1 min-w-[200px]">
-          <input
-            type="text"
-            name="search"
-            placeholder="Rechercher un fact-check..."
-            defaultValue={search}
-            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-          />
-          {source && <input type="hidden" name="source" value={source} />}
-          {verdict && <input type="hidden" name="verdict" value={verdict} />}
-          {politicianSlug && <input type="hidden" name="politician" value={politicianSlug} />}
-          {type && <input type="hidden" name="type" value={type} />}
-        </form>
-
-        {/* Type filter: all vs direct claims */}
-        <div className="flex gap-1">
-          <Link
-            href={buildUrl({ type: undefined })}
-            className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${
-              !directOnly ? "bg-primary text-primary-foreground" : "bg-muted hover:bg-muted/80"
-            }`}
-          >
-            Tout
-          </Link>
-          <Link
-            href={buildUrl({ type: directOnly ? undefined : "direct" })}
-            className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${
-              directOnly ? "bg-primary text-primary-foreground" : "bg-muted hover:bg-muted/80"
-            }`}
-          >
-            Propos de politicien
-          </Link>
-        </div>
-      </div>
-
-      <div className="flex flex-wrap gap-4 mb-6">
-        {/* Source filter */}
-        {sources.length > 0 && (
-          <div className="flex flex-wrap gap-2">
-            <Link
-              href={buildUrl({ source: undefined })}
-              className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${
-                !source ? "bg-primary text-primary-foreground" : "bg-muted hover:bg-muted/80"
-              }`}
-            >
-              Toutes sources
-            </Link>
-            {sources.slice(0, 5).map((s) => (
-              <Link
-                key={s.name}
-                href={buildUrl({ source: source === s.name ? undefined : s.name })}
-                className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${
-                  source === s.name
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted hover:bg-muted/80"
-                }`}
-              >
-                {s.name} ({s.count})
-              </Link>
-            ))}
-          </div>
-        )}
-
-        {/* Verdict filter */}
-        <div className="flex flex-wrap gap-1">
-          {RATING_OPTIONS.map((rating) => {
-            const count = stats.byRating[rating] || 0;
-            if (count === 0) return null;
-            return (
-              <Link
-                key={rating}
-                href={buildUrl({ verdict: verdict === rating ? undefined : rating })}
-                className="inline-block"
-              >
-                <Badge
-                  className={`cursor-pointer transition-opacity ${
-                    verdict === rating ? "ring-2 ring-primary" : "opacity-70 hover:opacity-100"
-                  } ${FACTCHECK_RATING_COLORS[rating]}`}
-                >
-                  {FACTCHECK_RATING_LABELS[rating]} ({count})
-                </Badge>
-              </Link>
-            );
-          })}
-        </div>
-      </div>
+      {/* Filter bar */}
+      <FactChecksFilterBar
+        currentFilters={{
+          search: search || "",
+          source: source || "",
+          verdict: verdict || "",
+          type: type || "",
+        }}
+        sources={sources}
+        ratingCounts={stats.byRating}
+      />
 
       {/* Active filters */}
       {(source || verdict || politicianSlug || search || directOnly) && (
@@ -506,21 +473,25 @@ export default async function FactChecksPage({ searchParams }: PageProps) {
         </div>
       )}
 
-      {/* Sources info */}
-      <div className="mt-8 text-center text-sm text-muted-foreground">
-        <p>
-          Données agrégées via la{" "}
-          <a
-            href="https://toolbox.google.com/factcheck/explorer"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-primary hover:underline"
-          >
-            Google Fact Check Tools API
-          </a>{" "}
-          (standard ClaimReview). Les verdicts sont émis par les organismes de fact-checking cités.
-        </p>
-      </div>
+      {/* Info box */}
+      <Card className="mt-8 bg-blue-50 border-blue-200">
+        <CardContent className="pt-6">
+          <h3 className="font-semibold text-blue-900 mb-2">À propos des données</h3>
+          <p className="text-sm text-blue-800">
+            Données agrégées via la{" "}
+            <a
+              href="https://toolbox.google.com/factcheck/explorer"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline"
+            >
+              Google Fact Check Tools API
+            </a>{" "}
+            (standard ClaimReview). Les verdicts sont émis par les organismes de fact-checking
+            cités. Poligraph ne produit pas ses propres vérifications.
+          </p>
+        </CardContent>
+      </Card>
     </div>
   );
 }

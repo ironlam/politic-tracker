@@ -3,6 +3,7 @@ import Link from "next/link";
 import { db } from "@/lib/db";
 import { Badge } from "@/components/ui/badge";
 import { FactCheckCard } from "@/components/factchecks/FactCheckCard";
+import { SeoIntro } from "@/components/seo/SeoIntro";
 import {
   FACTCHECK_RATING_LABELS,
   FACTCHECK_RATING_COLORS,
@@ -236,6 +237,9 @@ export default async function FactChecksPage({ searchParams }: PageProps) {
           Les verdicts ci-dessous proviennent des organismes de fact-checking cités. Transparence
           Politique ne produit pas ses propres vérifications.
         </p>
+        <SeoIntro
+          text={`${stats.totalFactChecks.toLocaleString("fr-FR")} vérifications de déclarations politiques, issues de ${sources.length} médias partenaires reconnus.`}
+        />
       </div>
 
       {/* Stats */}

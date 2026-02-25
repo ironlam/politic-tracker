@@ -17,6 +17,7 @@ import {
 } from "@/config/labels";
 import type { DossierStatus, ThemeCategory } from "@/generated/prisma";
 import { ExternalLink } from "lucide-react";
+import { SeoIntro } from "@/components/seo/SeoIntro";
 
 export const revalidate = 300; // ISR: re-check feature flag every 5 minutes
 
@@ -151,6 +152,9 @@ export default async function AssembleePage({ searchParams }: PageProps) {
             <ExternalLink className="h-3 w-3" />
           </a>
         </div>
+        <SeoIntro
+          text={`${totalDossiers.toLocaleString("fr-FR")} dossiers législatifs suivis à l'Assemblée nationale, dont ${activeCount} en discussion. Résumés simplifiés et suivi en temps réel.`}
+        />
       </div>
 
       {/* Status filter cards */}

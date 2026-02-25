@@ -14,11 +14,11 @@ import {
   Pencil,
   Trash2,
   GitMerge,
-  Loader2,
   ChevronLeft,
   ChevronsLeft,
   ChevronsRight,
 } from "lucide-react";
+import { AuditPageSkeleton } from "./_components/AuditPageSkeleton";
 
 // ─── Types ───────────────────────────────────────────────
 
@@ -310,9 +310,7 @@ export default function AuditLogPage() {
 
       {/* Content */}
       {loading ? (
-        <div className="flex items-center justify-center py-16">
-          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-        </div>
+        <AuditPageSkeleton />
       ) : entries.length === 0 ? (
         <Card>
           <CardContent className="p-12 text-center">

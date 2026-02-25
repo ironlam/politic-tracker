@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { VotingResultBadge, VotePositionBadge } from "@/components/votes";
 import { PoliticianAvatar } from "@/components/politicians/PoliticianAvatar";
 import { formatDate } from "@/lib/utils";
+import { THEME_CATEGORY_LABELS, THEME_CATEGORY_COLORS } from "@/config/labels";
 import { ExternalLink, Calendar, Users, Sparkles } from "lucide-react";
 import { BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 import type { VotePosition } from "@/types";
@@ -99,9 +100,13 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     summaryFirstLine ||
     `Scrutin du ${formatDate(scrutin.votingDate)} - ${scrutin.result === "ADOPTED" ? "Adopté" : "Rejeté"} avec ${scrutin.votesFor} pour, ${scrutin.votesAgainst} contre et ${scrutin.votesAbstain} abstentions.`;
 
+  const total = scrutin.votesFor + scrutin.votesAgainst + scrutin.votesAbstain;
+  const isThinContent = !scrutin.summary && total === 0;
+
   return {
     title: scrutin.title,
     description,
+    ...(isThinContent && { robots: { index: false, follow: true } }),
   };
 }
 
@@ -173,6 +178,14 @@ export default async function ScrutinPage({ params }: PageProps) {
               {total} votants
             </span>
             <Badge variant="outline">{scrutin.legislature}e législature</Badge>
+            {scrutin.theme && (
+              <Link
+                href={`/votes/themes/${scrutin.theme.toLowerCase().replace(/_/g, "-")}`}
+                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border transition-colors hover:opacity-80 ${THEME_CATEGORY_COLORS[scrutin.theme]}`}
+              >
+                {THEME_CATEGORY_LABELS[scrutin.theme]}
+              </Link>
+            )}
             {scrutin.sourceUrl && (
               <a
                 href={scrutin.sourceUrl}

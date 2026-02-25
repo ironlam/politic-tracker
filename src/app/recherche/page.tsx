@@ -5,6 +5,7 @@ import { AdvancedSearchClient } from "./AdvancedSearchClient";
 export const metadata: Metadata = {
   title: "Recherche avancée",
   description: "Recherche avancée de représentants politiques avec filtres multiples",
+  robots: { index: false, follow: true },
 };
 
 function SearchLoading() {

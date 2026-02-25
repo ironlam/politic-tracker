@@ -205,8 +205,9 @@ export default async function VotesPage({ searchParams }: PageProps) {
         <div>
           <h1 className="text-3xl font-bold mb-2">Votes parlementaires</h1>
           <p className="text-muted-foreground">
-            Consultez les scrutins de l&apos;Assemblée nationale et du Sénat. Découvrez comment
-            votent vos représentants.
+            {total.toLocaleString("fr-FR")} scrutins analysés.{" "}
+            {stats.ADOPTED ? `${Math.round((stats.ADOPTED / total) * 100)}% adoptés.` : ""}{" "}
+            Découvrez comment votent vos représentants.
           </p>
         </div>
         <div className="flex items-center gap-2">

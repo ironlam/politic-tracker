@@ -22,7 +22,9 @@ import {
   ChevronLeft,
   ChevronRight,
   Loader2,
+  Scale,
 } from "lucide-react";
+import { AffairesPageSkeleton } from "./_components/AffairesPageSkeleton";
 import type { PublicationStatus } from "@/generated/prisma";
 
 interface AffairItem {
@@ -394,12 +396,18 @@ export default function AdminAffairsPage() {
       <Card>
         <CardContent className="p-0">
           {loading ? (
-            <div className="flex items-center justify-center py-16">
-              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-            </div>
+            <AffairesPageSkeleton />
           ) : affairs.length === 0 ? (
-            <div className="text-center py-16 text-sm text-muted-foreground">
-              Aucune affaire trouvée
+            <div className="p-12 text-center">
+              <Scale
+                className="w-10 h-10 text-muted-foreground/40 mx-auto mb-3"
+                aria-hidden="true"
+              />
+              <p className="text-sm text-muted-foreground">
+                {searchQuery || categoryFilter
+                  ? "Aucune affaire pour ces filtres"
+                  : "Aucune affaire enregistrée"}
+              </p>
             </div>
           ) : (
             <div className="overflow-x-auto">

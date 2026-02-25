@@ -261,13 +261,13 @@ async function enrichAffairFromJudilibre(
       updateData.caseNumbers = Array.from(existingNumbers);
     }
 
-    // Map solution to status (only upgrade, never downgrade)
+    // Map solution to status (upgrade or terminal transition)
     const newStatus = mapSolutionToStatus(decision.solution);
     const currentAffair = await db.affair.findUnique({
       where: { id: affairId },
       select: { status: true },
     });
-    if (currentAffair && shouldUpgradeStatus(currentAffair.status, newStatus)) {
+    if (currentAffair && shouldUpdateStatus(currentAffair.status, newStatus)) {
       updateData.status = newStatus;
       // Track status change in affair timeline
       await trackStatusChange(affairId, currentAffair.status, newStatus, {
@@ -411,9 +411,42 @@ const STATUS_ORDER: Record<string, number> = {
   CLASSEMENT_SANS_SUITE: 8,
 };
 
-/** Only upgrade status, never downgrade */
-function shouldUpgradeStatus(current: AffairStatus, candidate: AffairStatus): boolean {
-  return (STATUS_ORDER[candidate] ?? 0) > (STATUS_ORDER[current] ?? 0);
+/** Terminal statuses — definitive resolution of the affair */
+const TERMINAL_STATUSES = new Set<string>([
+  "RELAXE",
+  "ACQUITTEMENT",
+  "NON_LIEU",
+  "PRESCRIPTION",
+  "CLASSEMENT_SANS_SUITE",
+]);
+
+/**
+ * Determine if a status transition should be applied.
+ *
+ * Rules:
+ * 1. Normal flow: only upgrade (higher severity)
+ * 2. Terminal status exception: RELAXE/ACQUITTEMENT/NON_LIEU/PRESCRIPTION/CLASSEMENT_SANS_SUITE
+ *    can be applied from any non-terminal state (court resolution)
+ * 3. CONDAMNATION_DEFINITIVE cannot be downgraded (all appeals exhausted)
+ */
+export function shouldUpdateStatus(current: AffairStatus, candidate: AffairStatus): boolean {
+  if (current === candidate) return false;
+
+  // Rule 1: Normal upgrade
+  if ((STATUS_ORDER[candidate] ?? 0) > (STATUS_ORDER[current] ?? 0)) {
+    return true;
+  }
+
+  // Rule 2: Terminal status from non-terminal (except CONDAMNATION_DEFINITIVE)
+  if (TERMINAL_STATUSES.has(candidate)) {
+    // Rule 3: CONDAMNATION_DEFINITIVE = all appeals exhausted, can't be reversed
+    if (current === "CONDAMNATION_DEFINITIVE") return false;
+    // Can't go from one terminal to another
+    if (TERMINAL_STATUSES.has(current)) return false;
+    return true;
+  }
+
+  return false;
 }
 
 // ============================================

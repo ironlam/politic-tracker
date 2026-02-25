@@ -44,4 +44,13 @@ describe("extractJurisdictionName", () => {
   it("handles Fort-de-France", () => {
     expect(extractJurisdictionName("cour d'appel de Fort-de-France")).toBe("Fort-de-France");
   });
+
+  it("handles cour d'assises", () => {
+    expect(extractJurisdictionName("cour d'assises de Paris")).toBe("Paris");
+    expect(extractJurisdictionName("devant la cour d'assises de Bobigny")).toBe("Bobigny");
+  });
+
+  it("handles tribunal de grande instance", () => {
+    expect(extractJurisdictionName("tribunal de grande instance de Bordeaux")).toBe("Bordeaux");
+  });
 });

@@ -72,11 +72,14 @@ export function findCourtDepartments(city: string): string[] | null {
  * Matches patterns like:
  * - "cour d'appel de Lyon"
  * - "cour d'appel d'Orléans"
+ * - "cour d'assises de Paris"
  * - "tribunal correctionnel de Paris"
  * - "tribunal judiciaire de Marseille"
+ * - "tribunal de grande instance de Bordeaux"
  */
 export function extractJurisdictionName(text: string): string | null {
-  const pattern = /(?:cour d'appel|tribunal\s+\w+)\s+d[e']\s*([A-ZÀ-Ÿ][\wÀ-ÿ]+(?:[- ][\wÀ-ÿ]+)*)/i;
+  const pattern =
+    /(?:cour d'appel|cour d'assises|tribunal(?:\s+[\wÀ-ÿ]+)+?)\s+d[e']\s*([A-ZÀ-Ÿ][\wÀ-ÿ]+(?:[- ][\wÀ-ÿ]+)*)/i;
   const match = text.match(pattern);
   return match ? match[1] : null;
 }

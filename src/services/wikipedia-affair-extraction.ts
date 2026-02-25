@@ -14,6 +14,8 @@
 
 import { AI_RATE_LIMIT_MS } from "@/config/rate-limits";
 
+import { clampConfidenceScore } from "@/services/affairs/confidence";
+
 const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
 const MODEL = "claude-sonnet-4-5-20250929";
 const MAX_TOKENS = 2000;
@@ -307,7 +309,9 @@ ${truncatedWikitext}`;
         factsDate: a.facts_date ? String(a.facts_date) : null,
         court: a.court ? String(a.court) : null,
         charges: Array.isArray(a.charges) ? a.charges.map(String) : [],
-        confidenceScore: typeof a.confidence_score === "number" ? a.confidence_score : 50,
+        confidenceScore: clampConfidenceScore(
+          typeof a.confidence_score === "number" ? a.confidence_score : 50
+        ),
         sourceUrls: Array.isArray(a.source_urls) ? a.source_urls.map(String) : [],
       };
     });

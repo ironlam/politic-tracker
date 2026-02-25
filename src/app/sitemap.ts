@@ -137,12 +137,6 @@ async function buildStaticAndPoliticiansSitemap(): Promise<MetadataRoute.Sitemap
       priority: 0.8,
     },
     {
-      url: `${baseUrl}/chat`,
-      lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.8,
-    },
-    {
       url: `${baseUrl}/soutenir`,
       lastModified: new Date(),
       changeFrequency: "monthly",

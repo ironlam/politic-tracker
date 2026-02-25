@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { withCache } from "@/lib/cache";
 
 export async function GET(request: NextRequest) {
   const query = request.nextUrl.searchParams.get("q") || "";
@@ -78,31 +79,34 @@ export async function GET(request: NextRequest) {
     }),
   ]);
 
-  return NextResponse.json({
-    politicians: politicians.map((p) => ({
-      id: p.id,
-      slug: p.slug,
-      fullName: p.fullName,
-      photoUrl: p.photoUrl,
-      party: p.currentParty?.shortName || null,
-      partyColor: p.currentParty?.color || null,
-      mandate: p.mandates[0]?.type || null,
-    })),
-    parties: parties.map((p) => ({
-      slug: p.slug,
-      name: p.name,
-      shortName: p.shortName,
-      color: p.color,
-      memberCount: p._count.politicians,
-    })),
-    scrutins: scrutins.map((s) => ({
-      slug: s.slug,
-      id: s.id,
-      title: s.title,
-      votingDate: s.votingDate.toISOString(),
-      chamber: s.chamber,
-    })),
-    // Dossiers: disabled until a public page exists (see #118)
-    dossiers: [],
-  });
+  return withCache(
+    NextResponse.json({
+      politicians: politicians.map((p) => ({
+        id: p.id,
+        slug: p.slug,
+        fullName: p.fullName,
+        photoUrl: p.photoUrl,
+        party: p.currentParty?.shortName || null,
+        partyColor: p.currentParty?.color || null,
+        mandate: p.mandates[0]?.type || null,
+      })),
+      parties: parties.map((p) => ({
+        slug: p.slug,
+        name: p.name,
+        shortName: p.shortName,
+        color: p.color,
+        memberCount: p._count.politicians,
+      })),
+      scrutins: scrutins.map((s) => ({
+        slug: s.slug,
+        id: s.id,
+        title: s.title,
+        votingDate: s.votingDate.toISOString(),
+        chamber: s.chamber,
+      })),
+      // Dossiers: disabled until a public page exists (see #118)
+      dossiers: [],
+    }),
+    "daily"
+  );
 }

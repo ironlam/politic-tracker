@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { withCache } from "@/lib/cache";
 
 /**
  * @openapi
@@ -96,5 +97,5 @@ export async function GET(request: NextRequest) {
     mandate: p.mandates[0]?.type || null,
   }));
 
-  return NextResponse.json(results);
+  return withCache(NextResponse.json(results), "daily");
 }

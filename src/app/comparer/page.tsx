@@ -355,9 +355,9 @@ export default async function ComparerPage({ searchParams }: PageProps) {
     return (
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Comparer</h1>
-          <p className="text-muted-foreground">
+        <div className="mb-6">
+          <h1 className="text-3xl font-display font-extrabold tracking-tight mb-1">Comparer</h1>
+          <p className="text-sm text-muted-foreground">
             Comparez deux partis ou deux représentants politiques.
           </p>
           <div className="mt-4">
@@ -412,7 +412,9 @@ export default async function ComparerPage({ searchParams }: PageProps) {
         {(leftPartyPreview || rightPartyPreview) && (
           <div className="flex items-center justify-center mb-8">
             <div className="flex-1 h-px bg-border" />
-            <span className="px-4 text-2xl font-bold text-muted-foreground">VS</span>
+            <span className="px-4 text-2xl font-display font-extrabold text-muted-foreground">
+              VS
+            </span>
             <div className="flex-1 h-px bg-border" />
           </div>
         )}
@@ -473,9 +475,9 @@ export default async function ComparerPage({ searchParams }: PageProps) {
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Comparer</h1>
-        <p className="text-muted-foreground">
+      <div className="mb-6">
+        <h1 className="text-3xl font-display font-extrabold tracking-tight mb-1">Comparer</h1>
+        <p className="text-sm text-muted-foreground">
           Comparez deux partis ou deux représentants politiques.
         </p>
         <div className="mt-4">
@@ -544,7 +546,9 @@ export default async function ComparerPage({ searchParams }: PageProps) {
       {(leftPreview || rightPreview) && (
         <div className="flex items-center justify-center mb-8">
           <div className="flex-1 h-px bg-border" />
-          <span className="px-4 text-2xl font-bold text-muted-foreground">VS</span>
+          <span className="px-4 text-2xl font-display font-extrabold text-muted-foreground">
+            VS
+          </span>
           <div className="flex-1 h-px bg-border" />
         </div>
       )}
@@ -563,7 +567,7 @@ export default async function ComparerPage({ searchParams }: PageProps) {
 
           {hasCommonVotes && (
             <section>
-              <h2 className="text-xl font-semibold mb-4">Concordance des votes</h2>
+              <h2 className="text-xl font-display font-semibold mb-4">Concordance des votes</h2>
               <VoteAgreement
                 leftVotes={leftPolitician.votes}
                 rightVotes={rightPolitician.votes}

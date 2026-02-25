@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { cacheTag, cacheLife } from "next/cache";
 import { db } from "@/lib/db";
 import { formatDate } from "@/lib/utils";
+import { Card, CardContent } from "@/components/ui/card";
 import { VOTE_POSITION_LABELS, VOTE_POSITION_DOT_COLORS } from "@/config/labels";
 import { VoteComparisonFilters } from "@/components/compare/VoteComparisonFilters";
 import type { VotePosition } from "@/types";
@@ -250,6 +251,14 @@ async function getPartyVoteComparisonData(leftSlug: string, rightSlug: string) {
 
 const PAGE_SIZE = 20;
 
+// Hex accent colors for vote comparison stats (inline styles per CLAUDE.md convention)
+const COMPARISON_ACCENT: Record<string, { border: string; bg: string }> = {
+  total: { border: "#2563eb", bg: "#2563eb0a" },
+  agree: { border: "#16a34a", bg: "#16a34a0a" },
+  disagree: { border: "#dc2626", bg: "#dc26260a" },
+  partial: { border: "#d97706", bg: "#d977060a" },
+};
+
 export default async function VotesComparisonPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const { left, right, mode, search, filter } = params;
@@ -343,33 +352,63 @@ export default async function VotesComparisonPage({ searchParams }: PageProps) {
       </Link>
 
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Concordance des votes</h1>
-        <p className="text-lg text-muted-foreground">
+      <div className="mb-6">
+        <h1 className="text-3xl font-display font-extrabold tracking-tight mb-1">
+          Concordance des votes
+        </h1>
+        <p className="text-sm text-muted-foreground">
           {leftName} vs {rightName}
         </p>
       </div>
 
       {/* Stats cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-muted rounded-lg p-4 text-center">
-          <p className="text-2xl font-bold">{stats.total}</p>
-          <p className="text-sm text-muted-foreground">
-            {isPartyMode ? "Scrutins comparés" : "Votes en commun"}
-          </p>
-        </div>
-        <div className="bg-green-500/10 dark:bg-green-500/20 rounded-lg p-4 text-center">
-          <p className="text-2xl font-bold text-green-600 dark:text-green-400">{stats.agree}</p>
-          <p className="text-sm text-muted-foreground">D&apos;accord</p>
-        </div>
-        <div className="bg-red-500/10 dark:bg-red-500/20 rounded-lg p-4 text-center">
-          <p className="text-2xl font-bold text-red-600 dark:text-red-400">{stats.disagree}</p>
-          <p className="text-sm text-muted-foreground">En désaccord</p>
-        </div>
-        <div className="bg-yellow-500/10 dark:bg-yellow-500/20 rounded-lg p-4 text-center">
-          <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{stats.partial}</p>
-          <p className="text-sm text-muted-foreground">Partiellement</p>
-        </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+        <Card className="border-l-4" style={{ borderLeftColor: COMPARISON_ACCENT.total.border }}>
+          <CardContent className="p-3 py-3">
+            <div
+              className="text-3xl font-display font-extrabold tracking-tight"
+              style={{ color: COMPARISON_ACCENT.total.border }}
+            >
+              {stats.total}
+            </div>
+            <div className="text-sm font-semibold mt-0.5 leading-tight">
+              {isPartyMode ? "Scrutins comparés" : "Votes en commun"}
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-l-4" style={{ borderLeftColor: COMPARISON_ACCENT.agree.border }}>
+          <CardContent className="p-3 py-3">
+            <div
+              className="text-3xl font-display font-extrabold tracking-tight"
+              style={{ color: COMPARISON_ACCENT.agree.border }}
+            >
+              {stats.agree}
+            </div>
+            <div className="text-sm font-semibold mt-0.5 leading-tight">D&apos;accord</div>
+          </CardContent>
+        </Card>
+        <Card className="border-l-4" style={{ borderLeftColor: COMPARISON_ACCENT.disagree.border }}>
+          <CardContent className="p-3 py-3">
+            <div
+              className="text-3xl font-display font-extrabold tracking-tight"
+              style={{ color: COMPARISON_ACCENT.disagree.border }}
+            >
+              {stats.disagree}
+            </div>
+            <div className="text-sm font-semibold mt-0.5 leading-tight">En désaccord</div>
+          </CardContent>
+        </Card>
+        <Card className="border-l-4" style={{ borderLeftColor: COMPARISON_ACCENT.partial.border }}>
+          <CardContent className="p-3 py-3">
+            <div
+              className="text-3xl font-display font-extrabold tracking-tight"
+              style={{ color: COMPARISON_ACCENT.partial.border }}
+            >
+              {stats.partial}
+            </div>
+            <div className="text-sm font-semibold mt-0.5 leading-tight">Partiellement</div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Agreement bar */}
@@ -377,7 +416,7 @@ export default async function VotesComparisonPage({ searchParams }: PageProps) {
         <div className="bg-muted rounded-lg p-4 mb-6">
           <div className="flex justify-between mb-2 text-sm">
             <span>Taux de concordance</span>
-            <span className="font-bold">{agreementRate}%</span>
+            <span className="font-display font-extrabold">{agreementRate}%</span>
           </div>
           <div className="h-4 rounded-full overflow-hidden bg-gray-200 flex">
             <div

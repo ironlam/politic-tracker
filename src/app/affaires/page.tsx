@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ExportButton } from "@/components/ui/ExportButton";
+import { AffairesFilterBar } from "@/components/affairs/AffairesFilterBar";
 import {
   AFFAIR_STATUS_LABELS,
   AFFAIR_STATUS_COLORS,
@@ -18,11 +19,9 @@ import {
   INVOLVEMENT_LABELS,
   INVOLVEMENT_COLORS,
   INVOLVEMENT_GROUP_LABELS,
-  INVOLVEMENT_GROUP_COLORS,
   involvementsFromGroups,
-  AFFAIR_SEVERITY_LABELS,
-  AFFAIR_SEVERITY_COLORS,
   AFFAIR_SEVERITY_EDITORIAL,
+  AFFAIR_SEVERITY_COLORS,
   type InvolvementGroup,
   type AffairSuperCategory,
 } from "@/config/labels";
@@ -32,6 +31,7 @@ export const revalidate = 300; // 5 minutes — CDN edge cache with ISR
 
 interface PageProps {
   searchParams: Promise<{
+    sort?: string;
     status?: string;
     supercat?: string;
     category?: string;
@@ -113,7 +113,8 @@ async function getAffairs(
   severity?: AffairSeverity,
   page = 1,
   involvements: Involvement[] = ["DIRECT"],
-  partySlug?: string
+  partySlug?: string,
+  sort?: string
 ) {
   "use cache";
   cacheTag("affairs");
@@ -139,6 +140,26 @@ async function getAffairs(
     ...(partySlug && { partyAtTime: { slug: partySlug } }),
   };
 
+  const orderBy =
+    sort === "date-desc"
+      ? [
+          { verdictDate: { sort: "desc" as const, nulls: "last" as const } },
+          { startDate: { sort: "desc" as const, nulls: "last" as const } },
+          { createdAt: "desc" as const },
+        ]
+      : sort === "date-asc"
+        ? [
+            { verdictDate: { sort: "asc" as const, nulls: "last" as const } },
+            { startDate: { sort: "asc" as const, nulls: "last" as const } },
+            { createdAt: "asc" as const },
+          ]
+        : [
+            { severity: "asc" as const },
+            { verdictDate: { sort: "desc" as const, nulls: "last" as const } },
+            { startDate: { sort: "desc" as const, nulls: "last" as const } },
+            { createdAt: "desc" as const },
+          ];
+
   const [affairs, total] = await Promise.all([
     db.affair.findMany({
       where,
@@ -151,13 +172,7 @@ async function getAffairs(
         },
         sources: { select: { id: true }, take: 1 },
       },
-      // Order by severity (CRITIQUE first), then most relevant date
-      orderBy: [
-        { severity: "asc" },
-        { verdictDate: { sort: "desc", nulls: "last" } },
-        { startDate: { sort: "desc", nulls: "last" } },
-        { createdAt: "desc" },
-      ],
+      orderBy,
       skip,
       take: limit,
     }),
@@ -235,6 +250,7 @@ async function getSeverityCounts() {
 
 export default async function AffairesPage({ searchParams }: PageProps) {
   const params = await searchParams;
+  const sortFilter = params.sort || "";
   const statusFilter = params.status || "";
   const superCatFilter = (params.supercat || "") as AffairSuperCategory | "";
   const categoryFilter = params.category || "";
@@ -266,7 +282,8 @@ export default async function AffairesPage({ searchParams }: PageProps) {
       severityFilter || undefined,
       page,
       activeInvolvements,
-      partiFilter || undefined
+      partiFilter || undefined,
+      sortFilter || undefined
     ),
     getSuperCategoryCounts(),
     getStatusCounts(),
@@ -276,32 +293,11 @@ export default async function AffairesPage({ searchParams }: PageProps) {
 
   const totalAffairs = Object.values(superCounts).reduce((a, b) => a + b, 0);
 
-  // Build URL helper
+  // Build URL helper (only used for super-category cards + pagination)
   function buildUrl(params: Record<string, string>) {
     const filtered = Object.entries(params).filter(([, v]) => v);
     if (filtered.length === 0) return "/affaires";
     return `/affaires?${filtered.map(([k, v]) => `${k}=${encodeURIComponent(v)}`).join("&")}`;
-  }
-
-  function toggleGroup(key: InvolvementGroup) {
-    const current = new Set(activeGroups);
-    if (current.has(key)) {
-      current.delete(key);
-    } else {
-      current.add(key);
-    }
-    // If empty, reset to mise-en-cause
-    if (current.size === 0) current.add("mise-en-cause");
-    const inv = [...current].join(",");
-    // Only include involvement param if not default (mise-en-cause only)
-    const isDefault = current.size === 1 && current.has("mise-en-cause");
-    return buildUrl({
-      status: statusFilter,
-      supercat: superCatFilter,
-      severity: severityFilter,
-      parti: partiFilter,
-      involvement: isDefault ? "" : inv,
-    });
   }
 
   return (
@@ -357,157 +353,25 @@ export default async function AffairesPage({ searchParams }: PageProps) {
         })}
       </div>
 
-      {/* Severity filter */}
-      <div className="mb-6">
-        <p className="text-sm font-medium mb-2">Niveau de gravité</p>
-        <div className="flex flex-wrap gap-2">
-          <Link
-            href={buildUrl({
-              status: statusFilter,
-              supercat: superCatFilter,
-              involvement: involvementFilter,
-              parti: partiFilter,
-            })}
-          >
-            <Badge
-              variant={severityFilter === "" ? "default" : "outline"}
-              className="cursor-pointer"
-            >
-              Tous
-            </Badge>
-          </Link>
-          {(Object.keys(AFFAIR_SEVERITY_LABELS) as AffairSeverity[]).map((sev) => {
-            const count = severityCounts[sev] || 0;
-            const isActive = severityFilter === sev;
-            return (
-              <Link
-                key={sev}
-                href={buildUrl({
-                  severity: isActive ? "" : sev,
-                  status: statusFilter,
-                  supercat: superCatFilter,
-                  involvement: involvementFilter,
-                  parti: partiFilter,
-                })}
-              >
-                <Badge
-                  variant={isActive ? "default" : "outline"}
-                  className={`cursor-pointer ${isActive ? AFFAIR_SEVERITY_COLORS[sev] : ""}`}
-                >
-                  {AFFAIR_SEVERITY_EDITORIAL[sev]} ({count})
-                </Badge>
-              </Link>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Party filter */}
-      <div className="mb-6">
-        <p className="text-sm font-medium mb-2">Filtrer par parti</p>
-        <div className="flex flex-wrap gap-2">
-          <Link
-            href={buildUrl({
-              status: statusFilter,
-              supercat: superCatFilter,
-              severity: severityFilter,
-              involvement: involvementFilter,
-            })}
-          >
-            <Badge variant={partiFilter === "" ? "default" : "outline"} className="cursor-pointer">
-              Tous les partis
-            </Badge>
-          </Link>
-          {partiesWithAffairs.map((p) => {
-            const isActive = partiFilter === p.slug;
-            return (
-              <Link
-                key={p.slug}
-                href={buildUrl({
-                  parti: isActive ? "" : (p.slug as string),
-                  status: statusFilter,
-                  supercat: superCatFilter,
-                  severity: severityFilter,
-                  involvement: involvementFilter,
-                })}
-              >
-                <Badge
-                  variant={isActive ? "default" : "outline"}
-                  className="cursor-pointer"
-                  style={{
-                    ...(isActive && p.color
-                      ? {
-                          backgroundColor: `${p.color}20`,
-                          color: p.color,
-                          borderColor: p.color,
-                        }
-                      : {}),
-                  }}
-                >
-                  {p.shortName} ({p._count.affairsAtTime})
-                </Badge>
-              </Link>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Status filter */}
-      <div className="mb-6">
-        <p className="text-sm font-medium mb-2">Filtrer par statut</p>
-        <div className="flex flex-wrap gap-2">
-          <Link href={buildUrl({ supercat: superCatFilter, severity: severityFilter })}>
-            <Badge variant={statusFilter === "" ? "default" : "outline"} className="cursor-pointer">
-              Tous
-            </Badge>
-          </Link>
-          {Object.entries(AFFAIR_STATUS_LABELS).map(([key, label]) => {
-            const count = statusCounts[key] || 0;
-            if (count === 0) return null;
-            const isActive = statusFilter === key;
-            return (
-              <Link
-                key={key}
-                href={buildUrl({
-                  status: isActive ? "" : key,
-                  supercat: superCatFilter,
-                  severity: severityFilter,
-                })}
-              >
-                <Badge
-                  variant={isActive ? "default" : "outline"}
-                  className={`cursor-pointer ${
-                    isActive ? AFFAIR_STATUS_COLORS[key as AffairStatus] : ""
-                  }`}
-                >
-                  {label} ({count})
-                </Badge>
-              </Link>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Involvement filter — 3 groups */}
-      <div className="mb-6">
-        <p className="text-sm font-medium mb-2">Implication du politicien</p>
-        <div className="flex flex-wrap gap-2">
-          {(Object.keys(INVOLVEMENT_GROUP_LABELS) as InvolvementGroup[]).map((group) => {
-            const isActive = activeGroups.includes(group);
-            return (
-              <Link key={group} href={toggleGroup(group)}>
-                <Badge
-                  variant={isActive ? "default" : "outline"}
-                  className={`cursor-pointer ${isActive ? INVOLVEMENT_GROUP_COLORS[group] : ""}`}
-                >
-                  {isActive ? "● " : "○ "}
-                  {INVOLVEMENT_GROUP_LABELS[group]}
-                </Badge>
-              </Link>
-            );
-          })}
-        </div>
-      </div>
+      {/* Compact filter bar */}
+      <AffairesFilterBar
+        currentFilters={{
+          sort: sortFilter,
+          severity: severityFilter,
+          parti: partiFilter,
+          status: statusFilter,
+          involvement: involvementFilter,
+          supercat: superCatFilter,
+        }}
+        parties={partiesWithAffairs.map((p) => ({
+          slug: p.slug as string,
+          shortName: p.shortName,
+          name: p.name,
+          count: p._count.affairsAtTime,
+        }))}
+        severityCounts={severityCounts}
+        statusCounts={statusCounts}
+      />
 
       {/* Active filters summary */}
       {(superCatFilter || statusFilter || severityFilter || involvementFilter || partiFilter) && (
@@ -536,7 +400,7 @@ export default async function AffairesPage({ searchParams }: PageProps) {
           )}
           {involvementFilter && (
             <Badge variant="outline">
-              Implication : {activeGroups.map((g) => INVOLVEMENT_GROUP_LABELS[g]).join(", ")}
+              Rôle : {activeGroups.map((g) => INVOLVEMENT_GROUP_LABELS[g]).join(", ")}
             </Badge>
           )}
           <Link href="/affaires" className="text-blue-600 hover:underline ml-2">
@@ -582,14 +446,18 @@ export default async function AffairesPage({ searchParams }: PageProps) {
                           <Badge className={AFFAIR_SUPER_CATEGORY_COLORS[superCat]}>
                             {AFFAIR_SUPER_CATEGORY_LABELS[superCat]}
                           </Badge>
-                          <Badge
-                            className={AFFAIR_SEVERITY_COLORS[affair.severity as AffairSeverity]}
-                          >
-                            {AFFAIR_SEVERITY_EDITORIAL[affair.severity as AffairSeverity]}
-                          </Badge>
-                          <Badge className={AFFAIR_STATUS_COLORS[affair.status]}>
-                            {AFFAIR_STATUS_LABELS[affair.status]}
-                          </Badge>
+                          {affair.severity === "CRITIQUE" && (
+                            <Badge
+                              className={AFFAIR_SEVERITY_COLORS[affair.severity as AffairSeverity]}
+                            >
+                              {AFFAIR_SEVERITY_EDITORIAL[affair.severity as AffairSeverity]}
+                            </Badge>
+                          )}
+                          {affair.status === "CONDAMNATION_DEFINITIVE" && (
+                            <Badge className={AFFAIR_STATUS_COLORS[affair.status]}>
+                              {AFFAIR_STATUS_LABELS[affair.status]}
+                            </Badge>
+                          )}
                           <Badge variant="outline">{AFFAIR_CATEGORY_LABELS[affair.category]}</Badge>
                           {affair.involvement !== "DIRECT" && (
                             <Badge
@@ -672,6 +540,7 @@ export default async function AffairesPage({ searchParams }: PageProps) {
                 <Link
                   href={buildUrl({
                     page: String(page - 1),
+                    sort: sortFilter,
                     status: statusFilter,
                     supercat: superCatFilter,
                     severity: severityFilter,
@@ -690,6 +559,7 @@ export default async function AffairesPage({ searchParams }: PageProps) {
                 <Link
                   href={buildUrl({
                     page: String(page + 1),
+                    sort: sortFilter,
                     status: statusFilter,
                     supercat: superCatFilter,
                     severity: severityFilter,

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { searchPoliticians, SearchFilters } from "@/services/search";
 import { MandateType } from "@/generated/prisma";
+import { withCache } from "@/lib/cache";
 
 /**
  * @openapi
@@ -140,7 +141,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const results = await searchPoliticians(filters, page, limit);
-    return NextResponse.json(results);
+    return withCache(NextResponse.json(results), "daily");
   } catch (error) {
     console.error("Search error:", error);
     return NextResponse.json({ error: "Erreur de recherche" }, { status: 500 });

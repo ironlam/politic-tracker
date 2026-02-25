@@ -59,7 +59,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "Affaire non trouvée" }, { status: 404 });
     }
 
-    const updateData: Record<string, unknown> = {};
+    const updateData: Record<string, string> = {};
 
     // Validate and set involvement
     if (body.involvement !== undefined) {

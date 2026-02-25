@@ -83,7 +83,11 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
         action: "UPDATE",
         entityType: "PartyMembership",
         entityId: membershipId,
-        changes: updateData,
+        changes: {
+          startDate: updateData.startDate ? String(updateData.startDate) : undefined,
+          endDate: updateData.endDate !== undefined ? String(updateData.endDate) : undefined,
+          role: updateData.role ? String(updateData.role) : undefined,
+        },
       },
     });
 

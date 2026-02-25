@@ -99,7 +99,16 @@ export function invalidateEntity(type: EntityType, slug?: string): void {
 
 // ─── Global revalidation (post-sync) ─────────────────────────────
 
-const ALL_TAGS = ["politicians", "parties", "votes", "stats", "dossiers", "factchecks"];
+export const ALL_TAGS = [
+  "politicians",
+  "parties",
+  "votes",
+  "stats",
+  "dossiers",
+  "factchecks",
+] as const;
+
+export type CacheTag = (typeof ALL_TAGS)[number];
 
 /**
  * Purge all main cache tags. Call after full sync operations.

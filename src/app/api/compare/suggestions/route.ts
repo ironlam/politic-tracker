@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { withCache } from "@/lib/cache";
 import type { PoliticalPosition } from "@/types";
 
 const POSITION_ORDER: PoliticalPosition[] = [
@@ -155,18 +156,21 @@ async function getPoliticianSuggestions() {
       used.add(c.rightSlug);
     }
 
-    if (pairs.length === 0) return NextResponse.json(POLITICIAN_FALLBACKS);
+    if (pairs.length === 0) return withCache(NextResponse.json(POLITICIAN_FALLBACKS), "static");
 
-    return NextResponse.json(
-      pairs.map(({ leftSlug, leftName, rightSlug, rightName }) => ({
-        leftSlug,
-        leftName,
-        rightSlug,
-        rightName,
-      }))
+    return withCache(
+      NextResponse.json(
+        pairs.map(({ leftSlug, leftName, rightSlug, rightName }) => ({
+          leftSlug,
+          leftName,
+          rightSlug,
+          rightName,
+        }))
+      ),
+      "static"
     );
   } catch {
-    return NextResponse.json(POLITICIAN_FALLBACKS);
+    return withCache(NextResponse.json(POLITICIAN_FALLBACKS), "static");
   }
 }
 
@@ -229,17 +233,20 @@ async function getPartySuggestions() {
       used.add(c.rightSlug);
     }
 
-    if (pairs.length === 0) return NextResponse.json(PARTY_FALLBACKS);
+    if (pairs.length === 0) return withCache(NextResponse.json(PARTY_FALLBACKS), "static");
 
-    return NextResponse.json(
-      pairs.map(({ leftSlug, leftName, rightSlug, rightName }) => ({
-        leftSlug,
-        leftName,
-        rightSlug,
-        rightName,
-      }))
+    return withCache(
+      NextResponse.json(
+        pairs.map(({ leftSlug, leftName, rightSlug, rightName }) => ({
+          leftSlug,
+          leftName,
+          rightSlug,
+          rightName,
+        }))
+      ),
+      "static"
     );
   } catch {
-    return NextResponse.json(PARTY_FALLBACKS);
+    return withCache(NextResponse.json(PARTY_FALLBACKS), "static");
   }
 }

@@ -3,7 +3,7 @@ import { describe, it, expect, vi } from "vitest";
 // Mock database to avoid DATABASE_URL requirement
 vi.mock("@/lib/db", () => ({ db: {} }));
 
-import { shouldUpdateStatus } from "./judilibre";
+import { shouldUpdateStatus, checkJurisdictionMatch } from "./judilibre";
 
 describe("shouldUpdateStatus", () => {
   // Normal upgrades (existing behavior)
@@ -45,5 +45,32 @@ describe("shouldUpdateStatus", () => {
   it("blocks terminal-to-terminal transitions", () => {
     expect(shouldUpdateStatus("RELAXE", "ACQUITTEMENT")).toBe(false);
     expect(shouldUpdateStatus("NON_LIEU", "PRESCRIPTION")).toBe(false);
+  });
+});
+
+describe("checkJurisdictionMatch", () => {
+  it("returns match when politician department matches court jurisdiction", () => {
+    const result = checkJurisdictionMatch("arrêt de la cour d'appel de Lyon", ["Rhône", "Paris"]);
+    expect(result).toEqual({ match: true, jurisdiction: "Lyon" });
+  });
+
+  it("returns mismatch when politician has no matching department", () => {
+    const result = checkJurisdictionMatch("arrêt de la cour d'appel de Bordeaux", ["Rhône"]);
+    expect(result).toEqual({ match: false, jurisdiction: "Bordeaux" });
+  });
+
+  it("returns unknown when no jurisdiction found in text", () => {
+    const result = checkJurisdictionMatch("texte sans juridiction", ["Rhône"]);
+    expect(result).toEqual({ match: "unknown", jurisdiction: null });
+  });
+
+  it("returns unknown when politician has no departments", () => {
+    const result = checkJurisdictionMatch("arrêt de la cour d'appel de Lyon", []);
+    expect(result).toEqual({ match: "unknown", jurisdiction: "Lyon" });
+  });
+
+  it("returns unknown when court is not in mapping table", () => {
+    const result = checkJurisdictionMatch("tribunal correctionnel de Tombouctou", ["Paris"]);
+    expect(result).toEqual({ match: "unknown", jurisdiction: "Tombouctou" });
   });
 });

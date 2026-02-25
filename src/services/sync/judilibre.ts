@@ -25,6 +25,7 @@ import {
 } from "@/services/affairs/judilibre-mapping";
 import { syncMetadata } from "@/lib/sync";
 import { trackStatusChange } from "@/services/affairs/status-tracking";
+import { findCourtDepartments, extractJurisdictionName } from "@/config/judilibre-courts";
 
 // ============================================
 // TYPES
@@ -144,10 +145,8 @@ function textRefersToPersonByName(text: string, fullName: string): boolean {
  * 1. The politician was at least 18 at the time of the decision
  * 2. The politician's name (not just surname) appears in the text
  *
- * TODO: Cross-check politician.departments against the court jurisdiction
- * mentioned in the decision (e.g. "Cour d'appel de Lyon" → Rhône) to further
- * reduce homonyme false positives. The department data is now available on
- * PoliticianForSearch for this purpose.
+ * Note: Jurisdiction cross-check against politician departments is handled
+ * separately in createAffairFromJudilibre (reduces confidence on mismatch).
  */
 function isRelevantDecision(
   decision: JudilibreDecisionSummary,
@@ -323,12 +322,25 @@ async function enrichAffairFromJudilibre(
 async function createAffairFromJudilibre(
   politicianId: string,
   decision: JudilibreDecisionSummary,
+  politicianDepartments: string[],
   dryRun: boolean,
   verbose?: boolean
 ): Promise<boolean> {
   const title = `[À VÉRIFIER] ${buildTitleFromDecision(decision)}`;
   const category = mapJudilibreToCategory(decision.themes, decision.summary);
   const status = mapSolutionToStatus(decision.solution);
+
+  // Cross-check jurisdiction against politician's departments
+  const jurisdictionCheck = checkJurisdictionMatch(decision.summary || "", politicianDepartments);
+
+  // If jurisdiction mismatch, reduce effective confidence
+  const confidenceScore =
+    jurisdictionCheck.match === false ? Math.max(0, 50 - JURISDICTION_MISMATCH_PENALTY) : undefined;
+  if (jurisdictionCheck.match === false && verbose) {
+    console.log(
+      `  ⚠ Juridiction mismatch: ${jurisdictionCheck.jurisdiction} vs départements [${politicianDepartments.join(", ")}] → confiance réduite`
+    );
+  }
 
   if (dryRun) {
     console.log(`  [DRY-RUN] Créerait affaire: ${title} (${decision.ecli})`);
@@ -354,6 +366,7 @@ async function createAffairFromJudilibre(
         description: decision.summary || `Décision de la Cour de cassation : ${decision.solution}.`,
         status,
         category,
+        confidenceScore,
         publicationStatus: "DRAFT",
         verdictDate: new Date(decision.decision_date),
         ecli: decision.ecli || null,
@@ -447,6 +460,53 @@ export function shouldUpdateStatus(current: AffairStatus, candidate: AffairStatu
   }
 
   return false;
+}
+
+// ============================================
+// JURISDICTION CROSS-CHECK
+// ============================================
+
+const JURISDICTION_MISMATCH_PENALTY = 30;
+
+export interface JurisdictionCheckResult {
+  match: boolean | "unknown";
+  jurisdiction: string | null;
+}
+
+/**
+ * Cross-check the court jurisdiction from the decision text against
+ * the politician's departments (from mandates).
+ *
+ * Returns:
+ * - { match: true } if jurisdiction overlaps with politician's departments
+ * - { match: false } if jurisdiction is known but doesn't overlap → lower confidence
+ * - { match: "unknown" } if jurisdiction not found or not in table → no filtering
+ */
+export function checkJurisdictionMatch(
+  text: string,
+  politicianDepartments: string[]
+): JurisdictionCheckResult {
+  const jurisdiction = extractJurisdictionName(text);
+
+  if (!jurisdiction) {
+    return { match: "unknown", jurisdiction: null };
+  }
+
+  if (politicianDepartments.length === 0) {
+    return { match: "unknown", jurisdiction };
+  }
+
+  const courtDepartments = findCourtDepartments(jurisdiction);
+
+  if (!courtDepartments) {
+    return { match: "unknown", jurisdiction };
+  }
+
+  const hasOverlap = politicianDepartments.some((dep) =>
+    courtDepartments.some((courtDep) => courtDep.toLowerCase() === dep.toLowerCase())
+  );
+
+  return { match: hasOverlap, jurisdiction };
 }
 
 // ============================================
@@ -559,6 +619,7 @@ export async function syncJudilibre(
             const created = await createAffairFromJudilibre(
               politician.id,
               decision,
+              politician.departments,
               dryRun,
               verbose
             );

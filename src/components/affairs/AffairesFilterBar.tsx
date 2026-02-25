@@ -37,7 +37,6 @@ const SORT_OPTIONS: Record<string, string> = {
   "date-asc": "Plus anciennes",
 };
 
-// Grouped status options for <select> with disabled separators
 const STATUS_GROUPS: { label: string; statuses: AffairStatus[] }[] = [
   {
     label: "── Condamnations ──",
@@ -58,7 +57,7 @@ const STATUS_GROUPS: { label: string; statuses: AffairStatus[] }[] = [
 ];
 
 const selectClassName =
-  "h-9 rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 cursor-pointer hover:border-primary/50 transition-colors";
+  "h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 cursor-pointer hover:border-primary/50 transition-colors";
 
 export function AffairesFilterBar({
   currentFilters,
@@ -85,7 +84,6 @@ export function AffairesFilterBar({
     });
   };
 
-  // Toggle involvement group (multi-select)
   const VALID_GROUPS: InvolvementGroup[] = ["mise-en-cause", "victime", "mentionne"];
   const activeGroups: InvolvementGroup[] = currentFilters.involvement
     ? (currentFilters.involvement
@@ -107,10 +105,10 @@ export function AffairesFilterBar({
   };
 
   return (
-    <div className="mb-6 space-y-3">
-      {/* Row 1: Dropdowns */}
-      <div className="flex flex-col sm:flex-row flex-wrap items-start sm:items-center gap-3 sm:gap-4">
-        {isPending && (
+    <div className="mb-6 rounded-lg border bg-muted/40 p-4 space-y-3 relative">
+      {/* Loading overlay */}
+      {isPending && (
+        <div className="absolute inset-0 rounded-lg bg-background/60 flex items-center justify-center z-10">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <svg
               className="animate-spin h-4 w-4"
@@ -134,12 +132,17 @@ export function AffairesFilterBar({
             </svg>
             <span>Chargement...</span>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* Sort */}
-        <div className="flex items-center gap-2">
-          <label htmlFor="sort-affairs" className="text-sm text-muted-foreground whitespace-nowrap">
-            Trier par :
+      {/* Dropdowns grid: 2 cols mobile, 4 cols desktop */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div>
+          <label
+            htmlFor="sort-affairs"
+            className="text-xs font-medium text-muted-foreground mb-1 block"
+          >
+            Trier par
           </label>
           <select
             id="sort-affairs"
@@ -155,13 +158,12 @@ export function AffairesFilterBar({
           </select>
         </div>
 
-        {/* Party */}
-        <div className="flex items-center gap-2">
+        <div>
           <label
             htmlFor="parti-affairs"
-            className="text-sm text-muted-foreground whitespace-nowrap"
+            className="text-xs font-medium text-muted-foreground mb-1 block"
           >
-            Parti :
+            Parti
           </label>
           <select
             id="parti-affairs"
@@ -178,13 +180,12 @@ export function AffairesFilterBar({
           </select>
         </div>
 
-        {/* Severity */}
-        <div className="flex items-center gap-2">
+        <div>
           <label
             htmlFor="severity-affairs"
-            className="text-sm text-muted-foreground whitespace-nowrap"
+            className="text-xs font-medium text-muted-foreground mb-1 block"
           >
-            Gravité :
+            Gravité
           </label>
           <select
             id="severity-affairs"
@@ -201,13 +202,12 @@ export function AffairesFilterBar({
           </select>
         </div>
 
-        {/* Status */}
-        <div className="flex items-center gap-2">
+        <div>
           <label
             htmlFor="status-affairs"
-            className="text-sm text-muted-foreground whitespace-nowrap"
+            className="text-xs font-medium text-muted-foreground mb-1 block"
           >
-            Statut :
+            Statut
           </label>
           <select
             id="status-affairs"
@@ -234,13 +234,13 @@ export function AffairesFilterBar({
         </div>
       </div>
 
-      {/* Row 2: Involvement toggles */}
+      {/* Involvement toggles */}
       <div
-        className="flex items-center gap-2 flex-wrap"
+        className="flex items-center gap-2 flex-wrap pt-1 border-t border-border/50"
         role="group"
         aria-label="Rôle du responsable politique"
       >
-        <span className="text-sm text-muted-foreground">Rôle :</span>
+        <span className="text-xs font-medium text-muted-foreground">Rôle :</span>
         {(Object.keys(INVOLVEMENT_GROUP_LABELS) as InvolvementGroup[]).map((group) => {
           const isActive = activeGroups.includes(group);
           return (

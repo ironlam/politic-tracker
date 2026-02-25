@@ -30,6 +30,15 @@ import type { AffairStatus, AffairCategory, AffairSeverity, Involvement } from "
 
 export const revalidate = 300; // 5 minutes — CDN edge cache with ISR
 
+// Hex accent colors per super-category (for inline styles per CLAUDE.md convention)
+const SUPER_CATEGORY_ACCENT: Record<AffairSuperCategory, { border: string; bg: string }> = {
+  PROBITE: { border: "#9333ea", bg: "#9333ea0a" },
+  FINANCES: { border: "#2563eb", bg: "#2563eb0a" },
+  PERSONNES: { border: "#dc2626", bg: "#dc26260a" },
+  EXPRESSION: { border: "#d97706", bg: "#d977060a" },
+  AUTRE: { border: "#6b7280", bg: "#6b72800a" },
+};
+
 interface PageProps {
   searchParams: Promise<{
     sort?: string;
@@ -303,16 +312,20 @@ export default async function AffairesPage({ searchParams }: PageProps) {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold mb-2">Affaires judiciaires</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-3xl font-display font-extrabold tracking-tight mb-1">
+            Affaires judiciaires
+          </h1>
+          <p className="text-sm text-muted-foreground">
             {totalAffairs} affaire{totalAffairs !== 1 ? "s" : ""} documentée
             {totalAffairs !== 1 ? "s" : ""} avec sources vérifiables
           </p>
-          <SeoIntro
-            text={`${totalAffairs} affaires judiciaires impliquant des responsables politiques, documentées avec sources vérifiables. Mises en examen, procès, condamnations et relaxes.`}
-          />
+          <div className="sr-only">
+            <SeoIntro
+              text={`${totalAffairs} affaires judiciaires impliquant des responsables politiques, documentées avec sources vérifiables. Mises en examen, procès, condamnations et relaxes.`}
+            />
+          </div>
         </div>
         <ExportButton
           endpoint="/api/export/affaires"
@@ -325,29 +338,33 @@ export default async function AffairesPage({ searchParams }: PageProps) {
       </div>
 
       {/* Super-category cards */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
         {(Object.keys(AFFAIR_SUPER_CATEGORY_LABELS) as AffairSuperCategory[]).map((superCat) => {
           const count = superCounts[superCat] || 0;
           const isActive = superCatFilter === superCat;
+          const accent = SUPER_CATEGORY_ACCENT[superCat];
           return (
             <Link key={superCat} href={isActive ? "/affaires" : buildUrl({ supercat: superCat })}>
               <Card
-                className={`cursor-pointer transition-all hover:shadow-md ${
-                  isActive ? "ring-2 ring-primary" : ""
+                className={`cursor-pointer transition-all hover:shadow-md hover:-translate-y-0.5 border-l-4 ${
+                  isActive ? "ring-2 ring-primary shadow-md" : ""
                 }`}
+                style={{
+                  borderLeftColor: accent.border,
+                  backgroundColor: isActive ? accent.bg : undefined,
+                }}
               >
-                <CardContent className="p-4">
+                <CardContent className="p-3 py-3">
                   <div
-                    className={`text-2xl font-bold ${
-                      AFFAIR_SUPER_CATEGORY_COLORS[superCat].split(" ")[1]
-                    }`}
+                    className="text-3xl font-display font-extrabold tracking-tight"
+                    style={{ color: accent.border }}
                   >
                     {count}
                   </div>
-                  <div className="text-sm font-medium">
+                  <div className="text-sm font-semibold mt-0.5 leading-tight">
                     {AFFAIR_SUPER_CATEGORY_LABELS[superCat]}
                   </div>
-                  <div className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                  <div className="text-xs text-muted-foreground mt-1 leading-snug line-clamp-2">
                     {AFFAIR_SUPER_CATEGORY_DESCRIPTIONS[superCat]}
                   </div>
                 </CardContent>
@@ -434,7 +451,11 @@ export default async function AffairesPage({ searchParams }: PageProps) {
                     ? "Faits"
                     : null;
               return (
-                <Card key={affair.id}>
+                <Card
+                  key={affair.id}
+                  className="border-l-4 transition-shadow hover:shadow-md"
+                  style={{ borderLeftColor: SUPER_CATEGORY_ACCENT[superCat].border }}
+                >
                   <CardContent className="pt-6">
                     <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                       <div className="flex-1">

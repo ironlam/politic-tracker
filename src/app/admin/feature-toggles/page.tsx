@@ -7,7 +7,9 @@ import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, Plus, Trash2, Clock } from "lucide-react";
+import { Plus, Trash2, Clock, ToggleLeft } from "lucide-react";
+import { toast } from "sonner";
+import { FlagCardSkeleton } from "./_components/FlagCardSkeleton";
 
 interface FeatureFlag {
   id: string;
@@ -59,14 +61,21 @@ export default function FeatureTogglesPage() {
   }, [fetchFlags]);
 
   async function toggleFlag(id: string, enabled: boolean) {
+    setFlags((prev) => prev.map((f) => (f.id === id ? { ...f, enabled } : f)));
     setToggling(id);
     try {
-      await fetch(`/api/admin/feature-flags/${id}`, {
+      const res = await fetch(`/api/admin/feature-flags/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ enabled }),
       });
-      setFlags((prev) => prev.map((f) => (f.id === id ? { ...f, enabled } : f)));
+      if (!res.ok) {
+        setFlags((prev) => prev.map((f) => (f.id === id ? { ...f, enabled: !enabled } : f)));
+        toast.error("Erreur, flag restauré");
+      }
+    } catch {
+      setFlags((prev) => prev.map((f) => (f.id === id ? { ...f, enabled: !enabled } : f)));
+      toast.error("Erreur réseau, flag restauré");
     } finally {
       setToggling(null);
     }
@@ -159,13 +168,15 @@ export default function FeatureTogglesPage() {
       )}
 
       {loading ? (
-        <div className="flex items-center justify-center py-16">
-          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-        </div>
+        <FlagCardSkeleton />
       ) : flags.length === 0 ? (
         <Card>
-          <CardContent className="p-8 text-center text-sm text-muted-foreground">
-            Aucun feature flag configuré
+          <CardContent className="p-12 text-center">
+            <ToggleLeft
+              className="w-10 h-10 text-muted-foreground/40 mx-auto mb-3"
+              aria-hidden="true"
+            />
+            <p className="text-sm text-muted-foreground">Aucun feature flag configuré</p>
           </CardContent>
         </Card>
       ) : (

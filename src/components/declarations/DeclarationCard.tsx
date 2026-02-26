@@ -2,9 +2,11 @@ import type { DeclarationDetails } from "@/types/hatvp";
 import { HorizontalBars } from "@/components/stats/HorizontalBars";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { ChevronRight } from "lucide-react";
 import { DeclarationMetrics } from "./DeclarationMetrics";
 
 interface DeclarationCardProps {
+  id?: string;
   declarations: Array<{
     id: string;
     type: string;
@@ -16,7 +18,33 @@ interface DeclarationCardProps {
   politicianHatvpUrl: string | null;
 }
 
-export function DeclarationCard({ declarations, politicianHatvpUrl }: DeclarationCardProps) {
+function CollapsibleSection({
+  title,
+  count,
+  children,
+}: {
+  title: string;
+  count: number;
+  children: React.ReactNode;
+}) {
+  return (
+    <details className="group border rounded-lg">
+      <summary className="flex items-center gap-2 cursor-pointer p-3 hover:bg-muted/50 transition-colors rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1">
+        <ChevronRight
+          className="w-4 h-4 text-muted-foreground transition-transform group-open:rotate-90"
+          aria-hidden="true"
+        />
+        <span className="text-sm font-medium flex-1">{title}</span>
+        <Badge variant="secondary" className="text-xs px-1.5 py-0">
+          {count}
+        </Badge>
+      </summary>
+      <div className="px-3 pb-3 pt-1 space-y-3">{children}</div>
+    </details>
+  );
+}
+
+export function DeclarationCard({ id, declarations, politicianHatvpUrl }: DeclarationCardProps) {
   if (declarations.length === 0) return null;
 
   // Find the latest DIA that has parsed details
@@ -39,7 +67,7 @@ export function DeclarationCard({ declarations, politicianHatvpUrl }: Declaratio
   }));
 
   return (
-    <Card>
+    <Card id={id}>
       <CardHeader>
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold">
@@ -99,121 +127,103 @@ export function DeclarationCard({ declarations, politicianHatvpUrl }: Declaratio
 
         {/* Professional activities */}
         {details && details.professionalActivities.length > 0 && (
-          <details className="group">
-            <summary className="flex items-center justify-between cursor-pointer py-2 text-sm font-medium">
-              <span>Revenus et activités professionnelles</span>
-              <span className="text-muted-foreground text-xs">
-                {details.professionalActivities.length}
-              </span>
-            </summary>
-            <div className="pt-2 space-y-3">
-              {details.professionalActivities.map((activity, i) => (
-                <div key={`activity-${i}`} className="text-sm">
-                  <div className="font-medium">{activity.description}</div>
-                  <div className="text-muted-foreground">{activity.employer}</div>
-                  {activity.startDate && (
-                    <div className="text-xs text-muted-foreground">
-                      {activity.startDate} — {activity.endDate || "en cours"}
-                    </div>
-                  )}
-                  {activity.annualRevenues.length > 0 && (
-                    <div className="flex gap-3 mt-1">
-                      {activity.annualRevenues.map((r) => (
-                        <span key={r.year} className="text-xs font-mono">
-                          {r.year}: {new Intl.NumberFormat("fr-FR").format(r.amount)} €
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </details>
+          <CollapsibleSection
+            title="Revenus et activités professionnelles"
+            count={details.professionalActivities.length}
+          >
+            {details.professionalActivities.map((activity, i) => (
+              <div key={`activity-${i}`} className="text-sm">
+                <div className="font-medium">{activity.description}</div>
+                <div className="text-muted-foreground">{activity.employer}</div>
+                {activity.startDate && (
+                  <div className="text-xs text-muted-foreground">
+                    {activity.startDate} — {activity.endDate || "en cours"}
+                  </div>
+                )}
+                {activity.annualRevenues.length > 0 && (
+                  <div className="flex gap-3 mt-1">
+                    {activity.annualRevenues.map((r) => (
+                      <span key={r.year} className="text-xs font-mono">
+                        {r.year}: {new Intl.NumberFormat("fr-FR").format(r.amount)} €
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </CollapsibleSection>
         )}
 
         {/* Electoral mandates */}
         {details && details.electoralMandates.length > 0 && (
-          <details className="group">
-            <summary className="flex items-center justify-between cursor-pointer py-2 text-sm font-medium">
-              <span>Mandats électifs et indemnités</span>
-              <span className="text-muted-foreground text-xs">
-                {details.electoralMandates.length}
-              </span>
-            </summary>
-            <div className="pt-2 space-y-3">
-              {details.electoralMandates.map((mandate, i) => (
-                <div key={`mandate-${i}`} className="text-sm">
-                  <div className="font-medium">{mandate.mandate}</div>
-                  {mandate.startDate && (
-                    <div className="text-xs text-muted-foreground">
-                      {mandate.startDate} — {mandate.endDate || "en cours"}
-                    </div>
-                  )}
-                  {mandate.annualRevenues.length > 0 && (
-                    <div className="flex gap-3 mt-1">
-                      {mandate.annualRevenues.map((r) => (
-                        <span key={r.year} className="text-xs font-mono">
-                          {r.year}: {new Intl.NumberFormat("fr-FR").format(r.amount)} €
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </details>
+          <CollapsibleSection
+            title="Mandats électifs et indemnités"
+            count={details.electoralMandates.length}
+          >
+            {details.electoralMandates.map((mandate, i) => (
+              <div key={`mandate-${i}`} className="text-sm">
+                <div className="font-medium">{mandate.mandate}</div>
+                {mandate.startDate && (
+                  <div className="text-xs text-muted-foreground">
+                    {mandate.startDate} — {mandate.endDate || "en cours"}
+                  </div>
+                )}
+                {mandate.annualRevenues.length > 0 && (
+                  <div className="flex gap-3 mt-1">
+                    {mandate.annualRevenues.map((r) => (
+                      <span key={r.year} className="text-xs font-mono">
+                        {r.year}: {new Intl.NumberFormat("fr-FR").format(r.amount)} €
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </CollapsibleSection>
         )}
 
         {/* Directorships */}
         {details && details.directorships.length > 0 && (
-          <details className="group">
-            <summary className="flex items-center justify-between cursor-pointer py-2 text-sm font-medium">
-              <span>Postes de direction</span>
-              <span className="text-muted-foreground text-xs">{details.directorships.length}</span>
-            </summary>
-            <div className="pt-2 space-y-3">
-              {details.directorships.map((dir, i) => (
-                <div key={`dir-${i}`} className="text-sm">
-                  <div className="font-medium">{dir.company}</div>
-                  <div className="text-muted-foreground">{dir.role}</div>
-                  {dir.startDate && (
-                    <div className="text-xs text-muted-foreground">
-                      {dir.startDate} — {dir.endDate || "en cours"}
-                    </div>
-                  )}
-                  {dir.annualRevenues.length > 0 && (
-                    <div className="flex gap-3 mt-1">
-                      {dir.annualRevenues.map((r) => (
-                        <span key={r.year} className="text-xs font-mono">
-                          {r.year}: {new Intl.NumberFormat("fr-FR").format(r.amount)} €
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </details>
+          <CollapsibleSection title="Postes de direction" count={details.directorships.length}>
+            {details.directorships.map((dir, i) => (
+              <div key={`dir-${i}`} className="text-sm">
+                <div className="font-medium">{dir.company}</div>
+                <div className="text-muted-foreground">{dir.role}</div>
+                {dir.startDate && (
+                  <div className="text-xs text-muted-foreground">
+                    {dir.startDate} — {dir.endDate || "en cours"}
+                  </div>
+                )}
+                {dir.annualRevenues.length > 0 && (
+                  <div className="flex gap-3 mt-1">
+                    {dir.annualRevenues.map((r) => (
+                      <span key={r.year} className="text-xs font-mono">
+                        {r.year}: {new Intl.NumberFormat("fr-FR").format(r.amount)} €
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </CollapsibleSection>
         )}
 
         {/* Spouse & collaborators */}
         {details && (details.spouseActivity || details.collaborators.length > 0) && (
-          <details className="group">
-            <summary className="flex items-center justify-between cursor-pointer py-2 text-sm font-medium">
-              <span>Conjoint & collaborateurs</span>
-            </summary>
-            <div className="pt-2 space-y-2">
-              {details.spouseActivity && (
-                <p className="text-sm text-muted-foreground">{details.spouseActivity}</p>
-              )}
-              {details.collaborators.map((c, i) => (
-                <div key={`collab-${i}`} className="text-sm">
-                  <span className="font-medium">{c.name}</span>
-                  <span className="text-muted-foreground"> — {c.employer}</span>
-                </div>
-              ))}
-            </div>
-          </details>
+          <CollapsibleSection
+            title="Conjoint & collaborateurs"
+            count={(details.spouseActivity ? 1 : 0) + details.collaborators.length}
+          >
+            {details.spouseActivity && (
+              <p className="text-sm text-muted-foreground">{details.spouseActivity}</p>
+            )}
+            {details.collaborators.map((c, i) => (
+              <div key={`collab-${i}`} className="text-sm">
+                <span className="font-medium">{c.name}</span>
+                <span className="text-muted-foreground"> — {c.employer}</span>
+              </div>
+            ))}
+          </CollapsibleSection>
         )}
 
         {/* All declaration links */}

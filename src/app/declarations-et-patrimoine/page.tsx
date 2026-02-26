@@ -606,7 +606,7 @@ export default async function DeclarationsPage({ searchParams }: PageProps) {
 
       {/* Results grid */}
       {tableData.rows.length === 0 ? (
-        <div className="text-center py-12 text-muted-foreground">
+        <div id="resultats" className="text-center py-12 text-muted-foreground">
           <p className="text-lg">Aucun résultat</p>
           <p className="text-sm mt-1">
             {search
@@ -615,7 +615,7 @@ export default async function DeclarationsPage({ searchParams }: PageProps) {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+        <div id="resultats" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
           {tableData.rows.map((row) => (
             <DeclarationListCard key={row.id} row={row} />
           ))}

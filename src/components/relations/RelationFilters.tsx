@@ -11,9 +11,20 @@ import {
 interface RelationFiltersProps {
   selectedTypes: RelationType[];
   onChange: (types: RelationType[]) => void;
+  compact?: boolean;
 }
 
-export function RelationFilters({ selectedTypes, onChange }: RelationFiltersProps) {
+/** Short label for mobile compact mode: take the last word of the label */
+function shortLabel(label: string): string {
+  const words = label.split(" ");
+  return words[words.length - 1];
+}
+
+export function RelationFilters({
+  selectedTypes,
+  onChange,
+  compact = false,
+}: RelationFiltersProps) {
   const handleToggle = (type: RelationType) => {
     if (selectedTypes.includes(type)) {
       // Don't allow removing all types
@@ -26,15 +37,54 @@ export function RelationFilters({ selectedTypes, onChange }: RelationFiltersProp
   };
 
   const handleSelectAll = () => {
-    onChange(ALL_RELATION_TYPES);
+    onChange([...ALL_RELATION_TYPES]);
   };
 
+  if (compact) {
+    return (
+      <div
+        role="group"
+        aria-label="Filtrer les types de relations"
+        className="flex flex-wrap gap-1.5"
+      >
+        {ALL_RELATION_TYPES.map((type) => {
+          const isSelected = selectedTypes.includes(type);
+          return (
+            <button
+              key={type}
+              onClick={() => handleToggle(type)}
+              aria-pressed={isSelected}
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-colors border focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 focus-visible:outline-none ${
+                isSelected
+                  ? "border-foreground/20 bg-foreground/5 text-foreground"
+                  : "border-border text-muted-foreground hover:border-muted-foreground/30"
+              }`}
+              title={RELATION_TYPE_DESCRIPTIONS[type]}
+            >
+              <span
+                className="w-2 h-2 rounded-full shrink-0"
+                style={{
+                  backgroundColor: isSelected ? RELATION_TYPE_COLORS[type] : "#D1D5DB",
+                }}
+              />
+              <span className="hidden sm:inline">{RELATION_TYPE_LABELS[type]}</span>
+              <span className="sm:hidden">{shortLabel(RELATION_TYPE_LABELS[type])}</span>
+            </button>
+          );
+        })}
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-3">
+    <div role="group" aria-label="Filtrer les types de relations" className="space-y-3">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-medium">Types de relations</h3>
         {selectedTypes.length < ALL_RELATION_TYPES.length && (
-          <button onClick={handleSelectAll} className="text-xs text-primary hover:underline">
+          <button
+            onClick={handleSelectAll}
+            className="text-xs text-primary hover:underline focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 focus-visible:outline-none rounded"
+          >
             Tout sélectionner
           </button>
         )}
@@ -46,7 +96,8 @@ export function RelationFilters({ selectedTypes, onChange }: RelationFiltersProp
             <button
               key={type}
               onClick={() => handleToggle(type)}
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-left text-sm transition-colors ${
+              aria-pressed={isSelected}
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-left text-sm transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 focus-visible:outline-none ${
                 isSelected
                   ? "border-primary bg-primary/5"
                   : "border-border hover:border-muted-foreground/30"

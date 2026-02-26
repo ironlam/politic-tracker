@@ -1,4 +1,4 @@
-export { syncDeputies, getSyncStats } from "./deputies";
+export { syncDeputies, getSyncStats, fetchDeputiesCSV } from "./deputies";
 export { syncSenators, getSenatStats } from "./senators";
 export { syncGovernment, getGovernmentStats } from "./government";
 export { syncHATVP, getHATVPStats } from "./hatvp";

@@ -18,6 +18,7 @@ import { MandateType, DataSource } from "../src/generated/prisma";
 import { politicianService } from "../src/services/politician";
 import { HTTPClient } from "../src/lib/api/http-client";
 import { SENATE_GROUPS, ASSEMBLY_GROUPS } from "../src/config/parliamentaryGroups";
+import { fetchDeputiesCSV } from "../src/services/sync/deputies";
 
 const client = new HTTPClient({ rateLimitMs: 500 });
 
@@ -171,34 +172,31 @@ async function fixStaleSenators(stats: Stats, apply: boolean) {
 async function fixStaleDeputies(stats: Stats, apply: boolean) {
   console.log("── Députés ────────────────────────────────");
 
-  const legislatureStartDate = new Date("2024-07-08");
-
-  let apiSlugs: Set<string>;
+  // Use the official data.gouv.fr CSV (same source as sync)
+  let activeAnIds: Set<string>;
   try {
-    const { data } = await client.get<
-      { deputes: { depute: { slug: string } }[] } | Record<string, unknown>
-    >("https://www.nosdeputes.fr/deputes/json");
-
-    const raw = data as { deputes?: { depute: { slug: string } }[] };
-    const deputies = raw.deputes ? raw.deputes.map((d) => d.depute) : [];
-    apiSlugs = new Set(deputies.map((d) => d.slug).filter(Boolean));
-    console.log(`  API NosDéputés: ${apiSlugs.size} députés actuels`);
+    const deputies = await fetchDeputiesCSV();
+    activeAnIds = new Set(deputies.map((d) => d.id));
+    console.log(`  CSV data.gouv.fr: ${activeAnIds.size} députés actifs`);
   } catch (error) {
-    console.warn("  ⚠ Could not fetch NosDéputés API, skipping");
-    stats.errors.push(`Deputies API: ${error}`);
+    console.warn("  ⚠ Could not fetch data.gouv.fr CSV, skipping");
+    stats.errors.push(`Deputies CSV: ${error}`);
     return;
   }
 
   const dbMandates = await db.mandate.findMany({
-    where: { type: MandateType.DEPUTE, isCurrent: true },
+    where: {
+      type: MandateType.DEPUTE,
+      isCurrent: true,
+      source: DataSource.ASSEMBLEE_NATIONALE,
+    },
     include: {
       politician: {
         select: {
           id: true,
           fullName: true,
-          slug: true,
           externalIds: {
-            where: { source: DataSource.NOSDEPUTES },
+            where: { source: DataSource.ASSEMBLEE_NATIONALE },
             select: { externalId: true },
           },
         },
@@ -207,23 +205,68 @@ async function fixStaleDeputies(stats: Stats, apply: boolean) {
   });
   console.log(`  DB: ${dbMandates.length} mandats de député isCurrent=true`);
 
+  const today = new Date();
   for (const mandate of dbMandates) {
-    const ndSlug = mandate.politician.externalIds[0]?.externalId || mandate.politician.slug;
+    const anId = mandate.politician.externalIds[0]?.externalId;
 
-    if (!apiSlugs.has(ndSlug)) {
-      if (mandate.startDate && mandate.startDate < legislatureStartDate) {
-        console.log(
-          `  ✗ ${mandate.politician.fullName} (${ndSlug}) → fermé au ${legislatureStartDate.toISOString().split("T")[0]}`
-        );
+    if (!anId || !activeAnIds.has(anId)) {
+      console.log(
+        `  ✗ ${mandate.politician.fullName} (${anId || "no AN ID"}) → fermé au ${today.toISOString().split("T")[0]}`
+      );
 
-        if (apply) {
-          await db.mandate.update({
-            where: { id: mandate.id },
-            data: { isCurrent: false, endDate: legislatureStartDate },
-          });
-        }
-        stats.deputiesClosed++;
+      if (apply) {
+        await db.mandate.update({
+          where: { id: mandate.id },
+          data: { isCurrent: false, endDate: today },
+        });
       }
+      stats.deputiesClosed++;
+    }
+  }
+
+  // Also check non-AN-sourced DEPUTE mandates (Wikidata, HATVP, etc.)
+  const nonAnMandates = await db.mandate.findMany({
+    where: {
+      type: MandateType.DEPUTE,
+      isCurrent: true,
+      source: { not: DataSource.ASSEMBLEE_NATIONALE },
+    },
+    include: {
+      politician: {
+        select: {
+          id: true,
+          fullName: true,
+          officialId: true,
+          externalIds: {
+            where: { source: DataSource.ASSEMBLEE_NATIONALE },
+            select: { externalId: true },
+          },
+        },
+      },
+    },
+  });
+
+  if (nonAnMandates.length > 0) {
+    console.log(`  Non-AN-sourced DEPUTE mandates: ${nonAnMandates.length}`);
+  }
+
+  for (const mandate of nonAnMandates) {
+    // Skip if politician also has a current AN-sourced mandate
+    const hasAnMandate = dbMandates.some((m) => m.politician.id === mandate.politician.id);
+    if (hasAnMandate) continue;
+
+    const anId = mandate.politician.externalIds[0]?.externalId || mandate.politician.officialId;
+    if (!anId || !activeAnIds.has(anId)) {
+      console.log(
+        `  ✗ ${mandate.politician.fullName} (source: ${mandate.source}) → fermé au ${today.toISOString().split("T")[0]}`
+      );
+      if (apply) {
+        await db.mandate.update({
+          where: { id: mandate.id },
+          data: { isCurrent: false, endDate: today },
+        });
+      }
+      stats.deputiesClosed++;
     }
   }
 

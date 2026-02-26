@@ -33,7 +33,7 @@ export function DeclarationCard({ declarations, politicianHatvpUrl }: Declaratio
   const remainingParticipations = sortedParticipations.slice(5);
 
   const participationBars = topParticipations.map((p) => ({
-    label: p.company,
+    label: p.company.includes("[Données non publiées]") ? "Société (nom non publié)" : p.company,
     value: p.evaluation!,
     suffix: " €",
   }));
@@ -81,7 +81,11 @@ export function DeclarationCard({ declarations, politicianHatvpUrl }: Declaratio
                 <div className="pt-2 space-y-2">
                   {remainingParticipations.map((p, i) => (
                     <div key={`part-${i}`} className="flex items-center justify-between text-sm">
-                      <span className="truncate mr-2">{p.company}</span>
+                      <span className="truncate mr-2">
+                        {p.company.includes("[Données non publiées]")
+                          ? "Société (nom non publié)"
+                          : p.company}
+                      </span>
                       <span className="font-mono text-muted-foreground whitespace-nowrap">
                         {new Intl.NumberFormat("fr-FR").format(p.evaluation!)} €
                       </span>

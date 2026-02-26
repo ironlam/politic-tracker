@@ -404,7 +404,7 @@ export default async function FactChecksPage({ searchParams }: PageProps) {
           <p className="text-xs text-muted-foreground mb-2">Politiciens les plus fact-checkés :</p>
           <div className="flex flex-wrap gap-1">
             {stats.topPoliticians.map((p) => (
-              <Link key={p.slug} href={buildUrl({ politician: p.slug })}>
+              <Link key={p.slug} href={buildUrl({ politician: p.slug })} prefetch={false}>
                 <Badge variant="outline" className="text-xs hover:bg-muted cursor-pointer">
                   {p.fullName} ({Number(p.count)})
                 </Badge>

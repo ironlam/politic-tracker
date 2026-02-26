@@ -1,11 +1,9 @@
 import { MandateType } from "@/generated/prisma";
 
 export type RelationType =
-  | "SAME_PARTY"
   | "SAME_GOVERNMENT"
-  | "SAME_LEGISLATURE"
-  | "SAME_CONSTITUENCY"
-  | "SAME_EUROPEAN_GROUP"
+  | "SHARED_COMPANY"
+  | "SAME_DEPARTMENT"
   | "PARTY_HISTORY";
 
 export interface GraphNode {
@@ -24,21 +22,21 @@ export interface GraphLink {
   source: string;
   target: string;
   type: RelationType;
-  strength: number; // 1-10, affects link thickness
-  label?: string; // e.g., "Gouvernement Borne (2022-2024)"
+  label?: string;
+}
+
+export interface Cluster {
+  type: RelationType;
+  label: string;
+  nodes: GraphNode[];
+  links: GraphLink[];
 }
 
 export interface RelationsResponse {
   center: GraphNode;
-  nodes: GraphNode[];
-  links: GraphLink[];
+  clusters: Cluster[];
   stats: {
     totalConnections: number;
     byType: Partial<Record<RelationType, number>>;
   };
-}
-
-export interface RelationsFilters {
-  types?: RelationType[];
-  limit?: number;
 }

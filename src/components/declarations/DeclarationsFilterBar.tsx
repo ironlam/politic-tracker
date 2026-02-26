@@ -54,7 +54,7 @@ export function DeclarationsFilterBar({
         params.delete("page");
       }
       startTransition(() => {
-        router.push(`/declarations-et-patrimoine?${params.toString()}#resultats`);
+        router.push(`/declarations-et-patrimoine?${params.toString()}`, { scroll: false });
       });
     },
     [router, searchParams, startTransition]

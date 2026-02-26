@@ -731,13 +731,13 @@ export default async function PoliticianPage({ params }: PageProps) {
                       <p className="text-sm font-medium mb-2">Derniers votes</p>
                       <div className="space-y-2">
                         {voteData.recentVotes.map((vote) => (
-                          <div key={vote.id} className="flex items-center gap-2 text-sm">
+                          <div key={vote.id} className="flex items-start gap-2 text-sm">
                             <span
-                              className={`w-2 h-2 rounded-full ${VOTE_POSITION_DOT_COLORS[vote.position]}`}
+                              className={`w-2 h-2 mt-1.5 shrink-0 rounded-full ${VOTE_POSITION_DOT_COLORS[vote.position]}`}
                             />
                             <Link
                               href={`/votes/${vote.scrutin.id}`}
-                              className="flex-1 truncate hover:underline"
+                              className="flex-1 hover:underline"
                             >
                               {vote.scrutin.title}
                             </Link>
@@ -868,41 +868,41 @@ export default async function PoliticianPage({ params }: PageProps) {
                             {directClaims.slice(0, 5).map((mention) => (
                               <div
                                 key={mention.id}
-                                className="flex items-start gap-3 border-b last:border-0 pb-3 last:pb-0"
+                                className="border-b last:border-0 pb-3 last:pb-0 space-y-1"
                               >
-                                <Badge
-                                  className={`shrink-0 ${FACTCHECK_RATING_COLORS[mention.factCheck.verdictRating]}`}
-                                >
-                                  {FACTCHECK_RATING_LABELS[mention.factCheck.verdictRating]}
-                                </Badge>
-                                <div className="min-w-0 flex-1">
-                                  {mention.factCheck.slug ? (
-                                    <Link
-                                      href={`/factchecks/${mention.factCheck.slug}`}
-                                      className="text-sm font-medium hover:underline"
-                                    >
-                                      {mention.factCheck.title}
-                                    </Link>
-                                  ) : (
-                                    <a
-                                      href={mention.factCheck.sourceUrl}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="text-sm font-medium hover:underline"
-                                    >
-                                      {mention.factCheck.title}
-                                    </a>
-                                  )}
-                                  {mention.factCheck.claimText && (
-                                    <p className="text-sm text-muted-foreground mt-1 line-clamp-3">
-                                      &laquo;&nbsp;{mention.factCheck.claimText}&nbsp;&raquo;
-                                    </p>
-                                  )}
-                                  <p className="text-xs text-muted-foreground mt-0.5">
+                                <div className="flex items-center gap-2">
+                                  <Badge
+                                    className={`shrink-0 ${FACTCHECK_RATING_COLORS[mention.factCheck.verdictRating]}`}
+                                  >
+                                    {FACTCHECK_RATING_LABELS[mention.factCheck.verdictRating]}
+                                  </Badge>
+                                  <span className="text-xs text-muted-foreground">
                                     {mention.factCheck.source} ·{" "}
                                     {formatDate(mention.factCheck.publishedAt)}
-                                  </p>
+                                  </span>
                                 </div>
+                                {mention.factCheck.slug ? (
+                                  <Link
+                                    href={`/factchecks/${mention.factCheck.slug}`}
+                                    className="text-sm font-medium hover:underline block"
+                                  >
+                                    {mention.factCheck.title}
+                                  </Link>
+                                ) : (
+                                  <a
+                                    href={mention.factCheck.sourceUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-sm font-medium hover:underline block"
+                                  >
+                                    {mention.factCheck.title}
+                                  </a>
+                                )}
+                                {mention.factCheck.claimText && (
+                                  <p className="text-sm text-muted-foreground">
+                                    &laquo;&nbsp;{mention.factCheck.claimText}&nbsp;&raquo;
+                                  </p>
+                                )}
                               </div>
                             ))}
                           </div>
@@ -919,46 +919,46 @@ export default async function PoliticianPage({ params }: PageProps) {
                             {otherMentions.slice(0, 3).map((mention) => (
                               <div
                                 key={mention.id}
-                                className="flex items-start gap-3 border-b last:border-0 pb-3 last:pb-0"
+                                className="border-b last:border-0 pb-3 last:pb-0 space-y-1"
                               >
-                                <Badge
-                                  className={`shrink-0 ${FACTCHECK_RATING_COLORS[mention.factCheck.verdictRating]}`}
-                                >
-                                  {FACTCHECK_RATING_LABELS[mention.factCheck.verdictRating]}
-                                </Badge>
-                                <div className="min-w-0 flex-1">
-                                  {mention.factCheck.slug ? (
-                                    <Link
-                                      href={`/factchecks/${mention.factCheck.slug}`}
-                                      className="text-sm font-medium hover:underline"
-                                    >
-                                      {mention.factCheck.title}
-                                    </Link>
-                                  ) : (
-                                    <a
-                                      href={mention.factCheck.sourceUrl}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="text-sm font-medium hover:underline"
-                                    >
-                                      {mention.factCheck.title}
-                                    </a>
-                                  )}
-                                  {mention.factCheck.claimText && (
-                                    <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                                      {mention.factCheck.claimant && (
-                                        <span className="font-medium">
-                                          {mention.factCheck.claimant} :{" "}
-                                        </span>
-                                      )}
-                                      &laquo;&nbsp;{mention.factCheck.claimText}&nbsp;&raquo;
-                                    </p>
-                                  )}
-                                  <p className="text-xs text-muted-foreground mt-0.5">
+                                <div className="flex items-center gap-2">
+                                  <Badge
+                                    className={`shrink-0 ${FACTCHECK_RATING_COLORS[mention.factCheck.verdictRating]}`}
+                                  >
+                                    {FACTCHECK_RATING_LABELS[mention.factCheck.verdictRating]}
+                                  </Badge>
+                                  <span className="text-xs text-muted-foreground">
                                     {mention.factCheck.source} ·{" "}
                                     {formatDate(mention.factCheck.publishedAt)}
-                                  </p>
+                                  </span>
                                 </div>
+                                {mention.factCheck.slug ? (
+                                  <Link
+                                    href={`/factchecks/${mention.factCheck.slug}`}
+                                    className="text-sm font-medium hover:underline block"
+                                  >
+                                    {mention.factCheck.title}
+                                  </Link>
+                                ) : (
+                                  <a
+                                    href={mention.factCheck.sourceUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-sm font-medium hover:underline block"
+                                  >
+                                    {mention.factCheck.title}
+                                  </a>
+                                )}
+                                {mention.factCheck.claimText && (
+                                  <p className="text-sm text-muted-foreground">
+                                    {mention.factCheck.claimant && (
+                                      <span className="font-medium">
+                                        {mention.factCheck.claimant} :{" "}
+                                      </span>
+                                    )}
+                                    &laquo;&nbsp;{mention.factCheck.claimText}&nbsp;&raquo;
+                                  </p>
+                                )}
                               </div>
                             ))}
                           </div>

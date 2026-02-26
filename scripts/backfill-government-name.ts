@@ -2,9 +2,7 @@
  * Backfill governmentName on existing government mandates.
  * The institution field already contains "Gouvernement {name}" — extract the name.
  */
-import { PrismaClient } from "@/generated/prisma";
-
-const db = new PrismaClient();
+import { db } from "../src/lib/db";
 
 async function main() {
   const govMandates = await db.mandate.findMany({

@@ -5,7 +5,7 @@ import { cacheTag, cacheLife } from "next/cache";
 import { db } from "@/lib/db";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { formatDate } from "@/lib/utils";
+import { formatDate, formatCompactCurrency } from "@/lib/utils";
 import {
   AFFAIR_STATUS_LABELS,
   AFFAIR_STATUS_COLORS,
@@ -184,13 +184,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (details) {
     const parts: string[] = [];
     if (details.totalPortfolioValue && details.totalPortfolioValue > 0) {
-      const formatted =
-        details.totalPortfolioValue >= 1_000_000
-          ? `${(details.totalPortfolioValue / 1_000_000).toFixed(1)} M€`
-          : details.totalPortfolioValue >= 1_000
-            ? `${Math.round(details.totalPortfolioValue / 1_000)} k€`
-            : `${details.totalPortfolioValue} €`;
-      parts.push(`${formatted} de participations financières`);
+      parts.push(
+        `${formatCompactCurrency(details.totalPortfolioValue)} de participations financières`
+      );
     }
     if (details.totalCompanies > 0) {
       parts.push(`${details.totalCompanies} sociétés déclarées`);
@@ -445,11 +441,14 @@ export default async function PoliticianPage({ params }: PageProps) {
   );
   const victimAffairs = politician.affairs.filter((a) => a.involvement === "VICTIM");
 
-  // Extract companies from HATVP declarations for JSON-LD
+  // Extract companies where politician is a board member for JSON-LD
   const latestDIAForLD = politician.declarations.find((d) => d.type === "INTERETS" && d.details);
   const detailsForLD = latestDIAForLD?.details as DeclarationDetails | null;
   const memberOfOrgs =
-    detailsForLD?.financialParticipations.map((p) => ({ name: p.company })).slice(0, 10) ?? [];
+    detailsForLD?.financialParticipations
+      .filter((p) => p.isBoardMember)
+      .map((p) => ({ name: p.company }))
+      .slice(0, 10) ?? [];
 
   return (
     <>

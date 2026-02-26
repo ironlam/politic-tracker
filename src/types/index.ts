@@ -103,6 +103,8 @@ export type PoliticianWithPartyAndCounts = Politician & {
   hasConviction?: boolean; // legacy — use hasCritiqueAffair
   hasCritiqueAffair?: boolean;
   isDeceased?: boolean;
+  /** True if active parliamentarian with no published DI */
+  missingDeclaration?: boolean;
   // Current mandate info (for display on cards)
   currentMandate?: {
     type: MandateType;

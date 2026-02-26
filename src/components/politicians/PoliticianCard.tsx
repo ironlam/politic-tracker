@@ -9,6 +9,7 @@ import type { PoliticianWithParty, PoliticianWithPartyAndCounts } from "@/types"
 interface PoliticianCardProps {
   politician: PoliticianWithParty | PoliticianWithPartyAndCounts;
   showConvictionBadge?: boolean;
+  showMissingDeclarationBadge?: boolean;
 }
 
 // Format mandate for display (short version)
@@ -30,12 +31,17 @@ function formatMandateShort(
   return typeLabel;
 }
 
-export function PoliticianCard({ politician, showConvictionBadge = false }: PoliticianCardProps) {
+export function PoliticianCard({
+  politician,
+  showConvictionBadge = false,
+  showMissingDeclarationBadge = false,
+}: PoliticianCardProps) {
   const hasCritiqueAffair =
     ("hasCritiqueAffair" in politician && politician.hasCritiqueAffair) ||
     ("hasCritiqueAffair" in politician && politician.hasCritiqueAffair);
   const affairCount = "_count" in politician ? politician._count.affairs : 0;
   const isDeceased = politician.deathDate !== null;
+  const missingDeclaration = "missingDeclaration" in politician && politician.missingDeclaration;
   const currentMandate = "currentMandate" in politician ? politician.currentMandate : null;
   const significantPartyRole =
     "significantPartyRole" in politician ? politician.significantPartyRole : null;
@@ -118,6 +124,14 @@ export function PoliticianCard({ politician, showConvictionBadge = false }: Poli
                     className="text-xs text-destructive/80 border-destructive/40 bg-destructive/5"
                   >
                     {affairCount} condamnation{affairCount > 1 ? "s" : ""}
+                  </Badge>
+                )}
+                {showMissingDeclarationBadge && missingDeclaration && (
+                  <Badge
+                    variant="outline"
+                    className="text-xs text-amber-600 border-amber-300 bg-amber-50 dark:text-amber-400 dark:border-amber-800 dark:bg-amber-950/30"
+                  >
+                    Aucune déclaration publiée
                   </Badge>
                 )}
               </div>

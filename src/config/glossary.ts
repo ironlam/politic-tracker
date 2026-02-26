@@ -61,6 +61,21 @@ export const INSTITUTION_TERMS = {
 } as const;
 
 // ============================================
+// HATVP — Déclarations de patrimoine & intérêts
+// ============================================
+
+export const HATVP_TERMS = {
+  portefeuilleTotal:
+    "Valeur totale estimée des participations financières déclarées (actions, obligations, assurance-vie…).",
+  participationsHatvp:
+    "Nombre d'entreprises ou organismes dans lesquels le déclarant détient des parts ou actions.",
+  revenusAnnuels:
+    "Montant brut des revenus perçus sur la dernière année déclarée (traitements, honoraires, dividendes…).",
+  mandatsDirections:
+    "Nombre de fonctions de direction ou mandats exercés dans des entreprises, associations ou organismes publics.",
+} as const;
+
+// ============================================
 // MÉTRIQUES & DONNÉES
 // ============================================
 
@@ -76,6 +91,7 @@ export const GLOSSARY = {
   ...LEGAL_TERMS,
   ...PARLIAMENTARY_TERMS,
   ...INSTITUTION_TERMS,
+  ...HATVP_TERMS,
   ...METRIC_TERMS,
 } as const;
 

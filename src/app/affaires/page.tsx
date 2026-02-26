@@ -344,7 +344,11 @@ export default async function AffairesPage({ searchParams }: PageProps) {
           const isActive = superCatFilter === superCat;
           const accent = SUPER_CATEGORY_ACCENT[superCat];
           return (
-            <Link key={superCat} href={isActive ? "/affaires" : buildUrl({ supercat: superCat })}>
+            <Link
+              key={superCat}
+              href={isActive ? "/affaires" : buildUrl({ supercat: superCat })}
+              prefetch={false}
+            >
               <Card
                 className={`cursor-pointer transition-all hover:shadow-md hover:-translate-y-0.5 border-l-4 ${
                   isActive ? "ring-2 ring-primary shadow-md" : ""

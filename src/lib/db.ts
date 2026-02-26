@@ -16,13 +16,14 @@ function createPrismaClient(): PrismaClient {
   }
 
   // Create a connection pool (SSL required by Supabase, rejectUnauthorized: false for pooler certs)
-  // Low max for serverless: each Vercel lambda gets its own pool
+  // Serverless-friendly: small pool per lambda, but enough to handle parallel queries within a request
   const pool = new Pool({
     connectionString,
-    max: 3,
-    idleTimeoutMillis: 30_000,
+    max: 5,
+    idleTimeoutMillis: 15_000,
     connectionTimeoutMillis: 10_000,
     ssl: { rejectUnauthorized: false },
+    allowExitOnIdle: true, // Release idle connections faster in serverless
   });
   globalForPrisma.pool = pool;
 

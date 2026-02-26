@@ -69,6 +69,7 @@ export interface SyncResult {
   partiesUpdated: number;
   deputiesCreated: number;
   deputiesUpdated: number;
+  deputiesDeactivated: number;
   errors: string[];
 }
 

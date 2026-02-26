@@ -39,8 +39,9 @@ async function getLatestCsvUrl(): Promise<string> {
 
 /**
  * Fetch and parse deputies CSV from data.gouv.fr
+ * Exported for reuse in cleanup scripts.
  */
-async function fetchDeputiesCSV(): Promise<DeputeCSV[]> {
+export async function fetchDeputiesCSV(): Promise<DeputeCSV[]> {
   const url = await getLatestCsvUrl();
   console.log(`Fetching deputies from: ${url}`);
 
@@ -321,6 +322,95 @@ async function upsertExternalIds(politicianId: string, anId: string, slug: strin
 }
 
 /**
+ * Deactivate mandates for deputies no longer in the CSV.
+ *
+ * Two-pass approach:
+ * 1. AN-sourced mandates: compare AN external IDs against the CSV
+ * 2. Non-AN-sourced mandates (Wikidata, etc.): if no AN-sourced mandate
+ *    exists for the same politician, and politician isn't in the CSV, close it.
+ */
+async function deactivateStaleMandates(activeAnIds: Set<string>): Promise<number> {
+  let count = 0;
+  const today = new Date();
+
+  // Pass 1: AN-sourced mandates
+  const anMandates = await db.mandate.findMany({
+    where: {
+      type: MandateType.DEPUTE,
+      isCurrent: true,
+      source: DataSource.ASSEMBLEE_NATIONALE,
+    },
+    include: {
+      politician: {
+        select: {
+          id: true,
+          fullName: true,
+          externalIds: {
+            where: { source: DataSource.ASSEMBLEE_NATIONALE },
+            select: { externalId: true },
+          },
+        },
+      },
+    },
+  });
+
+  for (const mandate of anMandates) {
+    const anId = mandate.politician.externalIds[0]?.externalId;
+    if (!anId || !activeAnIds.has(anId)) {
+      await db.mandate.update({
+        where: { id: mandate.id },
+        data: { isCurrent: false, endDate: today },
+      });
+      console.log(`  ⊘ Deactivated (AN): ${mandate.politician.fullName} (${anId || "no AN ID"})`);
+      count++;
+    }
+  }
+
+  // Pass 2: non-AN-sourced DEPUTE mandates (Wikidata, HATVP, etc.)
+  const nonAnMandates = await db.mandate.findMany({
+    where: {
+      type: MandateType.DEPUTE,
+      isCurrent: true,
+      source: { not: DataSource.ASSEMBLEE_NATIONALE },
+    },
+    include: {
+      politician: {
+        select: {
+          id: true,
+          fullName: true,
+          officialId: true,
+          externalIds: {
+            where: { source: DataSource.ASSEMBLEE_NATIONALE },
+            select: { externalId: true },
+          },
+        },
+      },
+    },
+  });
+
+  for (const mandate of nonAnMandates) {
+    // Skip if politician also has a current AN-sourced mandate (handled in pass 1)
+    const hasAnMandate = anMandates.some((m) => m.politician.id === mandate.politician.id);
+    if (hasAnMandate) continue;
+
+    // Check if politician matches anyone in the CSV
+    const anId = mandate.politician.externalIds[0]?.externalId || mandate.politician.officialId;
+    if (!anId || !activeAnIds.has(anId)) {
+      await db.mandate.update({
+        where: { id: mandate.id },
+        data: { isCurrent: false, endDate: today },
+      });
+      console.log(
+        `  ⊘ Deactivated (${mandate.source || "unknown"}): ${mandate.politician.fullName}`
+      );
+      count++;
+    }
+  }
+
+  return count;
+}
+
+/**
  * Main sync function - imports/updates all deputies
  */
 export async function syncDeputies(): Promise<SyncResult> {
@@ -330,6 +420,7 @@ export async function syncDeputies(): Promise<SyncResult> {
     partiesUpdated: 0,
     deputiesCreated: 0,
     deputiesUpdated: 0,
+    deputiesDeactivated: 0,
     errors: [],
   };
 
@@ -353,6 +444,11 @@ export async function syncDeputies(): Promise<SyncResult> {
       else if (status === "updated") result.deputiesUpdated++;
       else result.errors.push(`${dep.prenom} ${dep.nom}`);
     }
+
+    // 4. Deactivate mandates for deputies no longer in CSV
+    console.log("Checking for stale mandates...");
+    const activeAnIds = new Set(deputies.map((d) => d.id));
+    result.deputiesDeactivated = await deactivateStaleMandates(activeAnIds);
 
     result.success = true;
     console.log("Sync completed:", result);

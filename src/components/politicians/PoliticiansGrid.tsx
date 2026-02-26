@@ -32,6 +32,7 @@ interface PoliticiansGridProps {
     statusFilter: StatusFilter;
     sortOption: SortOption;
   };
+  showMissingDeclarationBadge?: boolean;
 }
 
 export function PoliticiansGrid({
@@ -42,6 +43,7 @@ export function PoliticiansGrid({
   parties,
   counts,
   filters,
+  showMissingDeclarationBadge = false,
 }: PoliticiansGridProps) {
   const router = useRouter();
   const _searchParams = useSearchParams();
@@ -214,7 +216,12 @@ export function PoliticiansGrid({
               </div>
             )}
             {politicians.map((politician) => (
-              <PoliticianCard key={politician.id} politician={politician} showConvictionBadge />
+              <PoliticianCard
+                key={politician.id}
+                politician={politician}
+                showConvictionBadge
+                showMissingDeclarationBadge={showMissingDeclarationBadge}
+              />
             ))}
           </div>
 

@@ -444,30 +444,46 @@ async function getLegislativeData() {
 
 // ── Participation data ────────────────────────────────────────
 
-async function getParticipationData() {
+async function getParticipationData(
+  chamber?: Chamber,
+  page: number = 1,
+  sortDirection: "ASC" | "DESC" = "ASC"
+) {
   "use cache";
   cacheTag("statistics", "participation");
   cacheLife("minutes");
 
-  const [ranking, partyStats] = await Promise.all([
-    voteStatsService.getParticipationRanking(undefined, undefined, 1, 20),
-    voteStatsService.getPartyParticipationStats(),
+  const [ranking, groupStats] = await Promise.all([
+    voteStatsService.getParticipationRanking(chamber, undefined, page, 50, sortDirection),
+    voteStatsService.getGroupParticipationStats(chamber),
   ]);
 
-  return { ranking, partyStats };
+  return { ranking, groupStats };
 }
 
 // ── Page ─────────────────────────────────────────────────────
 
-export default async function StatistiquesPage() {
+interface PageProps {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}
+
+export default async function StatistiquesPage({ searchParams }: PageProps) {
   if (!(await isFeatureEnabled("STATISTIQUES_SECTION"))) notFound();
 
-  const [legislativeData, judicialData, factCheckData, participationData] = await Promise.all([
-    getLegislativeData(),
-    getJudicialData(),
-    getFactCheckData(),
-    getParticipationData(),
-  ]);
+  const params = await searchParams;
+  const pChamber =
+    params.chamber === "AN" || params.chamber === "SENAT" ? (params.chamber as Chamber) : undefined;
+  const pPage = Math.max(1, Math.min(100, parseInt(String(params.pPage ?? "1"), 10) || 1));
+  const pSort = params.pSort === "desc" ? ("DESC" as const) : ("ASC" as const);
+
+  const [legislativeData, judicialData, factCheckData, participationData, partyParticipation] =
+    await Promise.all([
+      getLegislativeData(),
+      getJudicialData(),
+      getFactCheckData(),
+      getParticipationData(pChamber, pPage, pSort),
+      voteStatsService.getPartyParticipationStats(),
+    ]);
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -504,13 +520,16 @@ export default async function StatistiquesPage() {
             allData={legislativeData.all}
             anData={legislativeData.an}
             senatData={legislativeData.senat}
-            partyParticipation={participationData.partyStats}
+            partyParticipation={partyParticipation}
           />
         }
         participationContent={
           <ParticipationSection
             ranking={participationData.ranking}
-            partyStats={participationData.partyStats}
+            groupStats={participationData.groupStats}
+            chamber={pChamber}
+            page={pPage}
+            sortDirection={pSort}
           />
         }
       />

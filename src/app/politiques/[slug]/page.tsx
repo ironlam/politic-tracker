@@ -579,7 +579,7 @@ export default async function PoliticianPage({ params }: PageProps) {
 
             {/* Biography */}
             {politician.biography && (
-              <Card>
+              <Card id="biographie">
                 <CardContent className="pt-6">
                   <p className="text-muted-foreground leading-relaxed">{politician.biography}</p>
                   <div className="flex items-center gap-2 mt-3 pt-3 border-t border-dashed text-xs text-muted-foreground">
@@ -604,7 +604,7 @@ export default async function PoliticianPage({ params }: PageProps) {
 
             {/* Career / Mandates */}
             {hasMandates && (
-              <Card>
+              <Card id="parcours">
                 <CardHeader>
                   <h2 className="leading-none font-semibold">Parcours politique</h2>
                   <p className="text-xs text-muted-foreground mt-1">
@@ -621,6 +621,7 @@ export default async function PoliticianPage({ params }: PageProps) {
             {/* HATVP Declarations */}
             {politician.declarations.length > 0 && (
               <DeclarationCard
+                id="declarations"
                 declarations={politician.declarations.map((d) => ({
                   id: d.id,
                   type: d.type,
@@ -637,7 +638,7 @@ export default async function PoliticianPage({ params }: PageProps) {
 
             {/* Votes (deputies only) */}
             {voteData && voteData.stats.total > 0 && (
-              <Card>
+              <Card id="votes">
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <h2 className="leading-none font-semibold">Votes parlementaires</h2>
@@ -742,7 +743,7 @@ export default async function PoliticianPage({ params }: PageProps) {
                   verdictCounts.autre;
 
                 return (
-                  <Card>
+                  <Card id="factchecks">
                     <CardHeader>
                       <div className="flex items-center justify-between">
                         <h2 className="leading-none font-semibold">Fact-checks</h2>
@@ -935,7 +936,7 @@ export default async function PoliticianPage({ params }: PageProps) {
               })()}
 
             {/* Affairs — Accused / Involved */}
-            <Card>
+            <Card id="affaires">
               <CardHeader>
                 <h2 className="leading-none font-semibold">Affaires judiciaires</h2>
               </CardHeader>

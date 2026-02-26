@@ -15,6 +15,7 @@ interface PersonJsonLdProps {
   birthPlace?: string;
   url: string;
   sameAs?: string[];
+  memberOf?: Array<{ name: string }>;
 }
 
 export function PersonJsonLd({
@@ -29,6 +30,7 @@ export function PersonJsonLd({
   birthPlace,
   url,
   sameAs,
+  memberOf,
 }: PersonJsonLdProps) {
   const jsonLd = {
     "@context": "https://schema.org",
@@ -54,6 +56,13 @@ export function PersonJsonLd({
     }),
     url,
     ...(sameAs && sameAs.length > 0 && { sameAs }),
+    ...(memberOf &&
+      memberOf.length > 0 && {
+        memberOf: memberOf.map((org) => ({
+          "@type": "Organization",
+          name: org.name,
+        })),
+      }),
   };
 
   return (

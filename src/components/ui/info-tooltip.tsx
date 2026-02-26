@@ -10,6 +10,8 @@ interface InfoTooltipProps {
   term?: GlossaryKey;
   /** Or provide custom text directly */
   text?: string;
+  /** Optional link for "En savoir plus" */
+  href?: string;
   /** Visual size — "sm" for inline, "md" for standalone */
   size?: "sm" | "md";
   /** Additional CSS classes on the trigger button */
@@ -25,10 +27,12 @@ interface InfoTooltipProps {
  * Usage:
  *   <InfoTooltip term="sursis" />           // from glossary
  *   <InfoTooltip text="Custom explanation" /> // inline text
+ *   <InfoTooltip term="hatvp" href="https://www.hatvp.fr" /> // with link
  */
 export function InfoTooltip({
   term,
   text,
+  href,
   size = "sm",
   className,
   side = "top",
@@ -55,7 +59,17 @@ export function InfoTooltip({
         </button>
       </TooltipTrigger>
       <TooltipContent side={side} className="max-w-[280px] text-[13px] leading-relaxed">
-        {content}
+        <p>{content}</p>
+        {href && (
+          <a
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block mt-1.5 text-xs text-primary hover:underline"
+          >
+            En savoir plus →
+          </a>
+        )}
       </TooltipContent>
     </Tooltip>
   );

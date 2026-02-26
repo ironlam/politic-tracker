@@ -1,11 +1,15 @@
 import { db } from "@/lib/db";
-import { DataSource, DeclarationType } from "@/generated/prisma";
+import { DataSource, DeclarationType, Prisma } from "@/generated/prisma";
 import { parse } from "csv-parse/sync";
 import { HATVPCSV, HATVPSyncResult, HATVP_DOCUMENT_TYPE_MAPPING } from "./types";
 import { HTTPClient } from "@/lib/api/http-client";
 import { HATVP_RATE_LIMIT_MS } from "@/config/rate-limits";
+import { parseHATVPXml } from "./hatvp-xml";
+import { DeclarationDetails } from "@/types/hatvp";
 
 const client = new HTTPClient({ rateLimitMs: HATVP_RATE_LIMIT_MS });
+
+const DIA_TYPES = new Set(["di", "dim", "dia", "diam"]);
 
 const HATVP_CSV_URL = "https://www.hatvp.fr/livraison/opendata/liste.csv";
 
@@ -131,11 +135,26 @@ function extractYear(datePublication: string, dateDepot: string): number {
 }
 
 /**
+ * Fetch and parse HATVP XML declaration
+ */
+async function fetchAndParseXml(openDataFilename: string): Promise<DeclarationDetails | null> {
+  try {
+    const url = `https://www.hatvp.fr/livraison/dossiers/${openDataFilename}`;
+    const { data: xmlText } = await client.getText(url);
+    return parseHATVPXml(xmlText);
+  } catch (error) {
+    console.error(`Failed to fetch/parse XML ${openDataFilename}:`, error);
+    return null;
+  }
+}
+
+/**
  * Sync a single declaration
  */
 async function syncDeclaration(
   decl: HATVPCSV,
-  politicianId: string
+  politicianId: string,
+  details: DeclarationDetails | null
 ): Promise<"created" | "updated" | "error"> {
   try {
     const declType = getDeclarationType(decl.type_document);
@@ -162,6 +181,7 @@ async function syncDeclaration(
       pdfUrl: decl.nom_fichier
         ? `https://www.hatvp.fr/livraison/dossiers/${decl.nom_fichier}`
         : null,
+      details: (details as unknown as Prisma.InputJsonValue) ?? undefined,
     };
 
     if (existing) {
@@ -253,6 +273,8 @@ export async function syncHATVP(): Promise<HATVPSyncResult> {
     declarationsUpdated: 0,
     politiciansMatched: 0,
     politiciansNotFound: 0,
+    xmlParsed: 0,
+    xmlErrors: 0,
     errors: [],
   };
 
@@ -311,7 +333,15 @@ export async function syncHATVP(): Promise<HATVPSyncResult> {
 
       // Sync all declarations for this politician
       for (const decl of declarations) {
-        const status = await syncDeclaration(decl, politicianId);
+        // Fetch XML details for DIA-type declarations
+        let details: DeclarationDetails | null = null;
+        if (decl.open_data && DIA_TYPES.has(decl.type_document)) {
+          details = await fetchAndParseXml(decl.open_data);
+          if (details) result.xmlParsed++;
+          else result.xmlErrors++;
+        }
+
+        const status = await syncDeclaration(decl, politicianId, details);
         if (status === "created") result.declarationsCreated++;
         else if (status === "updated") result.declarationsUpdated++;
         else result.errors.push(`Declaration for ${firstDecl.prenom} ${firstDecl.nom}`);

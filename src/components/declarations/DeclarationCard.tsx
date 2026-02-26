@@ -44,6 +44,10 @@ function CollapsibleSection({
   );
 }
 
+function cleanCompanyName(name: string): string {
+  return name.includes("[Données non publiées]") ? "Société (nom non publié)" : name;
+}
+
 export function DeclarationCard({ id, declarations, politicianHatvpUrl }: DeclarationCardProps) {
   if (declarations.length === 0) return null;
 
@@ -61,7 +65,7 @@ export function DeclarationCard({ id, declarations, politicianHatvpUrl }: Declar
   const remainingParticipations = sortedParticipations.slice(5);
 
   const participationBars = topParticipations.map((p) => ({
-    label: p.company.includes("[Données non publiées]") ? "Société (nom non publié)" : p.company,
+    label: cleanCompanyName(p.company),
     value: p.evaluation!,
     suffix: " €",
   }));
@@ -109,11 +113,7 @@ export function DeclarationCard({ id, declarations, politicianHatvpUrl }: Declar
                 <div className="pt-2 space-y-2">
                   {remainingParticipations.map((p, i) => (
                     <div key={`part-${i}`} className="flex items-center justify-between text-sm">
-                      <span className="truncate mr-2">
-                        {p.company.includes("[Données non publiées]")
-                          ? "Société (nom non publié)"
-                          : p.company}
-                      </span>
+                      <span className="truncate mr-2">{cleanCompanyName(p.company)}</span>
                       <span className="font-mono text-muted-foreground whitespace-nowrap">
                         {new Intl.NumberFormat("fr-FR").format(p.evaluation!)} €
                       </span>

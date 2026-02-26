@@ -293,25 +293,35 @@ async function getDivisiveScrutins(
 async function getGlobalParticipation(
   chamber?: Chamber
 ): Promise<{ participating: number; total: number }> {
-  let rows: { participating: bigint; total: bigint }[];
+  const chamberFilter = chamber ? Prisma.sql`AND s.chamber = ${chamber}::"Chamber"` : Prisma.sql``;
+  const mandateTypeFilter = chamber
+    ? chamber === "AN"
+      ? Prisma.sql`AND m.type = 'DEPUTE'::"MandateType"`
+      : Prisma.sql`AND m.type = 'SENATEUR'::"MandateType"`
+    : Prisma.sql`AND m.type IN ('DEPUTE'::"MandateType", 'SENATEUR'::"MandateType")`;
 
-  if (chamber) {
-    rows = await db.$queryRaw`
+  // Use eligible scrutins as denominator (same methodology as per-politician stats)
+  const rows = await db.$queryRaw<[{ participating: bigint; total: bigint }]>`
+    SELECT
+      COALESCE(SUM(vote_count), 0) as "participating",
+      COALESCE(SUM(eligible_count), 0) as "total"
+    FROM (
       SELECT
-        COUNT(CASE WHEN v.position IN ('POUR', 'CONTRE', 'ABSTENTION') THEN 1 END) as "participating",
-        COUNT(v.id) as "total"
-      FROM "Vote" v
-      JOIN "Scrutin" s ON v."scrutinId" = s.id
-      WHERE s.chamber = ${chamber}::"Chamber"
-    `;
-  } else {
-    rows = await db.$queryRaw`
-      SELECT
-        COUNT(CASE WHEN v.position IN ('POUR', 'CONTRE', 'ABSTENTION') THEN 1 END) as "participating",
-        COUNT(v.id) as "total"
-      FROM "Vote" v
-    `;
-  }
+        COUNT(DISTINCT v.id)::bigint as vote_count,
+        COUNT(DISTINCT s.id)::bigint as eligible_count
+      FROM "Politician" pol
+      JOIN "Mandate" m ON m."politicianId" = pol.id
+        AND m."isCurrent" = true
+        ${mandateTypeFilter}
+      JOIN "Scrutin" s ON s.chamber = (CASE WHEN m.type = 'DEPUTE'::"MandateType" THEN 'AN'::"Chamber" ELSE 'SENAT'::"Chamber" END)
+        AND s."votingDate" >= m."startDate"
+        AND (m."endDate" IS NULL OR s."votingDate" <= m."endDate")
+        ${chamberFilter}
+      LEFT JOIN "Vote" v ON v."scrutinId" = s.id AND v."politicianId" = pol.id
+      WHERE pol."publicationStatus" = 'PUBLISHED'
+      GROUP BY pol.id, m.type
+    ) sub
+  `;
 
   const row = rows[0];
   return {
@@ -441,6 +451,9 @@ export interface ParticipationRankingEntry {
   partyShortName: string | null;
   partyColor: string | null;
   partySlug: string | null;
+  groupCode: string | null;
+  groupName: string | null;
+  groupColor: string | null;
   mandateType: string;
   votesCount: number;
   eligibleScrutins: number;
@@ -455,13 +468,13 @@ export interface ParticipationRankingResult {
 /**
  * Get participation ranking: compare each politician's vote count
  * against the total number of eligible scrutins during their active mandate.
- * Sorted by participationRate ASC (most absent first).
  */
 async function getParticipationRanking(
   chamber?: Chamber,
   partyId?: string,
   page: number = 1,
-  pageSize: number = 50
+  pageSize: number = 50,
+  sortDirection: "ASC" | "DESC" = "ASC"
 ): Promise<ParticipationRankingResult> {
   const offset = (page - 1) * pageSize;
 
@@ -473,6 +486,7 @@ async function getParticipationRanking(
       : Prisma.sql`AND m.type = 'SENATEUR'::"MandateType"`
     : Prisma.sql`AND m.type IN ('DEPUTE'::"MandateType", 'SENATEUR'::"MandateType")`;
   const partyFilter = partyId ? Prisma.sql`AND pol."currentPartyId" = ${partyId}` : Prisma.sql``;
+  const orderDirection = sortDirection === "DESC" ? Prisma.sql`DESC` : Prisma.sql`ASC`;
 
   const entries = await db.$queryRaw<ParticipationRankingEntry[]>`
     WITH eligible AS (
@@ -486,6 +500,9 @@ async function getParticipationRanking(
         p."shortName" as "partyShortName",
         p.color as "partyColor",
         p.slug as "partySlug",
+        pg.code as "groupCode",
+        pg.name as "groupName",
+        pg.color as "groupColor",
         m.type::text as "mandateType",
         COUNT(DISTINCT v.id)::int as "votesCount",
         COUNT(DISTINCT s.id)::int as "eligibleScrutins"
@@ -499,10 +516,11 @@ async function getParticipationRanking(
         ${chamberFilter}
       LEFT JOIN "Vote" v ON v."scrutinId" = s.id AND v."politicianId" = pol.id
       LEFT JOIN "Party" p ON p.id = pol."currentPartyId"
+      LEFT JOIN "ParliamentaryGroup" pg ON pg.id = m."parliamentaryGroupId"
       WHERE pol."publicationStatus" = 'PUBLISHED'
         ${partyFilter}
       GROUP BY pol.id, pol."firstName", pol."lastName", pol.slug, pol."blobPhotoUrl", pol."photoUrl",
-               pol."currentPartyId", p."shortName", p.color, p.slug, m.type
+               pol."currentPartyId", p."shortName", p.color, p.slug, pg.code, pg.name, pg.color, m.type
       HAVING COUNT(DISTINCT s.id) > 0
     )
     SELECT
@@ -515,12 +533,15 @@ async function getParticipationRanking(
       "partyShortName",
       "partyColor",
       "partySlug",
+      "groupCode",
+      "groupName",
+      "groupColor",
       "mandateType",
       "votesCount",
       "eligibleScrutins",
       ROUND(("votesCount"::numeric / "eligibleScrutins"::numeric) * 100, 1)::float as "participationRate"
     FROM eligible
-    ORDER BY "participationRate" ASC, "eligibleScrutins" DESC
+    ORDER BY "participationRate" ${orderDirection}, "eligibleScrutins" DESC
     LIMIT ${pageSize} OFFSET ${offset}
   `;
 
@@ -536,7 +557,6 @@ async function getParticipationRanking(
         AND s."votingDate" >= m."startDate"
         AND (m."endDate" IS NULL OR s."votingDate" <= m."endDate")
         ${chamberFilter}
-      LEFT JOIN "Party" p ON p.id = pol."currentPartyId"
       WHERE pol."publicationStatus" = 'PUBLISHED'
         ${partyFilter}
       GROUP BY pol.id, m.type
@@ -613,6 +633,63 @@ async function getPartyParticipationStats(chamber?: Chamber): Promise<PartyParti
 }
 
 // ============================================
+// Group participation stats (by parliamentary group)
+// ============================================
+
+export interface GroupParticipationStats {
+  groupId: string;
+  groupName: string;
+  groupCode: string;
+  groupColor: string | null;
+  groupChamber: string;
+  avgParticipationRate: number;
+  memberCount: number;
+}
+
+async function getGroupParticipationStats(chamber?: Chamber): Promise<GroupParticipationStats[]> {
+  const chamberFilter = chamber ? Prisma.sql`AND s.chamber = ${chamber}::"Chamber"` : Prisma.sql``;
+  const mandateTypeFilter = chamber
+    ? chamber === "AN"
+      ? Prisma.sql`AND m.type = 'DEPUTE'::"MandateType"`
+      : Prisma.sql`AND m.type = 'SENATEUR'::"MandateType"`
+    : Prisma.sql`AND m.type IN ('DEPUTE'::"MandateType", 'SENATEUR'::"MandateType")`;
+
+  return db.$queryRaw<GroupParticipationStats[]>`
+    WITH individual AS (
+      SELECT
+        pg.id as "groupId",
+        COUNT(DISTINCT v.id)::numeric / NULLIF(COUNT(DISTINCT s.id)::numeric, 0) * 100 as rate
+      FROM "Politician" pol
+      JOIN "Mandate" m ON m."politicianId" = pol.id
+        AND m."isCurrent" = true
+        ${mandateTypeFilter}
+      JOIN "Scrutin" s ON s.chamber = (CASE WHEN m.type = 'DEPUTE'::"MandateType" THEN 'AN'::"Chamber" ELSE 'SENAT'::"Chamber" END)
+        AND s."votingDate" >= m."startDate"
+        AND (m."endDate" IS NULL OR s."votingDate" <= m."endDate")
+        ${chamberFilter}
+      LEFT JOIN "Vote" v ON v."scrutinId" = s.id AND v."politicianId" = pol.id
+      JOIN "ParliamentaryGroup" pg ON pg.id = m."parliamentaryGroupId"
+      WHERE pol."publicationStatus" = 'PUBLISHED'
+      GROUP BY pol.id, pg.id, m.type
+      HAVING COUNT(DISTINCT s.id) > 0
+    )
+    SELECT
+      i."groupId",
+      pg.name as "groupName",
+      pg.code as "groupCode",
+      pg.color as "groupColor",
+      pg.chamber::text as "groupChamber",
+      ROUND(AVG(i.rate), 1)::float as "avgParticipationRate",
+      COUNT(*)::int as "memberCount"
+    FROM individual i
+    JOIN "ParliamentaryGroup" pg ON pg.id = i."groupId"
+    GROUP BY i."groupId", pg.name, pg.code, pg.color, pg.chamber
+    HAVING COUNT(*) >= 3
+    ORDER BY "avgParticipationRate" ASC
+  `;
+}
+
+// ============================================
 // Export
 // ============================================
 
@@ -621,4 +698,5 @@ export const voteStatsService = {
   getPoliticianVotingStats,
   getParticipationRanking,
   getPartyParticipationStats,
+  getGroupParticipationStats,
 };

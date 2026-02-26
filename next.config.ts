@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   serverExternalPackages: ["jsdom"],
+  staticPageGenerationTimeout: 120,
   experimental: {
     useCache: true,
   },

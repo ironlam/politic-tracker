@@ -16,6 +16,7 @@ import { StatsTabs } from "@/components/stats/StatsTabs";
 import { LegislativeSection } from "@/components/stats/LegislativeSection";
 import { JudicialSection } from "@/components/stats/JudicialSection";
 import { FactCheckSection } from "@/components/stats/FactCheckSection";
+import { ParticipationSection } from "@/components/stats/ParticipationSection";
 import { bayesianScore } from "@/lib/bayesianScore";
 
 export const revalidate = 300;
@@ -441,15 +442,31 @@ async function getLegislativeData() {
   return { all, an, senat };
 }
 
+// ── Participation data ────────────────────────────────────────
+
+async function getParticipationData() {
+  "use cache";
+  cacheTag("statistics", "participation");
+  cacheLife("minutes");
+
+  const [ranking, partyStats] = await Promise.all([
+    voteStatsService.getParticipationRanking(undefined, undefined, 1, 20),
+    voteStatsService.getPartyParticipationStats(),
+  ]);
+
+  return { ranking, partyStats };
+}
+
 // ── Page ─────────────────────────────────────────────────────
 
 export default async function StatistiquesPage() {
   if (!(await isFeatureEnabled("STATISTIQUES_SECTION"))) notFound();
 
-  const [legislativeData, judicialData, factCheckData] = await Promise.all([
+  const [legislativeData, judicialData, factCheckData, participationData] = await Promise.all([
     getLegislativeData(),
     getJudicialData(),
     getFactCheckData(),
+    getParticipationData(),
   ]);
 
   return (
@@ -487,6 +504,12 @@ export default async function StatistiquesPage() {
             allData={legislativeData.all}
             anData={legislativeData.an}
             senatData={legislativeData.senat}
+          />
+        }
+        participationContent={
+          <ParticipationSection
+            ranking={participationData.ranking}
+            partyStats={participationData.partyStats}
           />
         }
       />

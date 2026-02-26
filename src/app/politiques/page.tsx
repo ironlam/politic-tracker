@@ -559,7 +559,7 @@ export default async function PolitiquesPage({ searchParams }: PageProps) {
                 ? "/politiques"
                 : `/politiques?mandate=${mandate}`;
           return (
-            <Link key={key} href={href}>
+            <Link key={key} href={href} prefetch={false}>
               <Card
                 className={`cursor-pointer transition-all hover:shadow-md hover:-translate-y-0.5 border-l-4 ${
                   isActive ? "ring-2 ring-primary shadow-md" : ""

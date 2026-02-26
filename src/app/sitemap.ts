@@ -117,7 +117,7 @@ async function buildStaticAndPoliticiansSitemap(): Promise<MetadataRoute.Sitemap
       priority: 0.8,
     },
     {
-      url: `${baseUrl}/declarations`,
+      url: `${baseUrl}/declarations-et-patrimoine`,
       lastModified: new Date(),
       changeFrequency: "daily",
       priority: 0.8,

@@ -27,11 +27,11 @@ const BASE_URL = "https://poligraph.fr";
 const PAGE_SIZE = 24;
 
 export const metadata: Metadata = {
-  title: "Déclarations HATVP des élus français",
+  title: "Patrimoine et déclarations d'intérêts des élus — HATVP",
   description:
-    "Explorez les déclarations d'intérêts et de patrimoine des députés, sénateurs et ministres français. Portefeuilles financiers, participations, revenus et activités — données officielles HATVP.",
+    "Explorez le patrimoine et les déclarations d'intérêts des députés, sénateurs et ministres français. Portefeuilles financiers, participations, revenus et activités — données officielles HATVP.",
   openGraph: {
-    title: "Déclarations HATVP des élus français — Poligraph",
+    title: "Patrimoine et déclarations d'intérêts des élus — Poligraph",
     description:
       "Classement des élus par patrimoine déclaré, entreprises détenues et revenus. Source officielle : HATVP.",
   },
@@ -395,20 +395,20 @@ export default async function DeclarationsPage({ searchParams }: PageProps) {
       <BreadcrumbJsonLd
         items={[
           { name: "Accueil", url: BASE_URL },
-          { name: "Déclarations HATVP", url: `${BASE_URL}/declarations` },
+          { name: "Déclarations HATVP", url: `${BASE_URL}/declarations-et-patrimoine` },
         ]}
       />
       <CollectionPageJsonLd
         name="Déclarations HATVP des élus français"
         description="Déclarations d'intérêts et de patrimoine des députés, sénateurs et ministres français. Données officielles de la HATVP."
-        url={`${BASE_URL}/declarations`}
+        url={`${BASE_URL}/declarations-et-patrimoine`}
         numberOfItems={stats.totalDeclarations}
         about={{ name: "HATVP", url: "https://www.hatvp.fr" }}
       />
       <ItemListJsonLd
         name="Classement des élus par portefeuille déclaré"
         description="Les élus français avec les plus gros portefeuilles financiers déclarés auprès de la HATVP."
-        url={`${BASE_URL}/declarations`}
+        url={`${BASE_URL}/declarations-et-patrimoine`}
         items={topPortfolios.map((p, i) => ({
           name: p.fullName,
           url: `${BASE_URL}/politiques/${p.slug}`,
@@ -420,11 +420,11 @@ export default async function DeclarationsPage({ searchParams }: PageProps) {
       {/* Hero */}
       <div className="mb-8">
         <h1 className="text-3xl font-display font-extrabold tracking-tight mb-2">
-          Déclarations HATVP
+          Patrimoine et déclarations des élus
         </h1>
         <p className="text-muted-foreground max-w-2xl">
-          Explorez les déclarations d&apos;intérêts et de patrimoine des élus français, publiées par
-          la Haute Autorité pour la Transparence de la Vie Publique.
+          Explorez le patrimoine, les intérêts et les activités déclarés par les élus français
+          auprès de la Haute Autorité pour la Transparence de la Vie Publique (HATVP).
         </p>
         <div className="sr-only">
           <SeoIntro
@@ -776,7 +776,7 @@ function Pagination({
     if (sortOption && sortOption !== "portfolio") params.set("sort", sortOption);
     if (page > 1) params.set("page", String(page));
     const qs = params.toString();
-    return `/declarations${qs ? `?${qs}` : ""}`;
+    return `/declarations-et-patrimoine${qs ? `?${qs}` : ""}`;
   }
 
   // Show limited page numbers around current

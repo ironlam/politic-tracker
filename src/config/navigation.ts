@@ -71,8 +71,8 @@ export const NAV_GROUPS: NavGroup[] = [
     label: "Données",
     items: [
       {
-        href: "/declarations",
-        label: "Déclarations HATVP",
+        href: "/declarations-et-patrimoine",
+        label: "Patrimoine & déclarations",
         description: "Intérêts, patrimoine et participations des élus",
       },
       {
@@ -148,7 +148,7 @@ export const FOOTER_SECTIONS: FooterSection[] = [
       { href: "/politiques", label: "Représentants" },
       { href: "/carte", label: "Carte", featureFlag: "CARTE_SECTION" },
       { href: "/votes", label: "Votes" },
-      { href: "/declarations", label: "Déclarations HATVP" },
+      { href: "/declarations-et-patrimoine", label: "Patrimoine & déclarations" },
       { href: "/affaires", label: "Affaires" },
       { href: "/factchecks", label: "Fact-checks" },
       { href: "/elections", label: "Élections" },

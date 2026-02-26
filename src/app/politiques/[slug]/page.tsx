@@ -398,6 +398,10 @@ export default async function PoliticianPage({ params }: PageProps) {
   )?.parliamentaryGroup;
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://poligraph.fr";
 
+  const isActiveParliamentarian = politician.mandates.some(
+    (m) => m.isCurrent && (m.type === "DEPUTE" || m.type === "SENATEUR")
+  );
+
   // Get vote stats (only for deputies - they have votes tracked)
   const isDepute = currentMandate?.type === "DEPUTE";
   const voteData = isDepute ? await getVoteStats(politician.id) : null;
@@ -619,7 +623,7 @@ export default async function PoliticianPage({ params }: PageProps) {
             )}
 
             {/* HATVP Declarations */}
-            {politician.declarations.length > 0 && (
+            {politician.declarations.length > 0 ? (
               <DeclarationCard
                 id="declarations"
                 declarations={politician.declarations.map((d) => ({
@@ -634,7 +638,37 @@ export default async function PoliticianPage({ params }: PageProps) {
                   politician.externalIds.find((e) => e.source === "HATVP")?.url ?? null
                 }
               />
-            )}
+            ) : isActiveParliamentarian ? (
+              <Card id="declarations">
+                <CardHeader>
+                  <h2 className="text-lg font-semibold">
+                    Déclarations d&apos;intérêts et d&apos;activités
+                  </h2>
+                </CardHeader>
+                <CardContent>
+                  <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+                    <p className="text-sm font-medium text-amber-800 dark:text-amber-200 mb-2">
+                      Aucune déclaration publiée
+                    </p>
+                    <p className="text-sm text-amber-700 dark:text-amber-300 leading-relaxed">
+                      Tout député et sénateur est tenu de déposer une déclaration d&apos;intérêts et
+                      d&apos;activités dans les 2 mois suivant son élection (loi n°2013-907 du 11
+                      octobre 2013). Le non-dépôt est passible de 3 ans d&apos;emprisonnement, 45
+                      000 € d&apos;amende et 10 ans d&apos;inéligibilité. Seules les déclarations
+                      publiées par la HATVP sont affichées ici.
+                    </p>
+                    <a
+                      href="https://www.hatvp.fr/consulter-les-declarations/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-block mt-3 text-sm text-amber-700 dark:text-amber-300 underline hover:text-amber-900 dark:hover:text-amber-100"
+                    >
+                      Consulter le site de la HATVP →
+                    </a>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : null}
 
             {/* Votes (deputies only) */}
             {voteData && voteData.stats.total > 0 && (

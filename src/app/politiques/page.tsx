@@ -69,8 +69,8 @@ const MANDATE_ACCENT: Record<string, { border: string; bg: string; label: string
     conviction: {
       border: "#dc2626",
       bg: "#dc26260a",
-      label: "Décisions de justice",
-      desc: "Atteintes critiques à la probité",
+      label: "Condamnations",
+      desc: "Condamnations définitives pour atteinte à la probité",
     },
   };
 
@@ -131,6 +131,7 @@ async function queryPoliticians(
       affairs: {
         some: {
           severity: "CRITIQUE",
+          status: "CONDAMNATION_DEFINITIVE",
           publicationStatus: "PUBLISHED",
           involvement: "DIRECT",
         },
@@ -190,9 +191,10 @@ async function queryPoliticians(
           select: {
             affairs: {
               where: {
+                severity: "CRITIQUE",
+                status: "CONDAMNATION_DEFINITIVE",
                 publicationStatus: "PUBLISHED",
                 involvement: "DIRECT",
-                severity: "CRITIQUE",
               },
             },
           },
@@ -200,6 +202,7 @@ async function queryPoliticians(
         affairs: {
           where: {
             severity: "CRITIQUE",
+            status: "CONDAMNATION_DEFINITIVE",
             publicationStatus: "PUBLISHED",
             involvement: "DIRECT",
           },
@@ -374,13 +377,14 @@ async function getFilterCounts() {
     active,
     former,
   ] = await Promise.all([
-    // Critique affair counts (atteintes à la probité)
+    // Critique affair counts (condamnations définitives pour atteintes à la probité uniquement)
     db.politician.count({
       where: {
         publicationStatus: "PUBLISHED",
         affairs: {
           some: {
             severity: "CRITIQUE",
+            status: "CONDAMNATION_DEFINITIVE",
             publicationStatus: "PUBLISHED",
             involvement: "DIRECT",
           },
@@ -389,8 +393,9 @@ async function getFilterCounts() {
     }),
     db.affair.count({
       where: {
-        publicationStatus: "PUBLISHED",
         severity: "CRITIQUE",
+        status: "CONDAMNATION_DEFINITIVE",
+        publicationStatus: "PUBLISHED",
         involvement: "DIRECT",
       },
     }),

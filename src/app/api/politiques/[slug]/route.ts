@@ -93,6 +93,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
           type: d.type,
           year: d.year,
           url: d.pdfUrl,
+          hatvpUrl: d.hatvpUrl,
+          details: d.details,
         })),
         affairsCount: politician.affairs.length,
         factchecksCount:

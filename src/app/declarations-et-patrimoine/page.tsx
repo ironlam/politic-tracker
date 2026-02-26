@@ -372,6 +372,73 @@ async function getParties() {
   });
 }
 
+/**
+ * Party declaration rates for active parliamentarians — cached
+ */
+async function getPartyTransparency() {
+  "use cache";
+  cacheTag("declarations", "parties");
+  cacheLife("minutes");
+
+  const parties = await db.party.findMany({
+    where: {
+      politicians: {
+        some: {
+          publicationStatus: "PUBLISHED",
+          mandates: {
+            some: {
+              isCurrent: true,
+              type: { in: ["DEPUTE", "SENATEUR"] },
+            },
+          },
+        },
+      },
+    },
+    select: {
+      id: true,
+      name: true,
+      shortName: true,
+      color: true,
+      politicians: {
+        where: {
+          publicationStatus: "PUBLISHED",
+          mandates: {
+            some: {
+              isCurrent: true,
+              type: { in: ["DEPUTE", "SENATEUR"] },
+            },
+          },
+        },
+        select: {
+          id: true,
+          declarations: {
+            where: { type: "INTERETS" },
+            select: { id: true },
+            take: 1,
+          },
+        },
+      },
+    },
+  });
+
+  return parties
+    .map((p) => {
+      const total = p.politicians.length;
+      const withDeclaration = p.politicians.filter((pol) => pol.declarations.length > 0).length;
+      return {
+        partyId: p.id,
+        partyName: p.name,
+        partyShortName: p.shortName,
+        partyColor: p.color,
+        totalParliamentarians: total,
+        withDeclaration,
+        rate: total > 0 ? Math.round((withDeclaration / total) * 100) : 0,
+      };
+    })
+    .filter((p) => p.totalParliamentarians >= 3)
+    .sort((a, b) => b.rate - a.rate || b.totalParliamentarians - a.totalParliamentarians);
+}
+
 // ─── Page component ───────────────────────────────────────────
 
 export default async function DeclarationsPage({ searchParams }: PageProps) {
@@ -381,12 +448,13 @@ export default async function DeclarationsPage({ searchParams }: PageProps) {
   const sortOption = (params.sort || "portfolio") as DeclarationSortOption;
   const page = parseInt(params.page || "1", 10);
 
-  const [stats, topPortfolios, topCompanies, tableData, parties] = await Promise.all([
+  const [stats, topPortfolios, topCompanies, tableData, parties, transparency] = await Promise.all([
     getDeclarationStats(),
     getTopPortfolios(10),
     getTopCompanies(10),
     getDeclarations(search, partyFilter, sortOption, page),
     getParties(),
+    getPartyTransparency(),
   ]);
 
   const maxPortfolio = topPortfolios[0]?.totalPortfolioValue ?? 1;
@@ -582,6 +650,42 @@ export default async function DeclarationsPage({ searchParams }: PageProps) {
           </CardContent>
         </Card>
       </div>
+
+      {/* Party transparency */}
+      {transparency.length > 0 && (
+        <Card className="mb-10">
+          <CardHeader>
+            <h2 className="text-lg font-semibold">Transparence par parti</h2>
+            <p className="text-xs text-muted-foreground">
+              Taux de parlementaires (députés et sénateurs) ayant une déclaration d&apos;intérêts
+              publiée sur le site de la HATVP
+            </p>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {transparency.map((p) => (
+                <div key={p.partyId}>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-sm font-medium">{p.partyShortName || p.partyName}</span>
+                    <span className="text-sm text-muted-foreground tabular-nums">
+                      {p.withDeclaration}/{p.totalParliamentarians} ({p.rate}%)
+                    </span>
+                  </div>
+                  <div className="h-4 bg-muted rounded-full overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all"
+                      style={{
+                        width: `${p.rate}%`,
+                        backgroundColor: p.partyColor || "hsl(var(--primary))",
+                      }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Listing section */}
       <div className="mb-6">

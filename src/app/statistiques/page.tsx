@@ -504,6 +504,7 @@ export default async function StatistiquesPage() {
             allData={legislativeData.all}
             anData={legislativeData.an}
             senatData={legislativeData.senat}
+            partyParticipation={participationData.partyStats}
           />
         }
         participationContent={

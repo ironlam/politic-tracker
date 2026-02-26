@@ -141,7 +141,7 @@ export function DeclarationCard({ id, declarations, politicianHatvpUrl }: Declar
                   </div>
                 )}
                 {activity.annualRevenues.length > 0 && (
-                  <div className="flex gap-3 mt-1">
+                  <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1">
                     {activity.annualRevenues.map((r) => (
                       <span key={r.year} className="text-xs font-mono">
                         {r.year}: {new Intl.NumberFormat("fr-FR").format(r.amount)} €
@@ -169,7 +169,7 @@ export function DeclarationCard({ id, declarations, politicianHatvpUrl }: Declar
                   </div>
                 )}
                 {mandate.annualRevenues.length > 0 && (
-                  <div className="flex gap-3 mt-1">
+                  <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1">
                     {mandate.annualRevenues.map((r) => (
                       <span key={r.year} className="text-xs font-mono">
                         {r.year}: {new Intl.NumberFormat("fr-FR").format(r.amount)} €
@@ -195,7 +195,7 @@ export function DeclarationCard({ id, declarations, politicianHatvpUrl }: Declar
                   </div>
                 )}
                 {dir.annualRevenues.length > 0 && (
-                  <div className="flex gap-3 mt-1">
+                  <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1">
                     {dir.annualRevenues.map((r) => (
                       <span key={r.year} className="text-xs font-mono">
                         {r.year}: {new Intl.NumberFormat("fr-FR").format(r.amount)} €

@@ -29,6 +29,13 @@ export const NAV_TOP_LEVEL: NavItem[] = [
     icon: "shieldCheck",
     description: "Vérification des déclarations politiques",
   },
+  {
+    href: "/statistiques",
+    label: "Statistiques",
+    icon: "barChart",
+    description: "Tableaux de bord et analyses",
+    featureFlag: "STATISTIQUES_SECTION",
+  },
 ];
 
 // Main navigation groups (2 thematic dropdowns)

@@ -157,12 +157,7 @@ export default async function FactCheckDetailPage({ params }: PageProps) {
           <h2 className="text-sm font-semibold">Verdict</h2>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center gap-3">
-            <Badge className={`text-base px-4 py-1.5 ${ratingColor}`}>{ratingLabel}</Badge>
-            {factCheck.verdict && factCheck.verdict.toLowerCase() !== ratingLabel.toLowerCase() && (
-              <span className="text-sm text-muted-foreground">{factCheck.verdict}</span>
-            )}
-          </div>
+          <Badge className={`text-base px-4 py-1.5 ${ratingColor}`}>{ratingLabel}</Badge>
         </CardContent>
       </Card>
 

@@ -45,6 +45,13 @@ export function formatCurrency(amount: number | null): string {
   }).format(amount);
 }
 
+export function formatCompactCurrency(value: number | null): string {
+  if (value === null || value === 0) return "—";
+  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)} M€`;
+  if (value >= 1_000) return `${Math.round(value / 1_000)} k€`;
+  return `${value} €`;
+}
+
 /**
  * Generate a SEO-friendly slug with date prefix
  * Format: YYYY-MM-DD-titre-slugifie (max 120 characters)

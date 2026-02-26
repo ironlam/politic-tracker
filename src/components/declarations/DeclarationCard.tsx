@@ -79,8 +79,8 @@ export function DeclarationCard({ declarations, politicianHatvpUrl }: Declaratio
                   Voir les {sortedParticipations.length} participations
                 </summary>
                 <div className="pt-2 space-y-2">
-                  {remainingParticipations.map((p) => (
-                    <div key={p.company} className="flex items-center justify-between text-sm">
+                  {remainingParticipations.map((p, i) => (
+                    <div key={`part-${i}`} className="flex items-center justify-between text-sm">
                       <span className="truncate mr-2">{p.company}</span>
                       <span className="font-mono text-muted-foreground whitespace-nowrap">
                         {new Intl.NumberFormat("fr-FR").format(p.evaluation!)} €
@@ -202,8 +202,8 @@ export function DeclarationCard({ declarations, politicianHatvpUrl }: Declaratio
               {details.spouseActivity && (
                 <p className="text-sm text-muted-foreground">{details.spouseActivity}</p>
               )}
-              {details.collaborators.map((c) => (
-                <div key={c.name} className="text-sm">
+              {details.collaborators.map((c, i) => (
+                <div key={`collab-${i}`} className="text-sm">
                   <span className="font-medium">{c.name}</span>
                   <span className="text-muted-foreground"> — {c.employer}</span>
                 </div>

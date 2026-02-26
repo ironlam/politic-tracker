@@ -333,12 +333,23 @@ export async function syncHATVP(): Promise<HATVPSyncResult> {
 
       // Sync all declarations for this politician
       for (const decl of declarations) {
-        // Fetch XML details for DIA-type declarations
+        // Fetch XML details for DIA-type declarations (skip if already parsed)
         let details: DeclarationDetails | null = null;
         if (decl.open_data && DIA_TYPES.has(decl.type_document)) {
-          details = await fetchAndParseXml(decl.open_data);
-          if (details) result.xmlParsed++;
-          else result.xmlErrors++;
+          const declType = getDeclarationType(decl.type_document);
+          const year = extractYear(decl.date_publication, decl.date_depot);
+          const existing = await db.declaration.findUnique({
+            where: {
+              politicianId_type_year: { politicianId, type: declType, year },
+            },
+            select: { details: true },
+          });
+
+          if (existing?.details == null) {
+            details = await fetchAndParseXml(decl.open_data);
+            if (details) result.xmlParsed++;
+            else result.xmlErrors++;
+          }
         }
 
         const status = await syncDeclaration(decl, politicianId, details);

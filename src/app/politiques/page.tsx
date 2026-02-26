@@ -377,116 +377,116 @@ async function getFilterCounts() {
   cacheTag("politicians");
   cacheLife("minutes");
 
-  const [
-    withConviction,
-    totalAffairs,
-    deputes,
-    senateurs,
-    gouvernement,
-    presidentParti,
-    dirigeants,
-    active,
-    former,
-  ] = await Promise.all([
-    // Critique affair counts (condamnations définitives pour atteintes à la probité uniquement)
-    db.politician.count({
-      where: {
-        publicationStatus: "PUBLISHED",
-        affairs: {
-          some: {
-            severity: "CRITIQUE",
-            status: "CONDAMNATION_DEFINITIVE",
-            publicationStatus: "PUBLISHED",
-            involvement: "DIRECT",
-          },
-        },
+  // Single SQL query replaces 9 parallel Prisma count queries (1 connection instead of 9)
+  const [counts] = await db.$queryRaw<
+    [
+      {
+        with_conviction: bigint;
+        total_affairs: bigint;
+        deputes: bigint;
+        senateurs: bigint;
+        gouvernement: bigint;
+        president_parti: bigint;
+        dirigeants: bigint;
+        active: bigint;
+        former: bigint;
       },
-    }),
-    db.affair.count({
-      where: {
-        severity: "CRITIQUE",
-        status: "CONDAMNATION_DEFINITIVE",
-        publicationStatus: "PUBLISHED",
-        involvement: "DIRECT",
-      },
-    }),
-    // Mandate counts (current mandates only)
-    db.politician.count({
-      where: {
-        publicationStatus: "PUBLISHED",
-        mandates: {
-          some: { type: "DEPUTE", isCurrent: true },
-        },
-      },
-    }),
-    db.politician.count({
-      where: {
-        publicationStatus: "PUBLISHED",
-        mandates: {
-          some: { type: "SENATEUR", isCurrent: true },
-        },
-      },
-    }),
-    db.politician.count({
-      where: {
-        publicationStatus: "PUBLISHED",
-        mandates: {
-          some: {
-            type: { in: MANDATE_GROUPS.gouvernement },
-            isCurrent: true,
-          },
-        },
-      },
-    }),
-    db.politician.count({
-      where: {
-        publicationStatus: "PUBLISHED",
-        mandates: {
-          some: { type: "PRESIDENT_PARTI", isCurrent: true },
-        },
-      },
-    }),
-    // Dirigeants: PRESIDENT_PARTI + significant party roles
-    db.politician.count({
-      where: {
-        publicationStatus: "PUBLISHED",
-        OR: [
-          { mandates: { some: { type: "PRESIDENT_PARTI", isCurrent: true } } },
-          { partyHistory: { some: { endDate: null, role: { not: "MEMBER" } } } },
-        ],
-      },
-    }),
-    // Status counts (active = has current mandate OR significant party role)
-    db.politician.count({
-      where: {
-        publicationStatus: "PUBLISHED",
-        OR: [
-          { mandates: { some: { isCurrent: true } } },
-          { partyHistory: { some: { endDate: null, role: { not: "MEMBER" } } } },
-        ],
-      },
-    }),
-    db.politician.count({
-      where: {
-        publicationStatus: "PUBLISHED",
-        AND: [
-          { mandates: { none: { isCurrent: true } } },
-          { partyHistory: { none: { endDate: null, role: { not: "MEMBER" } } } },
-        ],
-      },
-    }),
-  ]);
+    ]
+  >`
+    SELECT
+      -- Politicians with critique affairs (CONDAMNATION_DEFINITIVE)
+      COUNT(DISTINCT p.id) FILTER (
+        WHERE EXISTS (
+          SELECT 1 FROM "Affair" a
+          WHERE a."politicianId" = p.id
+            AND a.severity = 'CRITIQUE'
+            AND a.status = 'CONDAMNATION_DEFINITIVE'
+            AND a."publicationStatus" = 'PUBLISHED'
+            AND a.involvement = 'DIRECT'
+        )
+      ) AS with_conviction,
+      -- Total critique affairs
+      (SELECT COUNT(*) FROM "Affair"
+        WHERE severity = 'CRITIQUE' AND status = 'CONDAMNATION_DEFINITIVE'
+          AND "publicationStatus" = 'PUBLISHED' AND involvement = 'DIRECT'
+      ) AS total_affairs,
+      -- Députés
+      COUNT(DISTINCT p.id) FILTER (
+        WHERE EXISTS (
+          SELECT 1 FROM "Mandate" m
+          WHERE m."politicianId" = p.id AND m.type = 'DEPUTE' AND m."isCurrent" = true
+        )
+      ) AS deputes,
+      -- Sénateurs
+      COUNT(DISTINCT p.id) FILTER (
+        WHERE EXISTS (
+          SELECT 1 FROM "Mandate" m
+          WHERE m."politicianId" = p.id AND m.type = 'SENATEUR' AND m."isCurrent" = true
+        )
+      ) AS senateurs,
+      -- Gouvernement
+      COUNT(DISTINCT p.id) FILTER (
+        WHERE EXISTS (
+          SELECT 1 FROM "Mandate" m
+          WHERE m."politicianId" = p.id
+            AND m.type IN ('MINISTRE', 'PREMIER_MINISTRE', 'MINISTRE_DELEGUE', 'SECRETAIRE_ETAT')
+            AND m."isCurrent" = true
+        )
+      ) AS gouvernement,
+      -- Présidents de parti
+      COUNT(DISTINCT p.id) FILTER (
+        WHERE EXISTS (
+          SELECT 1 FROM "Mandate" m
+          WHERE m."politicianId" = p.id AND m.type = 'PRESIDENT_PARTI' AND m."isCurrent" = true
+        )
+      ) AS president_parti,
+      -- Dirigeants (PRESIDENT_PARTI + significant party roles)
+      COUNT(DISTINCT p.id) FILTER (
+        WHERE EXISTS (
+          SELECT 1 FROM "Mandate" m
+          WHERE m."politicianId" = p.id AND m.type = 'PRESIDENT_PARTI' AND m."isCurrent" = true
+        )
+        OR EXISTS (
+          SELECT 1 FROM "PartyMembership" pm
+          WHERE pm."politicianId" = p.id AND pm."endDate" IS NULL AND pm.role != 'MEMBER'
+        )
+      ) AS dirigeants,
+      -- Active (has current mandate OR significant party role)
+      COUNT(DISTINCT p.id) FILTER (
+        WHERE EXISTS (
+          SELECT 1 FROM "Mandate" m
+          WHERE m."politicianId" = p.id AND m."isCurrent" = true
+        )
+        OR EXISTS (
+          SELECT 1 FROM "PartyMembership" pm
+          WHERE pm."politicianId" = p.id AND pm."endDate" IS NULL AND pm.role != 'MEMBER'
+        )
+      ) AS active,
+      -- Former (no current mandate AND no significant party role)
+      COUNT(DISTINCT p.id) FILTER (
+        WHERE NOT EXISTS (
+          SELECT 1 FROM "Mandate" m
+          WHERE m."politicianId" = p.id AND m."isCurrent" = true
+        )
+        AND NOT EXISTS (
+          SELECT 1 FROM "PartyMembership" pm
+          WHERE pm."politicianId" = p.id AND pm."endDate" IS NULL AND pm.role != 'MEMBER'
+        )
+      ) AS former
+    FROM "Politician" p
+    WHERE p."publicationStatus" = 'PUBLISHED'
+  `;
 
   return {
-    withConviction,
-    totalAffairs,
-    deputes,
-    senateurs,
-    gouvernement,
-    presidentParti,
-    dirigeants,
-    active,
-    former,
+    withConviction: Number(counts.with_conviction),
+    totalAffairs: Number(counts.total_affairs),
+    deputes: Number(counts.deputes),
+    senateurs: Number(counts.senateurs),
+    gouvernement: Number(counts.gouvernement),
+    presidentParti: Number(counts.president_parti),
+    dirigeants: Number(counts.dirigeants),
+    active: Number(counts.active),
+    former: Number(counts.former),
   };
 }
 

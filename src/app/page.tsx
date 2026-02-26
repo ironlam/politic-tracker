@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { cacheTag, cacheLife } from "next/cache";
 import { db } from "@/lib/db";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -11,6 +12,10 @@ import { FadeIn } from "@/components/motion";
 import { isFeatureEnabled } from "@/lib/feature-flags";
 
 async function getRecentFactChecks() {
+  "use cache";
+  cacheTag("factchecks", "homepage");
+  cacheLife("minutes");
+
   const factChecks = await db.factCheck.findMany({
     take: 5,
     orderBy: { publishedAt: "desc" },
@@ -46,6 +51,10 @@ async function getRecentFactChecks() {
 }
 
 async function getRecentVotes() {
+  "use cache";
+  cacheTag("votes", "homepage");
+  cacheLife("minutes");
+
   const scrutins = await db.scrutin.findMany({
     take: 5,
     orderBy: { votingDate: "desc" },
@@ -71,6 +80,10 @@ async function getRecentVotes() {
 }
 
 async function getActiveDossiers() {
+  "use cache";
+  cacheTag("dossiers", "homepage");
+  cacheLife("minutes");
+
   return db.legislativeDossier.findMany({
     where: { status: "EN_COURS" },
     orderBy: { filingDate: "desc" },
@@ -87,6 +100,10 @@ async function getActiveDossiers() {
 }
 
 async function getRecentArticles() {
+  "use cache";
+  cacheTag("press", "homepage");
+  cacheLife("minutes");
+
   // Only fetch articles that have at least one politician or party mention
   const articles = await db.pressArticle.findMany({
     where: {
@@ -114,6 +131,10 @@ async function getRecentArticles() {
 }
 
 async function getUpcomingElections() {
+  "use cache";
+  cacheTag("elections", "homepage");
+  cacheLife("minutes");
+
   const now = new Date();
   return db.election.findMany({
     where: {
@@ -126,6 +147,10 @@ async function getUpcomingElections() {
 }
 
 async function getRecentAffairs() {
+  "use cache";
+  cacheTag("affairs", "homepage");
+  cacheLife("minutes");
+
   const affairs = await db.affair.findMany({
     where: { publicationStatus: "PUBLISHED", involvement: "DIRECT" },
     take: 5,
@@ -223,15 +248,21 @@ export default async function HomePage() {
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button asChild size="lg" className="text-base px-8 shadow-lg shadow-primary/20">
-                  <Link href="/politiques">Explorer les représentants</Link>
+                  <Link href="/politiques" prefetch={false}>
+                    Explorer les représentants
+                  </Link>
                 </Button>
                 {statsEnabled && (
                   <Button asChild size="lg" variant="outline" className="text-base px-8">
-                    <Link href="/statistiques">Voir les statistiques</Link>
+                    <Link href="/statistiques" prefetch={false}>
+                      Voir les statistiques
+                    </Link>
                   </Button>
                 )}
                 <Button asChild size="lg" variant="outline" className="text-base px-8">
-                  <Link href="/comparer">Comparer</Link>
+                  <Link href="/comparer" prefetch={false}>
+                    Comparer
+                  </Link>
                 </Button>
               </div>
             </FadeIn>

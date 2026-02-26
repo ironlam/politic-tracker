@@ -1,5 +1,6 @@
 import { Metadata } from "next";
 import Link from "next/link";
+import { cacheTag, cacheLife } from "next/cache";
 import { db } from "@/lib/db";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +13,8 @@ import {
   FACTCHECK_RATING_DESCRIPTIONS,
 } from "@/config/labels";
 import type { FactCheckRating } from "@/types";
+
+export const revalidate = 300; // 5 minutes — CDN edge cache with ISR
 
 export const metadata: Metadata = {
   title: "Fact-checks",
@@ -138,6 +141,10 @@ async function getFactChecks(params: {
 }
 
 async function getStats() {
+  "use cache";
+  cacheTag("factchecks");
+  cacheLife("minutes");
+
   const [totalFactChecks, byRating, bySource, topPoliticians] = await Promise.all([
     db.factCheck.count(),
     db.factCheck.groupBy({
@@ -175,6 +182,10 @@ async function getStats() {
 }
 
 async function getSources() {
+  "use cache";
+  cacheTag("factchecks");
+  cacheLife("minutes");
+
   const sources = await db.factCheck.groupBy({
     by: ["source"],
     _count: true,

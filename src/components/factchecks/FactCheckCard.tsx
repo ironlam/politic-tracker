@@ -63,7 +63,7 @@ export function FactCheckCard({
       </div>
 
       {/* Title */}
-      <Link href={`/factchecks/${slug}`} className="block">
+      <Link href={`/factchecks/${slug}`} prefetch={false} className="block">
         <h3 className="font-semibold text-sm group-hover:text-primary transition-colors">
           {title}
         </h3>
@@ -85,6 +85,7 @@ export function FactCheckCard({
             <Link
               key={mention.politician.slug}
               href={`/politiques/${mention.politician.slug}`}
+              prefetch={false}
               className="inline-block"
             >
               <Badge variant="outline" className="text-xs hover:bg-muted">
@@ -103,6 +104,7 @@ export function FactCheckCard({
       {/* Detail link */}
       <Link
         href={`/factchecks/${slug}`}
+        prefetch={false}
         className="text-xs text-primary hover:underline mt-2 inline-block"
       >
         Voir le détail →

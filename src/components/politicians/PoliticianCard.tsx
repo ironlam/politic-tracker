@@ -56,6 +56,7 @@ export function PoliticianCard({
   return (
     <Link
       href={`/politiques/${politician.slug}`}
+      prefetch={false}
       className="block group focus-visible:outline-none"
     >
       <Card

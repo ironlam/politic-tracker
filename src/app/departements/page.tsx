@@ -95,6 +95,7 @@ export default async function DepartementsPage() {
           <Link
             key={dept.code}
             href={`/departements/${getDepartmentSlug(dept.name)}`}
+            prefetch={false}
             className="block group"
           >
             <Card className="h-full transition-all duration-200 hover:shadow-lg hover:border-primary/20">

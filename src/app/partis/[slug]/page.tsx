@@ -1,7 +1,9 @@
+import { cache } from "react";
 import Image from "next/image";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { cacheTag, cacheLife } from "next/cache";
 import { db } from "@/lib/db";
 import { isFeatureEnabled } from "@/lib/feature-flags";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -27,7 +29,11 @@ interface PageProps {
   params: Promise<{ slug: string }>;
 }
 
-async function getParty(slug: string) {
+const getParty = cache(async function getParty(slug: string) {
+  "use cache";
+  cacheTag(`party:${slug}`, "parties");
+  cacheLife("minutes");
+
   return db.party.findUnique({
     where: { slug },
     include: {
@@ -90,7 +96,7 @@ async function getParty(slug: string) {
       },
     },
   });
-}
+});
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
@@ -130,6 +136,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 async function getPartyLeadership(partyId: string, partyName: string) {
+  "use cache";
+  cacheTag(`party-leadership:${partyId}`, "parties");
+  cacheLife("minutes");
+
   return db.mandate.findMany({
     where: {
       type: "PRESIDENT_PARTI",
@@ -146,6 +156,10 @@ async function getPartyLeadership(partyId: string, partyName: string) {
 }
 
 async function getPartyRoles(partyId: string) {
+  "use cache";
+  cacheTag(`party-roles:${partyId}`, "parties");
+  cacheLife("minutes");
+
   return db.partyMembership.findMany({
     where: {
       partyId,

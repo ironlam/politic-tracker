@@ -172,7 +172,7 @@ export interface HATVPCSV {
   civilite: string; // M. / Mme
   prenom: string;
   nom: string; // NOM (uppercase)
-  classement: string; // Internal sort key
+  classement: string; // HATVP person ID (Wikidata P4703), e.g. "macronaaaemmanuel5835"
   type_mandat: string; // depute, senateur, gouvernement, commune, etc.
   qualite: string; // Full mandate description
   type_document: string; // di, dim, dia, diam, dsp, dspm, dspfm

@@ -36,7 +36,7 @@ async function fetchHATVPCSV(): Promise<HATVPCSV[]> {
  * Filter declarations for our target mandate types
  */
 function filterRelevantDeclarations(records: HATVPCSV[]): HATVPCSV[] {
-  const relevantTypes = ["depute", "senateur", "gouvernement", "europe"];
+  const relevantTypes = ["depute", "senateur", "gouvernement", "europe", "president", "commune"];
   return records.filter((r) => relevantTypes.includes(r.type_mandat));
 }
 
@@ -235,30 +235,37 @@ async function updatePhotoFromHATVP(politicianId: string, photoUrl: string | nul
 }
 
 /**
- * Create/update HATVP external ID
+ * Create/update HATVP external ID using the `classement` field.
+ * This is the canonical HATVP person ID (Wikidata P4703),
+ * usable via https://www.hatvp.fr/fiche-nominative/?declarant={classement}
  */
-async function upsertHATVPExternalId(politicianId: string, urlDossier: string): Promise<void> {
-  if (!urlDossier) return;
+async function upsertHATVPExternalId(
+  politicianId: string,
+  classement: string,
+  urlDossier: string
+): Promise<void> {
+  if (!classement) return;
 
-  // Extract HATVP ID from URL (e.g., /consulter-les-declarations/d/prenom-nom)
-  const hatvpId = urlDossier.replace(/^\//, "").replace(/\/$/, "");
+  const url = urlDossier
+    ? `https://www.hatvp.fr${urlDossier}`
+    : `https://www.hatvp.fr/fiche-nominative/?declarant=${classement}`;
 
   await db.externalId.upsert({
     where: {
       source_externalId: {
         source: DataSource.HATVP,
-        externalId: hatvpId,
+        externalId: classement,
       },
     },
     create: {
       politicianId,
       source: DataSource.HATVP,
-      externalId: hatvpId,
-      url: `https://www.hatvp.fr${urlDossier}`,
+      externalId: classement,
+      url,
     },
     update: {
       politicianId,
-      url: `https://www.hatvp.fr${urlDossier}`,
+      url,
     },
   });
 }
@@ -328,8 +335,8 @@ export async function syncHATVP(): Promise<HATVPSyncResult> {
       // Update photo if available
       await updatePhotoFromHATVP(politicianId, firstDecl.url_photo);
 
-      // Create HATVP external ID
-      await upsertHATVPExternalId(politicianId, firstDecl.url_dossier);
+      // Create HATVP external ID (classement = canonical HATVP person ID)
+      await upsertHATVPExternalId(politicianId, firstDecl.classement, firstDecl.url_dossier);
 
       // Sync all declarations for this politician
       for (const decl of declarations) {

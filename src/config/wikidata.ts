@@ -44,7 +44,7 @@ export const WD_PROPS = {
   // Identifiers
   AN_ID: "P4123", // Assemblée nationale
   SENAT_ID: "P4324", // Sénat
-  HATVP_ID: "P8919", // HATVP
+  HATVP_ID: "P4703", // HATVP person ID (classement)
   NOSDEPUTES_ID: "P7384", // NosDéputés.fr
 
   // Judicial

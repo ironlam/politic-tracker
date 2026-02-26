@@ -219,6 +219,11 @@ async function queryPoliticians(
             constituency: true,
           },
         },
+        declarations: {
+          where: { type: "INTERETS" },
+          select: { id: true },
+          take: 1,
+        },
         partyHistory: {
           where: {
             endDate: null,
@@ -242,13 +247,19 @@ async function queryPoliticians(
   // Transform to add hasConviction flag, current mandate, and significant party role
   const politiciansWithConviction = politicians.map((p) => {
     const significantRole = p.partyHistory[0] || null;
+    const mandate = p.mandates[0] || null;
+    const isActiveParliamentarian =
+      mandate !== null && (mandate.type === "DEPUTE" || mandate.type === "SENATEUR");
+    const hasDeclaration = p.declarations.length > 0;
     return {
       ...p,
       hasCritiqueAffair: p.affairs.length > 0,
       affairs: undefined,
-      currentMandate: p.mandates[0] || null,
+      currentMandate: mandate,
       mandates: undefined,
+      declarations: undefined,
       partyHistory: undefined,
+      missingDeclaration: isActiveParliamentarian && !hasDeclaration,
       significantPartyRole: significantRole
         ? {
             role: significantRole.role,
@@ -615,6 +626,7 @@ export default async function PolitiquesPage({ searchParams }: PageProps) {
           statusFilter,
           sortOption,
         }}
+        showMissingDeclarationBadge
       />
     </div>
   );

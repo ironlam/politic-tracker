@@ -70,8 +70,8 @@ export function PoliticianCard({ politician, showConvictionBadge = false }: Poli
               {showConvictionBadge && hasCritiqueAffair && (
                 <div
                   className="absolute -top-1 -right-1 w-5 h-5 bg-destructive rounded-full flex items-center justify-center shadow-md animate-pulse"
-                  title="Atteinte à la probité"
-                  aria-label="Ce représentant a une atteinte à la probité documentée"
+                  title="Condamnation définitive pour atteinte à la probité"
+                  aria-label="Ce représentant a une condamnation définitive pour atteinte à la probité"
                 >
                   <span className="text-white text-xs font-bold">!</span>
                 </div>
@@ -117,7 +117,7 @@ export function PoliticianCard({ politician, showConvictionBadge = false }: Poli
                     variant="outline"
                     className="text-xs text-destructive/80 border-destructive/40 bg-destructive/5"
                   >
-                    {affairCount} atteinte{affairCount > 1 ? "s" : ""} à la probité
+                    {affairCount} condamnation{affairCount > 1 ? "s" : ""}
                   </Badge>
                 )}
               </div>

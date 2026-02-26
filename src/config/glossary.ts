@@ -84,6 +84,14 @@ export const METRIC_TERMS = {
     "Score calculé automatiquement à partir de l'activité parlementaire, de la couverture médiatique et du rôle institutionnel.",
   participationRate:
     "Pourcentage de parlementaires ayant voté (pour, contre ou abstention) par rapport au nombre total de membres.",
+  portefeuilleTotal:
+    "Valeur totale des participations financières déclarées à la HATVP : actions, parts de sociétés (SCI, SARL…). Ce montant est une photographie à la date de déclaration, il ne comprend pas l'immobilier ni les comptes bancaires.",
+  participationsHatvp:
+    "Nombre de sociétés dans lesquelles l'élu détient des parts ou actions (SCI, SARL, SA…). Chaque participation est déclarée séparément avec sa valorisation.",
+  revenusAnnuels:
+    "Total des revenus déclarés sur la dernière année : indemnités parlementaires, salaires, revenus fonciers, dividendes, pensions. Montant net avant impôt sur le revenu.",
+  mandatsDirections:
+    "Nombre de mandats électifs et postes de direction (conseil d'administration, gérance…) déclarés, rémunérés ou non.",
 } as const;
 
 // Unified lookup for any term

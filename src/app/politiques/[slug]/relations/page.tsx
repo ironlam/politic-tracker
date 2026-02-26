@@ -21,7 +21,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   return {
     title: `Relations de ${politician.fullName} | Poligraph`,
-    description: `Découvrez les relations politiques de ${politician.fullName} : collègues de parti, de gouvernement, de législature.`,
+    description: `Découvrez les relations politiques de ${politician.fullName} : gouvernement, entreprises, département, parcours partisan.`,
   };
 }
 
@@ -70,7 +70,8 @@ export default async function RelationsPage({ params }: PageProps) {
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Relations de {politician.fullName}</h1>
         <p className="text-muted-foreground">
-          Visualisez les connexions politiques : collègues de parti, de gouvernement, de législature
+          Visualisez les connexions politiques : gouvernement, entreprises en commun, département,
+          parcours partisan
         </p>
       </div>
 

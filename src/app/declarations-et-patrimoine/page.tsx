@@ -198,6 +198,8 @@ async function getTopCompanies(limit = 10) {
 
     for (const part of details.financialParticipations) {
       if (!part.company) continue;
+      // Skip redacted company names (e.g. "SCI [Données non publiées]")
+      if (part.company.includes("[Données non publiées]")) continue;
       const key = part.company.toUpperCase().trim();
       if (!companyMap.has(key)) {
         companyMap.set(key, { politicians: new Set(), totalValue: 0 });

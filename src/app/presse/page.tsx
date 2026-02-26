@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { cacheTag, cacheLife } from "next/cache";
 import { db } from "@/lib/db";
 import { PressCard, PartyFilterSelect } from "@/components/presse";
 import { Badge } from "@/components/ui/badge";
@@ -88,6 +89,10 @@ async function getArticles(params: {
 }
 
 async function getStats() {
+  "use cache";
+  cacheTag("press");
+  cacheLife("minutes");
+
   // Only count articles linked to at least one politician or party
   const linkedFilter = {
     OR: [{ mentions: { some: {} } }, { partyMentions: { some: {} } }],
@@ -119,6 +124,10 @@ async function getStats() {
 }
 
 async function getPartiesWithMentions() {
+  "use cache";
+  cacheTag("press", "parties");
+  cacheLife("minutes");
+
   const parties = await db.party.findMany({
     where: {
       pressMentions: {

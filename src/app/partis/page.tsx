@@ -81,7 +81,7 @@ export default async function PartiesPage() {
           {activeParties
             .filter((p) => p.slug)
             .map((party) => (
-              <Link key={party.id} href={`/partis/${party.slug}`}>
+              <Link key={party.id} href={`/partis/${party.slug}`} prefetch={false}>
                 <Card className="h-full hover:shadow-md transition-shadow">
                   <CardContent className="p-4">
                     <div className="flex items-start gap-3">
@@ -161,7 +161,7 @@ export default async function PartiesPage() {
             {historicalParties
               .filter((p) => p.slug)
               .map((party) => (
-                <Link key={party.id} href={`/partis/${party.slug}`}>
+                <Link key={party.id} href={`/partis/${party.slug}`} prefetch={false}>
                   <Card className="h-full hover:shadow-md transition-shadow opacity-75 hover:opacity-100">
                     <CardContent className="p-4">
                       <div className="flex items-start gap-3">

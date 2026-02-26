@@ -176,7 +176,31 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     ? `${currentMandate.type === "DEPUTE" ? "Député" : currentMandate.type === "SENATEUR" ? "Sénateur" : "Représentant"}`
     : "Représentant politique";
 
-  const description = `${role} ${politician.currentParty ? `(${politician.currentParty.shortName})` : ""} - Consultez ses mandats, déclarations de patrimoine et affaires judiciaires.`;
+  // Find latest DIA declaration with details for SEO
+  const latestDIA = politician.declarations.find((d) => d.type === "INTERETS" && d.details);
+  const details = latestDIA?.details as DeclarationDetails | null;
+
+  let hatvpDescription = "";
+  if (details) {
+    const parts: string[] = [];
+    if (details.totalPortfolioValue && details.totalPortfolioValue > 0) {
+      const formatted =
+        details.totalPortfolioValue >= 1_000_000
+          ? `${(details.totalPortfolioValue / 1_000_000).toFixed(1)} M€`
+          : details.totalPortfolioValue >= 1_000
+            ? `${Math.round(details.totalPortfolioValue / 1_000)} k€`
+            : `${details.totalPortfolioValue} €`;
+      parts.push(`${formatted} de participations financières`);
+    }
+    if (details.totalCompanies > 0) {
+      parts.push(`${details.totalCompanies} sociétés déclarées`);
+    }
+    if (parts.length > 0) {
+      hatvpDescription = ` ${parts.join(", ")}.`;
+    }
+  }
+
+  const description = `${role} ${politician.currentParty ? `(${politician.currentParty.shortName})` : ""} - Consultez ses mandats, déclarations d'intérêts et affaires judiciaires.${hatvpDescription}`;
 
   return {
     title: politician.fullName,
@@ -421,6 +445,12 @@ export default async function PoliticianPage({ params }: PageProps) {
   );
   const victimAffairs = politician.affairs.filter((a) => a.involvement === "VICTIM");
 
+  // Extract companies from HATVP declarations for JSON-LD
+  const latestDIAForLD = politician.declarations.find((d) => d.type === "INTERETS" && d.details);
+  const detailsForLD = latestDIAForLD?.details as DeclarationDetails | null;
+  const memberOfOrgs =
+    detailsForLD?.financialParticipations.map((p) => ({ name: p.company })).slice(0, 10) ?? [];
+
   return (
     <>
       {/* JSON-LD Structured Data */}
@@ -438,6 +468,7 @@ export default async function PoliticianPage({ params }: PageProps) {
         sameAs={politician.externalIds
           .map((e) => e.url)
           .filter((url): url is string => url != null)}
+        memberOf={memberOfOrgs.length > 0 ? memberOfOrgs : undefined}
       />
       <BreadcrumbJsonLd
         items={[

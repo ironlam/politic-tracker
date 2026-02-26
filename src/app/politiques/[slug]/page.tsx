@@ -402,9 +402,10 @@ export default async function PoliticianPage({ params }: PageProps) {
     (m) => m.isCurrent && (m.type === "DEPUTE" || m.type === "SENATEUR")
   );
 
-  // Get vote stats (only for deputies - they have votes tracked)
-  const isDepute = currentMandate?.type === "DEPUTE";
-  const voteData = isDepute ? await getVoteStats(politician.id) : null;
+  // Get vote stats (for deputies and senators - both have votes tracked)
+  const isParliamentarian =
+    currentMandate?.type === "DEPUTE" || currentMandate?.type === "SENATEUR";
+  const voteData = isParliamentarian ? await getVoteStats(politician.id) : null;
 
   // Split affairs by involvement: direct (mis en cause) vs mentions vs victim
   const STATUS_SEVERITY: Record<string, number> = {

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { VoteStatsResult } from "@/services/voteStats";
+import type { VoteStatsResult, PartyParticipationStats } from "@/services/voteStats";
 import { HorizontalBars } from "./HorizontalBars";
 import { MethodologyDisclaimer } from "./MethodologyDisclaimer";
 
@@ -9,19 +9,20 @@ interface LegislativeSectionProps {
   allData: VoteStatsResult;
   anData: VoteStatsResult;
   senatData: VoteStatsResult;
+  partyParticipation: PartyParticipationStats[];
 }
 
-export function LegislativeSection({ allData }: LegislativeSectionProps) {
+export function LegislativeSection({ allData, partyParticipation }: LegislativeSectionProps) {
   const { global, parties, divisiveScrutins } = allData;
 
   const filteredParties = parties.filter((p) => p.totalVotes >= 100);
-  const sortedByParticipation = [...filteredParties].sort(
-    (a, b) => b.participationRate - a.participationRate
-  );
   const sortedByCohesion = [...filteredParties].sort((a, b) => b.cohesionRate - a.cohesionRate);
   const avgParticipation =
-    filteredParties.length > 0
-      ? filteredParties.reduce((sum, p) => sum + p.participationRate, 0) / filteredParties.length
+    partyParticipation.length > 0
+      ? Math.round(
+          partyParticipation.reduce((sum, p) => sum + p.avgParticipationRate, 0) /
+            partyParticipation.length
+        )
       : 0;
 
   return (
@@ -56,16 +57,16 @@ export function LegislativeSection({ allData }: LegislativeSectionProps) {
           <CardHeader>
             <CardTitle className="text-lg">Participation aux votes</CardTitle>
             <p className="text-sm text-muted-foreground">
-              Pourcentage de votes exprimés (hors absents et non-votants)
+              Taux moyen de présence aux scrutins par groupe politique
             </p>
           </CardHeader>
           <CardContent>
             <HorizontalBars
               title="Participation aux votes par parti"
               maxValue={100}
-              bars={sortedByParticipation.slice(0, 12).map((p) => ({
-                label: p.partyName || p.partyShortName,
-                value: p.participationRate,
+              bars={partyParticipation.slice(0, 12).map((p) => ({
+                label: p.partyShortName || p.partyName,
+                value: p.avgParticipationRate,
                 color: p.partyColor || undefined,
                 suffix: "%",
                 href: p.partySlug ? `/partis/${p.partySlug}` : undefined,

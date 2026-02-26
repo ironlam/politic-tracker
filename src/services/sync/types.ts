@@ -193,6 +193,8 @@ export interface HATVPSyncResult {
   declarationsUpdated: number;
   politiciansMatched: number;
   politiciansNotFound: number;
+  xmlParsed: number;
+  xmlErrors: number;
   errors: string[];
 }
 

@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { withCache } from "@/lib/cache";
-import { RelationType, GraphNode, GraphLink, RelationsResponse } from "@/types/relations";
-import { RELATION_TYPE_STRENGTH, ALL_RELATION_TYPES } from "@/config/relations";
-import { MandateType } from "@/generated/prisma";
+import { Prisma, MandateType } from "@/generated/prisma";
+import { RelationType, GraphNode, GraphLink, Cluster, RelationsResponse } from "@/types/relations";
+import { ALL_RELATION_TYPES } from "@/config/relations";
+import { DeclarationDetails } from "@/types/hatvp";
 
 interface RouteContext {
   params: Promise<{ slug: string }>;
@@ -16,12 +17,44 @@ const GOVERNMENT_TYPES: MandateType[] = [
   "SECRETAIRE_ETAT",
 ];
 
+function toGraphNode(p: {
+  id: string;
+  slug: string;
+  fullName: string;
+  photoUrl: string | null;
+  currentParty: { shortName: string; color: string | null } | null;
+  mandates?: { type: MandateType; isCurrent: boolean }[];
+}): GraphNode {
+  const mandate = p.mandates?.find((m) => m.isCurrent);
+  return {
+    id: p.id,
+    slug: p.slug,
+    fullName: p.fullName,
+    photoUrl: p.photoUrl,
+    party: p.currentParty,
+    mandateType: mandate?.type || null,
+  };
+}
+
+const POLITICIAN_SELECT = {
+  id: true,
+  slug: true,
+  fullName: true,
+  photoUrl: true,
+  currentParty: { select: { shortName: true, color: true } },
+  mandates: {
+    where: { isCurrent: true },
+    select: { type: true, isCurrent: true },
+    take: 1,
+  },
+} as const;
+
 /**
  * @openapi
  * /api/politiques/{slug}/relations:
  *   get:
  *     summary: Relations d'un représentant
- *     description: Retourne le graphe des relations d'un représentant (même parti, gouvernement, législature, etc.)
+ *     description: Retourne les clusters de relations d'un représentant (gouvernement, entreprises, département, parcours partisan)
  *     tags: [Relations]
  *     parameters:
  *       - in: path
@@ -36,7 +69,7 @@ const GOVERNMENT_TYPES: MandateType[] = [
  *         schema:
  *           type: string
  *         description: Types de relations à inclure (séparés par virgules)
- *         example: SAME_PARTY,SAME_GOVERNMENT
+ *         example: SAME_GOVERNMENT,SHARED_COMPANY
  *       - in: query
  *         name: limit
  *         schema:
@@ -46,28 +79,7 @@ const GOVERNMENT_TYPES: MandateType[] = [
  *         description: Nombre max de connexions par type
  *     responses:
  *       200:
- *         description: Graphe des relations
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 center:
- *                   type: object
- *                   description: Le représentant central
- *                 nodes:
- *                   type: array
- *                   description: Représentants connectés
- *                 links:
- *                   type: array
- *                   description: Liens entre représentants
- *                 stats:
- *                   type: object
- *                   properties:
- *                     totalConnections:
- *                       type: integer
- *                     byType:
- *                       type: object
+ *         description: Clusters de relations
  *       404:
  *         description: Représentant non trouvé
  *       500:
@@ -87,7 +99,6 @@ export async function GET(request: NextRequest, context: RouteContext) {
     : ALL_RELATION_TYPES;
 
   try {
-    // Get the central politician with their mandates and party history
     const politician = await db.politician.findUnique({
       where: { slug },
       include: {
@@ -100,11 +111,16 @@ export async function GET(request: NextRequest, context: RouteContext) {
             endDate: true,
             isCurrent: true,
             constituency: true,
-            europeanGroupId: true,
+            departmentCode: true,
+            governmentName: true,
           },
         },
-        partyHistory: {
-          select: { partyId: true },
+        partyHistory: { select: { partyId: true } },
+        declarations: {
+          where: { details: { not: Prisma.DbNull } },
+          select: { details: true },
+          orderBy: { year: "desc" },
+          take: 1,
         },
       },
     });
@@ -113,7 +129,6 @@ export async function GET(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "Politique non trouvé" }, { status: 404 });
     }
 
-    // Build center node
     const currentMandate = politician.mandates.find((m) => m.isCurrent);
     const center: GraphNode = {
       id: politician.id,
@@ -124,245 +139,187 @@ export async function GET(request: NextRequest, context: RouteContext) {
       mandateType: currentMandate?.type || null,
     };
 
-    const nodesMap = new Map<string, GraphNode>();
-    const links: GraphLink[] = [];
-    const stats: Partial<Record<RelationType, number>> = {};
+    const clusters: Cluster[] = [];
 
-    // Helper to add a node
-    const addNode = (p: {
-      id: string;
-      slug: string;
-      fullName: string;
-      photoUrl: string | null;
-      currentParty: { shortName: string; color: string | null } | null;
-      mandates?: { type: MandateType; isCurrent: boolean }[];
-    }) => {
-      if (p.id === politician.id || nodesMap.has(p.id)) return;
-      const mandate = p.mandates?.find((m) => m.isCurrent);
-      nodesMap.set(p.id, {
-        id: p.id,
-        slug: p.slug,
-        fullName: p.fullName,
-        photoUrl: p.photoUrl,
-        party: p.currentParty,
-        mandateType: mandate?.type || null,
-      });
-    };
-
-    // Helper to add a link
-    const addLink = (targetId: string, type: RelationType, label?: string) => {
-      if (targetId === politician.id) return;
-      // Check if link already exists
-      const existing = links.find(
-        (l) => l.source === politician.id && l.target === targetId && l.type === type
-      );
-      if (existing) return;
-
-      links.push({
-        source: politician.id,
-        target: targetId,
-        type,
-        strength: RELATION_TYPE_STRENGTH[type],
-        label,
-      });
-      stats[type] = (stats[type] || 0) + 1;
-    };
-
-    // 1. SAME_PARTY - Same current party
-    if (requestedTypes.includes("SAME_PARTY") && politician.currentParty) {
-      const sameParty = await db.politician.findMany({
-        where: {
-          currentPartyId: politician.currentParty.id,
-          id: { not: politician.id },
-        },
-        select: {
-          id: true,
-          slug: true,
-          fullName: true,
-          photoUrl: true,
-          currentParty: { select: { shortName: true, color: true } },
-          mandates: {
-            where: { isCurrent: true },
-            select: { type: true, isCurrent: true },
-            take: 1,
-          },
-        },
-        take: limit,
-      });
-
-      for (const p of sameParty) {
-        addNode(p);
-        addLink(p.id, "SAME_PARTY");
-      }
-    }
-
-    // 2. SAME_GOVERNMENT - Overlapping government mandates
+    // --- SAME_GOVERNMENT ---
     if (requestedTypes.includes("SAME_GOVERNMENT")) {
-      const govMandates = politician.mandates.filter((m) => GOVERNMENT_TYPES.includes(m.type));
+      const govMandates = politician.mandates.filter(
+        (m) => GOVERNMENT_TYPES.includes(m.type) && m.governmentName
+      );
 
-      for (const mandate of govMandates) {
+      // Group by government name for distinct clusters
+      const govGroups = new Map<string, (typeof politician.mandates)[number][]>();
+      for (const m of govMandates) {
+        const name = m.governmentName!;
+        if (!govGroups.has(name)) govGroups.set(name, []);
+        govGroups.get(name)!.push(m);
+      }
+
+      for (const [govName, mandates] of govGroups) {
+        const mandate = mandates[0];
         const colleagues = await db.politician.findMany({
           where: {
             id: { not: politician.id },
             mandates: {
               some: {
+                governmentName: govName,
                 type: { in: GOVERNMENT_TYPES },
-                OR: [
-                  // Overlapping dates
-                  {
-                    startDate: { lte: mandate.endDate || new Date() },
-                    endDate: { gte: mandate.startDate },
-                  },
-                  // Both current
-                  {
-                    isCurrent: true,
-                    startDate: { lte: mandate.endDate || new Date() },
-                  },
-                ],
               },
             },
           },
-          select: {
-            id: true,
-            slug: true,
-            fullName: true,
-            photoUrl: true,
-            currentParty: { select: { shortName: true, color: true } },
-            mandates: {
-              where: { type: { in: GOVERNMENT_TYPES } },
-              select: { type: true, isCurrent: true, title: true },
-              take: 1,
-            },
-          },
+          select: POLITICIAN_SELECT,
           take: limit,
         });
 
-        for (const p of colleagues) {
-          addNode(p);
-          addLink(p.id, "SAME_GOVERNMENT");
+        if (colleagues.length > 0) {
+          const nodes = colleagues.map(toGraphNode);
+          const links: GraphLink[] = nodes.map((n) => ({
+            source: politician.id,
+            target: n.id,
+            type: "SAME_GOVERNMENT" as RelationType,
+            label: govName,
+          }));
+
+          const dateRange = mandate.endDate
+            ? `(${mandate.startDate.getFullYear()}-${mandate.endDate.getFullYear()})`
+            : `(depuis ${mandate.startDate.getFullYear()})`;
+
+          clusters.push({
+            type: "SAME_GOVERNMENT",
+            label: `${govName} ${dateRange}`,
+            nodes,
+            links,
+          });
         }
       }
     }
 
-    // 3. SAME_LEGISLATURE - Same legislative period
-    if (requestedTypes.includes("SAME_LEGISLATURE")) {
-      const deputeMandate = politician.mandates.find((m) => m.type === "DEPUTE" && m.isCurrent);
+    // --- SHARED_COMPANY ---
+    if (requestedTypes.includes("SHARED_COMPANY")) {
+      const declaration = politician.declarations[0];
+      if (declaration?.details) {
+        const details = declaration.details as unknown as DeclarationDetails;
+        const companies = new Set<string>();
 
-      if (deputeMandate) {
-        const colleagues = await db.politician.findMany({
-          where: {
-            id: { not: politician.id },
-            mandates: {
-              some: {
-                type: "DEPUTE",
-                isCurrent: true,
-              },
-            },
-          },
-          select: {
-            id: true,
-            slug: true,
-            fullName: true,
-            photoUrl: true,
-            currentParty: { select: { shortName: true, color: true } },
-            mandates: {
-              where: { type: "DEPUTE", isCurrent: true },
-              select: { type: true, isCurrent: true },
-              take: 1,
-            },
-          },
-          take: limit,
-        });
+        for (const fp of details.financialParticipations || []) {
+          if (fp.company && !fp.company.includes("[Données non publiées]")) {
+            companies.add(fp.company.toUpperCase().trim());
+          }
+        }
+        for (const d of details.directorships || []) {
+          if (d.company && !d.company.includes("[Données non publiées]")) {
+            companies.add(d.company.toUpperCase().trim());
+          }
+        }
 
-        for (const p of colleagues) {
-          addNode(p);
-          addLink(p.id, "SAME_LEGISLATURE");
+        if (companies.size > 0) {
+          const companyArray = Array.from(companies);
+
+          // Fetch declarations with details, filter in JS for company matches
+          const matchingDeclarations = await db.declaration.findMany({
+            where: {
+              politicianId: { not: politician.id },
+              details: { not: Prisma.DbNull },
+            },
+            select: {
+              politicianId: true,
+              details: true,
+              politician: { select: POLITICIAN_SELECT },
+            },
+            take: 200,
+          });
+
+          const companyMatches = new Map<string, { node: GraphNode; companies: string[] }>();
+
+          for (const decl of matchingDeclarations) {
+            const d = decl.details as unknown as DeclarationDetails;
+            const sharedCompanies: string[] = [];
+
+            for (const fp of d.financialParticipations || []) {
+              if (fp.company && companyArray.includes(fp.company.toUpperCase().trim())) {
+                sharedCompanies.push(fp.company.trim());
+              }
+            }
+            for (const dir of d.directorships || []) {
+              if (dir.company && companyArray.includes(dir.company.toUpperCase().trim())) {
+                sharedCompanies.push(dir.company.trim());
+              }
+            }
+
+            if (sharedCompanies.length > 0 && !companyMatches.has(decl.politicianId)) {
+              companyMatches.set(decl.politicianId, {
+                node: toGraphNode(decl.politician),
+                companies: [...new Set(sharedCompanies)],
+              });
+            }
+          }
+
+          const sorted = Array.from(companyMatches.values())
+            .sort((a, b) => b.companies.length - a.companies.length)
+            .slice(0, limit);
+
+          if (sorted.length > 0) {
+            const nodes = sorted.map((s) => s.node);
+            const links: GraphLink[] = sorted.map((s) => ({
+              source: politician.id,
+              target: s.node.id,
+              type: "SHARED_COMPANY" as RelationType,
+              label: s.companies.join(", "),
+            }));
+
+            clusters.push({
+              type: "SHARED_COMPANY",
+              label: `${companies.size} entreprise${companies.size > 1 ? "s" : ""} déclarée${companies.size > 1 ? "s" : ""}`,
+              nodes,
+              links,
+            });
+          }
         }
       }
     }
 
-    // 4. SAME_CONSTITUENCY - Same department
-    if (requestedTypes.includes("SAME_CONSTITUENCY")) {
-      const deputeMandate = politician.mandates.find((m) => m.type === "DEPUTE" && m.constituency);
+    // --- SAME_DEPARTMENT ---
+    if (requestedTypes.includes("SAME_DEPARTMENT")) {
+      const deptMandate = politician.mandates.find((m) => m.departmentCode && m.isCurrent);
 
-      if (deputeMandate?.constituency) {
-        // Extract department name (before the parenthesis)
-        const department = deputeMandate.constituency.split("(")[0].trim();
-
+      if (deptMandate?.departmentCode) {
         const sameDept = await db.politician.findMany({
           where: {
             id: { not: politician.id },
             mandates: {
               some: {
-                type: "DEPUTE",
                 isCurrent: true,
-                constituency: { startsWith: department, mode: "insensitive" },
+                departmentCode: deptMandate.departmentCode,
               },
             },
           },
-          select: {
-            id: true,
-            slug: true,
-            fullName: true,
-            photoUrl: true,
-            currentParty: { select: { shortName: true, color: true } },
-            mandates: {
-              where: { type: "DEPUTE", isCurrent: true },
-              select: { type: true, isCurrent: true, constituency: true },
-              take: 1,
-            },
-          },
+          select: POLITICIAN_SELECT,
           take: limit,
         });
 
-        for (const p of sameDept) {
-          addNode(p);
-          addLink(p.id, "SAME_CONSTITUENCY", department);
+        if (sameDept.length > 0) {
+          const deptName =
+            deptMandate.constituency?.split("(")[0].trim() || deptMandate.departmentCode;
+
+          const nodes = sameDept.map(toGraphNode);
+          const links: GraphLink[] = nodes.map((n) => ({
+            source: politician.id,
+            target: n.id,
+            type: "SAME_DEPARTMENT" as RelationType,
+            label: deptName,
+          }));
+
+          clusters.push({
+            type: "SAME_DEPARTMENT",
+            label: deptName,
+            nodes,
+            links,
+          });
         }
       }
     }
 
-    // 5. SAME_EUROPEAN_GROUP - Same EU Parliament group
-    if (requestedTypes.includes("SAME_EUROPEAN_GROUP")) {
-      const mepMandate = politician.mandates.find(
-        (m) => m.type === "DEPUTE_EUROPEEN" && m.europeanGroupId
-      );
-
-      if (mepMandate?.europeanGroupId) {
-        const sameGroup = await db.politician.findMany({
-          where: {
-            id: { not: politician.id },
-            mandates: {
-              some: {
-                type: "DEPUTE_EUROPEEN",
-                europeanGroupId: mepMandate.europeanGroupId,
-                isCurrent: true,
-              },
-            },
-          },
-          select: {
-            id: true,
-            slug: true,
-            fullName: true,
-            photoUrl: true,
-            currentParty: { select: { shortName: true, color: true } },
-            mandates: {
-              where: { type: "DEPUTE_EUROPEEN", isCurrent: true },
-              select: { type: true, isCurrent: true },
-              take: 1,
-            },
-          },
-          take: limit,
-        });
-
-        for (const p of sameGroup) {
-          addNode(p);
-          addLink(p.id, "SAME_EUROPEAN_GROUP");
-        }
-      }
-    }
-
-    // 6. PARTY_HISTORY - Shared past party membership
+    // --- PARTY_HISTORY ---
     if (requestedTypes.includes("PARTY_HISTORY")) {
       const partyIds = politician.partyHistory.map((h) => h.partyId);
 
@@ -370,42 +327,43 @@ export async function GET(request: NextRequest, context: RouteContext) {
         const formerColleagues = await db.politician.findMany({
           where: {
             id: { not: politician.id },
+            ...(politician.currentParty
+              ? { NOT: { currentPartyId: politician.currentParty.id } }
+              : {}),
             partyHistory: {
               some: { partyId: { in: partyIds } },
             },
           },
-          select: {
-            id: true,
-            slug: true,
-            fullName: true,
-            photoUrl: true,
-            currentParty: { select: { shortName: true, color: true } },
-            mandates: {
-              where: { isCurrent: true },
-              select: { type: true, isCurrent: true },
-              take: 1,
-            },
-          },
+          select: POLITICIAN_SELECT,
           take: limit,
         });
 
-        for (const p of formerColleagues) {
-          addNode(p);
-          addLink(p.id, "PARTY_HISTORY");
+        if (formerColleagues.length > 0) {
+          const nodes = formerColleagues.map(toGraphNode);
+          const links: GraphLink[] = nodes.map((n) => ({
+            source: politician.id,
+            target: n.id,
+            type: "PARTY_HISTORY" as RelationType,
+          }));
+
+          clusters.push({
+            type: "PARTY_HISTORY",
+            label: "Anciens collègues de parti",
+            nodes,
+            links,
+          });
         }
       }
     }
 
-    const response: RelationsResponse = {
-      center,
-      nodes: Array.from(nodesMap.values()),
-      links,
-      stats: {
-        totalConnections: links.length,
-        byType: stats,
-      },
+    const stats: RelationsResponse["stats"] = {
+      totalConnections: clusters.reduce((sum, c) => sum + c.links.length, 0),
+      byType: Object.fromEntries(clusters.map((c) => [c.type, c.links.length])) as Partial<
+        Record<RelationType, number>
+      >,
     };
 
+    const response: RelationsResponse = { center, clusters, stats };
     return withCache(NextResponse.json(response), "daily");
   } catch (error) {
     console.error("API error:", error);

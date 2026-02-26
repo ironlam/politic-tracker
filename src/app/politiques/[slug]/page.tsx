@@ -31,6 +31,8 @@ import { PersonJsonLd, BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 import { SentenceDetails } from "@/components/affairs/SentenceDetails";
 import { AffairTimeline } from "@/components/affairs/AffairTimeline";
 import { VotePositionBadge } from "@/components/votes";
+import { DeclarationCard } from "@/components/declarations/DeclarationCard";
+import type { DeclarationDetails } from "@/types/hatvp";
 import { BetaDisclaimer } from "@/components/BetaDisclaimer";
 import { getPoliticianVotingStats } from "@/services/voteStats";
 
@@ -112,7 +114,7 @@ async function getPolitician(slug: string) {
         orderBy: { startDate: "desc" },
       },
       externalIds: {
-        select: { url: true },
+        select: { url: true, source: true },
       },
     },
   });
@@ -584,6 +586,23 @@ export default async function PoliticianPage({ params }: PageProps) {
                   <MandateTimeline mandates={politician.mandates} civility={politician.civility} />
                 </CardContent>
               </Card>
+            )}
+
+            {/* HATVP Declarations */}
+            {politician.declarations.length > 0 && (
+              <DeclarationCard
+                declarations={politician.declarations.map((d) => ({
+                  id: d.id,
+                  type: d.type,
+                  year: d.year,
+                  hatvpUrl: d.hatvpUrl,
+                  pdfUrl: d.pdfUrl,
+                  details: d.details as DeclarationDetails | null,
+                }))}
+                politicianHatvpUrl={
+                  politician.externalIds.find((e) => e.source === "HATVP")?.url ?? null
+                }
+              />
             )}
 
             {/* Votes (deputies only) */}
@@ -1167,31 +1186,6 @@ export default async function PoliticianPage({ params }: PageProps) {
                 </div>
               </CardContent>
             </Card>
-
-            {/* Declarations */}
-            {politician.declarations.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <h2 className="leading-none font-semibold text-lg">Déclarations HATVP</h2>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-2">
-                    {politician.declarations.map((decl) => (
-                      <li key={decl.id}>
-                        <a
-                          href={decl.hatvpUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-sm text-blue-600 hover:underline"
-                        >
-                          {decl.type.replace(/_/g, " ")} ({decl.year})
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
-            )}
 
             <BetaDisclaimer variant="profile" />
 

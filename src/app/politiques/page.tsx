@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import Link from "next/link";
 import { cacheTag, cacheLife } from "next/cache";
 import { db } from "@/lib/db";
 import {
@@ -7,6 +8,7 @@ import {
   type StatusFilter,
 } from "@/components/politicians/FilterBar";
 import { MandateType } from "@/generated/prisma";
+import { Card, CardContent } from "@/components/ui/card";
 import { SearchForm } from "@/components/politicians/SearchForm";
 import { PoliticiansGrid } from "@/components/politicians/PoliticiansGrid";
 import { ExportButton } from "@/components/ui/ExportButton";
@@ -36,6 +38,41 @@ interface PageProps {
 
 // Badge triggers on severity=CRITIQUE (atteintes à la probité)
 // Replaced former CONVICTION_STATUSES = ["CONDAMNATION_DEFINITIVE"]
+
+// Hex accent colors per mandate type (for inline styles per CLAUDE.md convention)
+const MANDATE_ACCENT: Record<string, { border: string; bg: string; label: string; desc: string }> =
+  {
+    depute: {
+      border: "#2563eb",
+      bg: "#2563eb0a",
+      label: "Députés",
+      desc: "Assemblée nationale",
+    },
+    senateur: {
+      border: "#9333ea",
+      bg: "#9333ea0a",
+      label: "Sénateurs",
+      desc: "Sénat",
+    },
+    gouvernement: {
+      border: "#d97706",
+      bg: "#d977060a",
+      label: "Gouvernement",
+      desc: "Ministres et secrétaires d'État",
+    },
+    dirigeants: {
+      border: "#059669",
+      bg: "#0596690a",
+      label: "Dirigeants",
+      desc: "Dirigeants de partis politiques",
+    },
+    conviction: {
+      border: "#dc2626",
+      bg: "#dc26260a",
+      label: "Décisions de justice",
+      desc: "Atteintes critiques à la probité",
+    },
+  };
 
 // Mandate type groups
 const MANDATE_GROUPS: Record<string, MandateType[]> = {
@@ -468,18 +505,22 @@ export default async function PolitiquesPage({ searchParams }: PageProps) {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold mb-2">Représentants politiques</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-3xl font-display font-extrabold tracking-tight mb-1">
+            Représentants politiques
+          </h1>
+          <p className="text-sm text-muted-foreground">
             {total} représentants
             {search && ` pour "${search}"`}
             {activeFilterCount > 0 &&
               ` (${activeFilterCount} filtre${activeFilterCount > 1 ? "s" : ""} actif${activeFilterCount > 1 ? "s" : ""})`}
           </p>
-          <SeoIntro
-            text={`Poligraph référence ${total.toLocaleString("fr-FR")} responsables politiques français : députés, sénateurs, membres du gouvernement et dirigeants de partis. Données issues de sources officielles.`}
-          />
+          <div className="sr-only">
+            <SeoIntro
+              text={`Poligraph référence ${total.toLocaleString("fr-FR")} responsables politiques français : députés, sénateurs, membres du gouvernement et dirigeants de partis. Données issues de sources officielles.`}
+            />
+          </div>
         </div>
         <ExportButton
           endpoint="/api/export/politiques"
@@ -489,6 +530,56 @@ export default async function PolitiquesPage({ searchParams }: PageProps) {
             hasAffairs: convictionFilter ? "true" : undefined,
           }}
         />
+      </div>
+
+      {/* Stat cards */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
+        {(
+          [
+            { key: "depute", count: counts.deputes, mandate: "depute" },
+            { key: "senateur", count: counts.senateurs, mandate: "senateur" },
+            { key: "gouvernement", count: counts.gouvernement, mandate: "gouvernement" },
+            { key: "dirigeants", count: counts.dirigeants, mandate: "dirigeants" },
+            { key: "conviction", count: counts.withConviction, mandate: "" },
+          ] as const
+        ).map(({ key, count, mandate }) => {
+          const accent = MANDATE_ACCENT[key];
+          const isActive = key === "conviction" ? convictionFilter : mandateFilter === mandate;
+          const href =
+            key === "conviction"
+              ? isActive
+                ? "/politiques"
+                : "/politiques?conviction=true"
+              : isActive
+                ? "/politiques"
+                : `/politiques?mandate=${mandate}`;
+          return (
+            <Link key={key} href={href}>
+              <Card
+                className={`cursor-pointer transition-all hover:shadow-md hover:-translate-y-0.5 border-l-4 ${
+                  isActive ? "ring-2 ring-primary shadow-md" : ""
+                }`}
+                style={{
+                  borderLeftColor: accent.border,
+                  backgroundColor: isActive ? accent.bg : undefined,
+                }}
+              >
+                <CardContent className="p-3 py-3">
+                  <div
+                    className="text-3xl font-display font-extrabold tracking-tight"
+                    style={{ color: accent.border }}
+                  >
+                    {count}
+                  </div>
+                  <div className="text-sm font-semibold mt-0.5 leading-tight">{accent.label}</div>
+                  <div className="text-xs text-muted-foreground mt-1 leading-snug line-clamp-2">
+                    {accent.desc}
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+          );
+        })}
       </div>
 
       {/* Search with autocomplete */}

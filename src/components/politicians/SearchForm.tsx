@@ -40,27 +40,29 @@ export function SearchForm({
     defaultSearch || partyFilter || convictionFilter || mandateFilter || statusFilter;
 
   return (
-    <div className="flex gap-4 flex-wrap items-center">
-      <SearchAutocomplete
-        defaultValue={defaultSearch}
-        placeholder="Rechercher un représentant..."
-        onSearch={handleSearch}
-      />
-      <button
-        type="button"
-        onClick={() => handleSearch(defaultSearch)}
-        className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
-      >
-        Rechercher
-      </button>
-      {hasFilters && (
-        <Link
-          href="/politiques"
-          className="px-4 py-2 border rounded-md hover:bg-muted text-muted-foreground"
+    <div className="rounded-lg border bg-muted/40 p-4">
+      <div className="flex gap-3 flex-wrap items-center">
+        <SearchAutocomplete
+          defaultValue={defaultSearch}
+          placeholder="Rechercher un représentant..."
+          onSearch={handleSearch}
+        />
+        <button
+          type="button"
+          onClick={() => handleSearch(defaultSearch)}
+          className="h-9 px-4 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 text-sm font-medium transition-colors"
         >
-          Réinitialiser
-        </Link>
-      )}
+          Rechercher
+        </button>
+        {hasFilters && (
+          <Link
+            href="/politiques"
+            className="h-9 flex items-center px-4 border rounded-md hover:bg-muted text-sm text-muted-foreground transition-colors"
+          >
+            Réinitialiser
+          </Link>
+        )}
+      </div>
     </div>
   );
 }

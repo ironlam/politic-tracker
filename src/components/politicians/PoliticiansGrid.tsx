@@ -86,7 +86,7 @@ export function PoliticiansGrid({
   return (
     <>
       {/* Filters and sort */}
-      <div className="mb-6 space-y-4">
+      <div className="mb-6 rounded-lg border bg-muted/40 p-4 space-y-3">
         {/* Sort and mandate/status filters */}
         <FilterBar
           currentSort={sortOption}
@@ -104,7 +104,7 @@ export function PoliticiansGrid({
         />
 
         {/* Party filter */}
-        <div className="flex flex-col sm:flex-row flex-wrap items-start sm:items-center gap-3 sm:gap-4">
+        <div className="flex flex-col sm:flex-row flex-wrap items-start sm:items-center gap-3 sm:gap-4 pt-1 border-t">
           <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto">
             <span className="text-sm text-muted-foreground whitespace-nowrap">Parti:</span>
             <div className="flex flex-wrap gap-1.5" role="group" aria-label="Filtrer par parti">
@@ -163,20 +163,20 @@ export function PoliticiansGrid({
             </Badge>
           </div>
         </div>
-
-        {/* Active filters summary */}
-        {activeFilterCount > 0 && (
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">Filtres actifs:</span>
-            <button
-              onClick={() => navigateTo("/politiques")}
-              className="text-sm text-primary hover:underline"
-            >
-              Tout effacer
-            </button>
-          </div>
-        )}
       </div>
+
+      {/* Active filters summary */}
+      {activeFilterCount > 0 && (
+        <div className="mb-6 flex items-center gap-2 text-sm">
+          <span className="text-muted-foreground">Filtres actifs :</span>
+          <button
+            onClick={() => navigateTo("/politiques")}
+            className="text-primary hover:underline"
+          >
+            Tout effacer
+          </button>
+        </div>
+      )}
 
       {/* Results */}
       {politicians.length > 0 ? (

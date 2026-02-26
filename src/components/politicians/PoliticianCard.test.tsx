@@ -126,4 +126,22 @@ describe("PoliticianCard", () => {
     render(<PoliticianCard politician={politicianWithMandate} />);
     expect(screen.getByText(/Député/)).toBeInTheDocument();
   });
+
+  it("should show missing declaration badge when enabled", () => {
+    const parliamentarian = {
+      ...mockPolitician,
+      missingDeclaration: true,
+    };
+    render(<PoliticianCard politician={parliamentarian} showMissingDeclarationBadge />);
+    expect(screen.getByText("Aucune déclaration publiée")).toBeInTheDocument();
+  });
+
+  it("should not show missing declaration badge when disabled", () => {
+    const parliamentarian = {
+      ...mockPolitician,
+      missingDeclaration: true,
+    };
+    render(<PoliticianCard politician={parliamentarian} />);
+    expect(screen.queryByText("Aucune déclaration publiée")).not.toBeInTheDocument();
+  });
 });

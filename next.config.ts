@@ -9,6 +9,7 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
       // Assemblee nationale
+      { protocol: "https", hostname: "www.assemblee-nationale.fr" },
       { protocol: "https", hostname: "www2.assemblee-nationale.fr" },
       { protocol: "https", hostname: "data.assemblee-nationale.fr" },
       // Senat

@@ -370,7 +370,8 @@ async function syncSenator(
 
     const mandateData = {
       type: MandateType.SENATEUR,
-      title: `Sénateur${sen.feminise ? "rice" : ""} ${sen.circonscription?.libelle || ""}`.trim(),
+      title:
+        `${sen.feminise ? "Sénatrice" : "Sénateur"} ${sen.circonscription?.libelle || ""}`.trim(),
       institution: "Sénat",
       constituency: sen.circonscription?.libelle || null,
       departmentCode: getDepartmentCode(sen.circonscription?.libelle),

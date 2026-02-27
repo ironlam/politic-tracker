@@ -505,7 +505,6 @@ export default async function PoliticianPage({ params }: PageProps) {
             firstName={politician.firstName}
             lastName={politician.lastName}
             size="lg"
-            politicianId={politician.id}
           />
           <div>
             <h1 className="text-3xl font-bold mb-2">{politician.fullName}</h1>

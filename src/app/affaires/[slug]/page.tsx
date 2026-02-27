@@ -162,7 +162,6 @@ export default async function AffairDetailPage({ params }: PageProps) {
               fullName={affair.politician.fullName}
               photoUrl={affair.politician.photoUrl}
               size="md"
-              politicianId={affair.politician.id}
             />
             <div>
               <p className="font-semibold">{affair.politician.fullName}</p>

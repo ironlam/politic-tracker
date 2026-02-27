@@ -96,12 +96,7 @@ export default async function AdminPoliticianPage({ params }: PageProps) {
       </div>
 
       <div className="flex items-start gap-6">
-        <PoliticianAvatar
-          photoUrl={politician.photoUrl}
-          fullName={politician.fullName}
-          size="xl"
-          politicianId={politician.id}
-        />
+        <PoliticianAvatar photoUrl={politician.photoUrl} fullName={politician.fullName} size="xl" />
         <div>
           <h1 className="text-2xl font-bold">{politician.fullName}</h1>
           {politician.currentParty && (

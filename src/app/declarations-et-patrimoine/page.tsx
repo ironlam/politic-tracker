@@ -556,7 +556,6 @@ export default async function DeclarationsPage({ searchParams }: PageProps) {
                       firstName={p.firstName}
                       lastName={p.lastName}
                       size="sm"
-                      politicianId={p.id}
                     />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
@@ -798,7 +797,6 @@ function DeclarationListCard({ row }: { row: DeclarationRow }) {
                 firstName={row.firstName}
                 lastName={row.lastName}
                 size="sm"
-                politicianId={row.id}
               />
             </div>
             <div className="flex-1 min-w-0">

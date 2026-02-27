@@ -114,7 +114,6 @@ export default async function PoliticianVotesPage({ params, searchParams }: Page
           firstName={politician.firstName}
           lastName={politician.lastName}
           size="md"
-          politicianId={politician.id}
         />
         <div>
           <h1 className="text-2xl font-bold">Votes de {politician.fullName}</h1>

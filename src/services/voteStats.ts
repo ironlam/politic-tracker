@@ -525,6 +525,59 @@ export interface GroupParticipationStats {
   memberCount: number;
 }
 
+// ============================================
+// Legislative stats types
+// ============================================
+
+export interface LegislativeKpi {
+  dossiersEnCours: number;
+  textesAdoptes: number;
+  themesActifs: number;
+}
+
+export interface ThemeDistribution {
+  theme: string;
+  label: string;
+  icon: string;
+  count: number;
+}
+
+export interface PipelineRow {
+  theme: string;
+  label: string;
+  icon: string;
+  depose: number;
+  enCommission: number;
+  enCours: number;
+  adopte: number;
+  rejete: number;
+  total: number;
+}
+
+export interface KeyVote {
+  id: string;
+  slug: string | null;
+  title: string;
+  votingDate: string;
+  theme: string | null;
+  themeLabel: string | null;
+  themeIcon: string | null;
+  votesFor: number;
+  votesAgainst: number;
+  votesAbstain: number;
+  result: string;
+  contestationScore: number;
+}
+
+export interface LegislativeStatsResult {
+  kpi: LegislativeKpi;
+  themesAN: ThemeDistribution[];
+  themesSENAT: ThemeDistribution[];
+  pipeline: PipelineRow[];
+  keyVotesAN: KeyVote[];
+  keyVotesSENAT: KeyVote[];
+}
+
 /**
  * Get average participation rate per parliamentary group from pre-computed StatsSnapshot.
  */
@@ -593,6 +646,45 @@ export async function getPoliticianParliamentaryCard(
 }
 
 // ============================================
+// Legislative stats (from StatsSnapshot)
+// ============================================
+
+/**
+ * Get legislative stats from pre-computed StatsSnapshot table.
+ * Reads all 6 legislative snapshot keys in a single query.
+ */
+async function getLegislativeStats(): Promise<LegislativeStatsResult> {
+  const keys = [
+    "legislative-kpi",
+    "legislative-themes-AN",
+    "legislative-themes-SENAT",
+    "legislative-pipeline",
+    "legislative-votes-AN",
+    "legislative-votes-SENAT",
+  ];
+
+  const snapshots = await db.statsSnapshot.findMany({
+    where: { key: { in: keys } },
+  });
+
+  const snapshotMap = new Map(snapshots.map((s) => [s.key, s.data]));
+
+  return {
+    kpi: (snapshotMap.get("legislative-kpi") as unknown as LegislativeKpi) || {
+      dossiersEnCours: 0,
+      textesAdoptes: 0,
+      themesActifs: 0,
+    },
+    themesAN: (snapshotMap.get("legislative-themes-AN") as unknown as ThemeDistribution[]) || [],
+    themesSENAT:
+      (snapshotMap.get("legislative-themes-SENAT") as unknown as ThemeDistribution[]) || [],
+    pipeline: (snapshotMap.get("legislative-pipeline") as unknown as PipelineRow[]) || [],
+    keyVotesAN: (snapshotMap.get("legislative-votes-AN") as unknown as KeyVote[]) || [],
+    keyVotesSENAT: (snapshotMap.get("legislative-votes-SENAT") as unknown as KeyVote[]) || [],
+  };
+}
+
+// ============================================
 // Export
 // ============================================
 
@@ -603,4 +695,5 @@ export const voteStatsService = {
   getPartyParticipationStats,
   getGroupParticipationStats,
   getPoliticianParliamentaryCard,
+  getLegislativeStats,
 };

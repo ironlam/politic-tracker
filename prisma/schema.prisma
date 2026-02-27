@@ -26,19 +26,19 @@ enum ModerationRecommendation {
 }
 
 model Politician {
-  id          String    @id @default(cuid())
-  slug        String    @unique
-  civility    String? // M. ou Mme
-  firstName   String
-  lastName    String
-  fullName    String // Computed: "firstName lastName" for search
-  birthDate   DateTime?
-  deathDate   DateTime? // Date of death (if deceased)
-  birthPlace  String?
+  id           String    @id @default(cuid())
+  slug         String    @unique
+  civility     String? // M. ou Mme
+  firstName    String
+  lastName     String
+  fullName     String // Computed: "firstName lastName" for search
+  birthDate    DateTime?
+  deathDate    DateTime? // Date of death (if deceased)
+  birthPlace   String?
   photoUrl     String? // URL de la photo (source externe originale)
   photoSource  String? // Source: "assemblee-nationale", "senat", "gouvernement", "hatvp", "manual"
   blobPhotoUrl String? // Vercel Blob cached photo URL
-  officialId  String?   @unique // DEPRECATED: use externalIds instead
+  officialId   String?   @unique // DEPRECATED: use externalIds instead
 
   // AI-generated biography
   biography            String?   @db.Text
@@ -64,6 +64,7 @@ model Politician {
   pressRejections   PressAnalysisRejection[] // Low-confidence press analysis rejections
   factCheckMentions FactCheckMention[] // Mentions in fact-checks
   candidacies       Candidacy[] // Election candidacies
+  candidates        Candidate[] // Local election candidates linked to this politician
   participation     PoliticianParticipation? // Pre-computed participation stats
 
   createdAt DateTime @default(now())
@@ -519,8 +520,8 @@ enum AffairCategory {
 }
 
 enum AffairSeverity {
-  CRITIQUE     // Atteintes graves aux personnes ou à la démocratie
-  GRAVE        // Atteintes significatives à la probité publique
+  CRITIQUE // Atteintes graves aux personnes ou à la démocratie
+  GRAVE // Atteintes significatives à la probité publique
   SIGNIFICATIF // Autres infractions et manquements
 }
 
@@ -579,7 +580,7 @@ model Declaration {
   // Source
   hatvpUrl String // Link to HATVP page
   pdfUrl   String? // Direct PDF link
-  details  Json?   // Structured data parsed from HATVP XML (DIA)
+  details  Json? // Structured data parsed from HATVP XML (DIA)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1155,6 +1156,14 @@ model Candidacy {
   candidateName String
   partyLabel    String?
 
+  // Candidate entity (lightweight, for local elections)
+  candidate   Candidate? @relation(fields: [candidateId], references: [id])
+  candidateId String?
+
+  // Commune (for municipal elections)
+  commune   Commune? @relation(fields: [communeId], references: [id])
+  communeId String?
+
   // List elections (municipales, européennes, régionales)
   listName     String?
   listPosition Int?
@@ -1179,6 +1188,8 @@ model Candidacy {
   @@index([electionId])
   @@index([politicianId])
   @@index([constituencyCode])
+  @@index([candidateId])
+  @@index([communeId])
 }
 
 model ElectionRound {
@@ -1223,10 +1234,10 @@ model ModerationReview {
 
   recommendation ModerationRecommendation
   confidence     Int // 0-100
-  reasoning      String @db.Text
+  reasoning      String                   @db.Text
 
   suggestedTitle       String?
-  suggestedDescription String? @db.Text
+  suggestedDescription String?         @db.Text
   suggestedStatus      AffairStatus?
   suggestedCategory    AffairCategory?
 
@@ -1298,15 +1309,15 @@ model SyncMetadata {
 /// Per-politician participation stats, pre-computed by sync:compute-stats.
 /// Enables instant pagination/ranking without expensive CTE+LATERAL queries.
 model PoliticianParticipation {
-  id             String   @id @default(cuid())
-  politicianId   String
-  politician     Politician @relation(fields: [politicianId], references: [id], onDelete: Cascade)
+  id           String     @id @default(cuid())
+  politicianId String
+  politician   Politician @relation(fields: [politicianId], references: [id], onDelete: Cascade)
 
   // Core stats
-  chamber        Chamber  // AN or SENAT (derived from mandate type)
-  mandateType    String   // "DEPUTE" or "SENATEUR"
-  votesCount     Int
-  eligibleScrutins Int
+  chamber           Chamber // AN or SENAT (derived from mandate type)
+  mandateType       String // "DEPUTE" or "SENATEUR"
+  votesCount        Int
+  eligibleScrutins  Int
   participationRate Float // 0-100, pre-computed
 
   // Denormalized display fields (avoid JOINs in read queries)
@@ -1323,7 +1334,7 @@ model PoliticianParticipation {
   groupName      String?
   groupColor     String?
 
-  computedAt     DateTime @default(now())
+  computedAt DateTime @default(now())
 
   @@unique([politicianId]) // One row per politician
   @@index([chamber, participationRate]) // Fast filtered+sorted pagination
@@ -1335,7 +1346,55 @@ model PoliticianParticipation {
 model StatsSnapshot {
   id         String   @id @default(cuid())
   key        String   @unique // e.g. "party-participation", "group-participation-AN"
-  data       Json     // The pre-computed result array/object
+  data       Json // The pre-computed result array/object
   computedAt DateTime @default(now())
   durationMs Int      @default(0) // How long the computation took
+}
+
+// ============================================
+// COMMUNES (reference table for municipal elections)
+// ============================================
+
+model Commune {
+  id             String   @id // INSEE code (e.g., "75056")
+  name           String
+  departmentCode String
+  departmentName String
+  regionCode     String?
+  postalCodes    String[]
+  population     Int?
+  latitude       Float?
+  longitude      Float?
+  totalSeats     Int? // Conseil municipal seats (computed from population)
+
+  candidacies Candidacy[]
+
+  @@index([departmentCode])
+  @@index([name])
+}
+
+// ============================================
+// CANDIDATES (lightweight entity for local elections)
+// ============================================
+
+model Candidate {
+  id          String  @id @default(cuid())
+  firstName   String
+  lastName    String
+  gender      String? // "M" or "F"
+  birthYear   Int?
+  nationality String?
+
+  // Optional link to existing Politician
+  politician   Politician? @relation(fields: [politicianId], references: [id])
+  politicianId String?
+
+  candidacies Candidacy[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([firstName, lastName, politicianId])
+  @@index([lastName])
+  @@index([politicianId])
 }

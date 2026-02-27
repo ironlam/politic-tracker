@@ -12,6 +12,8 @@ const DEFAULT_CSV_URL =
 
 const DEFAULT_ELECTION_SLUG = "municipales-2026";
 
+// 500 rows per chunk: balances batch efficiency vs. DB round-trips.
+// Within each chunk: 1 createMany (candidates) + 1 findMany + 1 createMany (candidacies) + N updates.
 const CHUNK_SIZE = 500;
 
 const dataGouvClient = new HTTPClient({
@@ -135,12 +137,22 @@ function buildInseeCode(deptCode: string, communeCode: string): string {
   const trimmedDept = deptCode.trim();
   const trimmedCommune = communeCode.trim();
 
+  let code: string;
   if (trimmedDept.length === 3) {
     // DOM-TOM: 3-digit dept + 2-digit commune = 5 chars
-    return trimmedDept + trimmedCommune.padStart(2, "0");
+    code = trimmedDept + trimmedCommune.padStart(2, "0");
+  } else {
+    // Metropolitan or Corsica: 2-char dept + 3-digit commune = 5 chars
+    code = trimmedDept + trimmedCommune.padStart(3, "0");
   }
-  // Metropolitan or Corsica: 2-char dept + 3-digit commune = 5 chars
-  return trimmedDept + trimmedCommune.padStart(3, "0");
+
+  if (code.length !== 5) {
+    console.warn(
+      `buildInseeCode: unexpected length ${code.length} for dept="${deptCode}" commune="${communeCode}" -> "${code}"`
+    );
+  }
+
+  return code;
 }
 
 /** Parsed row data extracted from a CSV row, ready for processing */
@@ -251,11 +263,10 @@ export async function syncCandidaturesMunicipales(
   // ─── Phase A: Pre-load reference data ───────────────────────────────
   console.log("\nPhase A: Pre-loading reference data...");
 
-  const [communeSet, existingCandidacyMap, partyCache] = await Promise.all([
-    loadCommuneMap(),
-    loadExistingCandidacies(electionRecord.id),
-    preWarmPartyCache(),
-  ]);
+  // Sequential to avoid pool starvation (pool max: 2, these are 3 queries)
+  const communeSet = await loadCommuneMap();
+  const existingCandidacyMap = await loadExistingCandidacies(electionRecord.id);
+  const partyCache = await preWarmPartyCache();
 
   // Cache for politician lookups: "firstName|lastName|deptCode" -> politicianId | null
   const politicianCache = new Map<string, string | null>();
@@ -314,10 +325,10 @@ export async function syncCandidaturesMunicipales(
     // Dry run: just report what we'd do
     const politiciansMatched = 0;
     const politiciansNotFound = 0;
-    let communesLinked = 0;
+    let candidaciesWithCommune = 0;
 
     for (const row of parsedRows) {
-      if (communeSet.has(row.inseeCode)) communesLinked++;
+      if (communeSet.has(row.inseeCode)) candidaciesWithCommune++;
 
       if (verbose) {
         const communeMatch = communeSet.has(row.inseeCode) ? "[COMMUNE]" : "";
@@ -332,7 +343,7 @@ export async function syncCandidaturesMunicipales(
       candidaciesCreated: 0,
       candidaciesUpdated: 0,
       candidatesCreated: 0,
-      communesLinked,
+      candidaciesWithCommune,
       politiciansMatched,
       politiciansNotFound,
       errors: parseErrors,
@@ -345,7 +356,7 @@ export async function syncCandidaturesMunicipales(
   let candidaciesCreated = 0;
   let candidaciesUpdated = 0;
   let candidatesCreated = 0;
-  let communesLinked = 0;
+  let candidaciesWithCommune = 0;
   let politiciansMatched = 0;
   let politiciansNotFound = 0;
   const errors: string[] = [...parseErrors];
@@ -429,7 +440,11 @@ export async function syncCandidaturesMunicipales(
         if (politicianCache.has(cacheKey)) {
           politicianId = politicianCache.get(cacheKey) ?? null;
         } else {
-          politicianId = await matchPolitician(row.firstName, row.lastName, row.deptCode);
+          politicianId = await matchPolitician(
+            row.normalizedFirstName,
+            row.normalizedLastName,
+            row.deptCode
+          );
           politicianCache.set(cacheKey, politicianId);
         }
 
@@ -448,6 +463,8 @@ export async function syncCandidaturesMunicipales(
       }
 
       // ── Step 5: Upsert candidacies for this chunk ──────────────────
+      const toCreate: Prisma.CandidacyCreateManyInput[] = [];
+
       for (let j = 0; j < chunk.length; j++) {
         const row = chunk[j];
         const politicianId = rowPoliticianIds[j];
@@ -458,7 +475,7 @@ export async function syncCandidaturesMunicipales(
 
           // Resolve commune
           const communeId = communeSet.has(row.inseeCode) ? row.inseeCode : null;
-          if (communeId) communesLinked++;
+          if (communeId) candidaciesWithCommune++;
 
           // Resolve party from cache
           const partyId = partyCache.get(row.nuanceCode) ?? null;
@@ -467,7 +484,7 @@ export async function syncCandidaturesMunicipales(
           const existingId = existingCandidacyMap.get(existingKey);
 
           if (existingId) {
-            // Update existing candidacy
+            // Update existing candidacy (must be individual — no batch update in Prisma)
             await db.candidacy.update({
               where: { id: existingId },
               data: {
@@ -483,31 +500,30 @@ export async function syncCandidaturesMunicipales(
             });
             candidaciesUpdated++;
           } else {
-            // Create new candidacy
-            const created = await db.candidacy.create({
-              data: {
-                electionId: electionRecord.id,
-                politicianId,
-                partyId,
-                candidateName: row.candidateName,
-                partyLabel: row.partyLabel,
-                listName: row.listName,
-                listPosition: row.listPosition,
-                constituencyCode: row.constituencyCode,
-                constituencyName: row.communeName,
-                candidateId,
-                communeId,
-              },
-              select: { id: true },
+            // Accumulate for batch createMany
+            toCreate.push({
+              electionId: electionRecord.id,
+              politicianId,
+              partyId,
+              candidateName: row.candidateName,
+              partyLabel: row.partyLabel,
+              listName: row.listName,
+              listPosition: row.listPosition,
+              constituencyCode: row.constituencyCode,
+              constituencyName: row.communeName,
+              candidateId,
+              communeId,
             });
-            candidaciesCreated++;
-
-            // Add to existing map so re-runs within same session don't create duplicates
-            existingCandidacyMap.set(existingKey, created.id);
           }
         } catch (error) {
           errors.push(`Row ${row.index + 1}: ${error}`);
         }
+      }
+
+      // Batch-create all new candidacies for this chunk
+      if (toCreate.length > 0) {
+        await db.candidacy.createMany({ data: toCreate, skipDuplicates: true });
+        candidaciesCreated += toCreate.length;
       }
     } catch (error) {
       // Chunk-level error — record it and continue to next chunk
@@ -519,7 +535,7 @@ export async function syncCandidaturesMunicipales(
     if (verbose || (chunkIdx + 1) % 10 === 0 || chunkIdx === totalChunks - 1) {
       console.log(
         `  Chunk ${chunkIdx + 1}/${totalChunks} — ${processedCount}/${parsedRows.length} rows ` +
-          `(created: ${candidaciesCreated}, candidates: ${candidatesCreated}, communes: ${communesLinked})`
+          `(created: ${candidaciesCreated}, candidates: ${candidatesCreated}, communes: ${candidaciesWithCommune})`
       );
     }
   }
@@ -537,7 +553,7 @@ export async function syncCandidaturesMunicipales(
   console.log(`  Candidacies created: ${candidaciesCreated}`);
   console.log(`  Candidacies updated: ${candidaciesUpdated}`);
   console.log(`  Candidates created: ${candidatesCreated}`);
-  console.log(`  Communes linked: ${communesLinked}`);
+  console.log(`  Communes linked: ${candidaciesWithCommune}`);
   console.log(`  Politicians matched: ${politiciansMatched}`);
   console.log(`  Politicians not found: ${politiciansNotFound}`);
   console.log(`  Party nuances cached: ${partyCache.size}`);
@@ -549,7 +565,7 @@ export async function syncCandidaturesMunicipales(
     candidaciesCreated,
     candidaciesUpdated,
     candidatesCreated,
-    communesLinked,
+    candidaciesWithCommune,
     politiciansMatched,
     politiciansNotFound,
     errors,

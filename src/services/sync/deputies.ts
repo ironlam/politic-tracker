@@ -175,8 +175,9 @@ async function syncDeputy(
       include: { mandates: true },
     });
 
-    // Photo URL from NosDéputés.fr (more reliable than AN)
-    const photoUrl = `https://www.nosdeputes.fr/depute/photo/${slug}/120`;
+    // Photo URL from Assemblée nationale (official, higher quality)
+    const anNumericId = dep.id.replace("PA", "");
+    const photoUrl = `https://www.assemblee-nationale.fr/dyn/static/tribun/17/photos/carre/${anNumericId}.jpg`;
 
     const politicianData = {
       slug,
@@ -187,7 +188,7 @@ async function syncDeputy(
       birthDate,
       birthPlace: dep.villeNaissance || null,
       photoUrl,
-      photoSource: "nosdeputes",
+      photoSource: "assemblee-nationale",
       officialId: dep.id,
     };
 

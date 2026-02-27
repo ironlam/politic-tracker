@@ -50,24 +50,21 @@ function PipelineTable({ rows }: { rows: PipelineRow[] }) {
           {rows.map((r) => (
             <tr key={r.theme} className="border-b last:border-0">
               <td className="py-2.5 pr-2">
-                <span className="text-sm whitespace-nowrap">
-                  {r.icon} <span className="hidden sm:inline">{r.label}</span>
-                  <span className="sm:hidden">
-                    {r.label.length > 15 ? r.label.slice(0, 15) + "\u2026" : r.label}
-                  </span>
+                <span className="text-sm">
+                  {r.icon} {r.label}
                 </span>
               </td>
               <td className="py-2.5 px-2 text-right tabular-nums text-muted-foreground">
-                {r.depose || "\u2014"}
+                {r.depose}
               </td>
               <td className="py-2.5 px-2 text-right tabular-nums text-yellow-600 dark:text-yellow-400">
-                {r.enCommission + r.enCours || "\u2014"}
+                {r.enCommission + r.enCours}
               </td>
               <td className="py-2.5 px-2 text-right tabular-nums text-green-600 dark:text-green-400">
-                {r.adopte || "\u2014"}
+                {r.adopte}
               </td>
               <td className="py-2.5 pl-2 text-right tabular-nums text-red-600 dark:text-red-400">
-                {r.rejete || "\u2014"}
+                {r.rejete}
               </td>
             </tr>
           ))}

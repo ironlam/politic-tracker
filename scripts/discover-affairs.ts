@@ -26,6 +26,7 @@ import { wikipediaService } from "../src/lib/api/wikipedia";
 import { extractAffairsFromWikipedia } from "../src/services/wikipedia-affair-extraction";
 import { findMatchingAffairs } from "../src/services/affairs/matching";
 import { clampConfidenceScore } from "../src/services/affairs/confidence";
+import { extractDateFromUrl } from "../src/lib/extract-date-from-url";
 import type { AffairCategory, AffairStatus, Involvement } from "../src/generated/prisma";
 
 // ============================================
@@ -50,6 +51,7 @@ interface DiscoveredAffair {
     title: string;
     publisher: string;
     sourceType: "WIKIDATA" | "WIKIPEDIA" | "PRESSE";
+    publishedAt: Date | null;
   }>;
   phase: "wikidata" | "wikipedia";
 }
@@ -200,6 +202,7 @@ async function runPhase1Wikidata(
                 title: `Wikidata — ${politician.fullName}`,
                 publisher: "Wikidata",
                 sourceType: "WIKIDATA",
+                publishedAt: null,
               },
             ],
             phase: "wikidata",
@@ -322,6 +325,7 @@ async function runPhase2Wikipedia(
               title: `Wikipedia — ${politician.fullName}`,
               publisher: "Wikipedia",
               sourceType: "WIKIPEDIA",
+              publishedAt: null,
             },
           ];
 
@@ -331,6 +335,7 @@ async function runPhase2Wikipedia(
               title: extracted.title,
               publisher: extractPublisherFromUrl(sourceUrl),
               sourceType: "PRESSE",
+              publishedAt: extractDateFromUrl(sourceUrl),
             });
           }
 
@@ -450,7 +455,7 @@ async function runPhase3Reconciliation(
               url: s.url,
               title: s.title,
               publisher: s.publisher,
-              publishedAt: new Date(),
+              publishedAt: s.publishedAt ?? affair.factsDate ?? new Date(),
               sourceType: s.sourceType,
             })),
           },

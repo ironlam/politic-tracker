@@ -6,49 +6,7 @@
  * Usage: npx dotenv -e .env -- npx tsx scripts/fix-affair-dates.ts
  */
 import { db } from "../src/lib/db";
-
-// URL date extraction patterns
-function extractDateFromUrl(url: string): Date | null {
-  // Skip Wikipedia URLs
-  if (url.includes("wikipedia.org")) return null;
-
-  // Pattern: /article/YYYY/MM/DD/ (lemonde, huffpost)
-  let match = url.match(/\/article\/(\d{4})\/(\d{2})\/(\d{2})\//);
-  if (match) return new Date(`${match[1]}-${match[2]}-${match[3]}`);
-
-  // Pattern: /YYYY/MM/DD/ (huffpost, various)
-  match = url.match(/\/(\d{4})\/(\d{2})\/(\d{2})\//);
-  if (match) {
-    const y = parseInt(match[1]);
-    if (y >= 2000 && y <= 2030) return new Date(`${match[1]}-${match[2]}-${match[3]}`);
-  }
-
-  // Pattern: -YYYYMMDD_ or -YYYYMMDD- (liberation, france24)
-  match = url.match(/[-/](\d{4})(\d{2})(\d{2})[_\-/.]/);
-  if (match) {
-    const y = parseInt(match[1]);
-    if (y >= 2000 && y <= 2030) return new Date(`${match[1]}-${match[2]}-${match[3]}`);
-  }
-
-  // Pattern: DD-MM-YYYY- (leparisien)
-  match = url.match(/(\d{2})-(\d{2})-(\d{4})-/);
-  if (match) {
-    const y = parseInt(match[3]);
-    if (y >= 2000 && y <= 2030) return new Date(`${match[3]}-${match[2]}-${match[1]}`);
-  }
-
-  // Pattern: /DDMMYY/ (mediapart old)
-  match = url.match(/\/(\d{2})(\d{2})(\d{2})\//);
-  if (match) {
-    const y = parseInt(match[3]);
-    if (y >= 0 && y <= 30) {
-      const fullYear = 2000 + y;
-      return new Date(`${fullYear}-${match[2]}-${match[1]}`);
-    }
-  }
-
-  return null;
-}
+import { extractDateFromUrl } from "../src/lib/extract-date-from-url";
 
 // Statuses that imply a verdict date exists
 const VERDICT_STATUSES = [

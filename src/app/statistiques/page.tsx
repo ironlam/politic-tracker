@@ -430,15 +430,10 @@ async function getFactCheckData() {
 
 async function getLegislativeData() {
   "use cache";
-  cacheTag("statistics", "votes");
+  cacheTag("statistics", "votes", "legislation");
   cacheLife("minutes");
 
-  // Sequential to avoid connection pool starvation (each call needs ~5 connections)
-  const all = await voteStatsService.getVoteStats();
-  const an = await voteStatsService.getVoteStats("AN" as Chamber);
-  const senat = await voteStatsService.getVoteStats("SENAT" as Chamber);
-
-  return { all, an, senat };
+  return voteStatsService.getLegislativeStats();
 }
 
 // ── Participation data ────────────────────────────────────────
@@ -452,12 +447,13 @@ async function getParticipationData(
   cacheTag("statistics", "participation");
   cacheLife("minutes");
 
-  const [ranking, groupStats] = await Promise.all([
+  const [ranking, groupStatsAN, groupStatsSENAT] = await Promise.all([
     voteStatsService.getParticipationRanking(chamber, undefined, page, 50, sortDirection),
-    voteStatsService.getGroupParticipationStats(chamber),
+    voteStatsService.getGroupParticipationStats("AN" as Chamber),
+    voteStatsService.getGroupParticipationStats("SENAT" as Chamber),
   ]);
 
-  return { ranking, groupStats };
+  return { ranking, groupStatsAN, groupStatsSENAT };
 }
 
 // ── Page ─────────────────────────────────────────────────────
@@ -475,14 +471,12 @@ export default async function StatistiquesPage({ searchParams }: PageProps) {
   const pPage = Math.max(1, Math.min(100, parseInt(String(params.pPage ?? "1"), 10) || 1));
   const pSort = params.pSort === "desc" ? ("DESC" as const) : ("ASC" as const);
 
-  const [legislativeData, judicialData, factCheckData, participationData, partyParticipation] =
-    await Promise.all([
-      getLegislativeData(),
-      getJudicialData(),
-      getFactCheckData(),
-      getParticipationData(pChamber, pPage, pSort),
-      voteStatsService.getPartyParticipationStats(),
-    ]);
+  const [legislativeData, judicialData, factCheckData, participationData] = await Promise.all([
+    getLegislativeData(),
+    getJudicialData(),
+    getFactCheckData(),
+    getParticipationData(pChamber, pPage, pSort),
+  ]);
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -514,18 +508,12 @@ export default async function StatistiquesPage({ searchParams }: PageProps) {
             leastReliableParties={factCheckData.leastReliableParties}
           />
         }
-        legislativeContent={
-          <LegislativeSection
-            allData={legislativeData.all}
-            anData={legislativeData.an}
-            senatData={legislativeData.senat}
-            partyParticipation={partyParticipation}
-          />
-        }
+        legislativeContent={<LegislativeSection stats={legislativeData} />}
         participationContent={
           <ParticipationSection
             ranking={participationData.ranking}
-            groupStats={participationData.groupStats}
+            groupStatsAN={participationData.groupStatsAN}
+            groupStatsSENAT={participationData.groupStatsSENAT}
             chamber={pChamber}
             page={pPage}
             sortDirection={pSort}

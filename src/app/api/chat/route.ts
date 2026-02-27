@@ -70,48 +70,48 @@ async function getGlobalStats(): Promise<{
   totalFactChecks: number;
   totalPressArticles: number;
 }> {
-  const [
-    totalAffairs,
-    totalPoliticians,
-    totalDossiers,
-    totalVotes,
-    totalFactChecks,
-    totalPressArticles,
-    mandateCounts,
-  ] = await Promise.all([
-    db.affair.count({ where: { publicationStatus: "PUBLISHED" } }),
-    db.politician.count(),
-    db.legislativeDossier.count(),
-    db.scrutin.count(),
-    db.factCheck.count(),
-    db.pressArticle.count(),
-    db.mandate.groupBy({
-      by: ["type"],
-      where: { isCurrent: true },
-      _count: true,
-    }),
-  ]);
+  // Single SQL for all counts — prevents pool starvation (7 parallel queries → 1)
+  const rows = await db.$queryRaw<
+    [
+      {
+        total_affairs: bigint;
+        total_politicians: bigint;
+        total_dossiers: bigint;
+        total_votes: bigint;
+        total_factchecks: bigint;
+        total_press_articles: bigint;
+        total_deputies: bigint;
+        total_senators: bigint;
+        total_meps: bigint;
+        total_ministers: bigint;
+      },
+    ]
+  >`
+    SELECT
+      (SELECT COUNT(*) FROM "Affair" WHERE "publicationStatus" = 'PUBLISHED') AS total_affairs,
+      (SELECT COUNT(*) FROM "Politician") AS total_politicians,
+      (SELECT COUNT(*) FROM "LegislativeDossier") AS total_dossiers,
+      (SELECT COUNT(*) FROM "Scrutin") AS total_votes,
+      (SELECT COUNT(*) FROM "FactCheck") AS total_factchecks,
+      (SELECT COUNT(*) FROM "PressArticle") AS total_press_articles,
+      (SELECT COUNT(*) FROM "Mandate" WHERE "isCurrent" = true AND "type" = 'DEPUTE') AS total_deputies,
+      (SELECT COUNT(*) FROM "Mandate" WHERE "isCurrent" = true AND "type" = 'SENATEUR') AS total_senators,
+      (SELECT COUNT(*) FROM "Mandate" WHERE "isCurrent" = true AND "type" = 'DEPUTE_EUROPEEN') AS total_meps,
+      (SELECT COUNT(*) FROM "Mandate" WHERE "isCurrent" = true AND "type" IN ('MINISTRE', 'MINISTRE_DELEGUE', 'SECRETAIRE_ETAT', 'PREMIER_MINISTRE')) AS total_ministers
+  `;
 
-  const countByType: Record<string, number> = {};
-  for (const m of mandateCounts) {
-    countByType[m.type] = m._count;
-  }
-
+  const r = rows[0];
   return {
-    totalAffairs,
-    totalPoliticians,
-    totalDossiers,
-    totalVotes,
-    totalFactChecks,
-    totalPressArticles,
-    totalDeputies: countByType["DEPUTE"] || 0,
-    totalSenators: countByType["SENATEUR"] || 0,
-    totalMEPs: countByType["DEPUTE_EUROPEEN"] || 0,
-    totalMinisters:
-      (countByType["MINISTRE"] || 0) +
-      (countByType["MINISTRE_DELEGUE"] || 0) +
-      (countByType["SECRETAIRE_ETAT"] || 0) +
-      (countByType["PREMIER_MINISTRE"] || 0),
+    totalAffairs: Number(r.total_affairs),
+    totalPoliticians: Number(r.total_politicians),
+    totalDossiers: Number(r.total_dossiers),
+    totalVotes: Number(r.total_votes),
+    totalFactChecks: Number(r.total_factchecks),
+    totalPressArticles: Number(r.total_press_articles),
+    totalDeputies: Number(r.total_deputies),
+    totalSenators: Number(r.total_senators),
+    totalMEPs: Number(r.total_meps),
+    totalMinisters: Number(r.total_ministers),
   };
 }
 

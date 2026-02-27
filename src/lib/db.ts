@@ -19,9 +19,9 @@ function createPrismaClient(): PrismaClient {
   // Serverless-friendly: small pool per lambda, but enough to handle parallel queries within a request
   const pool = new Pool({
     connectionString,
-    max: 5,
+    max: 10,
     idleTimeoutMillis: 15_000,
-    connectionTimeoutMillis: 10_000,
+    connectionTimeoutMillis: 15_000,
     ssl: { rejectUnauthorized: false },
     allowExitOnIdle: true, // Release idle connections faster in serverless
   });

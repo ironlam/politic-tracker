@@ -433,11 +433,10 @@ async function getLegislativeData() {
   cacheTag("statistics", "votes");
   cacheLife("minutes");
 
-  const [all, an, senat] = await Promise.all([
-    voteStatsService.getVoteStats(),
-    voteStatsService.getVoteStats("AN" as Chamber),
-    voteStatsService.getVoteStats("SENAT" as Chamber),
-  ]);
+  // Sequential to avoid connection pool starvation (each call needs ~5 connections)
+  const all = await voteStatsService.getVoteStats();
+  const an = await voteStatsService.getVoteStats("AN" as Chamber);
+  const senat = await voteStatsService.getVoteStats("SENAT" as Chamber);
 
   return { all, an, senat };
 }

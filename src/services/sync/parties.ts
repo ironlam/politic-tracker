@@ -9,6 +9,7 @@ import { FRENCH_ASSEMBLY_PARTIES, FRENCH_SENATE_PARTIES, type PartyConfig } from
 import { generateSlug } from "@/lib/utils";
 import { HTTPClient } from "@/lib/api/http-client";
 import { WIKIDATA_SPARQL_RATE_LIMIT_MS } from "@/config/rate-limits";
+import { createHash } from "crypto";
 
 export interface PartiesSyncResult {
   configUpdated: number;
@@ -48,6 +49,25 @@ interface WikidataPartyResult {
   headquarters?: { value: string };
   ideology?: { value: string };
   position?: { value: string };
+}
+
+/**
+ * Convert Wikidata Special:FilePath URLs to direct upload.wikimedia.org URLs.
+ * Wikidata returns http://commons.wikimedia.org/wiki/Special:FilePath/Name.svg
+ * which is a redirect — Next.js Image can't follow redirects.
+ */
+function normalizeWikimediaUrl(url: string): string {
+  // Ensure https
+  let normalized = url.replace(/^http:\/\//, "https://");
+  // Convert Special:FilePath to direct URL
+  const match = normalized.match(/Special:FilePath\/(.+)$/);
+  if (match) {
+    const filename = decodeURIComponent(match[1]).replace(/ /g, "_");
+    const hash = createHash("md5").update(filename).digest("hex");
+    const encodedFilename = encodeURIComponent(filename).replace(/%2F/g, "/");
+    normalized = `https://upload.wikimedia.org/wikipedia/commons/${hash[0]}/${hash.slice(0, 2)}/${encodedFilename}`;
+  }
+  return normalized;
 }
 
 async function applyLocalConfig(): Promise<{
@@ -190,7 +210,7 @@ async function enrichFromWikidata(): Promise<{
         ? result.color.value
         : `#${result.color.value}`
       : null;
-    const logoUrl = result.logo?.value || null;
+    const logoUrl = result.logo?.value ? normalizeWikimediaUrl(result.logo.value) : null;
     const website = result.website?.value || null;
     const headquarters = result.headquarters?.value || null;
     const ideology = result.ideology?.value || null;

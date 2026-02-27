@@ -234,7 +234,10 @@ function AffairCard({ affair, variant }: { affair: any; variant: "critique" | "o
       : "border-gray-200 dark:border-gray-700";
 
   return (
-    <div id={`affair-${affair.id}`} className={`border rounded-lg p-4 ${borderClass}`}>
+    <div
+      id={`affair-${affair.id}`}
+      className={`border rounded-lg p-4 overflow-hidden ${borderClass}`}
+    >
       {/* Header */}
       <div className="mb-3">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-4">
@@ -1064,12 +1067,12 @@ export default async function PoliticianPage({ params }: PageProps) {
                         Mentions dans des affaires ({mentionAffairs.length})
                       </h2>
                     </summary>
-                    <p className="text-xs text-muted-foreground mt-2 ml-6">
+                    <p className="text-xs text-muted-foreground mt-2 sm:ml-6">
                       Affaires où {politician.civility === "MME" ? "elle" : "il"} est mentionné
                       {politician.civility === "MME" ? "e" : ""} sans être directement mis
                       {politician.civility === "MME" ? "e" : ""} en cause.
                     </p>
-                    <div className="mt-4 space-y-4 ml-6">
+                    <div className="mt-4 space-y-4 sm:ml-6">
                       {mentionAffairs.map((affair) => (
                         <div
                           key={affair.id}

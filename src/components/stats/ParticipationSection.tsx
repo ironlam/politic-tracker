@@ -64,7 +64,9 @@ export function ParticipationSection({
         <Card>
           <CardContent className="pt-6 text-center">
             <div className="text-3xl font-bold tabular-nums">{avgRate.toFixed(0)}%</div>
-            <div className="text-sm text-muted-foreground mt-1">Participation moyenne</div>
+            <div className="text-xs sm:text-sm text-muted-foreground mt-1">
+              Participation moyenne
+            </div>
           </CardContent>
         </Card>
         <Card>
@@ -72,13 +74,15 @@ export function ParticipationSection({
             <div className="text-3xl font-bold tabular-nums">
               {totalParliamentarians.toLocaleString("fr-FR")}
             </div>
-            <div className="text-sm text-muted-foreground mt-1">Parlementaires suivis</div>
+            <div className="text-xs sm:text-sm text-muted-foreground mt-1">
+              Parlementaires suivis
+            </div>
           </CardContent>
         </Card>
         <Card className="col-span-2 sm:col-span-1">
           <CardContent className="pt-6 text-center">
             <div className="text-3xl font-bold tabular-nums">{allGroups.length}</div>
-            <div className="text-sm text-muted-foreground mt-1">Groupes représentés</div>
+            <div className="text-xs sm:text-sm text-muted-foreground mt-1">Groupes représentés</div>
           </CardContent>
         </Card>
       </div>
@@ -133,7 +137,7 @@ export function ParticipationSection({
       <Card className="mb-8">
         <CardHeader>
           <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
-            <CardTitle>Classement des parlementaires</CardTitle>
+            <CardTitle>Taux de présence aux scrutins</CardTitle>
             <ParticipationControls
               chamber={chamber}
               page={page}

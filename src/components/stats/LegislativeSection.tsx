@@ -3,12 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { HorizontalBars } from "./HorizontalBars";
 import { MethodologyDisclaimer } from "./MethodologyDisclaimer";
-import type {
-  LegislativeStatsResult,
-  ThemeDistribution,
-  PipelineRow,
-  KeyVote,
-} from "@/services/voteStats";
+import type { LegislativeStatsResult, ThemeDistribution, KeyVote } from "@/services/voteStats";
 
 interface LegislativeSectionProps {
   stats: LegislativeStatsResult;
@@ -29,62 +24,6 @@ function ThemeBars({ themes, title }: { themes: ThemeDistribution[]; title: stri
         suffix: " scrutins",
       }))}
     />
-  );
-}
-
-function PipelineTable({ rows }: { rows: PipelineRow[] }) {
-  if (rows.length === 0) return null;
-  return (
-    <div className="overflow-x-auto -mx-4 sm:mx-0">
-      <table className="w-full text-sm min-w-[400px]">
-        <thead>
-          <tr className="border-b text-left">
-            <th className="py-2 pr-2 font-medium">Thème</th>
-            <th className="py-2 px-2 text-right font-medium">En discussion</th>
-            <th className="py-2 px-2 text-right font-medium">Adoptés</th>
-            <th className="py-2 px-2 text-right font-medium">Total</th>
-            <th className="py-2 pl-2 w-24 font-medium">Avancement</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((r) => {
-            const enDiscussion = r.enCommission + r.enCours;
-            const pct = r.total > 0 ? Math.round((r.adopte / r.total) * 100) : 0;
-            return (
-              <tr key={r.theme} className="border-b last:border-0">
-                <td className="py-2.5 pr-2">
-                  <span className="text-sm">
-                    {r.icon} {r.label}
-                  </span>
-                </td>
-                <td className="py-2.5 px-2 text-right tabular-nums text-yellow-600 dark:text-yellow-400">
-                  {enDiscussion}
-                </td>
-                <td className="py-2.5 px-2 text-right tabular-nums text-green-600 dark:text-green-400">
-                  {r.adopte}
-                </td>
-                <td className="py-2.5 px-2 text-right tabular-nums text-muted-foreground">
-                  {r.total}
-                </td>
-                <td className="py-2.5 pl-2">
-                  <div className="flex items-center gap-2">
-                    <div className="h-2 flex-1 bg-muted rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-green-500 dark:bg-green-400 rounded-full"
-                        style={{ width: `${pct}%` }}
-                      />
-                    </div>
-                    <span className="text-xs tabular-nums text-muted-foreground w-8 text-right">
-                      {pct}%
-                    </span>
-                  </div>
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
   );
 }
 
@@ -131,7 +70,7 @@ function KeyVotesList({ votes }: { votes: KeyVote[] }) {
 }
 
 export function LegislativeSection({ stats }: LegislativeSectionProps) {
-  const { kpi, themesAN, themesSENAT, pipeline, keyVotesAN, keyVotesSENAT } = stats;
+  const { kpi, themesAN, themesSENAT, keyVotesAN, keyVotesSENAT } = stats;
 
   return (
     <section aria-labelledby="legislative-heading" className="py-8">
@@ -188,19 +127,6 @@ export function LegislativeSection({ stats }: LegislativeSectionProps) {
         </Card>
       </div>
 
-      {/* Pipeline */}
-      <Card className="mb-8">
-        <CardHeader>
-          <CardTitle className="text-lg">Pipeline législatif</CardTitle>
-          <p className="text-sm text-muted-foreground">
-            État d&apos;avancement des dossiers par thème
-          </p>
-        </CardHeader>
-        <CardContent>
-          <PipelineTable rows={pipeline} />
-        </CardContent>
-      </Card>
-
       {/* Key votes — AN / Sénat side by side */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
         <Card>
@@ -230,9 +156,9 @@ export function LegislativeSection({ stats }: LegislativeSectionProps) {
       {/* Methodology */}
       <MethodologyDisclaimer>
         Données issues de l&apos;open data de l&apos;Assemblée nationale et du Sénat (XVIIe
-        législature). La classification thématique est réalisée par IA (13 catégories). Le pipeline
-        reflète l&apos;état actuel des dossiers législatifs. Les votes marquants sont les scrutins
-        récents avec le plus fort taux de contestation (écart le plus faible entre pour et contre).
+        législature). La classification thématique est réalisée par IA (13 catégories). Les votes
+        marquants sont les scrutins récents avec le plus fort taux de contestation (écart le plus
+        faible entre pour et contre).
       </MethodologyDisclaimer>
     </section>
   );

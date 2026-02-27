@@ -372,8 +372,12 @@ async function syncSenator(
       startDate: mandateStart || new Date(),
       isCurrent: true,
       source: DataSource.SENAT,
-      sourceUrl: sen.url || `https://www.senat.fr/senateur/${sen.matricule}/`,
-      officialUrl: sen.url || `https://www.senat.fr/senateur/${sen.matricule}/`,
+      sourceUrl: sen.url
+        ? `https://www.senat.fr${sen.url}`
+        : `https://www.senat.fr/senateur/${sen.matricule}/`,
+      officialUrl: sen.url
+        ? `https://www.senat.fr${sen.url}`
+        : `https://www.senat.fr/senateur/${sen.matricule}/`,
       externalId: `senat-${sen.matricule}`,
       parliamentaryGroupId: groupId,
     };

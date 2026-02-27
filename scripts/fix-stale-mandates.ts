@@ -106,9 +106,11 @@ function getSerieEndDate(departmentCode: string | null, constituency: string | n
 interface Stats {
   senatorsClosed: number;
   deputiesClosed: number;
+  ministerConflictsClosed: number;
   pmClosed: number;
   phantomsClosed: number;
   doubleMandatesClosed: number;
+  urlsFixed: number;
   partiesFixed: number;
   errors: string[];
 }
@@ -271,6 +273,95 @@ async function fixStaleDeputies(stats: Stats, apply: boolean) {
   }
 
   console.log(`  → ${stats.deputiesClosed} mandats à fermer\n`);
+}
+
+// ============================================
+// FIX: MINISTER/PARLIAMENTARY CONFLICT
+// ============================================
+
+async function fixMinisterConflicts(stats: Stats, apply: boolean) {
+  console.log("── Conflits parlementaire/gouvernement ────");
+
+  const govTypes: MandateType[] = [
+    MandateType.MINISTRE,
+    MandateType.MINISTRE_DELEGUE,
+    MandateType.SECRETAIRE_ETAT,
+  ];
+  const parlTypes: MandateType[] = [MandateType.DEPUTE, MandateType.SENATEUR];
+
+  // Find politicians with both an active government mandate and an active parliamentary mandate
+  const conflicts = await db.politician.findMany({
+    where: {
+      mandates: { some: { type: { in: govTypes }, isCurrent: true } },
+      AND: { mandates: { some: { type: { in: parlTypes }, isCurrent: true } } },
+    },
+    include: {
+      mandates: {
+        where: { isCurrent: true, type: { in: [...govTypes, ...parlTypes] } },
+        orderBy: { startDate: "desc" },
+      },
+    },
+  });
+
+  console.log(`  ${conflicts.length} parlementaires avec un mandat gouvernemental actif`);
+
+  for (const pol of conflicts) {
+    const govMandate = pol.mandates.find((m) => govTypes.includes(m.type as MandateType));
+    const parlMandate = pol.mandates.find((m) => parlTypes.includes(m.type as MandateType));
+
+    if (!govMandate || !parlMandate) continue;
+
+    const endDate = govMandate.startDate || new Date();
+    console.log(
+      `  ✗ ${pol.fullName}: ${parlMandate.type} suspendu (→ ${govMandate.type} depuis ${govMandate.startDate?.toISOString().split("T")[0]})`
+    );
+
+    if (apply) {
+      await db.mandate.update({
+        where: { id: parlMandate.id },
+        data: { isCurrent: false, endDate },
+      });
+    }
+    stats.ministerConflictsClosed++;
+  }
+
+  console.log(`  → ${stats.ministerConflictsClosed} mandats parlementaires suspendus\n`);
+}
+
+// ============================================
+// FIX: RELATIVE URLs ON SENATE MANDATES
+// ============================================
+
+async function fixRelativeUrls(stats: Stats, apply: boolean) {
+  console.log("── URLs relatives sénat ───────────────────");
+
+  const badMandates = await db.mandate.findMany({
+    where: {
+      OR: [{ officialUrl: { startsWith: "/" } }, { sourceUrl: { startsWith: "/" } }],
+    },
+    include: { politician: { select: { fullName: true } } },
+  });
+
+  for (const m of badMandates) {
+    const fixedOfficial = m.officialUrl?.startsWith("/")
+      ? `https://www.senat.fr${m.officialUrl}`
+      : m.officialUrl;
+    const fixedSource = m.sourceUrl?.startsWith("/")
+      ? `https://www.senat.fr${m.sourceUrl}`
+      : m.sourceUrl;
+
+    console.log(`  ✗ ${m.politician.fullName}: ${m.officialUrl} → ${fixedOfficial}`);
+
+    if (apply) {
+      await db.mandate.update({
+        where: { id: m.id },
+        data: { officialUrl: fixedOfficial, sourceUrl: fixedSource },
+      });
+    }
+    stats.urlsFixed++;
+  }
+
+  console.log(`  → ${stats.urlsFixed} URLs corrigées\n`);
 }
 
 // ============================================
@@ -537,15 +628,19 @@ async function main() {
   const stats: Stats = {
     senatorsClosed: 0,
     deputiesClosed: 0,
+    ministerConflictsClosed: 0,
     pmClosed: 0,
     phantomsClosed: 0,
     doubleMandatesClosed: 0,
+    urlsFixed: 0,
     partiesFixed: 0,
     errors: [],
   };
 
   if (runAll || onlySenators) await fixStaleSenators(stats, apply);
   if (runAll || onlyDeputies) await fixStaleDeputies(stats, apply);
+  if (runAll) await fixMinisterConflicts(stats, apply);
+  if (runAll) await fixRelativeUrls(stats, apply);
   if (runAll) await fixDoublePM(stats, apply);
   if (runAll) await fixPhantomMandates(stats, apply);
   if (runAll) await fixDoubleMandates(stats, apply);
@@ -555,6 +650,8 @@ async function main() {
   console.log("📊 Summary\n");
   console.log(`Sénateurs fermés: ${stats.senatorsClosed}`);
   console.log(`Députés fermés: ${stats.deputiesClosed}`);
+  console.log(`Conflits ministre/parlementaire: ${stats.ministerConflictsClosed}`);
+  console.log(`URLs corrigées: ${stats.urlsFixed}`);
   console.log(`PM fermés: ${stats.pmClosed}`);
   console.log(`Fantômes fermés: ${stats.phantomsClosed}`);
   console.log(`Double mandats fermés: ${stats.doubleMandatesClosed}`);

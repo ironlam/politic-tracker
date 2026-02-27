@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
@@ -24,11 +25,13 @@ import { PoliticianAvatar } from "@/components/politicians/PoliticianAvatar";
 import { ArticleJsonLd, BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 import type { AffairCategory, Involvement } from "@/types";
 
+export const revalidate = 3600; // ISR: revalidate every hour
+
 interface PageProps {
   params: Promise<{ slug: string }>;
 }
 
-async function getAffair(slug: string) {
+const getAffair = cache(async function getAffair(slug: string) {
   return db.affair.findFirst({
     where: { slug, publicationStatus: "PUBLISHED" },
     include: {
@@ -55,7 +58,7 @@ async function getAffair(slug: string) {
       },
     },
   });
-}
+});
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;

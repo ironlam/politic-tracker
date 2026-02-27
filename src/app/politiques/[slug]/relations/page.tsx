@@ -1,19 +1,34 @@
+import { cache } from "react";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { db } from "@/lib/db";
 import { RelationsClient } from "./RelationsClient";
 
+export const revalidate = 3600; // ISR: revalidate every hour
+
 interface PageProps {
   params: Promise<{ slug: string }>;
 }
 
+const getPoliticianBasic = cache(async function getPoliticianBasic(slug: string) {
+  return db.politician.findUnique({
+    where: { slug },
+    select: {
+      id: true,
+      slug: true,
+      fullName: true,
+      photoUrl: true,
+      currentParty: {
+        select: { shortName: true, color: true },
+      },
+    },
+  });
+});
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const politician = await db.politician.findUnique({
-    where: { slug },
-    select: { fullName: true },
-  });
+  const politician = await getPoliticianBasic(slug);
 
   if (!politician) {
     return { title: "Non trouvé" };
@@ -28,18 +43,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function RelationsPage({ params }: PageProps) {
   const { slug } = await params;
 
-  const politician = await db.politician.findUnique({
-    where: { slug },
-    select: {
-      id: true,
-      slug: true,
-      fullName: true,
-      photoUrl: true,
-      currentParty: {
-        select: { shortName: true, color: true },
-      },
-    },
-  });
+  const politician = await getPoliticianBasic(slug);
 
   if (!politician) {
     notFound();

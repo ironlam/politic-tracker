@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
 import Link from "next/link";
@@ -12,6 +13,8 @@ import { ExternalLink, Calendar, Users, Sparkles } from "lucide-react";
 import { BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 import type { VotePosition } from "@/types";
 
+export const revalidate = 3600; // ISR: revalidate every hour
+
 interface PageProps {
   params: Promise<{ slug: string }>;
 }
@@ -20,7 +23,7 @@ interface PageProps {
  * Get scrutin with redirect support for legacy URLs
  * Returns { scrutin, redirect } where redirect is the slug to redirect to
  */
-async function getScrutinWithRedirect(slugOrId: string) {
+const getScrutinWithRedirect = cache(async function getScrutinWithRedirect(slugOrId: string) {
   const includeOptions = {
     votes: {
       include: {
@@ -85,7 +88,7 @@ async function getScrutinWithRedirect(slugOrId: string) {
   }
 
   return { scrutin: null, redirect: null };
-}
+});
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;

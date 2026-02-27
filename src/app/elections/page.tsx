@@ -7,6 +7,8 @@ import { ElectionCountdown, ElectionTimeline } from "@/components/elections";
 import { ELECTION_TYPE_LABELS, ELECTION_TYPE_ICONS } from "@/config/labels";
 import type { ElectionType } from "@/types";
 
+export const revalidate = 300; // ISR: revalidate every 5 minutes
+
 export const metadata: Metadata = {
   title: "Calendrier électoral",
   description:

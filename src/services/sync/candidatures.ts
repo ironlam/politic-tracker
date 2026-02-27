@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { ElectionStatus } from "@/generated/prisma";
+import { ElectionStatus, Prisma } from "@/generated/prisma";
 import { parse } from "csv-parse/sync";
 import { NUANCE_POLITIQUE_MAPPING } from "@/config/labels";
 import type { CandidatureMunicipaleCSV, CandidaturesSyncResult } from "./types";
@@ -11,6 +11,8 @@ const DEFAULT_CSV_URL =
   "https://static.data.gouv.fr/resources/elections-municipales-2020-candidatures-au-1er-tour/20200304-105123/livre-des-listes-et-candidats.txt";
 
 const DEFAULT_ELECTION_SLUG = "municipales-2026";
+
+const CHUNK_SIZE = 500;
 
 const dataGouvClient = new HTTPClient({
   rateLimitMs: DATA_GOUV_RATE_LIMIT_MS,
@@ -105,6 +107,117 @@ async function matchParty(nuanceCode: string): Promise<string | null> {
 }
 
 /**
+ * Normalize a name from CSV (all-caps or mixed) to title case,
+ * preserving hyphens and spaces.
+ * "JEAN-PIERRE" -> "Jean-Pierre", "DE LA FONTAINE" -> "De La Fontaine"
+ */
+function normalizeName(raw: string): string {
+  return raw.replace(/[A-Za-zÀ-ÿ]+/g, (w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
+}
+
+/**
+ * Build the INSEE code from department code and commune code.
+ * INSEE code = departmentCode + communeCode (padded to 3 digits).
+ * Examples:
+ *   dept "13", commune "055" -> "13055" (Marseille)
+ *   dept "75", commune "056" -> "75056" (Paris)
+ *   dept "971", commune "05" -> "97105" (DOM-TOM — dept is 3 digits, commune padded to 2)
+ *
+ * Standard: metropolitan depts are 2 digits (or "2A"/"2B" for Corsica),
+ * commune code is 3 digits. DOM depts are 3 digits, commune code is 2 digits.
+ * The total INSEE code is always 5 characters.
+ */
+function buildInseeCode(deptCode: string, communeCode: string): string {
+  // The CSV commune code may already be properly formatted.
+  // For metropolitan France (2-char dept), commune code should be 3 digits.
+  // For DOM-TOM (3-char dept like "971"), commune code should be 2 digits.
+  // Corsica: "2A" or "2B" are 2-char dept codes.
+  const trimmedDept = deptCode.trim();
+  const trimmedCommune = communeCode.trim();
+
+  if (trimmedDept.length === 3) {
+    // DOM-TOM: 3-digit dept + 2-digit commune = 5 chars
+    return trimmedDept + trimmedCommune.padStart(2, "0");
+  }
+  // Metropolitan or Corsica: 2-char dept + 3-digit commune = 5 chars
+  return trimmedDept + trimmedCommune.padStart(3, "0");
+}
+
+/** Parsed row data extracted from a CSV row, ready for processing */
+interface ParsedRow {
+  /** Index in the toProcess array (for error reporting) */
+  index: number;
+  firstName: string;
+  lastName: string;
+  normalizedFirstName: string;
+  normalizedLastName: string;
+  gender: string | null;
+  nationality: string | null;
+  deptCode: string;
+  codeCommune: string;
+  communeName: string;
+  nuanceCode: string;
+  listName: string | null;
+  listPosition: number | null;
+  partyLabel: string | null;
+  candidateName: string;
+  constituencyCode: string;
+  inseeCode: string;
+}
+
+/**
+ * Pre-load all communes into a Map<inseeCode, true> for fast lookup.
+ * Commune.id IS the INSEE code.
+ */
+async function loadCommuneMap(): Promise<Set<string>> {
+  const communes = await db.commune.findMany({
+    select: { id: true },
+  });
+  const set = new Set<string>();
+  for (const c of communes) {
+    set.add(c.id);
+  }
+  console.log(`  Pre-loaded ${set.size} communes`);
+  return set;
+}
+
+/**
+ * Pre-load all existing candidacies for a given election into a Map
+ * keyed by "candidateName|constituencyCode" -> candidacyId.
+ */
+async function loadExistingCandidacies(electionId: string): Promise<Map<string, string>> {
+  const existing = await db.candidacy.findMany({
+    where: { electionId },
+    select: { id: true, candidateName: true, constituencyCode: true },
+  });
+  const map = new Map<string, string>();
+  for (const c of existing) {
+    if (c.constituencyCode) {
+      map.set(`${c.candidateName}|${c.constituencyCode}`, c.id);
+    }
+  }
+  console.log(`  Pre-loaded ${map.size} existing candidacies`);
+  return map;
+}
+
+/**
+ * Pre-warm the party cache by resolving all nuance codes upfront.
+ * There are only ~20-30 distinct nuance codes, so this is cheap.
+ */
+async function preWarmPartyCache(): Promise<Map<string, string | null>> {
+  const cache = new Map<string, string | null>();
+  const nuanceCodes = Object.keys(NUANCE_POLITIQUE_MAPPING);
+
+  for (const code of nuanceCodes) {
+    const partyId = await matchParty(code);
+    cache.set(code, partyId);
+  }
+
+  console.log(`  Pre-warmed party cache: ${cache.size} nuance codes`);
+  return cache;
+}
+
+/**
  * Sync candidatures municipales from a data.gouv.fr CSV
  */
 export async function syncCandidaturesMunicipales(
@@ -135,123 +248,283 @@ export async function syncCandidaturesMunicipales(
 
   console.log(`Target election: ${electionRecord.title} (${electionRecord.slug})`);
 
+  // ─── Phase A: Pre-load reference data ───────────────────────────────
+  console.log("\nPhase A: Pre-loading reference data...");
+
+  const [communeSet, existingCandidacyMap, partyCache] = await Promise.all([
+    loadCommuneMap(),
+    loadExistingCandidacies(electionRecord.id),
+    preWarmPartyCache(),
+  ]);
+
+  // Cache for politician lookups: "firstName|lastName|deptCode" -> politicianId | null
+  const politicianCache = new Map<string, string | null>();
+
+  // ─── Fetch and parse CSV ────────────────────────────────────────────
   const records = await fetchCandidaturesCSV(url);
   const toProcess = limit ? records.slice(0, limit) : records;
 
-  let candidaciesCreated = 0;
-  let candidaciesUpdated = 0;
-  let politiciansMatched = 0;
-  let politiciansNotFound = 0;
-  const errors: string[] = [];
-
-  // Cache for party lookups (nuance code -> partyId)
-  const partyCache = new Map<string, string | null>();
-
-  console.log(`\nProcessing ${toProcess.length} candidatures...`);
+  // ─── Parse all rows upfront (CPU-only, no DB) ──────────────────────
+  console.log(`\nParsing ${toProcess.length} rows...`);
+  const parsedRows: ParsedRow[] = [];
+  const parseErrors: string[] = [];
 
   for (let i = 0; i < toProcess.length; i++) {
     const row = toProcess[i];
+    const nom = row["Nom candidat"];
+    const prenom = row["Prénom candidat"];
 
-    try {
-      const nom = row["Nom candidat"];
-      const prenom = row["Prénom candidat"];
-      const deptCode = row["Code du département"];
-      const codeCommune = row["Code commune"];
-      const commune = row["Libellé commune"];
-      const nuanceCode = row["Nuance Liste"];
-      const listName = row["Libellé Etendu Liste"] || row["Libellé abrégé liste"];
-      const listPosition = parseInt(row["N° candidat"], 10) || null;
+    if (!nom || !prenom) {
+      parseErrors.push(`Row ${i + 1}: missing candidate name`);
+      continue;
+    }
 
-      if (!nom || !prenom) {
-        errors.push(`Row ${i + 1}: missing candidate name`);
-        continue;
-      }
+    const deptCode = row["Code du département"];
+    const codeCommune = row["Code commune"];
+    const nuanceCode = row["Nuance Liste"];
+    const rawListName = row["Libellé Etendu Liste"] || row["Libellé abrégé liste"];
+    const rawListPosition = parseInt(row["N° candidat"], 10);
+    const gender = row["Sexe candidat"] || null;
+    const nationality = row["Nationalité"] || null;
 
-      // Match politician (optional)
-      const politicianId = await matchPolitician(prenom, nom, deptCode);
+    parsedRows.push({
+      index: i,
+      firstName: prenom,
+      lastName: nom,
+      normalizedFirstName: normalizeName(prenom),
+      normalizedLastName: normalizeName(nom),
+      gender: gender === "M" || gender === "F" ? gender : null,
+      nationality: nationality || null,
+      deptCode,
+      codeCommune,
+      communeName: row["Libellé commune"],
+      nuanceCode,
+      listName: rawListName || null,
+      listPosition: isNaN(rawListPosition) ? null : rawListPosition,
+      partyLabel: row["Libellé abrégé liste"] || nuanceCode || null,
+      candidateName: `${prenom} ${nom}`,
+      constituencyCode: `${deptCode}-${codeCommune}`,
+      inseeCode: buildInseeCode(deptCode, codeCommune),
+    });
+  }
 
-      if (politicianId) {
-        politiciansMatched++;
-      } else {
-        politiciansNotFound++;
-        if (verbose && politiciansNotFound <= 20) {
-          console.log(`  No match: ${prenom} ${nom} (${commune}, dept ${deptCode})`);
-        }
-      }
+  console.log(`  Parsed: ${parsedRows.length} valid rows, ${parseErrors.length} parse errors`);
 
-      // Match party via nuance code (cached)
-      let partyId: string | null;
-      if (partyCache.has(nuanceCode)) {
-        partyId = partyCache.get(nuanceCode) ?? null;
-      } else {
-        partyId = await matchParty(nuanceCode);
-        partyCache.set(nuanceCode, partyId);
-      }
+  if (dryRun) {
+    // Dry run: just report what we'd do
+    const politiciansMatched = 0;
+    const politiciansNotFound = 0;
+    let communesLinked = 0;
 
-      const candidateName = `${prenom} ${nom}`;
-      const constituencyCode = `${deptCode}-${codeCommune}`;
-      const constituencyName = commune;
-      const partyLabel = row["Libellé abrégé liste"] || nuanceCode || null;
+    for (const row of parsedRows) {
+      if (communeSet.has(row.inseeCode)) communesLinked++;
 
-      if (dryRun) {
-        if (verbose) {
-          console.log(
-            `  [DRY-RUN] ${candidateName} | ${commune} | ${nuanceCode} | list: ${listName} #${listPosition}${politicianId ? " [MATCHED]" : ""}`
-          );
-        }
-        continue;
-      }
-
-      // Upsert candidacy (unique by election + candidate name + constituency)
-      const existing = await db.candidacy.findFirst({
-        where: {
-          electionId: electionRecord.id,
-          candidateName,
-          constituencyCode,
-        },
-      });
-
-      if (existing) {
-        await db.candidacy.update({
-          where: { id: existing.id },
-          data: {
-            politicianId,
-            partyId,
-            partyLabel,
-            listName,
-            listPosition,
-            constituencyName,
-          },
-        });
-        candidaciesUpdated++;
-      } else {
-        await db.candidacy.create({
-          data: {
-            electionId: electionRecord.id,
-            politicianId,
-            partyId,
-            candidateName,
-            partyLabel,
-            listName,
-            listPosition,
-            constituencyCode,
-            constituencyName,
-          },
-        });
-        candidaciesCreated++;
-      }
-
-      if (verbose && (i + 1) % 5000 === 0) {
+      if (verbose) {
+        const communeMatch = communeSet.has(row.inseeCode) ? "[COMMUNE]" : "";
         console.log(
-          `  Progress: ${i + 1}/${toProcess.length} (created: ${candidaciesCreated}, matched: ${politiciansMatched})`
+          `  [DRY-RUN] ${row.candidateName} | ${row.communeName} | ${row.nuanceCode} | list: ${row.listName} #${row.listPosition} ${communeMatch}`
         );
       }
+    }
+
+    return {
+      success: parseErrors.length === 0,
+      candidaciesCreated: 0,
+      candidaciesUpdated: 0,
+      candidatesCreated: 0,
+      communesLinked,
+      politiciansMatched,
+      politiciansNotFound,
+      errors: parseErrors,
+    };
+  }
+
+  // ─── Phase B: Process in chunks ─────────────────────────────────────
+  console.log(`\nPhase B: Processing ${parsedRows.length} rows in chunks of ${CHUNK_SIZE}...`);
+
+  let candidaciesCreated = 0;
+  let candidaciesUpdated = 0;
+  let candidatesCreated = 0;
+  let communesLinked = 0;
+  let politiciansMatched = 0;
+  let politiciansNotFound = 0;
+  const errors: string[] = [...parseErrors];
+
+  const totalChunks = Math.ceil(parsedRows.length / CHUNK_SIZE);
+
+  for (let chunkIdx = 0; chunkIdx < totalChunks; chunkIdx++) {
+    const chunkStart = chunkIdx * CHUNK_SIZE;
+    const chunk = parsedRows.slice(chunkStart, chunkStart + CHUNK_SIZE);
+
+    try {
+      // ── Step 1: Collect unique candidate identities in this chunk ──
+      // Key: "normalizedFirstName|normalizedLastName" (for candidates without politicianId)
+      const uniqueCandidates = new Map<
+        string,
+        { firstName: string; lastName: string; gender: string | null; nationality: string | null }
+      >();
+
+      for (const row of chunk) {
+        const key = `${row.normalizedFirstName}|${row.normalizedLastName}`;
+        if (!uniqueCandidates.has(key)) {
+          uniqueCandidates.set(key, {
+            firstName: row.normalizedFirstName,
+            lastName: row.normalizedLastName,
+            gender: row.gender,
+            nationality: row.nationality,
+          });
+        }
+      }
+
+      // ── Step 2: Batch-create Candidate records ─────────────────────
+      // We create candidates with politicianId = null initially.
+      // The partial unique index (firstName, lastName WHERE politicianId IS NULL)
+      // ensures deduplication. skipDuplicates handles conflicts gracefully.
+      const candidateData: Prisma.CandidateCreateManyInput[] = [];
+      for (const c of uniqueCandidates.values()) {
+        candidateData.push({
+          firstName: c.firstName,
+          lastName: c.lastName,
+          gender: c.gender,
+          nationality: c.nationality,
+        });
+      }
+
+      if (candidateData.length > 0) {
+        const result = await db.candidate.createMany({
+          data: candidateData,
+          skipDuplicates: true,
+        });
+        candidatesCreated += result.count;
+      }
+
+      // ── Step 3: Fetch back Candidate IDs for this chunk ────────────
+      // We need to resolve candidate IDs for linking to candidacies.
+      // Query by all unique (firstName, lastName) pairs in this chunk.
+      const namePairs = Array.from(uniqueCandidates.values());
+      const candidateRecords = await db.candidate.findMany({
+        where: {
+          OR: namePairs.map((c) => ({
+            firstName: c.firstName,
+            lastName: c.lastName,
+            politicianId: null,
+          })),
+        },
+        select: { id: true, firstName: true, lastName: true },
+      });
+
+      // Build lookup: "firstName|lastName" -> candidateId
+      const candidateIdMap = new Map<string, string>();
+      for (const c of candidateRecords) {
+        candidateIdMap.set(`${c.firstName}|${c.lastName}`, c.id);
+      }
+
+      // ── Step 4: Resolve politicians for this chunk (cached) ────────
+      // Process politician lookups sequentially to avoid pool starvation.
+      const rowPoliticianIds: (string | null)[] = [];
+      for (const row of chunk) {
+        const cacheKey = `${row.normalizedFirstName}|${row.normalizedLastName}|${row.deptCode}`;
+        let politicianId: string | null;
+
+        if (politicianCache.has(cacheKey)) {
+          politicianId = politicianCache.get(cacheKey) ?? null;
+        } else {
+          politicianId = await matchPolitician(row.firstName, row.lastName, row.deptCode);
+          politicianCache.set(cacheKey, politicianId);
+        }
+
+        rowPoliticianIds.push(politicianId);
+
+        if (politicianId) {
+          politiciansMatched++;
+        } else {
+          politiciansNotFound++;
+          if (verbose && politiciansNotFound <= 20) {
+            console.log(
+              `  No match: ${row.firstName} ${row.lastName} (${row.communeName}, dept ${row.deptCode})`
+            );
+          }
+        }
+      }
+
+      // ── Step 5: Upsert candidacies for this chunk ──────────────────
+      for (let j = 0; j < chunk.length; j++) {
+        const row = chunk[j];
+        const politicianId = rowPoliticianIds[j];
+
+        try {
+          const candidateKey = `${row.normalizedFirstName}|${row.normalizedLastName}`;
+          const candidateId = candidateIdMap.get(candidateKey) ?? null;
+
+          // Resolve commune
+          const communeId = communeSet.has(row.inseeCode) ? row.inseeCode : null;
+          if (communeId) communesLinked++;
+
+          // Resolve party from cache
+          const partyId = partyCache.get(row.nuanceCode) ?? null;
+
+          const existingKey = `${row.candidateName}|${row.constituencyCode}`;
+          const existingId = existingCandidacyMap.get(existingKey);
+
+          if (existingId) {
+            // Update existing candidacy
+            await db.candidacy.update({
+              where: { id: existingId },
+              data: {
+                politicianId,
+                partyId,
+                partyLabel: row.partyLabel,
+                listName: row.listName,
+                listPosition: row.listPosition,
+                constituencyName: row.communeName,
+                candidateId,
+                communeId,
+              },
+            });
+            candidaciesUpdated++;
+          } else {
+            // Create new candidacy
+            const created = await db.candidacy.create({
+              data: {
+                electionId: electionRecord.id,
+                politicianId,
+                partyId,
+                candidateName: row.candidateName,
+                partyLabel: row.partyLabel,
+                listName: row.listName,
+                listPosition: row.listPosition,
+                constituencyCode: row.constituencyCode,
+                constituencyName: row.communeName,
+                candidateId,
+                communeId,
+              },
+              select: { id: true },
+            });
+            candidaciesCreated++;
+
+            // Add to existing map so re-runs within same session don't create duplicates
+            existingCandidacyMap.set(existingKey, created.id);
+          }
+        } catch (error) {
+          errors.push(`Row ${row.index + 1}: ${error}`);
+        }
+      }
     } catch (error) {
-      errors.push(`Row ${i + 1}: ${error}`);
+      // Chunk-level error — record it and continue to next chunk
+      errors.push(`Chunk ${chunkIdx + 1}: ${error}`);
+    }
+
+    // Progress logging
+    const processedCount = Math.min((chunkIdx + 1) * CHUNK_SIZE, parsedRows.length);
+    if (verbose || (chunkIdx + 1) % 10 === 0 || chunkIdx === totalChunks - 1) {
+      console.log(
+        `  Chunk ${chunkIdx + 1}/${totalChunks} — ${processedCount}/${parsedRows.length} rows ` +
+          `(created: ${candidaciesCreated}, candidates: ${candidatesCreated}, communes: ${communesLinked})`
+      );
     }
   }
 
-  // Update election status if we imported candidacies
+  // ─── Update election status ─────────────────────────────────────────
   if (!dryRun && candidaciesCreated > 0) {
     await db.election.update({
       where: { id: electionRecord.id },
@@ -263,15 +536,20 @@ export async function syncCandidaturesMunicipales(
   console.log(`\nResults:`);
   console.log(`  Candidacies created: ${candidaciesCreated}`);
   console.log(`  Candidacies updated: ${candidaciesUpdated}`);
+  console.log(`  Candidates created: ${candidatesCreated}`);
+  console.log(`  Communes linked: ${communesLinked}`);
   console.log(`  Politicians matched: ${politiciansMatched}`);
   console.log(`  Politicians not found: ${politiciansNotFound}`);
-  console.log(`  Nuance codes cached: ${partyCache.size}`);
+  console.log(`  Party nuances cached: ${partyCache.size}`);
+  console.log(`  Politician lookups cached: ${politicianCache.size}`);
   console.log(`  Errors: ${errors.length}`);
 
   return {
     success: errors.length === 0,
     candidaciesCreated,
     candidaciesUpdated,
+    candidatesCreated,
+    communesLinked,
     politiciansMatched,
     politiciansNotFound,
     errors,

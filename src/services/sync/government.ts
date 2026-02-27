@@ -401,6 +401,7 @@ async function applyLocalCorrections(): Promise<{ applied: number; errors: strin
 
     // 1. End mandates
     for (const endMandate of corrections.endMandates || []) {
+      if (!endMandate.politicianName) continue; // skip comment entries
       try {
         const politician = await db.politician.findFirst({
           where: { fullName: { equals: endMandate.politicianName, mode: "insensitive" } },
@@ -436,6 +437,7 @@ async function applyLocalCorrections(): Promise<{ applied: number; errors: strin
 
     // 2. New members
     for (const newMember of corrections.newMembers || []) {
+      if (!newMember.firstName) continue; // skip comment entries
       try {
         const slug = generateSlug(`${newMember.firstName}-${newMember.lastName}`);
 

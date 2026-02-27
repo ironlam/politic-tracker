@@ -277,6 +277,8 @@ async function fixStaleDeputies(stats: Stats, apply: boolean) {
 
 // ============================================
 // FIX: MINISTER/PARLIAMENTARY CONFLICT
+// Cross-checks with live AN CSV + senat.fr API
+// to avoid overriding authoritative sources.
 // ============================================
 
 async function fixMinisterConflicts(stats: Stats, apply: boolean) {
@@ -289,7 +291,28 @@ async function fixMinisterConflicts(stats: Stats, apply: boolean) {
   ];
   const parlTypes: MandateType[] = [MandateType.DEPUTE, MandateType.SENATEUR];
 
-  // Find politicians with both an active government mandate and an active parliamentary mandate
+  // 1. Load authoritative parliamentary sources
+  let activeAnIds = new Set<string>();
+  try {
+    const deputies = await fetchDeputiesCSV();
+    activeAnIds = new Set(deputies.map((d) => d.id));
+    console.log(`  CSV data.gouv.fr: ${activeAnIds.size} députés actifs`);
+  } catch {
+    console.warn("  ⚠ Could not fetch AN CSV");
+  }
+
+  let activeSenatMatricules = new Set<string>();
+  try {
+    const { data: apiSenators } = await client.get<{ matricule: string }[]>(
+      "https://www.senat.fr/api-senat/senateurs.json"
+    );
+    activeSenatMatricules = new Set(apiSenators.map((s) => s.matricule));
+    console.log(`  API senat.fr: ${activeSenatMatricules.size} sénateurs actifs`);
+  } catch {
+    console.warn("  ⚠ Could not fetch senat.fr API");
+  }
+
+  // 2. Find conflicts (active gov + active parliamentary)
   const conflicts = await db.politician.findMany({
     where: {
       mandates: { some: { type: { in: govTypes }, isCurrent: true } },
@@ -299,6 +322,10 @@ async function fixMinisterConflicts(stats: Stats, apply: boolean) {
       mandates: {
         where: { isCurrent: true, type: { in: [...govTypes, ...parlTypes] } },
         orderBy: { startDate: "desc" },
+      },
+      externalIds: {
+        where: { source: { in: [DataSource.ASSEMBLEE_NATIONALE, DataSource.SENAT] } },
+        select: { source: true, externalId: true },
       },
     },
   });
@@ -311,21 +338,45 @@ async function fixMinisterConflicts(stats: Stats, apply: boolean) {
 
     if (!govMandate || !parlMandate) continue;
 
-    const endDate = govMandate.startDate || new Date();
-    console.log(
-      `  ✗ ${pol.fullName}: ${parlMandate.type} suspendu (→ ${govMandate.type} depuis ${govMandate.startDate?.toISOString().split("T")[0]})`
-    );
+    // 3. Cross-check with authoritative source
+    const anId = pol.externalIds.find(
+      (e) => e.source === DataSource.ASSEMBLEE_NATIONALE
+    )?.externalId;
+    const senatId = pol.externalIds.find((e) => e.source === DataSource.SENAT)?.externalId;
 
-    if (apply) {
-      await db.mandate.update({
-        where: { id: parlMandate.id },
-        data: { isCurrent: false, endDate },
-      });
+    const isActiveInParliament =
+      (parlMandate.type === MandateType.DEPUTE && anId && activeAnIds.has(anId)) ||
+      (parlMandate.type === MandateType.SENATEUR && senatId && activeSenatMatricules.has(senatId));
+
+    if (isActiveInParliament) {
+      // The person is confirmed active by the authoritative source → close the MINISTER mandate (stale)
+      console.log(
+        `  ✗ ${pol.fullName}: ${govMandate.type} stale (confirmé ${parlMandate.type} par source officielle)`
+      );
+      if (apply) {
+        await db.mandate.update({
+          where: { id: govMandate.id },
+          data: { isCurrent: false, endDate: new Date() },
+        });
+      }
+      stats.ministerConflictsClosed++;
+    } else {
+      // The person is NOT in the authoritative source → close the parliamentary mandate
+      const endDate = govMandate.startDate || new Date();
+      console.log(
+        `  ✗ ${pol.fullName}: ${parlMandate.type} suspendu (→ ${govMandate.type} depuis ${govMandate.startDate?.toISOString().split("T")[0]})`
+      );
+      if (apply) {
+        await db.mandate.update({
+          where: { id: parlMandate.id },
+          data: { isCurrent: false, endDate },
+        });
+      }
+      stats.ministerConflictsClosed++;
     }
-    stats.ministerConflictsClosed++;
   }
 
-  console.log(`  → ${stats.ministerConflictsClosed} mandats parlementaires suspendus\n`);
+  console.log(`  → ${stats.ministerConflictsClosed} conflits résolus\n`);
 }
 
 // ============================================

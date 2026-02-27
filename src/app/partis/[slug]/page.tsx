@@ -319,7 +319,6 @@ export default async function PartyPage({ params }: PageProps) {
                               firstName={mandate.politician.firstName}
                               lastName={mandate.politician.lastName}
                               size="sm"
-                              politicianId={mandate.politician.id}
                             />
                             <div className="min-w-0 flex-1">
                               <p className="font-semibold">{mandate.politician.fullName}</p>
@@ -351,7 +350,6 @@ export default async function PartyPage({ params }: PageProps) {
                               firstName={membership.politician.firstName}
                               lastName={membership.politician.lastName}
                               size="sm"
-                              politicianId={membership.politician.id}
                             />
                             <div className="min-w-0 flex-1">
                               <p className="font-medium">{membership.politician.fullName}</p>
@@ -386,7 +384,6 @@ export default async function PartyPage({ params }: PageProps) {
                                 firstName={mandate.politician.firstName}
                                 lastName={mandate.politician.lastName}
                                 size="sm"
-                                politicianId={mandate.politician.id}
                               />
                               <div>
                                 <span className="font-medium">{mandate.politician.fullName}</span>
@@ -432,7 +429,6 @@ export default async function PartyPage({ params }: PageProps) {
                             firstName={politician.firstName}
                             lastName={politician.lastName}
                             size="sm"
-                            politicianId={politician.id}
                           />
                         </Link>
                         <div className="min-w-0 flex-1">
@@ -489,7 +485,6 @@ export default async function PartyPage({ params }: PageProps) {
                             firstName={membership.politician.firstName}
                             lastName={membership.politician.lastName}
                             size="sm"
-                            politicianId={membership.politician.id}
                           />
                           <span className="font-medium">{membership.politician.fullName}</span>
                         </div>

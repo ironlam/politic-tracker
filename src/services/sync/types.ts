@@ -364,6 +364,8 @@ export interface CandidaturesSyncResult {
   success: boolean;
   candidaciesCreated: number;
   candidaciesUpdated: number;
+  candidatesCreated: number;
+  communesLinked: number;
   politiciansMatched: number;
   politiciansNotFound: number;
   errors: string[];

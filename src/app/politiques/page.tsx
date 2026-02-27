@@ -489,7 +489,7 @@ export default async function PolitiquesPage({ searchParams }: PageProps) {
   const mandateFilter = (
     rawMandate === "president_parti" ? "dirigeants" : rawMandate
   ) as MandateFilter;
-  const statusFilter = (params.status || "active") as StatusFilter;
+  const statusFilter = (params.status ?? "") as StatusFilter;
   const sortOption = (params.sort || "prominence") as SortOption;
   const page = parseInt(params.page || "1", 10);
 

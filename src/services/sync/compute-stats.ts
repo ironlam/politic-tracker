@@ -239,30 +239,40 @@ async function upsertPoliticianParticipation(
     return;
   }
 
-  // Delete existing rows and insert fresh (faster than individual upserts)
-  await db.politicianParticipation.deleteMany();
-
-  // Batch insert using raw SQL for performance
+  // Atomic delete+insert in a transaction to prevent readers seeing partial data
   const CHUNK_SIZE = 200;
-  for (let i = 0; i < rows.length; i += CHUNK_SIZE) {
-    const chunk = rows.slice(i, i + CHUNK_SIZE);
-    const now = new Date().toISOString();
+  await db.$transaction(
+    async (tx) => {
+      await tx.politicianParticipation.deleteMany();
 
-    const values = chunk
-      .map(
-        (r) =>
-          `(gen_random_uuid()::text, '${r.politicianId}', '${r.chamber}'::"Chamber", '${r.mandateType}', ${r.votesCount}, ${r.eligibleScrutins}, ${r.participationRate}, '${esc(r.firstName)}', '${esc(r.lastName)}', '${esc(r.slug)}', ${r.photoUrl ? `'${esc(r.photoUrl)}'` : "NULL"}, ${r.partyId ? `'${r.partyId}'` : "NULL"}, ${r.partyShortName ? `'${esc(r.partyShortName)}'` : "NULL"}, ${r.partyColor ? `'${esc(r.partyColor)}'` : "NULL"}, ${r.partySlug ? `'${esc(r.partySlug)}'` : "NULL"}, ${r.groupId ? `'${r.groupId}'` : "NULL"}, ${r.groupCode ? `'${esc(r.groupCode)}'` : "NULL"}, ${r.groupName ? `'${esc(r.groupName)}'` : "NULL"}, ${r.groupColor ? `'${esc(r.groupColor)}'` : "NULL"}, '${now}'::timestamp)`
-      )
-      .join(",\n");
-
-    await db.$executeRawUnsafe(`
-      INSERT INTO "PoliticianParticipation"
-        (id, "politicianId", chamber, "mandateType", "votesCount", "eligibleScrutins", "participationRate",
-         "firstName", "lastName", slug, "photoUrl", "partyId", "partyShortName", "partyColor", "partySlug",
-         "groupId", "groupCode", "groupName", "groupColor", "computedAt")
-      VALUES ${values}
-    `);
-  }
+      for (let i = 0; i < rows.length; i += CHUNK_SIZE) {
+        const chunk = rows.slice(i, i + CHUNK_SIZE);
+        await tx.politicianParticipation.createMany({
+          data: chunk.map((r) => ({
+            politicianId: r.politicianId,
+            chamber: r.chamber,
+            mandateType: r.mandateType,
+            votesCount: r.votesCount,
+            eligibleScrutins: r.eligibleScrutins,
+            participationRate: r.participationRate,
+            firstName: r.firstName,
+            lastName: r.lastName,
+            slug: r.slug,
+            photoUrl: r.photoUrl,
+            partyId: r.partyId,
+            partyShortName: r.partyShortName,
+            partyColor: r.partyColor,
+            partySlug: r.partySlug,
+            groupId: r.groupId,
+            groupCode: r.groupCode,
+            groupName: r.groupName,
+            groupColor: r.groupColor,
+          })),
+        });
+      }
+    },
+    { timeout: 60_000 }
+  );
 
   if (verbose) console.log(`  → Inserted ${rows.length} PoliticianParticipation rows`);
 }
@@ -286,11 +296,6 @@ async function upsertStatsSnapshot(
   });
 
   if (verbose) console.log(`  → Saved StatsSnapshot "${key}"`);
-}
-
-/** Escape single quotes for raw SQL */
-function esc(s: string): string {
-  return s.replace(/'/g, "''");
 }
 
 // ============================================

@@ -450,11 +450,11 @@ export interface ParticipationRankingResult {
 
 /**
  * Get participation ranking from pre-computed PoliticianParticipation table.
- * Falls back to live query if table is empty (before first sync:compute-stats run).
+ * Returns empty results if table has not been populated yet (run sync:compute-stats).
  */
 async function getParticipationRanking(
   chamber?: Chamber,
-  _partyId?: string,
+  partyId?: string,
   page: number = 1,
   pageSize: number = 50,
   sortDirection: "ASC" | "DESC" = "ASC"
@@ -464,6 +464,7 @@ async function getParticipationRanking(
   // Build Prisma where filter
   const where: Record<string, unknown> = {};
   if (chamber) where.chamber = chamber;
+  if (partyId) where.partyId = partyId;
 
   const [entries, total] = await Promise.all([
     db.politicianParticipation.findMany({

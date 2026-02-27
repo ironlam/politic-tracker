@@ -85,9 +85,9 @@ interface PipelineRow {
 }
 
 interface LegislativeKpi {
-  dossiersEnCours: number;
+  scrutinsAnalyses: number;
+  dossiersEnDiscussion: number;
   textesAdoptes: number;
-  themesActifs: number;
 }
 
 interface KeyVoteRow {
@@ -354,31 +354,27 @@ function themeIconFor(theme: string): string {
 async function computeLegislativeKpi(verbose = false): Promise<LegislativeKpi> {
   if (verbose) console.log("  Computing legislative KPIs...");
 
-  const [dossiersEnCours, textesAdoptes, themesActifs] = await Promise.all([
+  const [scrutinsAnalyses, dossiersEnDiscussion, textesAdoptes] = await Promise.all([
+    db.scrutin.count({
+      where: { chamber: "AN" },
+    }),
     db.legislativeDossier.count({
       where: { status: { in: ["EN_COMMISSION", "EN_COURS"] } },
     }),
     db.legislativeDossier.count({
       where: { status: "ADOPTE" },
     }),
-    db.legislativeDossier.groupBy({
-      by: ["theme"],
-      where: {
-        status: { in: ["EN_COMMISSION", "EN_COURS"] },
-        theme: { not: null },
-      },
-    }),
   ]);
 
   if (verbose)
     console.log(
-      `  → KPI: ${dossiersEnCours} en cours, ${textesAdoptes} adoptés, ${themesActifs.length} thèmes actifs`
+      `  → KPI: ${scrutinsAnalyses} scrutins AN, ${dossiersEnDiscussion} en discussion, ${textesAdoptes} adoptés`
     );
 
   return {
-    dossiersEnCours,
+    scrutinsAnalyses,
+    dossiersEnDiscussion,
     textesAdoptes,
-    themesActifs: themesActifs.length,
   };
 }
 

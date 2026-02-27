@@ -4,13 +4,15 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { HorizontalBars } from "./HorizontalBars";
 import { MethodologyDisclaimer } from "./MethodologyDisclaimer";
+import { ParliamentaryWorkCallout } from "./ParliamentaryWorkCallout";
 import { ParticipationControls } from "./ParticipationControls";
 import type { ParticipationRankingResult, GroupParticipationStats } from "@/services/voteStats";
 import type { Chamber } from "@/generated/prisma";
 
 interface ParticipationSectionProps {
   ranking: ParticipationRankingResult;
-  groupStats: GroupParticipationStats[];
+  groupStatsAN: GroupParticipationStats[];
+  groupStatsSENAT: GroupParticipationStats[];
   chamber?: Chamber;
   page: number;
   sortDirection: "ASC" | "DESC";
@@ -30,26 +32,33 @@ function chamberLabel(mandateType: string): { label: string; variant: "default" 
 
 export function ParticipationSection({
   ranking,
-  groupStats,
+  groupStatsAN,
+  groupStatsSENAT,
   chamber,
   page,
   sortDirection,
 }: ParticipationSectionProps) {
+  const sortedGroupsAN = [...groupStatsAN].sort(
+    (a, b) => b.avgParticipationRate - a.avgParticipationRate
+  );
+  const sortedGroupsSENAT = [...groupStatsSENAT].sort(
+    (a, b) => b.avgParticipationRate - a.avgParticipationRate
+  );
+
+  const allGroups = [...groupStatsAN, ...groupStatsSENAT];
   const avgRate =
-    groupStats.length > 0
-      ? groupStats.reduce((sum, g) => sum + g.avgParticipationRate, 0) / groupStats.length
+    allGroups.length > 0
+      ? allGroups.reduce((sum, g) => sum + g.avgParticipationRate, 0) / allGroups.length
       : 0;
 
   const totalParliamentarians = ranking.total;
   const totalPages = Math.ceil(ranking.total / 50);
 
-  // Sort groups by participation rate descending for the chart
-  const sortedGroups = [...groupStats].sort(
-    (a, b) => b.avgParticipationRate - a.avgParticipationRate
-  );
-
   return (
     <section aria-labelledby="participation-heading" className="py-8">
+      {/* Pedagogical callout */}
+      <ParliamentaryWorkCallout />
+
       {/* KPI cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8">
         <Card>
@@ -68,30 +77,57 @@ export function ParticipationSection({
         </Card>
         <Card className="col-span-2 sm:col-span-1">
           <CardContent className="pt-6 text-center">
-            <div className="text-3xl font-bold tabular-nums">{groupStats.length}</div>
+            <div className="text-3xl font-bold tabular-nums">{allGroups.length}</div>
             <div className="text-sm text-muted-foreground mt-1">Groupes représentés</div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Group participation bars */}
-      <Card className="mb-8">
-        <CardHeader>
-          <CardTitle>Participation moyenne par groupe parlementaire</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <HorizontalBars
-            title="Participation moyenne par groupe parlementaire"
-            maxValue={100}
-            bars={sortedGroups.map((g) => ({
-              label: g.groupCode,
-              value: g.avgParticipationRate,
-              color: g.groupColor || undefined,
-              suffix: "%",
-            }))}
-          />
-        </CardContent>
-      </Card>
+      {/* Group participation — AN / Sénat side by side */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Assemblée nationale</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {sortedGroupsAN.length > 0 ? (
+              <HorizontalBars
+                title="Groupes parlementaires AN"
+                maxValue={100}
+                bars={sortedGroupsAN.map((g) => ({
+                  label: g.groupCode,
+                  value: g.avgParticipationRate,
+                  color: g.groupColor || undefined,
+                  suffix: "%",
+                }))}
+              />
+            ) : (
+              <p className="text-sm text-muted-foreground">Aucune donnée</p>
+            )}
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Sénat</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {sortedGroupsSENAT.length > 0 ? (
+              <HorizontalBars
+                title="Groupes parlementaires Sénat"
+                maxValue={100}
+                bars={sortedGroupsSENAT.map((g) => ({
+                  label: g.groupCode,
+                  value: g.avgParticipationRate,
+                  color: g.groupColor || undefined,
+                  suffix: "%",
+                }))}
+              />
+            ) : (
+              <p className="text-sm text-muted-foreground">Aucune donnée</p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Ranking table */}
       <Card className="mb-8">
@@ -198,11 +234,38 @@ export function ParticipationSection({
       </Card>
 
       {/* Methodology disclaimer */}
-      <MethodologyDisclaimer>
+      <MethodologyDisclaimer
+        details={
+          <div className="space-y-3 text-sm">
+            <div>
+              <p className="font-medium mb-1">Sources et calcul</p>
+              <ul className="list-disc list-inside space-y-0.5 text-muted-foreground">
+                <li>Données : scrutins publics de l&apos;Assemblée nationale et du Sénat</li>
+                <li>Formule : votes enregistrés / scrutins éligibles durant le mandat × 100</li>
+                <li>
+                  NON_VOTANT = présent (le parlementaire était en séance, ex : président de séance)
+                </li>
+                <li>Seuls les parlementaires sans enregistrement de vote sont comptés absents</li>
+              </ul>
+            </div>
+            <div>
+              <p className="font-medium mb-1">Limites de cet indicateur</p>
+              <ul className="list-disc list-inside space-y-0.5 text-muted-foreground">
+                <li>Ne mesure que les votes en séance plénière</li>
+                <li>Le travail en commission n&apos;est pas comptabilisé</li>
+                <li>
+                  Certains parlementaires ont des fonctions qui les éloignent de l&apos;hémicycle
+                  (ministres, questeurs, présidents de commission)
+                </li>
+                <li>Les votes par délégation ne sont pas toujours enregistrés individuellement</li>
+              </ul>
+            </div>
+          </div>
+        }
+      >
         Le taux de participation est calculé en comparant le nombre de votes enregistrés pour chaque
-        parlementaire au nombre total de scrutins pendant la durée de son mandat. Les non-votants
-        (présidents de séance) sont comptés comme présents. Source : data.assemblee-nationale.fr,
-        data.senat.fr.
+        parlementaire au nombre total de scrutins pendant la durée de son mandat. Source :
+        data.assemblee-nationale.fr, data.senat.fr.
       </MethodologyDisclaimer>
     </section>
   );

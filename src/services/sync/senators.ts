@@ -321,8 +321,9 @@ async function syncSenator(
       mandateStart = sen.serie === 1 ? new Date("2023-10-01") : new Date("2020-10-01");
     }
 
-    // Photo URL from senat.fr
-    const photoUrl = sen.urlAvatar || `https://www.senat.fr/senateur/${sen.matricule}/photo.jpg`;
+    // Photo URL from senat.fr (urlAvatar is a relative path like /senimg/xxx.jpg)
+    const rawAvatar = sen.urlAvatar || `/senateur/${sen.matricule}/photo.jpg`;
+    const photoUrl = rawAvatar.startsWith("http") ? rawAvatar : `https://www.senat.fr${rawAvatar}`;
 
     // Check if politician exists (by external ID or slug)
     const existingByExtId = await db.externalId.findUnique({

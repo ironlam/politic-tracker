@@ -571,9 +571,11 @@ export interface KeyVote {
 
 export interface LegislativeStatsResult {
   kpi: LegislativeKpi;
-  themes: ThemeDistribution[];
+  themesAN: ThemeDistribution[];
+  themesSENAT: ThemeDistribution[];
   pipeline: PipelineRow[];
-  keyVotes: KeyVote[];
+  keyVotesAN: KeyVote[];
+  keyVotesSENAT: KeyVote[];
 }
 
 /**
@@ -655,8 +657,10 @@ async function getLegislativeStats(): Promise<LegislativeStatsResult> {
   const keys = [
     "legislative-kpi",
     "legislative-themes-AN",
+    "legislative-themes-SENAT",
     "legislative-pipeline",
     "legislative-votes-AN",
+    "legislative-votes-SENAT",
   ];
 
   const snapshots = await db.statsSnapshot.findMany({
@@ -671,9 +675,12 @@ async function getLegislativeStats(): Promise<LegislativeStatsResult> {
       dossiersEnDiscussion: 0,
       textesAdoptes: 0,
     },
-    themes: (snapshotMap.get("legislative-themes-AN") as unknown as ThemeDistribution[]) || [],
+    themesAN: (snapshotMap.get("legislative-themes-AN") as unknown as ThemeDistribution[]) || [],
+    themesSENAT:
+      (snapshotMap.get("legislative-themes-SENAT") as unknown as ThemeDistribution[]) || [],
     pipeline: (snapshotMap.get("legislative-pipeline") as unknown as PipelineRow[]) || [],
-    keyVotes: (snapshotMap.get("legislative-votes-AN") as unknown as KeyVote[]) || [],
+    keyVotesAN: (snapshotMap.get("legislative-votes-AN") as unknown as KeyVote[]) || [],
+    keyVotesSENAT: (snapshotMap.get("legislative-votes-SENAT") as unknown as KeyVote[]) || [],
   };
 }
 

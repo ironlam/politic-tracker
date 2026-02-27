@@ -14,14 +14,14 @@ interface LegislativeSectionProps {
   stats: LegislativeStatsResult;
 }
 
-function ThemeBars({ themes }: { themes: ThemeDistribution[] }) {
+function ThemeBars({ themes, title }: { themes: ThemeDistribution[]; title: string }) {
   if (themes.length === 0) {
     return <p className="text-sm text-muted-foreground">Aucune donnée disponible</p>;
   }
   const maxCount = Math.max(...themes.map((t) => t.count));
   return (
     <HorizontalBars
-      title="Répartition thématique des scrutins"
+      title={title}
       maxValue={maxCount}
       bars={themes.slice(0, 10).map((t) => ({
         label: `${t.icon} ${t.label}`,
@@ -131,7 +131,7 @@ function KeyVotesList({ votes }: { votes: KeyVote[] }) {
 }
 
 export function LegislativeSection({ stats }: LegislativeSectionProps) {
-  const { kpi, themes, pipeline, keyVotes } = stats;
+  const { kpi, themesAN, themesSENAT, pipeline, keyVotesAN, keyVotesSENAT } = stats;
 
   return (
     <section aria-labelledby="legislative-heading" className="py-8">
@@ -163,21 +163,30 @@ export function LegislativeSection({ stats }: LegislativeSectionProps) {
         </Card>
       </div>
       <p className="text-xs text-muted-foreground mb-8 text-center">
-        XVIIe législature · Assemblée nationale · Données mises à jour quotidiennement
+        XVIIe législature · Données mises à jour quotidiennement
       </p>
 
-      {/* Theme distribution — AN only, full width */}
-      <Card className="mb-8">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-lg">Répartition thématique des scrutins</CardTitle>
-          <p className="text-sm text-muted-foreground">
-            Thèmes les plus traités à l&apos;Assemblée nationale
-          </p>
-        </CardHeader>
-        <CardContent>
-          <ThemeBars themes={themes} />
-        </CardContent>
-      </Card>
+      {/* Theme priorities — AN / Sénat side by side */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg">Assemblée nationale</CardTitle>
+            <p className="text-sm text-muted-foreground">Thèmes les plus traités en scrutins</p>
+          </CardHeader>
+          <CardContent>
+            <ThemeBars themes={themesAN} title="Thèmes AN" />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg">Sénat</CardTitle>
+            <p className="text-sm text-muted-foreground">Thèmes les plus traités en scrutins</p>
+          </CardHeader>
+          <CardContent>
+            <ThemeBars themes={themesSENAT} title="Thèmes Sénat" />
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Pipeline */}
       <Card className="mb-8">
@@ -192,26 +201,38 @@ export function LegislativeSection({ stats }: LegislativeSectionProps) {
         </CardContent>
       </Card>
 
-      {/* Key votes — AN only, full width */}
-      <Card className="mb-8">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-lg">Votes marquants</CardTitle>
-          <p className="text-sm text-muted-foreground">
-            Les 5 scrutins récents les plus contestés (écart serré entre pour et contre)
-          </p>
-        </CardHeader>
-        <CardContent>
-          <KeyVotesList votes={keyVotes} />
-        </CardContent>
-      </Card>
+      {/* Key votes — AN / Sénat side by side */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg">Votes marquants — AN</CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Scrutins récents les plus contestés (écart serré entre pour et contre)
+            </p>
+          </CardHeader>
+          <CardContent>
+            <KeyVotesList votes={keyVotesAN} />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg">Votes marquants — Sénat</CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Scrutins récents les plus contestés (écart serré entre pour et contre)
+            </p>
+          </CardHeader>
+          <CardContent>
+            <KeyVotesList votes={keyVotesSENAT} />
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Methodology */}
       <MethodologyDisclaimer>
-        Données issues de l&apos;open data de l&apos;Assemblée nationale (XVIIe législature). La
-        classification thématique est réalisée par IA (13 catégories). Le pipeline reflète
-        l&apos;état actuel des dossiers législatifs. Les votes marquants sont les scrutins récents
-        avec le plus fort taux de contestation (écart le plus faible entre pour et contre). Les
-        données du Sénat ne sont pas encore intégrées à cette section.
+        Données issues de l&apos;open data de l&apos;Assemblée nationale et du Sénat (XVIIe
+        législature). La classification thématique est réalisée par IA (13 catégories). Le pipeline
+        reflète l&apos;état actuel des dossiers législatifs. Les votes marquants sont les scrutins
+        récents avec le plus fort taux de contestation (écart le plus faible entre pour et contre).
       </MethodologyDisclaimer>
     </section>
   );

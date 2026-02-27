@@ -102,33 +102,27 @@ function parseScrutinMetadata(
     const decodedHtml = decodeHtmlEntities(html);
     const textContent = decodedHtml.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
 
-    // Extract title from h1 + h2
+    // Extract title — prefer <p class="page-lead"> (descriptive) over h1 (generic "Scrutin n°X")
+    const pageLeadMatch = decodedHtml.match(/<p\s+class="page-lead">([\s\S]*?)<\/p>/i);
     const h1Match = decodedHtml.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i);
-    const h2Match = decodedHtml.match(/<h2[^>]*>([\s\S]*?)<\/h2>/i);
 
     let title = `Scrutin n°${number}`;
-    if (h1Match) {
-      let h1Text = h1Match[1]
+    if (pageLeadMatch) {
+      const leadText = pageLeadMatch[1]
         .replace(/<[^>]+>/g, " ")
         .replace(/\s+/g, " ")
         .trim();
-      h1Text = h1Text
+      if (leadText.length > 5) {
+        title = leadText;
+      }
+    } else if (h1Match) {
+      const h1Text = h1Match[1]
+        .replace(/<[^>]+>/g, " ")
         .replace(/\s*En savoir plus\s*/gi, " ")
         .replace(/\s+/g, " ")
         .trim();
-      title = h1Text;
-      if (h2Match) {
-        let h2Text = h2Match[1]
-          .replace(/<[^>]+>/g, " ")
-          .replace(/\s+/g, " ")
-          .trim();
-        h2Text = h2Text
-          .replace(/\s*En savoir plus\s*/gi, " ")
-          .replace(/\s+/g, " ")
-          .trim();
-        if (h2Text.length < 200 && h2Text.length > 0) {
-          title = `${h1Text} ${h2Text}`;
-        }
+      if (h1Text.length > 5) {
+        title = h1Text;
       }
     }
 

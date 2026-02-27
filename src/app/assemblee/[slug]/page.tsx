@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { Metadata } from "next";
 import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
@@ -9,6 +10,8 @@ import { StatusBadge, CategoryBadge } from "@/components/legislation";
 import { AMENDMENT_STATUS_LABELS, AMENDMENT_STATUS_COLORS } from "@/config/labels";
 import { ExternalLink, ArrowLeft, Calendar, FileText } from "lucide-react";
 import { LegislationJsonLd, BreadcrumbJsonLd } from "@/components/seo/JsonLd";
+
+export const revalidate = 3600; // ISR: revalidate every hour
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -25,7 +28,7 @@ const includeOptions = {
  * Get dossier with redirect support for legacy URLs
  * Returns { dossier, redirect } where redirect is the slug to redirect to
  */
-async function getDossierWithRedirect(slugOrId: string) {
+const getDossierWithRedirect = cache(async function getDossierWithRedirect(slugOrId: string) {
   // 1. Try by slug first (canonical URL - most common case)
   let dossier = await db.legislativeDossier.findUnique({
     where: { slug: slugOrId },
@@ -77,7 +80,7 @@ async function getDossierWithRedirect(slugOrId: string) {
   }
 
   return { dossier: null, redirect: null };
-}
+});
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;

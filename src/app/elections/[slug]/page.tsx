@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
@@ -22,6 +23,8 @@ import { ELECTION_GUIDES } from "@/config/election-guides";
 import { EventJsonLd, BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 import type { ElectionStatus } from "@/types";
 
+export const revalidate = 3600; // ISR: revalidate every hour
+
 interface PageProps {
   params: Promise<{ slug: string }>;
 }
@@ -41,7 +44,7 @@ function isPhaseAtLeast(current: ElectionStatus, target: ElectionStatus): boolea
   return STATUS_ORDER.indexOf(current) >= STATUS_ORDER.indexOf(target);
 }
 
-async function getElection(slug: string) {
+const getElection = cache(async function getElection(slug: string) {
   return db.election.findUnique({
     where: { slug },
     include: {
@@ -72,7 +75,7 @@ async function getElection(slug: string) {
       },
     },
   });
-}
+});
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;

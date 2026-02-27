@@ -26,26 +26,45 @@ interface DataHealthItem {
 }
 
 async function getDashboardData() {
-  const [
-    totalPoliticians,
-    publishedPoliticians,
-    politiciansWithoutPhoto,
-    politiciansDraft,
-    biographiesMissing,
-    totalAffairs,
-    affairsDraft,
-    affairsWithoutEcli,
-    recentActivity,
-    syncHistory,
-  ] = await Promise.all([
-    db.politician.count(),
-    db.politician.count({ where: { publicationStatus: "PUBLISHED" } }),
-    db.politician.count({ where: { photoUrl: null, publicationStatus: "PUBLISHED" } }),
-    db.politician.count({ where: { publicationStatus: "DRAFT" } }),
-    db.politician.count({ where: { biography: null, publicationStatus: "PUBLISHED" } }),
-    db.affair.count(),
-    db.affair.count({ where: { publicationStatus: "DRAFT" } }),
-    db.affair.count({ where: { ecli: null, publicationStatus: "PUBLISHED" } }),
+  // Single SQL for all counts — prevents pool starvation (8 parallel counts → 1 query)
+  const counts = await db.$queryRaw<
+    [
+      {
+        total_politicians: bigint;
+        published_politicians: bigint;
+        without_photo: bigint;
+        draft_politicians: bigint;
+        without_bio: bigint;
+        total_affairs: bigint;
+        draft_affairs: bigint;
+        without_ecli: bigint;
+      },
+    ]
+  >`
+    SELECT
+      COUNT(*)                                                                           AS total_politicians,
+      COUNT(*) FILTER (WHERE "publicationStatus" = 'PUBLISHED')                          AS published_politicians,
+      COUNT(*) FILTER (WHERE "publicationStatus" = 'PUBLISHED' AND "photoUrl" IS NULL)   AS without_photo,
+      COUNT(*) FILTER (WHERE "publicationStatus" = 'DRAFT')                              AS draft_politicians,
+      COUNT(*) FILTER (WHERE "publicationStatus" = 'PUBLISHED' AND "biography" IS NULL)  AS without_bio,
+      (SELECT COUNT(*) FROM "Affair")                                                    AS total_affairs,
+      (SELECT COUNT(*) FROM "Affair" WHERE "publicationStatus" = 'DRAFT')                AS draft_affairs,
+      (SELECT COUNT(*) FROM "Affair" WHERE "publicationStatus" = 'PUBLISHED' AND "ecli" IS NULL) AS without_ecli
+    FROM "Politician"
+  `;
+
+  const c = counts[0];
+  const totalPoliticians = Number(c.total_politicians);
+  const publishedPoliticians = Number(c.published_politicians);
+  const politiciansWithoutPhoto = Number(c.without_photo);
+  const politiciansDraft = Number(c.draft_politicians);
+  const biographiesMissing = Number(c.without_bio);
+  const totalAffairs = Number(c.total_affairs);
+  const affairsDraft = Number(c.draft_affairs);
+  const affairsWithoutEcli = Number(c.without_ecli);
+
+  // These 2 queries need actual rows, not counts — run in parallel (2 = fine with max:2 pool)
+  const [recentActivity, syncHistory] = await Promise.all([
     db.auditLog.findMany({
       take: 20,
       orderBy: { createdAt: "desc" },
@@ -56,7 +75,6 @@ async function getDashboardData() {
     }),
   ]);
 
-  // Calculate data completeness
   const withPhoto = publishedPoliticians - politiciansWithoutPhoto;
   const withBio = publishedPoliticians - biographiesMissing;
   const completeness =

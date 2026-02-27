@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
@@ -10,12 +11,14 @@ import { ArrowLeft, ExternalLink, Info } from "lucide-react";
 import { feminizeRole } from "@/config/labels";
 import { getPoliticianVotingStats } from "@/services/voteStats";
 
+export const revalidate = 300; // ISR: revalidate every 5 minutes (paginated content)
+
 interface PageProps {
   params: Promise<{ slug: string }>;
   searchParams: Promise<{ page?: string }>;
 }
 
-async function getPolitician(slug: string) {
+const getPolitician = cache(async function getPolitician(slug: string) {
   return db.politician.findUnique({
     where: { slug },
     select: {
@@ -33,7 +36,7 @@ async function getPolitician(slug: string) {
       },
     },
   });
-}
+});
 
 async function getVotes(politicianId: string, page: number, limit: number) {
   const skip = (page - 1) * limit;

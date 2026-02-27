@@ -8,6 +8,8 @@ import { PoliticianAvatar } from "@/components/politicians/PoliticianAvatar";
 import { ensureContrast } from "@/lib/contrast";
 import { getDepartmentBySlug } from "@/config/departments";
 
+export const revalidate = 3600; // ISR: revalidate every hour
+
 interface PageProps {
   params: Promise<{ slug: string }>;
 }

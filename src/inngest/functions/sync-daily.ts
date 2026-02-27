@@ -119,6 +119,13 @@ const DAILY_STEPS: DailyStep[] = [
       return assignPublicationStatus();
     },
   },
+  {
+    name: "compute-stats",
+    run: async () => {
+      const { computeStats } = await import("@/services/sync/compute-stats");
+      return computeStats();
+    },
+  },
 ];
 
 export const syncDaily = inngest.createFunction(

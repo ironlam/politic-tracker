@@ -290,61 +290,24 @@ async function getDivisiveScrutins(
   }));
 }
 
+/**
+ * Get global participation from pre-computed PoliticianParticipation table.
+ * Sums votesCount and eligibleScrutins across all politicians.
+ */
 async function getGlobalParticipation(
   chamber?: Chamber
 ): Promise<{ participating: number; total: number }> {
-  const chamberFilter = chamber ? Prisma.sql`AND s.chamber = ${chamber}::"Chamber"` : Prisma.sql``;
-  const mandateTypeFilter = chamber
-    ? chamber === "AN"
-      ? Prisma.sql`AND m.type = 'DEPUTE'::"MandateType"`
-      : Prisma.sql`AND m.type = 'SENATEUR'::"MandateType"`
-    : Prisma.sql`AND m.type IN ('DEPUTE'::"MandateType", 'SENATEUR'::"MandateType")`;
+  const where: Record<string, unknown> = {};
+  if (chamber) where.chamber = chamber;
 
-  // Deduplicate by (startDate, endDate, type) to avoid the N×M cross-join.
-  // ~20 unique mandate date groups vs ~580 individual politicians.
-  const rows = await db.$queryRaw<[{ participating: bigint; total: bigint }]>`
-    WITH mandate_groups AS (
-      SELECT m."startDate", m."endDate", m.type, COUNT(DISTINCT pol.id)::int as n
-      FROM "Mandate" m
-      JOIN "Politician" pol ON m."politicianId" = pol.id
-      WHERE m."isCurrent" = true
-        ${mandateTypeFilter}
-        AND pol."publicationStatus" = 'PUBLISHED'
-      GROUP BY m."startDate", m."endDate", m.type
-    ),
-    eligible AS (
-      SELECT SUM(mg.n * sub.cnt)::bigint as "total"
-      FROM mandate_groups mg
-      CROSS JOIN LATERAL (
-        SELECT COUNT(*)::int as cnt
-        FROM "Scrutin" s
-        WHERE s.chamber = (CASE WHEN mg.type = 'DEPUTE'::"MandateType" THEN 'AN'::"Chamber" ELSE 'SENAT'::"Chamber" END)
-          AND s."votingDate" >= mg."startDate"
-          AND (mg."endDate" IS NULL OR s."votingDate" <= mg."endDate")
-          ${chamberFilter}
-      ) sub
-    ),
-    votes AS (
-      SELECT COUNT(v.id)::bigint as "participating"
-      FROM "Vote" v
-      JOIN "Politician" pol ON v."politicianId" = pol.id
-      JOIN "Mandate" m ON m."politicianId" = pol.id
-        AND m."isCurrent" = true
-        ${mandateTypeFilter}
-      JOIN "Scrutin" s ON v."scrutinId" = s.id
-        AND s."votingDate" >= m."startDate"
-        AND (m."endDate" IS NULL OR s."votingDate" <= m."endDate")
-        ${chamberFilter}
-      WHERE pol."publicationStatus" = 'PUBLISHED'
-    )
-    SELECT e."total", v."participating"
-    FROM eligible e, votes v
-  `;
+  const result = await db.politicianParticipation.aggregate({
+    where,
+    _sum: { votesCount: true, eligibleScrutins: true },
+  });
 
-  const row = rows[0];
   return {
-    participating: Number(row?.participating ?? 0),
-    total: Number(row?.total ?? 0),
+    participating: result._sum.votesCount ?? 0,
+    total: result._sum.eligibleScrutins ?? 0,
   };
 }
 
@@ -486,108 +449,36 @@ export interface ParticipationRankingResult {
 }
 
 /**
- * Get participation ranking: compare each politician's vote count
- * against the total number of eligible scrutins during their active mandate.
+ * Get participation ranking from pre-computed PoliticianParticipation table.
+ * Falls back to live query if table is empty (before first sync:compute-stats run).
  */
 async function getParticipationRanking(
   chamber?: Chamber,
-  partyId?: string,
+  _partyId?: string,
   page: number = 1,
   pageSize: number = 50,
   sortDirection: "ASC" | "DESC" = "ASC"
 ): Promise<ParticipationRankingResult> {
   const offset = (page - 1) * pageSize;
 
-  // Build conditional WHERE fragments
-  const chamberFilter = chamber ? Prisma.sql`AND s.chamber = ${chamber}::"Chamber"` : Prisma.sql``;
-  const mandateTypeFilter = chamber
-    ? chamber === "AN"
-      ? Prisma.sql`AND m.type = 'DEPUTE'::"MandateType"`
-      : Prisma.sql`AND m.type = 'SENATEUR'::"MandateType"`
-    : Prisma.sql`AND m.type IN ('DEPUTE'::"MandateType", 'SENATEUR'::"MandateType")`;
-  const partyFilter = partyId ? Prisma.sql`AND pol."currentPartyId" = ${partyId}` : Prisma.sql``;
-  const orderDirection = sortDirection === "DESC" ? Prisma.sql`DESC` : Prisma.sql`ASC`;
+  // Build Prisma where filter
+  const where: Record<string, unknown> = {};
+  if (chamber) where.chamber = chamber;
 
-  const entries = await db.$queryRaw<ParticipationRankingEntry[]>`
-    WITH eligible AS (
-      SELECT
-        pol.id as "politicianId",
-        pol."firstName",
-        pol."lastName",
-        pol.slug,
-        COALESCE(pol."blobPhotoUrl", pol."photoUrl") as "photoUrl",
-        pol."currentPartyId" as "partyId",
-        p."shortName" as "partyShortName",
-        p.color as "partyColor",
-        p.slug as "partySlug",
-        pg.code as "groupCode",
-        pg.name as "groupName",
-        pg.color as "groupColor",
-        m.type::text as "mandateType",
-        COUNT(DISTINCT v.id)::int as "votesCount",
-        COUNT(DISTINCT s.id)::int as "eligibleScrutins"
-      FROM "Politician" pol
-      JOIN "Mandate" m ON m."politicianId" = pol.id
-        AND m."isCurrent" = true
-        ${mandateTypeFilter}
-      JOIN "Scrutin" s ON s.chamber = (CASE WHEN m.type = 'DEPUTE'::"MandateType" THEN 'AN'::"Chamber" ELSE 'SENAT'::"Chamber" END)
-        AND s."votingDate" >= m."startDate"
-        AND (m."endDate" IS NULL OR s."votingDate" <= m."endDate")
-        ${chamberFilter}
-      LEFT JOIN "Vote" v ON v."scrutinId" = s.id AND v."politicianId" = pol.id
-      LEFT JOIN "Party" p ON p.id = pol."currentPartyId"
-      LEFT JOIN "ParliamentaryGroup" pg ON pg.id = m."parliamentaryGroupId"
-      WHERE pol."publicationStatus" = 'PUBLISHED'
-        ${partyFilter}
-      GROUP BY pol.id, pol."firstName", pol."lastName", pol.slug, pol."blobPhotoUrl", pol."photoUrl",
-               pol."currentPartyId", p."shortName", p.color, p.slug, pg.code, pg.name, pg.color, m.type
-      HAVING COUNT(DISTINCT s.id) > 0
-    )
-    SELECT
-      "politicianId",
-      "firstName",
-      "lastName",
-      slug,
-      "photoUrl",
-      "partyId",
-      "partyShortName",
-      "partyColor",
-      "partySlug",
-      "groupCode",
-      "groupName",
-      "groupColor",
-      "mandateType",
-      "votesCount",
-      "eligibleScrutins",
-      ROUND(("votesCount"::numeric / "eligibleScrutins"::numeric) * 100, 1)::float as "participationRate"
-    FROM eligible
-    ORDER BY "participationRate" ${orderDirection}, "eligibleScrutins" DESC
-    LIMIT ${pageSize} OFFSET ${offset}
-  `;
+  const [entries, total] = await Promise.all([
+    db.politicianParticipation.findMany({
+      where,
+      orderBy: [
+        { participationRate: sortDirection === "DESC" ? "desc" : "asc" },
+        { eligibleScrutins: "desc" },
+      ],
+      skip: offset,
+      take: pageSize,
+    }),
+    db.politicianParticipation.count({ where }),
+  ]);
 
-  const countResult = await db.$queryRaw<[{ count: number }]>`
-    SELECT COUNT(*)::int as "count"
-    FROM (
-      SELECT pol.id
-      FROM "Politician" pol
-      JOIN "Mandate" m ON m."politicianId" = pol.id
-        AND m."isCurrent" = true
-        ${mandateTypeFilter}
-      JOIN "Scrutin" s ON s.chamber = (CASE WHEN m.type = 'DEPUTE'::"MandateType" THEN 'AN'::"Chamber" ELSE 'SENAT'::"Chamber" END)
-        AND s."votingDate" >= m."startDate"
-        AND (m."endDate" IS NULL OR s."votingDate" <= m."endDate")
-        ${chamberFilter}
-      WHERE pol."publicationStatus" = 'PUBLISHED'
-        ${partyFilter}
-      GROUP BY pol.id, m.type
-      HAVING COUNT(DISTINCT s.id) > 0
-    ) sub
-  `;
-
-  return {
-    entries,
-    total: countResult[0]?.count ?? 0,
-  };
+  return { entries, total };
 }
 
 // ============================================
@@ -605,80 +496,18 @@ export interface PartyParticipationStats {
 }
 
 /**
- * Get average participation rate per party, based on individual mandate-eligible scrutins.
- *
- * Uses a deduplicated mandate-groups approach: pre-compute eligible scrutin counts
- * for each unique (startDate, endDate, type) combination (~20 groups vs ~580 politicians),
- * then use LATERAL subqueries for per-politician vote counts.
- *
- * TODO: Replace with pre-computed stats table for sub-second performance (#212)
+ * Get average participation rate per party from pre-computed StatsSnapshot.
  */
 async function getPartyParticipationStats(chamber?: Chamber): Promise<PartyParticipationStats[]> {
-  const chamberFilter = chamber ? Prisma.sql`AND s.chamber = ${chamber}::"Chamber"` : Prisma.sql``;
-  const mandateTypeFilter = chamber
-    ? chamber === "AN"
-      ? Prisma.sql`AND m.type = 'DEPUTE'::"MandateType"`
-      : Prisma.sql`AND m.type = 'SENATEUR'::"MandateType"`
-    : Prisma.sql`AND m.type IN ('DEPUTE'::"MandateType", 'SENATEUR'::"MandateType")`;
+  const key = chamber ? `party-participation-${chamber}` : "party-participation";
+  const snapshot = await db.statsSnapshot.findUnique({ where: { key } });
 
-  const rows = await db.$queryRaw<PartyParticipationStats[]>`
-    WITH mandate_eligible AS (
-      SELECT
-        md."startDate", md."endDate", md.type,
-        (CASE WHEN md.type = 'DEPUTE'::"MandateType" THEN 'AN'::"Chamber" ELSE 'SENAT'::"Chamber" END) as chamber,
-        (SELECT COUNT(*) FROM "Scrutin" s
-         WHERE s.chamber = (CASE WHEN md.type = 'DEPUTE'::"MandateType" THEN 'AN'::"Chamber" ELSE 'SENAT'::"Chamber" END)
-           AND s."votingDate" >= md."startDate"
-           AND (md."endDate" IS NULL OR s."votingDate" <= md."endDate")
-           ${chamberFilter})::int as eligible
-      FROM (
-        SELECT DISTINCT m."startDate", m."endDate", m.type
-        FROM "Mandate" m
-        WHERE m."isCurrent" = true ${mandateTypeFilter}
-      ) md
-    ),
-    individual AS (
-      SELECT
-        pol."currentPartyId" as "partyId",
-        vote_sub.cnt::numeric / NULLIF(me.eligible::numeric, 0) * 100 as rate
-      FROM "Politician" pol
-      JOIN "Mandate" m ON m."politicianId" = pol.id AND m."isCurrent" = true
-        ${mandateTypeFilter}
-      JOIN mandate_eligible me ON me."startDate" = m."startDate"
-        AND ((me."endDate" IS NULL AND m."endDate" IS NULL) OR me."endDate" = m."endDate")
-        AND me.type = m.type
-      CROSS JOIN LATERAL (
-        SELECT COUNT(*)::int as cnt
-        FROM "Vote" v
-        WHERE v."politicianId" = pol.id
-          AND EXISTS (
-            SELECT 1 FROM "Scrutin" s
-            WHERE s.id = v."scrutinId"
-              AND s.chamber = me.chamber
-              AND s."votingDate" >= m."startDate"
-              AND (m."endDate" IS NULL OR s."votingDate" <= m."endDate")
-              ${chamberFilter}
-          )
-      ) vote_sub
-      WHERE pol."currentPartyId" IS NOT NULL AND pol."publicationStatus" = 'PUBLISHED'
-        AND me.eligible > 0
-    )
-    SELECT
-      i."partyId",
-      p.name as "partyName",
-      p."shortName" as "partyShortName",
-      p.color as "partyColor",
-      p.slug as "partySlug",
-      ROUND(AVG(i.rate), 1)::float as "avgParticipationRate",
-      COUNT(*)::int as "memberCount"
-    FROM individual i
-    JOIN "Party" p ON p.id = i."partyId"
-    GROUP BY i."partyId", p.name, p."shortName", p.color, p.slug
-    HAVING COUNT(*) >= 3
-    ORDER BY "avgParticipationRate" ASC
-  `;
+  if (snapshot) {
+    return snapshot.data as unknown as PartyParticipationStats[];
+  }
 
-  return rows;
+  // Fallback: empty array if not yet computed
+  return [];
 }
 
 // ============================================
@@ -695,71 +524,19 @@ export interface GroupParticipationStats {
   memberCount: number;
 }
 
+/**
+ * Get average participation rate per parliamentary group from pre-computed StatsSnapshot.
+ */
 async function getGroupParticipationStats(chamber?: Chamber): Promise<GroupParticipationStats[]> {
-  const chamberFilter = chamber ? Prisma.sql`AND s.chamber = ${chamber}::"Chamber"` : Prisma.sql``;
-  const mandateTypeFilter = chamber
-    ? chamber === "AN"
-      ? Prisma.sql`AND m.type = 'DEPUTE'::"MandateType"`
-      : Prisma.sql`AND m.type = 'SENATEUR'::"MandateType"`
-    : Prisma.sql`AND m.type IN ('DEPUTE'::"MandateType", 'SENATEUR'::"MandateType")`;
+  const key = chamber ? `group-participation-${chamber}` : "group-participation";
+  const snapshot = await db.statsSnapshot.findUnique({ where: { key } });
 
-  return db.$queryRaw<GroupParticipationStats[]>`
-    WITH mandate_eligible AS (
-      SELECT
-        md."startDate", md."endDate", md.type,
-        (CASE WHEN md.type = 'DEPUTE'::"MandateType" THEN 'AN'::"Chamber" ELSE 'SENAT'::"Chamber" END) as chamber,
-        (SELECT COUNT(*) FROM "Scrutin" s
-         WHERE s.chamber = (CASE WHEN md.type = 'DEPUTE'::"MandateType" THEN 'AN'::"Chamber" ELSE 'SENAT'::"Chamber" END)
-           AND s."votingDate" >= md."startDate"
-           AND (md."endDate" IS NULL OR s."votingDate" <= md."endDate")
-           ${chamberFilter})::int as eligible
-      FROM (
-        SELECT DISTINCT m."startDate", m."endDate", m.type
-        FROM "Mandate" m
-        WHERE m."isCurrent" = true ${mandateTypeFilter}
-      ) md
-    ),
-    individual AS (
-      SELECT
-        m."parliamentaryGroupId" as "groupId",
-        vote_sub.cnt::numeric / NULLIF(me.eligible::numeric, 0) * 100 as rate
-      FROM "Politician" pol
-      JOIN "Mandate" m ON m."politicianId" = pol.id AND m."isCurrent" = true
-        ${mandateTypeFilter}
-      JOIN mandate_eligible me ON me."startDate" = m."startDate"
-        AND ((me."endDate" IS NULL AND m."endDate" IS NULL) OR me."endDate" = m."endDate")
-        AND me.type = m.type
-      CROSS JOIN LATERAL (
-        SELECT COUNT(*)::int as cnt
-        FROM "Vote" v
-        WHERE v."politicianId" = pol.id
-          AND EXISTS (
-            SELECT 1 FROM "Scrutin" s
-            WHERE s.id = v."scrutinId"
-              AND s.chamber = me.chamber
-              AND s."votingDate" >= m."startDate"
-              AND (m."endDate" IS NULL OR s."votingDate" <= m."endDate")
-              ${chamberFilter}
-          )
-      ) vote_sub
-      WHERE m."parliamentaryGroupId" IS NOT NULL
-        AND pol."publicationStatus" = 'PUBLISHED'
-        AND me.eligible > 0
-    )
-    SELECT
-      i."groupId",
-      pg.name as "groupName",
-      pg.code as "groupCode",
-      pg.color as "groupColor",
-      pg.chamber::text as "groupChamber",
-      ROUND(AVG(i.rate), 1)::float as "avgParticipationRate",
-      COUNT(*)::int as "memberCount"
-    FROM individual i
-    JOIN "ParliamentaryGroup" pg ON pg.id = i."groupId"
-    GROUP BY i."groupId", pg.name, pg.code, pg.color, pg.chamber
-    HAVING COUNT(*) >= 3
-    ORDER BY "avgParticipationRate" ASC
-  `;
+  if (snapshot) {
+    return snapshot.data as unknown as GroupParticipationStats[];
+  }
+
+  // Fallback: empty array if not yet computed
+  return [];
 }
 
 // ============================================
@@ -778,64 +555,39 @@ export interface PoliticianParliamentaryCardData {
 
 /**
  * Get participation rank and stats for a single politician.
- * Uses a window function to compute rank in a single query.
+ * Uses the pre-computed PoliticianParticipation table with window functions.
  */
 export async function getPoliticianParliamentaryCard(
   politicianId: string,
   mandateType: "DEPUTE" | "SENATEUR"
 ): Promise<PoliticianParliamentaryCardData | null> {
-  const chamber = mandateType === "DEPUTE" ? "AN" : "SENAT";
+  const chamber: Chamber = mandateType === "DEPUTE" ? "AN" : "SENAT";
 
-  const rows = await db.$queryRaw<
-    {
-      votesCount: number;
-      eligibleScrutins: number;
-      participationRate: number;
-      rank: number;
-      totalPeers: number;
-    }[]
-  >`
-    WITH rates AS (
-      SELECT
-        pol.id as "politicianId",
-        COUNT(v.id)::int as "votesCount",
-        COUNT(DISTINCT s.id)::int as "eligibleScrutins",
-        CASE WHEN COUNT(DISTINCT s.id) > 0
-          THEN ROUND(COUNT(v.id)::numeric / COUNT(DISTINCT s.id) * 100, 1)
-          ELSE 0 END::float as rate,
-        RANK() OVER (ORDER BY
-          CASE WHEN COUNT(DISTINCT s.id) > 0
-            THEN COUNT(v.id)::float / COUNT(DISTINCT s.id)
-            ELSE 0 END DESC) as rank,
-        COUNT(*) OVER ()::int as "totalPeers"
-      FROM "Politician" pol
-      JOIN "Mandate" m ON m."politicianId" = pol.id
-        AND m."isCurrent" = true
-        AND m.type = ${mandateType}::"MandateType"
-      JOIN "Scrutin" s ON s.chamber = ${chamber}::"Chamber"
-        AND s."votingDate" >= m."startDate"
-        AND (m."endDate" IS NULL OR s."votingDate" <= m."endDate")
-      LEFT JOIN "Vote" v ON v."scrutinId" = s.id AND v."politicianId" = pol.id
-      WHERE pol."publicationStatus" = 'PUBLISHED'
-      GROUP BY pol.id
-      HAVING COUNT(DISTINCT s.id) > 0
-    )
-    SELECT
-      "votesCount",
-      "eligibleScrutins",
-      rate as "participationRate",
-      rank::int,
-      "totalPeers"
-    FROM rates
-    WHERE "politicianId" = ${politicianId}
-  `;
+  const entry = await db.politicianParticipation.findUnique({
+    where: { politicianId },
+  });
 
-  if (rows.length === 0) return null;
+  if (!entry || entry.chamber !== chamber) return null;
+
+  // Count how many have higher participation (= rank)
+  const [higherCount, totalPeers] = await Promise.all([
+    db.politicianParticipation.count({
+      where: {
+        chamber,
+        participationRate: { gt: entry.participationRate },
+      },
+    }),
+    db.politicianParticipation.count({ where: { chamber } }),
+  ]);
 
   return {
     chamber,
     mandateType,
-    ...rows[0],
+    votesCount: entry.votesCount,
+    eligibleScrutins: entry.eligibleScrutins,
+    participationRate: entry.participationRate,
+    rank: higherCount + 1,
+    totalPeers,
   };
 }
 

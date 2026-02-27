@@ -93,6 +93,10 @@ const steps: SyncStep[] = [
     name: "Publication status",
     command: `npx tsx scripts/assign-publication-status.ts${dryRunFlag}`,
   },
+  {
+    name: "Compute participation stats",
+    command: `npx tsx scripts/compute-stats.ts${dryRunFlag}`,
+  },
   ...(CRON_SECRET
     ? [
         {

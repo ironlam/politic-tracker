@@ -79,7 +79,6 @@ const MANDATE_GROUPS: Record<string, MandateType[]> = {
   depute: ["DEPUTE"],
   senateur: ["SENATEUR"],
   gouvernement: ["MINISTRE", "PREMIER_MINISTRE", "MINISTRE_DELEGUE", "SECRETAIRE_ETAT"],
-  president_parti: ["PRESIDENT_PARTI"],
   dirigeants: ["PRESIDENT_PARTI"], // Also includes significant party roles (handled separately)
 };
 
@@ -386,7 +385,6 @@ async function getFilterCounts() {
         deputes: bigint;
         senateurs: bigint;
         gouvernement: bigint;
-        president_parti: bigint;
         dirigeants: bigint;
         active: bigint;
         former: bigint;
@@ -433,13 +431,6 @@ async function getFilterCounts() {
             AND m."isCurrent" = true
         )
       ) AS gouvernement,
-      -- Présidents de parti
-      COUNT(DISTINCT p.id) FILTER (
-        WHERE EXISTS (
-          SELECT 1 FROM "Mandate" m
-          WHERE m."politicianId" = p.id AND m.type = 'PRESIDENT_PARTI' AND m."isCurrent" = true
-        )
-      ) AS president_parti,
       -- Dirigeants (PRESIDENT_PARTI + significant party roles)
       COUNT(DISTINCT p.id) FILTER (
         WHERE EXISTS (
@@ -483,7 +474,6 @@ async function getFilterCounts() {
     deputes: Number(counts.deputes),
     senateurs: Number(counts.senateurs),
     gouvernement: Number(counts.gouvernement),
-    presidentParti: Number(counts.president_parti),
     dirigeants: Number(counts.dirigeants),
     active: Number(counts.active),
     former: Number(counts.former),
@@ -495,7 +485,10 @@ export default async function PolitiquesPage({ searchParams }: PageProps) {
   const search = params.search || "";
   const partyFilter = params.party || "";
   const convictionFilter = params.conviction === "true";
-  const mandateFilter = (params.mandate || "") as MandateFilter;
+  const rawMandate = params.mandate || "";
+  const mandateFilter = (
+    rawMandate === "president_parti" ? "dirigeants" : rawMandate
+  ) as MandateFilter;
   const statusFilter = (params.status || "active") as StatusFilter;
   const sortOption = (params.sort || "prominence") as SortOption;
   const page = parseInt(params.page || "1", 10);

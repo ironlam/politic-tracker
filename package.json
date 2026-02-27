@@ -48,6 +48,7 @@
     "sync:votes-senat:stats": "tsx scripts/sync-votes-senat.ts --stats",
     "sync:votes-senat:all": "tsx scripts/sync-votes-senat.ts --all",
     "sync:stats": "tsx scripts/sync-assemblee.ts --stats",
+    "sync:compute-stats": "tsx scripts/compute-stats.ts",
     "sync:senat:stats": "tsx scripts/sync-senat.ts --stats",
     "sync:gouvernement:stats": "tsx scripts/sync-gouvernement.ts --stats",
     "sync:wikidata-ids": "tsx scripts/sync-wikidata-ids.ts",

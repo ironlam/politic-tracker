@@ -64,6 +64,7 @@ model Politician {
   pressRejections   PressAnalysisRejection[] // Low-confidence press analysis rejections
   factCheckMentions FactCheckMention[] // Mentions in fact-checks
   candidacies       Candidacy[] // Election candidacies
+  participation     PoliticianParticipation? // Pre-computed participation stats
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1288,4 +1289,53 @@ model SyncMetadata {
   extra         Json?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+}
+
+// ============================================
+// PRE-COMPUTED STATS
+// ============================================
+
+/// Per-politician participation stats, pre-computed by sync:compute-stats.
+/// Enables instant pagination/ranking without expensive CTE+LATERAL queries.
+model PoliticianParticipation {
+  id             String   @id @default(cuid())
+  politicianId   String
+  politician     Politician @relation(fields: [politicianId], references: [id], onDelete: Cascade)
+
+  // Core stats
+  chamber        Chamber  // AN or SENAT (derived from mandate type)
+  mandateType    String   // "DEPUTE" or "SENATEUR"
+  votesCount     Int
+  eligibleScrutins Int
+  participationRate Float // 0-100, pre-computed
+
+  // Denormalized display fields (avoid JOINs in read queries)
+  firstName      String
+  lastName       String
+  slug           String
+  photoUrl       String?
+  partyId        String?
+  partyShortName String?
+  partyColor     String?
+  partySlug      String?
+  groupId        String?
+  groupCode      String?
+  groupName      String?
+  groupColor     String?
+
+  computedAt     DateTime @default(now())
+
+  @@unique([politicianId]) // One row per politician
+  @@index([chamber, participationRate]) // Fast filtered+sorted pagination
+  @@index([participationRate]) // Fast global ranking
+}
+
+/// Key-value store for aggregate stats (party/group participation, etc.).
+/// Pre-computed by sync:compute-stats, read as JSON blobs by the stats page.
+model StatsSnapshot {
+  id         String   @id @default(cuid())
+  key        String   @unique // e.g. "party-participation", "group-participation-AN"
+  data       Json     // The pre-computed result array/object
+  computedAt DateTime @default(now())
+  durationMs Int      @default(0) // How long the computation took
 }

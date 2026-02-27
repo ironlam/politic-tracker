@@ -300,27 +300,45 @@ async function getGlobalParticipation(
       : Prisma.sql`AND m.type = 'SENATEUR'::"MandateType"`
     : Prisma.sql`AND m.type IN ('DEPUTE'::"MandateType", 'SENATEUR'::"MandateType")`;
 
-  // Use eligible scrutins as denominator (same methodology as per-politician stats)
+  // Deduplicate by (startDate, endDate, type) to avoid the N×M cross-join.
+  // ~20 unique mandate date groups vs ~580 individual politicians.
   const rows = await db.$queryRaw<[{ participating: bigint; total: bigint }]>`
-    SELECT
-      COALESCE(SUM(vote_count), 0) as "participating",
-      COALESCE(SUM(eligible_count), 0) as "total"
-    FROM (
-      SELECT
-        COUNT(DISTINCT v.id)::bigint as vote_count,
-        COUNT(DISTINCT s.id)::bigint as eligible_count
-      FROM "Politician" pol
+    WITH mandate_groups AS (
+      SELECT m."startDate", m."endDate", m.type, COUNT(DISTINCT pol.id)::int as n
+      FROM "Mandate" m
+      JOIN "Politician" pol ON m."politicianId" = pol.id
+      WHERE m."isCurrent" = true
+        ${mandateTypeFilter}
+        AND pol."publicationStatus" = 'PUBLISHED'
+      GROUP BY m."startDate", m."endDate", m.type
+    ),
+    eligible AS (
+      SELECT SUM(mg.n * sub.cnt)::bigint as "total"
+      FROM mandate_groups mg
+      CROSS JOIN LATERAL (
+        SELECT COUNT(*)::int as cnt
+        FROM "Scrutin" s
+        WHERE s.chamber = (CASE WHEN mg.type = 'DEPUTE'::"MandateType" THEN 'AN'::"Chamber" ELSE 'SENAT'::"Chamber" END)
+          AND s."votingDate" >= mg."startDate"
+          AND (mg."endDate" IS NULL OR s."votingDate" <= mg."endDate")
+          ${chamberFilter}
+      ) sub
+    ),
+    votes AS (
+      SELECT COUNT(v.id)::bigint as "participating"
+      FROM "Vote" v
+      JOIN "Politician" pol ON v."politicianId" = pol.id
       JOIN "Mandate" m ON m."politicianId" = pol.id
         AND m."isCurrent" = true
         ${mandateTypeFilter}
-      JOIN "Scrutin" s ON s.chamber = (CASE WHEN m.type = 'DEPUTE'::"MandateType" THEN 'AN'::"Chamber" ELSE 'SENAT'::"Chamber" END)
+      JOIN "Scrutin" s ON v."scrutinId" = s.id
         AND s."votingDate" >= m."startDate"
         AND (m."endDate" IS NULL OR s."votingDate" <= m."endDate")
         ${chamberFilter}
-      LEFT JOIN "Vote" v ON v."scrutinId" = s.id AND v."politicianId" = pol.id
       WHERE pol."publicationStatus" = 'PUBLISHED'
-      GROUP BY pol.id, m.type
-    ) sub
+    )
+    SELECT e."total", v."participating"
+    FROM eligible e, votes v
   `;
 
   const row = rows[0];
@@ -588,6 +606,12 @@ export interface PartyParticipationStats {
 
 /**
  * Get average participation rate per party, based on individual mandate-eligible scrutins.
+ *
+ * Uses a deduplicated mandate-groups approach: pre-compute eligible scrutin counts
+ * for each unique (startDate, endDate, type) combination (~20 groups vs ~580 politicians),
+ * then use LATERAL subqueries for per-politician vote counts.
+ *
+ * TODO: Replace with pre-computed stats table for sub-second performance (#212)
  */
 async function getPartyParticipationStats(chamber?: Chamber): Promise<PartyParticipationStats[]> {
   const chamberFilter = chamber ? Prisma.sql`AND s.chamber = ${chamber}::"Chamber"` : Prisma.sql``;
@@ -598,23 +622,46 @@ async function getPartyParticipationStats(chamber?: Chamber): Promise<PartyParti
     : Prisma.sql`AND m.type IN ('DEPUTE'::"MandateType", 'SENATEUR'::"MandateType")`;
 
   const rows = await db.$queryRaw<PartyParticipationStats[]>`
-    WITH individual AS (
+    WITH mandate_eligible AS (
+      SELECT
+        md."startDate", md."endDate", md.type,
+        (CASE WHEN md.type = 'DEPUTE'::"MandateType" THEN 'AN'::"Chamber" ELSE 'SENAT'::"Chamber" END) as chamber,
+        (SELECT COUNT(*) FROM "Scrutin" s
+         WHERE s.chamber = (CASE WHEN md.type = 'DEPUTE'::"MandateType" THEN 'AN'::"Chamber" ELSE 'SENAT'::"Chamber" END)
+           AND s."votingDate" >= md."startDate"
+           AND (md."endDate" IS NULL OR s."votingDate" <= md."endDate")
+           ${chamberFilter})::int as eligible
+      FROM (
+        SELECT DISTINCT m."startDate", m."endDate", m.type
+        FROM "Mandate" m
+        WHERE m."isCurrent" = true ${mandateTypeFilter}
+      ) md
+    ),
+    individual AS (
       SELECT
         pol."currentPartyId" as "partyId",
-        COUNT(DISTINCT v.id)::numeric / NULLIF(COUNT(DISTINCT s.id)::numeric, 0) * 100 as rate
+        vote_sub.cnt::numeric / NULLIF(me.eligible::numeric, 0) * 100 as rate
       FROM "Politician" pol
-      JOIN "Mandate" m ON m."politicianId" = pol.id
-        AND m."isCurrent" = true
+      JOIN "Mandate" m ON m."politicianId" = pol.id AND m."isCurrent" = true
         ${mandateTypeFilter}
-      JOIN "Scrutin" s ON s.chamber = (CASE WHEN m.type = 'DEPUTE'::"MandateType" THEN 'AN'::"Chamber" ELSE 'SENAT'::"Chamber" END)
-        AND s."votingDate" >= m."startDate"
-        AND (m."endDate" IS NULL OR s."votingDate" <= m."endDate")
-        ${chamberFilter}
-      LEFT JOIN "Vote" v ON v."scrutinId" = s.id AND v."politicianId" = pol.id
-      WHERE pol."currentPartyId" IS NOT NULL
-        AND pol."publicationStatus" = 'PUBLISHED'
-      GROUP BY pol.id, pol."currentPartyId", m.type
-      HAVING COUNT(DISTINCT s.id) > 0
+      JOIN mandate_eligible me ON me."startDate" = m."startDate"
+        AND ((me."endDate" IS NULL AND m."endDate" IS NULL) OR me."endDate" = m."endDate")
+        AND me.type = m.type
+      CROSS JOIN LATERAL (
+        SELECT COUNT(*)::int as cnt
+        FROM "Vote" v
+        WHERE v."politicianId" = pol.id
+          AND EXISTS (
+            SELECT 1 FROM "Scrutin" s
+            WHERE s.id = v."scrutinId"
+              AND s.chamber = me.chamber
+              AND s."votingDate" >= m."startDate"
+              AND (m."endDate" IS NULL OR s."votingDate" <= m."endDate")
+              ${chamberFilter}
+          )
+      ) vote_sub
+      WHERE pol."currentPartyId" IS NOT NULL AND pol."publicationStatus" = 'PUBLISHED'
+        AND me.eligible > 0
     )
     SELECT
       i."partyId",
@@ -657,23 +704,47 @@ async function getGroupParticipationStats(chamber?: Chamber): Promise<GroupParti
     : Prisma.sql`AND m.type IN ('DEPUTE'::"MandateType", 'SENATEUR'::"MandateType")`;
 
   return db.$queryRaw<GroupParticipationStats[]>`
-    WITH individual AS (
+    WITH mandate_eligible AS (
       SELECT
-        pg.id as "groupId",
-        COUNT(DISTINCT v.id)::numeric / NULLIF(COUNT(DISTINCT s.id)::numeric, 0) * 100 as rate
+        md."startDate", md."endDate", md.type,
+        (CASE WHEN md.type = 'DEPUTE'::"MandateType" THEN 'AN'::"Chamber" ELSE 'SENAT'::"Chamber" END) as chamber,
+        (SELECT COUNT(*) FROM "Scrutin" s
+         WHERE s.chamber = (CASE WHEN md.type = 'DEPUTE'::"MandateType" THEN 'AN'::"Chamber" ELSE 'SENAT'::"Chamber" END)
+           AND s."votingDate" >= md."startDate"
+           AND (md."endDate" IS NULL OR s."votingDate" <= md."endDate")
+           ${chamberFilter})::int as eligible
+      FROM (
+        SELECT DISTINCT m."startDate", m."endDate", m.type
+        FROM "Mandate" m
+        WHERE m."isCurrent" = true ${mandateTypeFilter}
+      ) md
+    ),
+    individual AS (
+      SELECT
+        m."parliamentaryGroupId" as "groupId",
+        vote_sub.cnt::numeric / NULLIF(me.eligible::numeric, 0) * 100 as rate
       FROM "Politician" pol
-      JOIN "Mandate" m ON m."politicianId" = pol.id
-        AND m."isCurrent" = true
+      JOIN "Mandate" m ON m."politicianId" = pol.id AND m."isCurrent" = true
         ${mandateTypeFilter}
-      JOIN "Scrutin" s ON s.chamber = (CASE WHEN m.type = 'DEPUTE'::"MandateType" THEN 'AN'::"Chamber" ELSE 'SENAT'::"Chamber" END)
-        AND s."votingDate" >= m."startDate"
-        AND (m."endDate" IS NULL OR s."votingDate" <= m."endDate")
-        ${chamberFilter}
-      LEFT JOIN "Vote" v ON v."scrutinId" = s.id AND v."politicianId" = pol.id
-      JOIN "ParliamentaryGroup" pg ON pg.id = m."parliamentaryGroupId"
-      WHERE pol."publicationStatus" = 'PUBLISHED'
-      GROUP BY pol.id, pg.id, m.type
-      HAVING COUNT(DISTINCT s.id) > 0
+      JOIN mandate_eligible me ON me."startDate" = m."startDate"
+        AND ((me."endDate" IS NULL AND m."endDate" IS NULL) OR me."endDate" = m."endDate")
+        AND me.type = m.type
+      CROSS JOIN LATERAL (
+        SELECT COUNT(*)::int as cnt
+        FROM "Vote" v
+        WHERE v."politicianId" = pol.id
+          AND EXISTS (
+            SELECT 1 FROM "Scrutin" s
+            WHERE s.id = v."scrutinId"
+              AND s.chamber = me.chamber
+              AND s."votingDate" >= m."startDate"
+              AND (m."endDate" IS NULL OR s."votingDate" <= m."endDate")
+              ${chamberFilter}
+          )
+      ) vote_sub
+      WHERE m."parliamentaryGroupId" IS NOT NULL
+        AND pol."publicationStatus" = 'PUBLISHED'
+        AND me.eligible > 0
     )
     SELECT
       i."groupId",

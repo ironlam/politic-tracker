@@ -689,6 +689,7 @@ model Scrutin {
   @@index([votingDate])
   @@index([legislature])
   @@index([chamber])
+  @@index([chamber, votingDate]) // participation stats: mandate date range queries
   @@index([theme])
   @@index([result, votingDate]) // result filter + default date sort
 }

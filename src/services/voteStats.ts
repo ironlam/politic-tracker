@@ -331,16 +331,18 @@ async function getGlobalParticipation(
 }
 
 async function getChamberCounts(chamber?: Chamber) {
-  const where = chamber ? { chamber } : {};
+  const rows = await db.$queryRaw<
+    [{ an: number; senat: number; adoptes: number; rejetes: number }]
+  >`
+    SELECT
+      COUNT(*) FILTER (WHERE chamber = 'AN'::"Chamber")::int as an,
+      COUNT(*) FILTER (WHERE chamber = 'SENAT'::"Chamber")::int as senat,
+      COUNT(*) FILTER (WHERE result = 'ADOPTED' ${chamber ? Prisma.sql`AND chamber = ${chamber}::"Chamber"` : Prisma.sql``})::int as adoptes,
+      COUNT(*) FILTER (WHERE result = 'REJECTED' ${chamber ? Prisma.sql`AND chamber = ${chamber}::"Chamber"` : Prisma.sql``})::int as rejetes
+    FROM "Scrutin"
+  `;
 
-  const [an, senat, adoptes, rejetes] = await Promise.all([
-    db.scrutin.count({ where: { chamber: "AN" } }),
-    db.scrutin.count({ where: { chamber: "SENAT" } }),
-    db.scrutin.count({ where: { ...where, result: "ADOPTED" } }),
-    db.scrutin.count({ where: { ...where, result: "REJECTED" } }),
-  ]);
-
-  return { an, senat, adoptes, rejetes };
+  return rows[0];
 }
 
 // ============================================
@@ -690,6 +692,83 @@ async function getGroupParticipationStats(chamber?: Chamber): Promise<GroupParti
 }
 
 // ============================================
+// Per-politician participation card data
+// ============================================
+
+export interface PoliticianParliamentaryCardData {
+  chamber: "AN" | "SENAT";
+  mandateType: "DEPUTE" | "SENATEUR";
+  votesCount: number;
+  eligibleScrutins: number;
+  participationRate: number;
+  rank: number;
+  totalPeers: number;
+}
+
+/**
+ * Get participation rank and stats for a single politician.
+ * Uses a window function to compute rank in a single query.
+ */
+export async function getPoliticianParliamentaryCard(
+  politicianId: string,
+  mandateType: "DEPUTE" | "SENATEUR"
+): Promise<PoliticianParliamentaryCardData | null> {
+  const chamber = mandateType === "DEPUTE" ? "AN" : "SENAT";
+
+  const rows = await db.$queryRaw<
+    {
+      votesCount: number;
+      eligibleScrutins: number;
+      participationRate: number;
+      rank: number;
+      totalPeers: number;
+    }[]
+  >`
+    WITH rates AS (
+      SELECT
+        pol.id as "politicianId",
+        COUNT(v.id)::int as "votesCount",
+        COUNT(DISTINCT s.id)::int as "eligibleScrutins",
+        CASE WHEN COUNT(DISTINCT s.id) > 0
+          THEN ROUND(COUNT(v.id)::numeric / COUNT(DISTINCT s.id) * 100, 1)
+          ELSE 0 END::float as rate,
+        RANK() OVER (ORDER BY
+          CASE WHEN COUNT(DISTINCT s.id) > 0
+            THEN COUNT(v.id)::float / COUNT(DISTINCT s.id)
+            ELSE 0 END DESC) as rank,
+        COUNT(*) OVER ()::int as "totalPeers"
+      FROM "Politician" pol
+      JOIN "Mandate" m ON m."politicianId" = pol.id
+        AND m."isCurrent" = true
+        AND m.type = ${mandateType}::"MandateType"
+      JOIN "Scrutin" s ON s.chamber = ${chamber}::"Chamber"
+        AND s."votingDate" >= m."startDate"
+        AND (m."endDate" IS NULL OR s."votingDate" <= m."endDate")
+      LEFT JOIN "Vote" v ON v."scrutinId" = s.id AND v."politicianId" = pol.id
+      WHERE pol."publicationStatus" = 'PUBLISHED'
+      GROUP BY pol.id
+      HAVING COUNT(DISTINCT s.id) > 0
+    )
+    SELECT
+      "votesCount",
+      "eligibleScrutins",
+      rate as "participationRate",
+      rank::int,
+      "totalPeers"
+    FROM rates
+    WHERE "politicianId" = ${politicianId}
+  `;
+
+  if (rows.length === 0) return null;
+
+  return {
+    chamber,
+    mandateType,
+    ...rows[0],
+  };
+}
+
+// ============================================
 // Export
 // ============================================
 
@@ -699,4 +778,5 @@ export const voteStatsService = {
   getParticipationRanking,
   getPartyParticipationStats,
   getGroupParticipationStats,
+  getPoliticianParliamentaryCard,
 };

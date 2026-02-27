@@ -30,11 +30,11 @@ import { InteractiveTimeline } from "@/components/politicians/InteractiveTimelin
 import { PersonJsonLd, BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 import { SentenceDetails } from "@/components/affairs/SentenceDetails";
 import { AffairTimeline } from "@/components/affairs/AffairTimeline";
-import { VotePositionBadge } from "@/components/votes";
+import { VotePositionBadge, ParliamentaryCard } from "@/components/votes";
 import { DeclarationCard } from "@/components/declarations/DeclarationCard";
 import type { DeclarationDetails } from "@/types/hatvp";
 import { BetaDisclaimer } from "@/components/BetaDisclaimer";
-import { getPoliticianVotingStats } from "@/services/voteStats";
+import { getPoliticianVotingStats, getPoliticianParliamentaryCard } from "@/services/voteStats";
 
 export const revalidate = 3600; // ISR: revalidate every hour
 
@@ -405,7 +405,13 @@ export default async function PoliticianPage({ params }: PageProps) {
   // Get vote stats (for deputies and senators - both have votes tracked)
   const isParliamentarian =
     currentMandate?.type === "DEPUTE" || currentMandate?.type === "SENATEUR";
-  const voteData = isParliamentarian ? await getVoteStats(politician.id) : null;
+  const mandateType = currentMandate?.type as "DEPUTE" | "SENATEUR" | undefined;
+  const [voteData, parliamentaryCard] = await Promise.all([
+    isParliamentarian ? getVoteStats(politician.id) : null,
+    isParliamentarian && mandateType
+      ? getPoliticianParliamentaryCard(politician.id, mandateType)
+      : null,
+  ]);
 
   // Split affairs by involvement: direct (mis en cause) vs mentions vs victim
   const STATUS_SEVERITY: Record<string, number> = {
@@ -670,6 +676,18 @@ export default async function PoliticianPage({ params }: PageProps) {
                 </CardContent>
               </Card>
             ) : null}
+
+            {/* Parliamentary mandate card */}
+            {parliamentaryCard && currentMandate && (
+              <ParliamentaryCard
+                data={parliamentaryCard}
+                groupCode={currentGroup?.code ?? null}
+                groupName={currentGroup?.name ?? null}
+                groupColor={currentGroup?.color ?? null}
+                constituency={currentMandate.constituency ?? null}
+                mandateTitle={currentMandate.title}
+              />
+            )}
 
             {/* Votes (deputies only) */}
             {voteData && voteData.stats.total > 0 && (

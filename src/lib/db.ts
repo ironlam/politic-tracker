@@ -24,6 +24,7 @@ function createPrismaClient(): PrismaClient {
     connectionTimeoutMillis: 15_000,
     ssl: { rejectUnauthorized: false },
     allowExitOnIdle: true, // Release idle connections faster in serverless
+    statement_timeout: 30_000, // Kill queries after 30s to prevent pool starvation
   });
   globalForPrisma.pool = pool;
 

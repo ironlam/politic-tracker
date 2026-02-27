@@ -1186,6 +1186,7 @@ model Candidacy {
   updatedAt DateTime @updatedAt
 
   @@index([electionId])
+  @@index([electionId, communeId])
   @@index([politicianId])
   @@index([constituencyCode])
   @@index([candidateId])
@@ -1361,6 +1362,7 @@ model Commune {
   departmentCode String
   departmentName String
   regionCode     String?
+  regionName     String?
   postalCodes    String[]
   population     Int?
   latitude       Float?

@@ -315,6 +315,11 @@ async function syncSenator(
       mandateStart = new Date(extraData.mandat_debut);
       if (isNaN(mandateStart.getTime())) mandateStart = null;
     }
+    // Fallback: derive from senate renewal series
+    // Serie 1 → elected Sept 24, 2023 | Serie 2 → elected Sept 27, 2020
+    if (!mandateStart && sen.serie) {
+      mandateStart = sen.serie === 1 ? new Date("2023-10-01") : new Date("2020-10-01");
+    }
 
     // Photo URL from senat.fr
     const photoUrl = sen.urlAvatar || `https://www.senat.fr/senateur/${sen.matricule}/photo.jpg`;

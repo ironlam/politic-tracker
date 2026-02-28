@@ -33,7 +33,7 @@ export function MunicipalesChiffres({
 
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-      {/* Communes avec competition */}
+      {/* Communes avec compétition */}
       <Card>
         <CardContent className="pt-5">
           <p className="tabular-nums text-2xl font-bold">
@@ -42,12 +42,12 @@ export function MunicipalesChiffres({
               / {totalCommunes.toLocaleString("fr-FR")}
             </span>
           </p>
-          <p className="text-sm text-muted-foreground mt-1">Communes avec competition</p>
+          <p className="text-sm text-muted-foreground mt-1">Communes avec compétition</p>
           <p className="text-xs text-muted-foreground mt-0.5">{competitionPct}%</p>
         </CardContent>
       </Card>
 
-      {/* Indice de competition moyen */}
+      {/* Indice de compétition moyen */}
       <Card>
         <CardContent className="pt-5">
           <p
@@ -55,17 +55,17 @@ export function MunicipalesChiffres({
           >
             {averageCompetitionIndex.toFixed(2)}
           </p>
-          <p className="text-sm text-muted-foreground mt-1">Indice de competition moyen</p>
+          <p className="text-sm text-muted-foreground mt-1">Indice de compétition moyen</p>
         </CardContent>
       </Card>
 
-      {/* Taux de parite */}
+      {/* Taux de parité */}
       <Card>
         <CardContent className="pt-5">
           <p className={`tabular-nums text-2xl font-bold ${parityColor(parityRate)}`}>
             {(parityRate * 100).toFixed(1)}%
           </p>
-          <p className="text-sm text-muted-foreground mt-1">Taux de parite</p>
+          <p className="text-sm text-muted-foreground mt-1">Taux de parité</p>
         </CardContent>
       </Card>
 
@@ -81,7 +81,7 @@ export function MunicipalesChiffres({
             prefetch={false}
             className="text-xs text-primary hover:underline mt-1 inline-block"
           >
-            Voir les details &rarr;
+            Voir les détails &rarr;
           </Link>
         </CardContent>
       </Card>

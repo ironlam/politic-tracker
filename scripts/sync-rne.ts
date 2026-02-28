@@ -30,10 +30,11 @@ Matching: Associates RNE data with existing politicians in our database
     const stats = await getRNEStats();
 
     console.log("\n" + "=".repeat(50));
-    console.log("RNE Maires Stats");
+    console.log("LocalOfficial Stats:");
     console.log("=".repeat(50));
-    console.log(`Current MAIRE mandates: ${stats.totalMaireMandates}`);
-    console.log(`RNE external IDs: ${stats.totalRNEExternalIds}`);
+    console.log(`  Total officials: ${stats.totalOfficials}`);
+    console.log(`  Currently active: ${stats.totalCurrent}`);
+    console.log(`  Matched to Politician: ${stats.totalMatched}`);
   },
 
   async sync(options): Promise<SyncResult> {
@@ -49,10 +50,13 @@ Matching: Associates RNE data with existing politicians in our database
       success: result.success,
       duration: 0,
       stats: {
+        officialsCreated: result.officialsCreated,
+        officialsUpdated: result.officialsUpdated,
+        officialsClosed: result.officialsClosed,
         mandatesCreated: result.mandatesCreated,
         mandatesUpdated: result.mandatesUpdated,
+        mandatesClosed: result.mandatesClosed,
         politiciansMatched: result.politiciansMatched,
-        politiciansNotFound: result.politiciansNotFound,
       },
       errors: result.errors,
     };

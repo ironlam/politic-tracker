@@ -142,28 +142,26 @@ export function MandateTimeline({ mandates, civility }: MandateTimelineProps) {
           <div className="space-y-3">
             {currentMandates.map((mandate) => {
               const displayRole = mandate.role ? feminizeRole(mandate.role, civility) : null;
+              const typeLabel = MANDATE_TYPE_LABELS[mandate.type] || mandate.type;
+              // Use the title as heading when it's more descriptive than the generic type label
+              const titleIsDescriptive =
+                mandate.title && mandate.title !== typeLabel && !displayRole;
+              const heading = displayRole || (titleIsDescriptive ? mandate.title : typeLabel);
               return (
                 <div key={mandate.id} className="relative pl-6 pb-3 border-l-2 border-primary">
                   <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-primary border-2 border-background" />
                   <div className="bg-primary/5 rounded-lg p-4">
                     <div className="flex items-start justify-between gap-2">
                       <div>
-                        <p className="font-semibold text-lg">
-                          {displayRole || MANDATE_TYPE_LABELS[mandate.type] || mandate.type}
-                        </p>
+                        <p className="font-semibold text-lg">{heading}</p>
                         {displayRole && (
                           <Badge variant="outline" className="mt-1">
-                            {MANDATE_TYPE_LABELS[mandate.type] || mandate.type}
+                            {typeLabel}
                           </Badge>
                         )}
-                        {mandate.constituency && (
+                        {mandate.constituency && !titleIsDescriptive && (
                           <p className="text-muted-foreground">{mandate.constituency}</p>
                         )}
-                        {mandate.title &&
-                          mandate.title !== MANDATE_TYPE_LABELS[mandate.type] &&
-                          !displayRole && (
-                            <p className="text-sm text-muted-foreground mt-1">{mandate.title}</p>
-                          )}
                       </div>
                       <Badge variant="secondary" className="shrink-0">
                         Depuis {formatYear(mandate.startDate)}

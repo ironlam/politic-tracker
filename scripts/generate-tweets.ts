@@ -314,8 +314,8 @@ async function recentAffairs(): Promise<TweetDraft[]> {
     let content = `⚖️ ${a.politician.fullName}`;
     if (party) content += ` (${party})`;
     if (mandateLabel) content += `, ${mandateLabel}`;
-    content += `\n${statusLabel} pour ${categoryLabel.toLowerCase()}.\n\n`;
-    content += `${a.title}`;
+    content += `\n\n${a.title}\n\n`;
+    content += `Statut : ${statusLabel}.`;
 
     if (a.description) {
       const desc =
@@ -713,48 +713,42 @@ async function recentPress(): Promise<TweetDraft[]> {
 // --- Nouveaux générateurs ---
 
 async function participationRanking(): Promise<TweetDraft[]> {
-  // Bottom 5 participation — who shows up the least?
-  const bottom = await db.politicianParticipation.findMany({
-    where: { eligibleScrutins: { gte: 50 } },
-    orderBy: { participationRate: "asc" },
-    take: 5,
-    select: {
-      firstName: true,
-      lastName: true,
-      slug: true,
-      participationRate: true,
-      votesCount: true,
-      eligibleScrutins: true,
-      chamber: true,
-      groupName: true,
-    },
-  });
+  const participationSelect = {
+    firstName: true,
+    lastName: true,
+    slug: true,
+    participationRate: true,
+    votesCount: true,
+    eligibleScrutins: true,
+    chamber: true,
+    groupName: true,
+  } as const;
 
-  const top = await db.politicianParticipation.findMany({
-    where: { eligibleScrutins: { gte: 50 } },
-    orderBy: { participationRate: "desc" },
-    take: 5,
-    select: {
-      firstName: true,
-      lastName: true,
-      slug: true,
-      participationRate: true,
-      votesCount: true,
-      eligibleScrutins: true,
-      chamber: true,
-      groupName: true,
-    },
-  });
+  // Query separately per chamber to avoid mixing AN/SENAT rankings
+  const [bottomAN, topAN] = await Promise.all([
+    db.politicianParticipation.findMany({
+      where: { eligibleScrutins: { gte: 50 }, chamber: "AN" },
+      orderBy: { participationRate: "asc" },
+      take: 5,
+      select: participationSelect,
+    }),
+    db.politicianParticipation.findMany({
+      where: { eligibleScrutins: { gte: 50 }, chamber: "AN" },
+      orderBy: { participationRate: "desc" },
+      take: 5,
+      select: participationSelect,
+    }),
+  ]);
 
   const drafts: TweetDraft[] = [];
 
-  if (bottom.length >= 3) {
-    const worst = bottom[0];
+  if (bottomAN.length >= 3) {
+    const worst = bottomAN[0];
     let content = `📉 ${worst.firstName} ${worst.lastName} a participé à ${Math.round(worst.participationRate)}% des scrutins.\n\n`;
     content += `${worst.votesCount} votes sur ${worst.eligibleScrutins} possibles`;
     if (worst.groupName) content += ` (${worst.groupName})`;
-    content += `.\n\nLes 5 taux de participation les plus bas :\n`;
-    for (const p of bottom) {
+    content += `.\n\nLes 5 taux de participation les plus bas (Assemblée nationale) :\n`;
+    for (const p of bottomAN) {
       content += `• ${p.firstName} ${p.lastName} — ${Math.round(p.participationRate)}%\n`;
     }
 
@@ -766,13 +760,13 @@ async function participationRanking(): Promise<TweetDraft[]> {
     });
   }
 
-  if (top.length >= 3) {
-    const best = top[0];
+  if (topAN.length >= 3) {
+    const best = topAN[0];
     let content = `📈 ${best.firstName} ${best.lastName} : ${Math.round(best.participationRate)}% de participation aux scrutins.\n\n`;
     content += `${best.votesCount} votes sur ${best.eligibleScrutins}`;
     if (best.groupName) content += ` (${best.groupName})`;
-    content += `.\n\nLes 5 parlementaires les plus assidus :\n`;
-    for (const p of top) {
+    content += `.\n\nLes 5 parlementaires les plus assidus (Assemblée nationale) :\n`;
+    for (const p of topAN) {
       content += `• ${p.firstName} ${p.lastName} — ${Math.round(p.participationRate)}%\n`;
     }
 

@@ -395,8 +395,12 @@ export interface MaireRNECSV {
 
 export interface RNESyncResult {
   success: boolean;
+  officialsCreated: number;
+  officialsUpdated: number;
+  officialsClosed: number;
   mandatesCreated: number;
   mandatesUpdated: number;
+  mandatesClosed: number;
   politiciansMatched: number;
   politiciansNotFound: number;
   errors: string[];

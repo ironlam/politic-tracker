@@ -96,6 +96,24 @@ export default async function RootLayout({
           description="Observatoire citoyen de la vie politique. Mandats, votes, patrimoine, affaires judiciaires et fact-checking."
           url={siteUrl}
         />
+        <link
+          rel="alternate"
+          type="application/rss+xml"
+          title="Poligraph — Affaires"
+          href="/api/rss/affaires.xml"
+        />
+        <link
+          rel="alternate"
+          type="application/rss+xml"
+          title="Poligraph — Votes"
+          href="/api/rss/votes.xml"
+        />
+        <link
+          rel="alternate"
+          type="application/rss+xml"
+          title="Poligraph — Fact-checks"
+          href="/api/rss/factchecks.xml"
+        />
         <UmamiAnalytics />
       </head>
       <body

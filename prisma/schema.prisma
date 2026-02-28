@@ -1432,6 +1432,7 @@ model LocalOfficial {
   @@index([role, departmentCode])
   @@index([role, isCurrent])
   @@index([politicianId])
+  @@index([role, externalId])
   @@index([lastName])
 }
 

@@ -1428,6 +1428,7 @@ model LocalOfficial {
   updatedAt       DateTime           @updatedAt
 
   @@unique([role, communeId], name: "one_official_per_role_commune")
+  @@unique([role, externalId], name: "one_official_per_role_externalId")
   @@index([role, communeId])
   @@index([role, departmentCode])
   @@index([role, isCurrent])

@@ -6,15 +6,24 @@
  *   npm run sync:rne:maires -- --stats   # Show current stats
  *   npm run sync:rne:maires -- --dry-run # Preview without saving
  *   npm run sync:rne:maires -- --limit=100 --verbose # Test with 100 rows
+ *   npm run sync:rne:maires -- --resolve-parties --verbose # Resolve party affiliations
  */
 
 import "dotenv/config";
 import { createCLI, type SyncHandler, type SyncResult } from "../src/lib/sync";
-import { syncRNEMaires, getRNEStats } from "../src/services/sync/rne";
+import { syncRNEMaires, getRNEStats, resolveParties } from "../src/services/sync/rne";
 
 const handler: SyncHandler = {
   name: "Politic Tracker - RNE Maires Sync",
   description: "Import maires from Répertoire National des Élus (data.gouv.fr)",
+
+  options: [
+    {
+      name: "--resolve-parties",
+      type: "boolean",
+      description: "Resolve party affiliations from enriched communes CSV",
+    },
+  ],
 
   showHelp() {
     console.log(`
@@ -39,6 +48,22 @@ Matching: Associates RNE data with existing politicians in our database
 
   async sync(options): Promise<SyncResult> {
     const { dryRun = false, limit, verbose = false } = options;
+
+    // --resolve-parties: standalone mode, skip main sync
+    if (options.resolveParties) {
+      console.log("\n--- Resolve party affiliations ---");
+      const result = await resolveParties({ verbose: verbose as boolean });
+      return {
+        success: true,
+        duration: 0,
+        stats: {
+          partiesFromNuance: result.fromNuance,
+          partiesFromPolitician: result.fromPolitician,
+          unmappedNuances: result.unmapped.length,
+        },
+        errors: [],
+      };
+    }
 
     const result = await syncRNEMaires({
       dryRun,

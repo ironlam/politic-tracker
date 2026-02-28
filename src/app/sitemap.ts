@@ -184,6 +184,12 @@ async function buildStaticAndPoliticiansSitemap(): Promise<MetadataRoute.Sitemap
       changeFrequency: "weekly",
       priority: 0.7,
     },
+    {
+      url: `${baseUrl}/elections/municipales-2026/maires`,
+      lastModified: new Date(),
+      changeFrequency: "weekly",
+      priority: 0.7,
+    },
   ];
 
   const politicianPages: MetadataRoute.Sitemap = politicians.map((p) => ({

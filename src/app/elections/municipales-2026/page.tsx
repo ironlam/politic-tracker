@@ -135,6 +135,32 @@ export default async function MunicipalesLandingPage() {
         </section>
       )}
 
+      {/* Cross-links */}
+      <section className="py-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Link href="/elections/municipales-2026/maires" prefetch={false}>
+            <Card className="hover:shadow-sm transition-shadow h-full">
+              <CardContent className="pt-5">
+                <h3 className="font-semibold mb-1">Annuaire des maires</h3>
+                <p className="text-sm text-muted-foreground">
+                  Explorez les 35 000 maires de France : parité, couleur politique, ancienneté.
+                </p>
+              </CardContent>
+            </Card>
+          </Link>
+          <Link href="/elections/municipales-2026/cumul" prefetch={false}>
+            <Card className="hover:shadow-sm transition-shadow h-full">
+              <CardContent className="pt-5">
+                <h3 className="font-semibold mb-1">Cumul des mandats</h3>
+                <p className="text-sm text-muted-foreground">
+                  Députés, sénateurs et ministres candidats aux municipales 2026.
+                </p>
+              </CardContent>
+            </Card>
+          </Link>
+        </div>
+      </section>
+
       {/* Cartographie politique */}
       {departmentData.length > 0 && (
         <section className="py-8">

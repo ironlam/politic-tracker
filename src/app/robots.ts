@@ -21,6 +21,7 @@ export default function robots(): MetadataRoute.Robots {
           `${baseUrl}/sitemap/2.xml`,
           `${baseUrl}/sitemap/3.xml`,
           `${baseUrl}/sitemap/4.xml`,
+          `${baseUrl}/sitemap/5.xml`,
         ]
       : undefined,
   };

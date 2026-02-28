@@ -1,4 +1,5 @@
 import { cache } from "react";
+import { cacheTag, cacheLife } from "next/cache";
 import { Prisma } from "@/generated/prisma";
 import { db } from "@/lib/db";
 
@@ -451,3 +452,189 @@ export const getParityOutliers = cache(async function getParityOutliers() {
 
   return { best, worst };
 });
+
+// ============================================
+// Maires listing + stats
+// ============================================
+
+export interface MaireStats {
+  total: number;
+  femaleRate: number;
+  withParty: number;
+  withPolitician: number;
+  partyDistribution: Array<{ shortName: string; color: string | null; count: number }>;
+  mandateDistribution: Array<{ bracket: string; count: number }>;
+}
+
+/** Aggregated stats for all current maires — cached with tag */
+export async function getMaireStats(): Promise<MaireStats> {
+  "use cache";
+  cacheTag("maires-stats");
+  cacheLife("hours");
+
+  const [counts] = await db.$queryRaw<
+    [{ total: number; female: number; with_party: number; with_politician: number }]
+  >(Prisma.sql`
+    SELECT
+      COUNT(*)::int as total,
+      COUNT(*) FILTER (WHERE gender = 'F')::int as female,
+      COUNT(*) FILTER (WHERE "partyId" IS NOT NULL)::int as with_party,
+      COUNT(*) FILTER (WHERE "politicianId" IS NOT NULL)::int as with_politician
+    FROM "LocalOfficial"
+    WHERE role = 'MAIRE' AND "isCurrent" = true
+  `);
+
+  const partyDistribution = await db.$queryRaw<
+    Array<{ shortName: string; color: string | null; count: number }>
+  >(Prisma.sql`
+    SELECT p."shortName", p.color, COUNT(*)::int as count
+    FROM "LocalOfficial" lo
+    JOIN "Party" p ON lo."partyId" = p.id
+    WHERE lo.role = 'MAIRE' AND lo."isCurrent" = true AND lo."partyId" IS NOT NULL
+    GROUP BY p."shortName", p.color
+    ORDER BY count DESC
+    LIMIT 15
+  `);
+
+  const mandateDistribution = await db.$queryRaw<
+    Array<{ bracket: string; count: number }>
+  >(Prisma.sql`
+    SELECT
+      CASE
+        WHEN "functionStart" >= '2024-01-01' THEN 'Depuis 2024'
+        WHEN "functionStart" >= '2020-01-01' THEN 'Depuis 2020'
+        WHEN "functionStart" >= '2014-01-01' THEN 'Depuis 2014'
+        WHEN "functionStart" IS NOT NULL THEN 'Avant 2014'
+        ELSE 'Non renseigné'
+      END as bracket,
+      COUNT(*)::int as count
+    FROM "LocalOfficial"
+    WHERE role = 'MAIRE' AND "isCurrent" = true
+    GROUP BY bracket
+    ORDER BY MIN(COALESCE("functionStart", '1900-01-01'))
+  `);
+
+  return {
+    total: counts.total,
+    femaleRate: counts.total > 0 ? counts.female / counts.total : 0,
+    withParty: counts.with_party,
+    withPolitician: counts.with_politician,
+    partyDistribution,
+    mandateDistribution,
+  };
+}
+
+/** Core query for maires listing — used by both cached and uncached paths */
+async function queryMaires(
+  search?: string,
+  departmentCode?: string,
+  partyId?: string,
+  gender?: string,
+  page = 1
+) {
+  const limit = 50;
+  const skip = (page - 1) * limit;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const conditions: any[] = [{ role: "MAIRE" as const }, { isCurrent: true }];
+
+  if (search) {
+    conditions.push({
+      OR: [
+        { fullName: { contains: search, mode: "insensitive" } },
+        { lastName: { contains: search, mode: "insensitive" } },
+      ],
+    });
+  }
+
+  if (departmentCode) {
+    conditions.push({ departmentCode });
+  }
+
+  if (partyId) {
+    conditions.push({ partyId });
+  }
+
+  if (gender) {
+    conditions.push({ gender });
+  }
+
+  const where = { AND: conditions };
+
+  const [maires, total] = await Promise.all([
+    db.localOfficial.findMany({
+      where,
+      include: {
+        party: { select: { shortName: true, color: true, slug: true } },
+        politician: { select: { slug: true, fullName: true, photoUrl: true } },
+        commune: { select: { name: true, departmentCode: true, population: true } },
+      },
+      orderBy: { lastName: "asc" },
+      skip,
+      take: limit,
+    }),
+    db.localOfficial.count({ where }),
+  ]);
+
+  return {
+    maires,
+    total,
+    page,
+    totalPages: Math.ceil(total / limit),
+  };
+}
+
+/** Cached path — bounded key space (enums + page, no free-text) */
+export async function getMairesFiltered(
+  departmentCode?: string,
+  partyId?: string,
+  gender?: string,
+  page = 1
+) {
+  "use cache";
+  cacheTag("maires-listing");
+  cacheLife("hours");
+  return queryMaires(undefined, departmentCode, partyId, gender, page);
+}
+
+/** Uncached path — free-text search */
+export async function searchMaires(
+  search: string,
+  departmentCode?: string,
+  partyId?: string,
+  gender?: string,
+  page = 1
+) {
+  return queryMaires(search, departmentCode, partyId, gender, page);
+}
+
+/** Router: cached when no search, uncached when searching */
+export async function getMaires(
+  search?: string,
+  departmentCode?: string,
+  partyId?: string,
+  gender?: string,
+  page = 1
+) {
+  if (search) {
+    return searchMaires(search, departmentCode, partyId, gender, page);
+  }
+  return getMairesFiltered(departmentCode, partyId, gender, page);
+}
+
+/** Get parties that have at least one maire (for filter dropdown) */
+export async function getMaireParties() {
+  "use cache";
+  cacheTag("maires-listing");
+  cacheLife("hours");
+
+  return db.party.findMany({
+    where: {
+      localOfficials: {
+        some: { role: "MAIRE", isCurrent: true },
+      },
+    },
+    select: { id: true, shortName: true, color: true },
+    orderBy: { shortName: "asc" },
+  });
+}

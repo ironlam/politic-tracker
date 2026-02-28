@@ -1,5 +1,5 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { CompetitionIndex } from "./CompetitionIndex";
 
 interface CommuneRadiographieProps {
   listCount: number;
@@ -8,28 +8,6 @@ interface CommuneRadiographieProps {
   totalSeats: number | null;
   femaleRate: number;
   nationalPoliticiansCount: number;
-}
-
-function getCompetitionInfo(
-  listCount: number,
-  population: number | null
-): { label: string; className: string } {
-  // Expected number of lists based on population
-  let expectedLists = 2;
-  if (population != null) {
-    if (population >= 50_000) expectedLists = 4;
-    else if (population >= 10_000) expectedLists = 3;
-  }
-
-  const ratio = expectedLists > 0 ? listCount / expectedLists : 0;
-
-  if (ratio > 1) {
-    return { label: "Forte", className: "bg-green-100 text-green-800" };
-  }
-  if (ratio >= 0.5) {
-    return { label: "Normale", className: "bg-yellow-100 text-yellow-800" };
-  }
-  return { label: "Faible", className: "bg-red-100 text-red-800" };
 }
 
 function getParityInfo(femaleRate: number): {
@@ -54,7 +32,6 @@ export function CommuneRadiographie({
   femaleRate,
   nationalPoliticiansCount,
 }: CommuneRadiographieProps) {
-  const competition = getCompetitionInfo(listCount, population);
   const parity = getParityInfo(femaleRate);
 
   return (
@@ -78,7 +55,7 @@ export function CommuneRadiographie({
           <div>
             <dt className="text-muted-foreground text-sm">Compétition</dt>
             <dd className="mt-1">
-              <Badge className={competition.className}>{competition.label}</Badge>
+              <CompetitionIndex listCount={listCount} population={population} />
             </dd>
           </div>
 

@@ -1,6 +1,5 @@
 import { Metadata } from "next";
 import Link from "next/link";
-import { cacheTag, cacheLife } from "next/cache";
 import { db } from "@/lib/db";
 import { Card, CardContent } from "@/components/ui/card";
 import { StatCard } from "@/components/ui/StatCard";
@@ -8,6 +7,13 @@ import { Badge } from "@/components/ui/badge";
 import { ExportButton } from "@/components/ui/ExportButton";
 import { AffairesFilterBar } from "@/components/affairs/AffairesFilterBar";
 import { SeoIntro } from "@/components/seo/SeoIntro";
+import {
+  getAffairs,
+  getSuperCategoryCounts,
+  getStatusCounts,
+  getSeverityCounts,
+  getPartiesWithAffairs,
+} from "@/lib/data/affairs";
 import {
   AFFAIR_STATUS_LABELS,
   AFFAIR_STATUS_COLORS,
@@ -17,7 +23,6 @@ import {
   AFFAIR_SUPER_CATEGORY_COLORS,
   AFFAIR_SUPER_CATEGORY_DESCRIPTIONS,
   CATEGORY_TO_SUPER,
-  getCategoriesForSuper,
   INVOLVEMENT_LABELS,
   INVOLVEMENT_COLORS,
   INVOLVEMENT_GROUP_LABELS,
@@ -27,7 +32,7 @@ import {
   type InvolvementGroup,
   type AffairSuperCategory,
 } from "@/config/labels";
-import type { AffairStatus, AffairCategory, AffairSeverity, Involvement } from "@/types";
+import type { AffairStatus, AffairSeverity, Involvement } from "@/types";
 
 export const revalidate = 300; // 5 minutes — CDN edge cache with ISR
 
@@ -89,268 +94,6 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
       description,
     },
   };
-}
-
-async function getPartiesWithAffairs() {
-  "use cache";
-  cacheTag("affairs", "parties");
-  cacheLife("hours");
-
-  const parties = await db.party.findMany({
-    where: {
-      affairsAtTime: {
-        some: { publicationStatus: "PUBLISHED" },
-      },
-      slug: { not: null },
-    },
-    select: {
-      slug: true,
-      shortName: true,
-      name: true,
-      color: true,
-      _count: {
-        select: { affairsAtTime: { where: { publicationStatus: "PUBLISHED" } } },
-      },
-    },
-    orderBy: { shortName: "asc" },
-  });
-
-  return parties;
-}
-
-// Tier 1: Core query — accepts free-text search (never cached directly)
-async function queryAffairs(
-  search?: string,
-  status?: string,
-  superCategory?: AffairSuperCategory,
-  category?: string,
-  severity?: AffairSeverity,
-  page = 1,
-  involvements: Involvement[] = ["DIRECT"],
-  partySlug?: string,
-  sort?: string
-) {
-  const limit = 20;
-  const skip = (page - 1) * limit;
-
-  // Build category filter based on super-category or specific category
-  let categoryFilter: AffairCategory[] | undefined;
-  if (category) {
-    categoryFilter = [category as AffairCategory];
-  } else if (superCategory) {
-    categoryFilter = getCategoriesForSuper(superCategory);
-  }
-
-  const where = {
-    publicationStatus: "PUBLISHED" as const,
-    involvement: { in: involvements },
-    ...(status && { status: status as AffairStatus }),
-    ...(categoryFilter && { category: { in: categoryFilter } }),
-    ...(severity && { severity }),
-    ...(partySlug && { partyAtTime: { slug: partySlug } }),
-    ...(search && {
-      OR: [
-        { title: { contains: search, mode: "insensitive" as const } },
-        { description: { contains: search, mode: "insensitive" as const } },
-      ],
-    }),
-  };
-
-  const orderBy =
-    sort === "date-desc"
-      ? [
-          { verdictDate: { sort: "desc" as const, nulls: "last" as const } },
-          { startDate: { sort: "desc" as const, nulls: "last" as const } },
-          { createdAt: "desc" as const },
-        ]
-      : sort === "date-asc"
-        ? [
-            { verdictDate: { sort: "asc" as const, nulls: "last" as const } },
-            { startDate: { sort: "asc" as const, nulls: "last" as const } },
-            { createdAt: "asc" as const },
-          ]
-        : [
-            { severity: "asc" as const },
-            { verdictDate: { sort: "desc" as const, nulls: "last" as const } },
-            { startDate: { sort: "desc" as const, nulls: "last" as const } },
-            { createdAt: "desc" as const },
-          ];
-
-  const [affairs, total] = await Promise.all([
-    db.affair.findMany({
-      where,
-      include: {
-        politician: {
-          select: { id: true, fullName: true, slug: true, currentParty: true },
-        },
-        partyAtTime: {
-          select: { id: true, slug: true, shortName: true, name: true, color: true },
-        },
-        sources: { select: { id: true }, take: 1 },
-      },
-      orderBy,
-      skip,
-      take: limit,
-    }),
-    db.affair.count({ where }),
-  ]);
-
-  return {
-    affairs,
-    total,
-    page,
-    totalPages: Math.ceil(total / limit),
-  };
-}
-
-// Tier 2: Cached path — bounded params only (no free-text search)
-async function getAffairsFiltered(
-  status?: string,
-  superCategory?: AffairSuperCategory,
-  category?: string,
-  severity?: AffairSeverity,
-  page = 1,
-  involvements: Involvement[] = ["DIRECT"],
-  partySlug?: string,
-  sort?: string
-) {
-  "use cache";
-  cacheTag("affairs");
-  cacheLife("minutes");
-  return queryAffairs(
-    undefined,
-    status,
-    superCategory,
-    category,
-    severity,
-    page,
-    involvements,
-    partySlug,
-    sort
-  );
-}
-
-// Tier 3: Uncached path — free-text search
-async function searchAffairs(
-  search: string,
-  status?: string,
-  superCategory?: AffairSuperCategory,
-  category?: string,
-  severity?: AffairSeverity,
-  page = 1,
-  involvements: Involvement[] = ["DIRECT"],
-  partySlug?: string,
-  sort?: string
-) {
-  return queryAffairs(
-    search,
-    status,
-    superCategory,
-    category,
-    severity,
-    page,
-    involvements,
-    partySlug,
-    sort
-  );
-}
-
-// Router — decides cached vs uncached
-async function getAffairs(
-  search?: string,
-  status?: string,
-  superCategory?: AffairSuperCategory,
-  category?: string,
-  severity?: AffairSeverity,
-  page = 1,
-  involvements: Involvement[] = ["DIRECT"],
-  partySlug?: string,
-  sort?: string
-) {
-  if (search) {
-    return searchAffairs(
-      search,
-      status,
-      superCategory,
-      category,
-      severity,
-      page,
-      involvements,
-      partySlug,
-      sort
-    );
-  }
-  return getAffairsFiltered(
-    status,
-    superCategory,
-    category,
-    severity,
-    page,
-    involvements,
-    partySlug,
-    sort
-  );
-}
-
-async function getSuperCategoryCounts() {
-  "use cache";
-  cacheTag("affairs");
-  cacheLife("minutes");
-
-  const categoryCounts = await db.affair.groupBy({
-    by: ["category"],
-    where: { publicationStatus: "PUBLISHED", involvement: "DIRECT" },
-    _count: { category: true },
-  });
-
-  // Aggregate by super-category
-  const superCounts: Record<string, number> = {
-    PROBITE: 0,
-    FINANCES: 0,
-    PERSONNES: 0,
-    EXPRESSION: 0,
-    AUTRE: 0,
-  };
-
-  for (const { category, _count } of categoryCounts) {
-    const superCat = CATEGORY_TO_SUPER[category as AffairCategory];
-    if (superCat) {
-      superCounts[superCat] += _count.category;
-    }
-  }
-
-  return superCounts;
-}
-
-async function getStatusCounts() {
-  "use cache";
-  cacheTag("affairs");
-  cacheLife("minutes");
-
-  const statusCounts = await db.affair.groupBy({
-    by: ["status"],
-    where: { publicationStatus: "PUBLISHED", involvement: "DIRECT" },
-    _count: { status: true },
-  });
-
-  return Object.fromEntries(statusCounts.map((s) => [s.status, s._count.status]));
-}
-
-async function getSeverityCounts() {
-  "use cache";
-  cacheTag("affairs");
-  cacheLife("minutes");
-
-  const severityCounts = await db.affair.groupBy({
-    by: ["severity"],
-    where: { publicationStatus: "PUBLISHED", involvement: "DIRECT" },
-    _count: { severity: true },
-  });
-
-  return Object.fromEntries(severityCounts.map((s) => [s.severity, s._count.severity])) as Record<
-    string,
-    number
-  >;
 }
 
 export default async function AffairesPage({ searchParams }: PageProps) {

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { db } from "@/lib/db";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { CompetitionIndex } from "@/components/elections/municipales/CompetitionIndex";
 import { MunicipalesHero } from "@/components/elections/municipales/MunicipalesHero";
 import { MunicipalesChiffres } from "@/components/elections/municipales/MunicipalesChiffres";
 import { CommuneSearch } from "@/components/elections/municipales/CommuneSearch";
@@ -142,6 +143,10 @@ export default async function MunicipalesLandingPage() {
                     <p className="text-sm text-muted-foreground">{commune.departmentCode}</p>
                     <div className="mt-2 flex items-center gap-2">
                       <Badge variant="outline">{commune.listCount} listes</Badge>
+                      <CompetitionIndex
+                        listCount={commune.listCount}
+                        population={commune.population}
+                      />
                       {commune.population && (
                         <span className="text-xs text-muted-foreground">
                           {commune.population.toLocaleString("fr-FR")} hab.

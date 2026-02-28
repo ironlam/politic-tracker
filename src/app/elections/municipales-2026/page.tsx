@@ -8,6 +8,8 @@ import { MunicipalesHero } from "@/components/elections/municipales/MunicipalesH
 import { MunicipalesChiffres } from "@/components/elections/municipales/MunicipalesChiffres";
 import { CommuneSearch } from "@/components/elections/municipales/CommuneSearch";
 import { ELECTION_GUIDES } from "@/config/election-guides";
+import { getDepartmentPartyData } from "@/lib/data/municipales";
+import { PartyMap } from "@/components/elections/municipales/PartyMap";
 
 export const revalidate = 300; // ISR: 5 minutes
 
@@ -63,6 +65,7 @@ export const metadata: Metadata = {
 export default async function MunicipalesLandingPage() {
   const election = await getElection();
   const stats = await getMunicipalesStats();
+  const departmentData = await getDepartmentPartyData();
 
   const targetDate = election?.round1Date ? election.round1Date.toISOString() : null;
 
@@ -149,6 +152,25 @@ export default async function MunicipalesLandingPage() {
                 </Card>
               </Link>
             ))}
+          </div>
+        </section>
+      )}
+
+      {/* Cartographie politique */}
+      {departmentData.length > 0 && (
+        <section className="py-8">
+          <h2 className="text-xl font-bold mb-4">Cartographie politique</h2>
+          <div className="border rounded-xl overflow-hidden bg-card p-4">
+            <PartyMap departments={departmentData} mini />
+          </div>
+          <div className="mt-3 text-right">
+            <Link
+              href="/elections/municipales-2026/carte"
+              prefetch={false}
+              className="text-sm text-primary hover:underline"
+            >
+              Voir la carte complète →
+            </Link>
           </div>
         </section>
       )}

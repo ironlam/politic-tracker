@@ -2,6 +2,40 @@ import { cache } from "react";
 import { Prisma } from "@/generated/prisma";
 import { db } from "@/lib/db";
 
+// ============================================
+// Shared types
+// ============================================
+
+export interface MunicipalesStats {
+  totalCandidacies: number;
+  totalLists: number;
+  totalCommunes: number;
+  communesWithCompetition: number;
+  communesUncontested: number;
+  averageCompetitionIndex: number;
+  parityRate: number;
+  parityByParty: Record<string, number>;
+  nationalPoliticiansCandidates: number;
+  mostContestedCommunes: Array<{
+    id: string;
+    name: string;
+    departmentCode: string;
+    population: number | null;
+    listCount: number;
+  }>;
+}
+
+// ============================================
+// Stats snapshot
+// ============================================
+
+export const getMunicipalesStats = cache(async function getMunicipalesStats() {
+  const snapshot = await db.statsSnapshot.findUnique({
+    where: { key: "municipales-2026" },
+  });
+  return snapshot?.data as MunicipalesStats | null;
+});
+
 export const getCommune = cache(async function getCommune(inseeCode: string) {
   // Get commune
   const commune = await db.commune.findUnique({

@@ -16,12 +16,12 @@ function getParityInfo(femaleRate: number): {
 } {
   const pct = Math.round(femaleRate * 100);
   if (pct >= 45) {
-    return { label: `${pct} %`, className: "text-green-700" };
+    return { label: `${pct} %`, className: "text-green-600 dark:text-green-400" };
   }
   if (pct >= 30) {
-    return { label: `${pct} %`, className: "text-yellow-700" };
+    return { label: `${pct} %`, className: "text-yellow-600 dark:text-yellow-400" };
   }
-  return { label: `${pct} %`, className: "text-red-700" };
+  return { label: `${pct} %`, className: "text-red-600 dark:text-red-400" };
 }
 
 export function CommuneRadiographie({

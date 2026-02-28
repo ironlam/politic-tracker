@@ -38,11 +38,18 @@ export function MissingMayorsTable({ mayors }: MissingMayorsTableProps) {
       {/* Desktop table */}
       <div className="hidden md:block overflow-x-auto">
         <table className="w-full text-sm">
+          <caption className="sr-only">Maires sortants absents des listes</caption>
           <thead>
             <tr className="border-b text-left text-muted-foreground">
-              <th className="py-3 px-2 font-medium">Nom</th>
-              <th className="py-3 px-2 font-medium">Parti</th>
-              <th className="py-3 px-2 font-medium">Maire depuis</th>
+              <th scope="col" className="py-3 px-2 font-medium">
+                Nom
+              </th>
+              <th scope="col" className="py-3 px-2 font-medium">
+                Parti
+              </th>
+              <th scope="col" className="py-3 px-2 font-medium">
+                Maire depuis
+              </th>
             </tr>
           </thead>
           <tbody>

@@ -107,33 +107,88 @@ export function CumulTable({ candidates }: CumulTableProps) {
       {/* Desktop table */}
       <div className="hidden md:block overflow-x-auto">
         <table className="w-full text-sm">
+          <caption className="sr-only">Candidats en cumul de mandats</caption>
           <thead>
             <tr className="border-b text-left text-muted-foreground">
               <th
+                scope="col"
                 className="py-3 px-2 font-medium cursor-pointer select-none hover:text-foreground transition-colors"
                 onClick={() => toggleSort("name")}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    toggleSort("name");
+                  }
+                }}
+                tabIndex={0}
+                role="button"
+                aria-sort={
+                  sortKey === "name" ? (sortDir === "asc" ? "ascending" : "descending") : "none"
+                }
               >
                 Nom{arrow("name")}
               </th>
               <th
+                scope="col"
                 className="py-3 px-2 font-medium cursor-pointer select-none hover:text-foreground transition-colors"
                 onClick={() => toggleSort("mandate")}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    toggleSort("mandate");
+                  }
+                }}
+                tabIndex={0}
+                role="button"
+                aria-sort={
+                  sortKey === "mandate" ? (sortDir === "asc" ? "ascending" : "descending") : "none"
+                }
               >
                 Mandat national{arrow("mandate")}
               </th>
               <th
+                scope="col"
                 className="py-3 px-2 font-medium cursor-pointer select-none hover:text-foreground transition-colors"
                 onClick={() => toggleSort("department")}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    toggleSort("department");
+                  }
+                }}
+                tabIndex={0}
+                role="button"
+                aria-sort={
+                  sortKey === "department"
+                    ? sortDir === "asc"
+                      ? "ascending"
+                      : "descending"
+                    : "none"
+                }
               >
                 Commune{arrow("department")}
               </th>
               <th
+                scope="col"
                 className="py-3 px-2 font-medium cursor-pointer select-none hover:text-foreground transition-colors"
                 onClick={() => toggleSort("party")}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    toggleSort("party");
+                  }
+                }}
+                tabIndex={0}
+                role="button"
+                aria-sort={
+                  sortKey === "party" ? (sortDir === "asc" ? "ascending" : "descending") : "none"
+                }
               >
                 Parti{arrow("party")}
               </th>
-              <th className="py-3 px-2 font-medium">Liste</th>
+              <th scope="col" className="py-3 px-2 font-medium">
+                Liste
+              </th>
             </tr>
           </thead>
           <tbody>

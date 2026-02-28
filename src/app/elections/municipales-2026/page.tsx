@@ -9,36 +9,10 @@ import { MunicipalesHero } from "@/components/elections/municipales/MunicipalesH
 import { MunicipalesChiffres } from "@/components/elections/municipales/MunicipalesChiffres";
 import { CommuneSearch } from "@/components/elections/municipales/CommuneSearch";
 import { ELECTION_GUIDES } from "@/config/election-guides";
-import { getDepartmentPartyData } from "@/lib/data/municipales";
+import { getDepartmentPartyData, getMunicipalesStats } from "@/lib/data/municipales";
 import { PartyMap } from "@/components/elections/municipales/PartyMap";
 
 export const revalidate = 300; // ISR: 5 minutes
-
-interface MunicipalesStats {
-  totalCandidacies: number;
-  totalLists: number;
-  totalCommunes: number;
-  communesWithCompetition: number;
-  communesUncontested: number;
-  averageCompetitionIndex: number;
-  parityRate: number;
-  parityByParty: Record<string, number>;
-  nationalPoliticiansCandidates: number;
-  mostContestedCommunes: Array<{
-    id: string;
-    name: string;
-    departmentCode: string;
-    population: number | null;
-    listCount: number;
-  }>;
-}
-
-const getMunicipalesStats = cache(async function getMunicipalesStats() {
-  const snapshot = await db.statsSnapshot.findUnique({
-    where: { key: "municipales-2026" },
-  });
-  return snapshot?.data as MunicipalesStats | null;
-});
 
 const getElection = cache(async function getElection() {
   return db.election.findUnique({

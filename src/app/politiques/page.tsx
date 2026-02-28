@@ -333,8 +333,6 @@ async function getFilterCounts() {
         senateurs: bigint;
         gouvernement: bigint;
         dirigeants: bigint;
-        active: bigint;
-        former: bigint;
       },
     ]
   >`
@@ -388,8 +386,7 @@ async function getFilterCounts() {
           SELECT 1 FROM "PartyMembership" pm
           WHERE pm."politicianId" = p.id AND pm."endDate" IS NULL AND pm.role != 'MEMBER'
         )
-      ) AS dirigeants,
-      -- (active/former counts removed — filter was not useful with 98% active)
+      ) AS dirigeants
     FROM "Politician" p
     WHERE p."publicationStatus" = 'PUBLISHED'
   `;

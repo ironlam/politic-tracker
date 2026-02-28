@@ -1,10 +1,8 @@
-import { cache } from "react";
 import { Metadata } from "next";
 import Link from "next/link";
-import { db } from "@/lib/db";
 import { Card, CardContent } from "@/components/ui/card";
 import { ParityChart } from "@/components/elections/municipales/ParityChart";
-import { getParityBySize, getParityOutliers } from "@/lib/data/municipales";
+import { getMunicipalesStats, getParityBySize, getParityOutliers } from "@/lib/data/municipales";
 
 export const revalidate = 300;
 
@@ -13,32 +11,6 @@ export const metadata: Metadata = {
   description:
     "Analyse de la parité femmes-hommes dans les candidatures aux élections municipales 2026 par parti, par taille de commune et par liste.",
 };
-
-interface MunicipalesStats {
-  totalCandidacies: number;
-  totalLists: number;
-  totalCommunes: number;
-  communesWithCompetition: number;
-  communesUncontested: number;
-  averageCompetitionIndex: number;
-  parityRate: number;
-  parityByParty: Record<string, number>;
-  nationalPoliticiansCandidates: number;
-  mostContestedCommunes: Array<{
-    id: string;
-    name: string;
-    departmentCode: string;
-    population: number | null;
-    listCount: number;
-  }>;
-}
-
-const getMunicipalesStats = cache(async function getMunicipalesStats() {
-  const snapshot = await db.statsSnapshot.findUnique({
-    where: { key: "municipales-2026" },
-  });
-  return snapshot?.data as MunicipalesStats | null;
-});
 
 function parityColor(rate: number): string {
   if (rate >= 0.45) return "text-green-600 dark:text-green-400";

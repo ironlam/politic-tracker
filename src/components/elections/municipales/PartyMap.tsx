@@ -194,7 +194,7 @@ function PartyMapComponent({ departments, mini = false }: PartyMapProps) {
   }
 
   return (
-    <div className="relative flex gap-6">
+    <div className="relative flex flex-col lg:flex-row gap-6">
       {/* Map area */}
       <div className="flex-1 min-w-0">
         <div className="relative" style={{ height: 520 }}>
@@ -239,7 +239,7 @@ function PartyMapComponent({ departments, mini = false }: PartyMapProps) {
         {domtomDepts.length > 0 && (
           <div
             aria-label="Territoires d'outre-mer"
-            className="flex justify-center gap-2 py-2 border-t border-border/50"
+            className="flex flex-wrap justify-center gap-2 py-2 border-t border-border/50"
           >
             <span className="text-xs text-muted-foreground self-center mr-2">Outre-mer :</span>
             {DOMTOM_CODES.map((code) => {
@@ -276,7 +276,7 @@ function PartyMapComponent({ departments, mini = false }: PartyMapProps) {
 
       {/* Sidebar: department details */}
       {selectedDept && (
-        <aside className="w-72 shrink-0 border rounded-lg p-4 bg-card max-h-[560px] overflow-y-auto">
+        <aside className="w-full lg:w-72 shrink-0 border rounded-lg p-4 bg-card lg:max-h-[560px] overflow-y-auto">
           <div className="flex items-center justify-between mb-3">
             <h3 className="font-bold text-lg">{selectedDept.name}</h3>
             <button

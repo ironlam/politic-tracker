@@ -24,20 +24,11 @@
 import "dotenv/config";
 import * as fs from "fs";
 import * as path from "path";
-import { TwitterApi } from "twitter-api-v2";
+import { postToTwitter, truncateForTwitter, twitterCharCount } from "../src/lib/social/post";
 
 // --- Config ---
 
-const TWITTER_API_KEY = process.env.TWITTER_API_KEY;
-const TWITTER_API_SECRET = process.env.TWITTER_API_SECRET;
-const TWITTER_ACCESS_TOKEN = process.env.TWITTER_ACCESS_TOKEN;
-const TWITTER_ACCESS_TOKEN_SECRET = process.env.TWITTER_ACCESS_TOKEN_SECRET;
-const TWITTER_HANDLE = process.env.TWITTER_HANDLE || "poligraph_fr";
-
-// Twitter counts URLs as 23 chars (t.co shortening)
-const TCO_URL_LENGTH = 23;
-// X Premium allows up to 25 000 chars (free = 280)
-const TWITTER_MAX_CHARS = 25_000;
+const TWITTER_MAX_CHARS = 25_000; // For preview display only
 
 // --- Parse tweet drafts from markdown ---
 
@@ -96,47 +87,6 @@ function parseTweetsFromMarkdown(filePath: string): ParsedTweet[] {
   return tweets;
 }
 
-// --- Twitter character counting ---
-// Twitter uses a "weighted" char count:
-// - Regular chars: 1 each
-// - URLs: always 23 chars (t.co)
-// - CJK chars: 2 each (not relevant for French)
-
-function twitterCharCount(text: string): number {
-  // Replace all URLs with 23-char placeholders for counting
-  const withoutUrls = text.replace(/https?:\/\/\S+/g, "");
-  const urlCount = (text.match(/https?:\/\/\S+/g) || []).length;
-  return withoutUrls.length + urlCount * TCO_URL_LENGTH;
-}
-
-function truncateForTwitter(content: string, link?: string): string {
-  // The link will be appended as a separate line
-  // Twitter counts it as 23 chars + 2 for the newlines
-  const linkCost = link ? TCO_URL_LENGTH + 2 : 0;
-  const maxContentChars = TWITTER_MAX_CHARS - linkCost;
-
-  let truncated = content;
-  if (twitterCharCount(truncated) > maxContentChars) {
-    // Truncate progressively until within budget
-    while (twitterCharCount(truncated) > maxContentChars - 3 && truncated.length > 0) {
-      // Cut at last newline or space
-      const lastBreak = Math.max(truncated.lastIndexOf("\n"), truncated.lastIndexOf(" "));
-      if (lastBreak > truncated.length / 2) {
-        truncated = truncated.substring(0, lastBreak);
-      } else {
-        truncated = truncated.substring(0, truncated.length - 10);
-      }
-    }
-    truncated = truncated.trimEnd() + "...";
-  }
-
-  if (link) {
-    truncated += `\n\n${link}`;
-  }
-
-  return truncated;
-}
-
 // --- Main ---
 
 async function main() {
@@ -189,51 +139,10 @@ async function main() {
     return;
   }
 
-  // Validate env
-  if (
-    !TWITTER_API_KEY ||
-    !TWITTER_API_SECRET ||
-    !TWITTER_ACCESS_TOKEN ||
-    !TWITTER_ACCESS_TOKEN_SECRET
-  ) {
-    console.error("Variables d'environnement manquantes :");
-    console.error("  TWITTER_API_KEY=xxxxxxxx");
-    console.error("  TWITTER_API_SECRET=xxxxxxxx");
-    console.error("  TWITTER_ACCESS_TOKEN=xxxxxxxx");
-    console.error("  TWITTER_ACCESS_TOKEN_SECRET=xxxxxxxx");
-    console.error("");
-    console.error("→ https://developer.x.com/en/portal/dashboard");
-    process.exit(1);
-  }
-
-  // Login with OAuth 1.0a (User Context)
-  console.log(`Connexion à X (@${TWITTER_HANDLE})...`);
-  const client = new TwitterApi({
-    appKey: TWITTER_API_KEY,
-    appSecret: TWITTER_API_SECRET,
-    accessToken: TWITTER_ACCESS_TOKEN,
-    accessSecret: TWITTER_ACCESS_TOKEN_SECRET,
-  });
-
-  // Verify credentials
-  try {
-    const me = await client.v2.me();
-    console.log(`Connecté en tant que @${me.data.username}\n`);
-  } catch (e: unknown) {
-    const message = e instanceof Error ? e.message : String(e);
-    console.error(`Erreur d'authentification: ${message}`);
-    console.error("Vérifie que tes tokens ont les permissions Read+Write.");
-    process.exit(1);
-  }
-
   // Post each selected tweet
   for (const tweet of selectedTweets) {
-    const twitterText = truncateForTwitter(tweet.content, tweet.link);
-
     try {
-      const response = await client.v2.tweet(twitterText);
-      const tweetId = response.data.id;
-      const url = `https://x.com/${TWITTER_HANDLE}/status/${tweetId}`;
+      const url = await postToTwitter(tweet.content, tweet.link);
       console.log(`✓ Tweet ${tweet.number} publié → ${url}`);
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : String(error);

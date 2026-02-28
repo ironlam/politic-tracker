@@ -7,6 +7,7 @@ import { syncFactchecksGrouped } from "./functions/sync-factchecks";
 import { syncLegislation } from "./functions/sync-legislation";
 import { syncPoliticians } from "./functions/sync-politicians";
 import { syncDaily } from "./functions/sync-daily";
+import { postSocial } from "./functions/post-social";
 import { syncPress } from "./functions/sync-press";
 import { syncVotes } from "./functions/sync-votes";
 
@@ -22,6 +23,7 @@ const groupedFunctions = [
   syncPoliticians,
   maintenance,
   syncDaily,
+  postSocial,
 ];
 
 // --- Individual script wrappers (admin SCRIPT_CATALOG) ---

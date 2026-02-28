@@ -161,34 +161,72 @@ export default async function FactCheckDetailPage({ params }: PageProps) {
         </CardContent>
       </Card>
 
-      {/* Politicians mentioned */}
-      {factCheck.mentions.length > 0 && (
-        <Card className="mb-6">
-          <CardHeader>
-            <h2 className="text-sm font-semibold">
-              Politiciens mentionnés ({factCheck.mentions.length})
-            </h2>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-2">
-              {factCheck.mentions.map((mention) => (
-                <Link
-                  key={mention.politician.slug}
-                  href={`/politiques/${mention.politician.slug}`}
-                  className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 hover:bg-muted transition-colors"
-                >
-                  <span className="text-sm font-medium">{mention.politician.fullName}</span>
-                  {mention.politician.currentParty && (
-                    <Badge variant="outline" className="text-xs">
-                      {mention.politician.currentParty.shortName}
-                    </Badge>
-                  )}
-                </Link>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {/* Politicians — split by role */}
+      {factCheck.mentions.length > 0 &&
+        (() => {
+          const claimants = factCheck.mentions.filter((m) => m.isClaimant);
+          const subjects = factCheck.mentions.filter((m) => !m.isClaimant);
+
+          return (
+            <Card className="mb-6">
+              <CardContent className="pt-6 space-y-4">
+                {claimants.length > 0 && (
+                  <div>
+                    <h2 className="text-sm font-semibold mb-2">
+                      Auteur{claimants.length > 1 ? "s" : ""} de la déclaration
+                    </h2>
+                    <div className="flex flex-wrap gap-2">
+                      {claimants.map((mention) => (
+                        <Link
+                          key={mention.politician.slug}
+                          href={`/politiques/${mention.politician.slug}`}
+                          className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 hover:bg-muted transition-colors"
+                        >
+                          <span className="text-sm font-medium">{mention.politician.fullName}</span>
+                          {mention.politician.currentParty && (
+                            <Badge variant="outline" className="text-xs">
+                              {mention.politician.currentParty.shortName}
+                            </Badge>
+                          )}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {subjects.length > 0 && (
+                  <div>
+                    <h2 className="text-sm font-semibold mb-2 text-muted-foreground">
+                      Politicien{subjects.length > 1 ? "s" : ""} concerné
+                      {subjects.length > 1 ? "s" : ""}
+                    </h2>
+                    <p className="text-xs text-muted-foreground mb-2">
+                      Mentionné{subjects.length > 1 ? "s" : ""} dans ce fact-check, mais pas auteur
+                      {subjects.length > 1 ? "s" : ""} de la déclaration vérifiée.
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {subjects.map((mention) => (
+                        <Link
+                          key={mention.politician.slug}
+                          href={`/politiques/${mention.politician.slug}`}
+                          className="inline-flex items-center gap-2 rounded-lg border border-dashed px-3 py-2 hover:bg-muted transition-colors"
+                        >
+                          <span className="text-sm text-muted-foreground">
+                            {mention.politician.fullName}
+                          </span>
+                          {mention.politician.currentParty && (
+                            <Badge variant="outline" className="text-xs">
+                              {mention.politician.currentParty.shortName}
+                            </Badge>
+                          )}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          );
+        })()}
 
       {/* Source link */}
       <div className="flex justify-center">

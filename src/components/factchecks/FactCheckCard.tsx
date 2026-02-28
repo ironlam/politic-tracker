@@ -14,11 +14,14 @@ interface FactCheckCardProps {
   source: string;
   publishedAt: Date;
   mentions: Array<{
+    isClaimant: boolean;
     politician: {
       slug: string;
       fullName: string;
     };
   }>;
+  /** When filtering by politician, highlight their role (claimant vs mentioned) */
+  highlightedSlug?: string;
 }
 
 // Accent border color per rating (matches VERDICT_GROUP_COLORS from labels.ts)
@@ -42,6 +45,7 @@ export function FactCheckCard({
   source,
   publishedAt,
   mentions,
+  highlightedSlug,
 }: FactCheckCardProps) {
   const ratingLabel = FACTCHECK_RATING_LABELS[verdictRating];
   const ratingColor = FACTCHECK_RATING_COLORS[verdictRating];
@@ -81,6 +85,19 @@ export function FactCheckCard({
       {/* Politicians mentioned */}
       {mentions.length > 0 && (
         <div className="mt-3 flex flex-wrap gap-1">
+          {highlightedSlug &&
+            (() => {
+              const highlighted = mentions.find((m) => m.politician.slug === highlightedSlug);
+              if (!highlighted) return null;
+              return (
+                <Badge
+                  variant={highlighted.isClaimant ? "default" : "secondary"}
+                  className="text-xs"
+                >
+                  {highlighted.isClaimant ? "Propos direct" : "Mentionné"}
+                </Badge>
+              );
+            })()}
           {visiblePoliticians.map((mention) => (
             <Link
               key={mention.politician.slug}

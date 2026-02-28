@@ -122,7 +122,8 @@ async function getFactChecks(params: {
       take: limit,
       include: {
         mentions: {
-          include: {
+          select: {
+            isClaimant: true,
             politician: {
               select: { slug: true, fullName: true },
             },
@@ -445,6 +446,7 @@ export default async function FactChecksPage({ searchParams }: PageProps) {
               source={fc.source}
               publishedAt={fc.publishedAt}
               mentions={fc.mentions}
+              highlightedSlug={politicianSlug}
             />
           ))}
         </div>

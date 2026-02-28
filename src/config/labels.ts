@@ -1119,3 +1119,17 @@ export const VERDICT_GROUP_COLORS: Record<string, string> = {
   faux: "#c1121f",
   inverifiable: "#6b7280",
 };
+
+// ============================================
+// PHOTO SOURCES (admin forms)
+// ============================================
+
+export const PHOTO_SOURCES = [
+  { value: "assemblee-nationale", label: "Assemblée nationale" },
+  { value: "senat", label: "Sénat" },
+  { value: "gouvernement", label: "Gouvernement" },
+  { value: "hatvp", label: "HATVP" },
+  { value: "nosdeputes", label: "NosDéputés.fr" },
+  { value: "wikidata", label: "Wikidata" },
+  { value: "manual", label: "Manuel" },
+] as const;

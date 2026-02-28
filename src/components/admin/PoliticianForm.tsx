@@ -10,7 +10,7 @@ import { Select } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { normalizeImageUrl } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-import { DATA_SOURCE_LABELS } from "@/config/labels";
+import { DATA_SOURCE_LABELS, PHOTO_SOURCES } from "@/config/labels";
 import type { DataSource } from "@/types";
 
 interface ExternalIdData {
@@ -57,15 +57,6 @@ const DATA_SOURCES: DataSource[] = [
   "MANUAL",
 ];
 
-const PHOTO_SOURCES = [
-  { value: "nosdeputes", label: "NosDéputés.fr" },
-  { value: "assemblee-nationale", label: "Assemblée nationale" },
-  { value: "senat", label: "Sénat" },
-  { value: "gouvernement", label: "Gouvernement" },
-  { value: "hatvp", label: "HATVP" },
-  { value: "wikidata", label: "Wikidata" },
-  { value: "manual", label: "Manuel" },
-];
 
 export function PoliticianForm({ initialData, parties }: PoliticianFormProps) {
   const router = useRouter();

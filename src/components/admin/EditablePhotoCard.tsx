@@ -9,16 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { normalizeImageUrl } from "@/lib/utils";
-
-const PHOTO_SOURCES = [
-  { value: "assemblee-nationale", label: "Assemblée nationale" },
-  { value: "senat", label: "Sénat" },
-  { value: "gouvernement", label: "Gouvernement" },
-  { value: "hatvp", label: "HATVP" },
-  { value: "nosdeputes", label: "NosDéputés.fr" },
-  { value: "wikidata", label: "Wikidata" },
-  { value: "manual", label: "Manuelle" },
-] as const;
+import { PHOTO_SOURCES } from "@/config/labels";
 
 interface EditablePhotoCardProps {
   politician: {

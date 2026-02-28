@@ -180,3 +180,109 @@ export const getDepartmentPartyData = cache(async function getDepartmentPartyDat
     dominantParty: dept.parties[0]?.label ?? null, // Already sorted by listCount DESC
   }));
 });
+
+export const getParityBySize = cache(async function getParityBySize() {
+  const election = await db.election.findUnique({
+    where: { slug: "municipales-2026" },
+    select: { id: true },
+  });
+  if (!election) return [];
+
+  const rows = await db.$queryRaw<
+    Array<{
+      bracket: string;
+      femaleCount: number;
+      totalCount: number;
+    }>
+  >(Prisma.sql`
+    SELECT
+      CASE
+        WHEN co.population < 1000 THEN '< 1 000 hab.'
+        WHEN co.population < 10000 THEN '1 000 - 10 000 hab.'
+        WHEN co.population < 50000 THEN '10 000 - 50 000 hab.'
+        ELSE '50 000+ hab.'
+      END as bracket,
+      COUNT(*) FILTER (WHERE ca."gender" = 'F')::int as "femaleCount",
+      COUNT(*)::int as "totalCount"
+    FROM "Candidacy" c
+    JOIN "Commune" co ON c."communeId" = co.id
+    JOIN "Candidate" ca ON c."candidateId" = ca.id
+    WHERE c."electionId" = ${election.id} AND ca."gender" IS NOT NULL AND co.population IS NOT NULL
+    GROUP BY bracket
+    ORDER BY MIN(co.population)
+  `);
+
+  return rows.map((r) => ({
+    bracket: r.bracket,
+    femaleRate: r.totalCount > 0 ? r.femaleCount / r.totalCount : 0,
+    femaleCount: r.femaleCount,
+    maleCount: r.totalCount - r.femaleCount,
+    totalCount: r.totalCount,
+  }));
+});
+
+export const getParityOutliers = cache(async function getParityOutliers() {
+  const election = await db.election.findUnique({
+    where: { slug: "municipales-2026" },
+    select: { id: true },
+  });
+  if (!election) return { best: [], worst: [] };
+
+  // Best parity lists (closest to 50%)
+  const best = await db.$queryRaw<
+    Array<{
+      listName: string;
+      communeId: string;
+      communeName: string;
+      departmentCode: string;
+      femaleRate: number;
+      candidateCount: number;
+    }>
+  >(Prisma.sql`
+    SELECT
+      c."listName",
+      co.id as "communeId",
+      co.name as "communeName",
+      co."departmentCode",
+      COUNT(*) FILTER (WHERE ca."gender" = 'F')::float / NULLIF(COUNT(*)::float, 0) as "femaleRate",
+      COUNT(*)::int as "candidateCount"
+    FROM "Candidacy" c
+    JOIN "Commune" co ON c."communeId" = co.id
+    JOIN "Candidate" ca ON c."candidateId" = ca.id
+    WHERE c."electionId" = ${election.id} AND ca."gender" IS NOT NULL AND c."listName" IS NOT NULL
+    GROUP BY c."listName", co.id, co.name, co."departmentCode"
+    HAVING COUNT(*) >= 10
+    ORDER BY ABS(0.5 - COUNT(*) FILTER (WHERE ca."gender" = 'F')::float / NULLIF(COUNT(*)::float, 0)) ASC
+    LIMIT 10
+  `);
+
+  // Worst parity lists (furthest from 50%)
+  const worst = await db.$queryRaw<
+    Array<{
+      listName: string;
+      communeId: string;
+      communeName: string;
+      departmentCode: string;
+      femaleRate: number;
+      candidateCount: number;
+    }>
+  >(Prisma.sql`
+    SELECT
+      c."listName",
+      co.id as "communeId",
+      co.name as "communeName",
+      co."departmentCode",
+      COUNT(*) FILTER (WHERE ca."gender" = 'F')::float / NULLIF(COUNT(*)::float, 0) as "femaleRate",
+      COUNT(*)::int as "candidateCount"
+    FROM "Candidacy" c
+    JOIN "Commune" co ON c."communeId" = co.id
+    JOIN "Candidate" ca ON c."candidateId" = ca.id
+    WHERE c."electionId" = ${election.id} AND ca."gender" IS NOT NULL AND c."listName" IS NOT NULL
+    GROUP BY c."listName", co.id, co.name, co."departmentCode"
+    HAVING COUNT(*) >= 10
+    ORDER BY ABS(0.5 - COUNT(*) FILTER (WHERE ca."gender" = 'F')::float / NULLIF(COUNT(*)::float, 0)) DESC
+    LIMIT 10
+  `);
+
+  return { best, worst };
+});

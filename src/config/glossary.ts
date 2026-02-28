@@ -81,7 +81,7 @@ export const HATVP_TERMS = {
 
 export const METRIC_TERMS = {
   prominence:
-    "Score calculé automatiquement à partir de l'activité parlementaire, de la couverture médiatique et du rôle institutionnel.",
+    "Score de notoriété calculé à partir de l'activité parlementaire, de la couverture médiatique et du rôle institutionnel.",
   participationRate:
     "Pourcentage de parlementaires ayant voté (pour, contre ou abstention) par rapport au nombre total de membres.",
   portefeuilleTotal:

@@ -9,7 +9,7 @@ export type MandateFilter = "" | "depute" | "senateur" | "gouvernement" | "dirig
 export type StatusFilter = "" | "active" | "former"; // kept for backward compat — unused in UI
 
 const SORT_OPTIONS: Record<SortOption, string> = {
-  prominence: "Importance",
+  prominence: "Notoriété",
   alpha: "A - Z",
   "alpha-desc": "Z - A",
   recent: "Plus récents",

@@ -14,14 +14,11 @@
 import "dotenv/config";
 import * as fs from "fs";
 import * as path from "path";
-import { BskyAgent, RichText } from "@atproto/api";
+import { postToBluesky, truncateForBluesky } from "../src/lib/social/post";
 
 // --- Config ---
 
-const BLUESKY_HANDLE = process.env.BLUESKY_HANDLE;
-const BLUESKY_APP_PASSWORD = process.env.BLUESKY_APP_PASSWORD;
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://poligraph.fr";
-const BLUESKY_MAX_CHARS = 300; // Bluesky limit (graphemes)
+const BLUESKY_MAX_CHARS = 300; // For preview display only
 
 // --- Parse tweet drafts from markdown ---
 
@@ -80,42 +77,6 @@ function parseTweetsFromMarkdown(filePath: string): ParsedTweet[] {
   return tweets;
 }
 
-// --- Truncate content for Bluesky's 300 grapheme limit ---
-
-function truncateForBluesky(content: string, link?: string): string {
-  // Reserve space for link on a new line
-  const linkSuffix = link ? `\n\n${link}` : "";
-  const linkLen = linkSuffix.length;
-  const maxContentLen = BLUESKY_MAX_CHARS - linkLen;
-
-  let truncated = content;
-  if (truncated.length > maxContentLen) {
-    truncated = truncated.substring(0, maxContentLen - 3).trimEnd() + "...";
-  }
-
-  return truncated + linkSuffix;
-}
-
-// --- Post to Bluesky ---
-
-async function postToBluesky(agent: BskyAgent, text: string): Promise<string> {
-  // RichText handles link detection and facets (clickable links)
-  const rt = new RichText({ text });
-  await rt.detectFacets(agent);
-
-  const response = await agent.post({
-    text: rt.text,
-    facets: rt.facets,
-    createdAt: new Date().toISOString(),
-  });
-
-  // Extract the post URI to build the web URL
-  const uri = response.uri;
-  // uri format: at://did:plc:xxx/app.bsky.feed.post/rkey
-  const rkey = uri.split("/").pop();
-  return `https://bsky.app/profile/${BLUESKY_HANDLE}/post/${rkey}`;
-}
-
 // --- Main ---
 
 async function main() {
@@ -167,29 +128,10 @@ async function main() {
     return;
   }
 
-  // Validate env
-  if (!BLUESKY_HANDLE || !BLUESKY_APP_PASSWORD) {
-    console.error("Variables d'environnement manquantes :");
-    console.error("  BLUESKY_HANDLE=poligraph-fr.bsky.social");
-    console.error("  BLUESKY_APP_PASSWORD=xxxx-xxxx-xxxx-xxxx");
-    process.exit(1);
-  }
-
-  // Login
-  console.log(`Connexion à Bluesky (${BLUESKY_HANDLE})...`);
-  const agent = new BskyAgent({ service: "https://bsky.social" });
-  await agent.login({
-    identifier: BLUESKY_HANDLE,
-    password: BLUESKY_APP_PASSWORD,
-  });
-  console.log("Connecté.\n");
-
   // Post each selected tweet
   for (const tweet of selectedTweets) {
-    const blueskyText = truncateForBluesky(tweet.content, tweet.link);
-
     try {
-      const url = await postToBluesky(agent, blueskyText);
+      const url = await postToBluesky(tweet.content, tweet.link);
       console.log(`✓ Tweet ${tweet.number} publié → ${url}`);
     } catch (error) {
       console.error(`✗ Tweet ${tweet.number} échoué:`, error);

@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { getCommune } from "@/lib/data/municipales";
 import { CommuneRadiographie } from "@/components/elections/municipales/CommuneRadiographie";
 import { ListCard } from "@/components/elections/municipales/ListCard";
+import { AlerteCumul } from "@/components/elections/municipales/PoliticianBridge";
 import { EventJsonLd, BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 
 export const revalidate = 3600; // ISR: revalidate every hour
@@ -113,6 +114,28 @@ export default async function CommuneDetailPage({ params }: PageProps) {
             )}
           </div>
         </div>
+
+        {/* Alerte cumul */}
+        {commune.stats.nationalPoliticiansCount > 0 &&
+          (() => {
+            // Extract unique mandate types from candidates with linked politicians
+            const mandateTypes = [
+              ...new Set(
+                commune.lists
+                  .flatMap((l) => l.members)
+                  .filter((m) => m.politician?.mandates?.length)
+                  .flatMap((m) => m.politician!.mandates.map((md) => md.type))
+              ),
+            ];
+            return (
+              <div className="mb-6">
+                <AlerteCumul
+                  count={commune.stats.nationalPoliticiansCount}
+                  mandateTypes={mandateTypes}
+                />
+              </div>
+            );
+          })()}
 
         {/* Radiographie */}
         <section className="mb-8">

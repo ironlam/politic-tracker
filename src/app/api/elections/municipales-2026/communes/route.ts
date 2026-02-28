@@ -168,34 +168,40 @@ async function handleTextSearch(query: string): Promise<Response> {
   let communes: CommuneRow[];
 
   if (isPostalCode) {
-    // Search by postal code prefix match
-    communes = await db.commune.findMany({
-      where: {
-        postalCodes: { has: query },
-      },
-      select: {
-        id: true,
-        name: true,
-        departmentCode: true,
-        departmentName: true,
-        population: true,
-        totalSeats: true,
-      },
-      orderBy: { population: "desc" },
-      take: 8,
-    });
-
-    // If exact postal code match returns nothing, try prefix match for partial codes
-    if (communes.length === 0 && query.length < 5) {
+    if (query.length === 5) {
+      // Exact 5-digit postal code match
       communes = await db.commune.findMany({
         where: {
-          postalCodes: {
-            hasSome: [], // Prisma doesn't support prefix on arrays — fall back to name search
-          },
+          postalCodes: { has: query },
         },
-        take: 0,
+        select: {
+          id: true,
+          name: true,
+          departmentCode: true,
+          departmentName: true,
+          population: true,
+          totalSeats: true,
+        },
+        orderBy: { population: "desc" },
+        take: 8,
       });
-      // For partial postal codes, fall through to name search as fallback
+    } else if (query.length <= 3) {
+      // 2-3 digits: interpret as department code prefix
+      communes = await db.commune.findMany({
+        where: { departmentCode: query },
+        select: {
+          id: true,
+          name: true,
+          departmentCode: true,
+          departmentName: true,
+          population: true,
+          totalSeats: true,
+        },
+        orderBy: { population: "desc" },
+        take: 8,
+      });
+    } else {
+      // 4 digits: partial postal code — no efficient way to search, fall through to name search
       communes = await db.commune.findMany({
         where: {
           name: { contains: query, mode: "insensitive" },
@@ -318,6 +324,7 @@ async function handleDepartmentFilter(dept: string): Promise<Response> {
       totalSeats: true,
     },
     orderBy: { population: "desc" },
+    take: 100,
   });
 
   const communeIds = communes.map((c) => c.id);

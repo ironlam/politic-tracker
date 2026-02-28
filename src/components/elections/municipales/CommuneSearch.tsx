@@ -220,6 +220,7 @@ export function CommuneSearch({
               ref={inputRef}
               id="commune-search-input"
               type="search"
+              role="combobox"
               value={query}
               onChange={(e) => {
                 setQuery(e.target.value);

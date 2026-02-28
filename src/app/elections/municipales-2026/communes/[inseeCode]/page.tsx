@@ -19,12 +19,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const commune = await getCommune(inseeCode);
 
   if (!commune) {
-    return { title: "Commune non trouvee" };
+    return { title: "Commune non trouvée" };
   }
 
   const { stats } = commune;
-  const title = `Municipales 2026 a ${commune.name} — Candidats et listes | Poligraph`;
-  const description = `Decouvrez les ${stats.listCount} listes et ${stats.candidateCount} candidats aux elections municipales 2026 a ${commune.name} (${commune.departmentName}).`;
+  const title = `Municipales 2026 à ${commune.name} — Candidats et listes | Poligraph`;
+  const description = `Découvrez les ${stats.listCount} listes et ${stats.candidateCount} candidats aux élections municipales 2026 à ${commune.name} (${commune.departmentName}).`;
 
   return {
     title,
@@ -49,17 +49,19 @@ export default async function CommuneDetailPage({ params }: PageProps) {
 
   return (
     <>
-      <EventJsonLd
-        name={`Municipales 2026 - ${commune.name}`}
-        description={`Elections municipales 2026 a ${commune.name} (${commune.departmentName})`}
-        startDate={commune.round1Date?.toISOString() || ""}
-        location={commune.name}
-        url={communeUrl}
-      />
+      {commune.round1Date && (
+        <EventJsonLd
+          name={`Municipales 2026 - ${commune.name}`}
+          description={`Élections municipales 2026 à ${commune.name} (${commune.departmentName})`}
+          startDate={commune.round1Date.toISOString()}
+          location={commune.name}
+          url={communeUrl}
+        />
+      )}
       <BreadcrumbJsonLd
         items={[
           { name: "Accueil", url: siteUrl },
-          { name: "Elections", url: `${siteUrl}/elections` },
+          { name: "Élections", url: `${siteUrl}/elections` },
           {
             name: "Municipales 2026",
             url: `${siteUrl}/elections/municipales-2026`,
@@ -79,7 +81,7 @@ export default async function CommuneDetailPage({ params }: PageProps) {
             <li aria-hidden="true">/</li>
             <li>
               <Link href="/elections" className="hover:text-foreground transition-colors">
-                Elections
+                Élections
               </Link>
             </li>
             <li aria-hidden="true">/</li>
@@ -110,7 +112,7 @@ export default async function CommuneDetailPage({ params }: PageProps) {
               </Badge>
             )}
             {commune.totalSeats != null && (
-              <Badge variant="outline">{commune.totalSeats} sieges</Badge>
+              <Badge variant="outline">{commune.totalSeats} sièges</Badge>
             )}
           </div>
         </div>
@@ -167,7 +169,7 @@ export default async function CommuneDetailPage({ params }: PageProps) {
               ))}
             </div>
           ) : (
-            <p className="text-muted-foreground">Aucune liste deposee pour le moment.</p>
+            <p className="text-muted-foreground">Aucune liste déposée pour le moment.</p>
           )}
         </section>
       </main>

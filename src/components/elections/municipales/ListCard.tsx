@@ -98,7 +98,7 @@ function ParityIndicator({ femaleCount, total }: { femaleCount: number; total: n
           <path d="M12 17h.01" />
         </svg>
       )}
-      <span className="sr-only">{isParityOk ? "Parite respectee" : "Parite insuffisante"}</span>
+      <span className="sr-only">{isParityOk ? "Parité respectée" : "Parité insuffisante"}</span>
     </span>
   );
 }
@@ -122,6 +122,7 @@ export function ListCard({
           onClick={() => setExpanded((prev) => !prev)}
           className="w-full text-left flex items-center gap-3"
           aria-expanded={expanded}
+          aria-label={`Voir les candidats de la liste ${name}`}
         >
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2 mb-1">
@@ -133,7 +134,7 @@ export function ListCard({
               )}
             </div>
             <p className="text-sm text-muted-foreground">
-              Tete de liste : {teteDeListe.candidateName}
+              Tête de liste : {teteDeListe.candidateName}
             </p>
           </div>
 

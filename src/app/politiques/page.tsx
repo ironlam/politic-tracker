@@ -1,10 +1,9 @@
 import { Metadata } from "next";
-import Link from "next/link";
 import { cacheTag, cacheLife } from "next/cache";
 import { db } from "@/lib/db";
 import { type SortOption, type MandateFilter } from "@/components/politicians/FilterBar";
 import { MandateType } from "@/generated/prisma";
-import { Card, CardContent } from "@/components/ui/card";
+import { StatCard } from "@/components/ui/StatCard";
 import { SearchForm } from "@/components/politicians/SearchForm";
 import { PoliticiansGrid } from "@/components/politicians/PoliticiansGrid";
 import { ExportButton } from "@/components/ui/ExportButton";
@@ -473,30 +472,15 @@ export default async function PolitiquesPage({ searchParams }: PageProps) {
                 ? "/politiques"
                 : `/politiques?mandate=${mandate}`;
           return (
-            <Link key={key} href={href} prefetch={false}>
-              <Card
-                className={`cursor-pointer transition-all hover:shadow-md hover:-translate-y-0.5 border-l-4 ${
-                  isActive ? "ring-2 ring-primary shadow-md" : ""
-                }`}
-                style={{
-                  borderLeftColor: accent.border,
-                  backgroundColor: isActive ? accent.bg : undefined,
-                }}
-              >
-                <CardContent className="p-3 py-3">
-                  <div
-                    className="text-3xl font-display font-extrabold tracking-tight"
-                    style={{ color: accent.border }}
-                  >
-                    {count}
-                  </div>
-                  <div className="text-sm font-semibold mt-0.5 leading-tight">{accent.label}</div>
-                  <div className="text-xs text-muted-foreground mt-1 leading-snug line-clamp-2">
-                    {accent.desc}
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
+            <StatCard
+              key={key}
+              count={count}
+              label={accent.label}
+              description={accent.desc}
+              accent={accent}
+              href={href}
+              isActive={isActive}
+            />
           );
         })}
       </div>

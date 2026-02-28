@@ -3,6 +3,7 @@ import Link from "next/link";
 import { cacheTag, cacheLife } from "next/cache";
 import { db } from "@/lib/db";
 import { Card, CardContent } from "@/components/ui/card";
+import { StatCard } from "@/components/ui/StatCard";
 import { Badge } from "@/components/ui/badge";
 import { ExportButton } from "@/components/ui/ExportButton";
 import { AffairesFilterBar } from "@/components/affairs/AffairesFilterBar";
@@ -440,36 +441,15 @@ export default async function AffairesPage({ searchParams }: PageProps) {
           const isActive = superCatFilter === superCat;
           const accent = SUPER_CATEGORY_ACCENT[superCat];
           return (
-            <Link
+            <StatCard
               key={superCat}
+              count={count}
+              label={AFFAIR_SUPER_CATEGORY_LABELS[superCat]}
+              description={AFFAIR_SUPER_CATEGORY_DESCRIPTIONS[superCat]}
+              accent={accent}
               href={isActive ? "/affaires" : buildUrl({ supercat: superCat })}
-              prefetch={false}
-            >
-              <Card
-                className={`cursor-pointer transition-all hover:shadow-md hover:-translate-y-0.5 border-l-4 ${
-                  isActive ? "ring-2 ring-primary shadow-md" : ""
-                }`}
-                style={{
-                  borderLeftColor: accent.border,
-                  backgroundColor: isActive ? accent.bg : undefined,
-                }}
-              >
-                <CardContent className="p-3 py-3">
-                  <div
-                    className="text-3xl font-display font-extrabold tracking-tight"
-                    style={{ color: accent.border }}
-                  >
-                    {count}
-                  </div>
-                  <div className="text-sm font-semibold mt-0.5 leading-tight">
-                    {AFFAIR_SUPER_CATEGORY_LABELS[superCat]}
-                  </div>
-                  <div className="text-xs text-muted-foreground mt-1 leading-snug line-clamp-2">
-                    {AFFAIR_SUPER_CATEGORY_DESCRIPTIONS[superCat]}
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
+              isActive={isActive}
+            />
           );
         })}
       </div>
@@ -531,7 +511,7 @@ export default async function AffairesPage({ searchParams }: PageProps) {
               Rôle : {activeGroups.map((g) => INVOLVEMENT_GROUP_LABELS[g]).join(", ")}
             </Badge>
           )}
-          <Link href="/affaires" className="text-blue-600 hover:underline ml-2">
+          <Link href="/affaires" className="text-primary hover:underline ml-2">
             Effacer les filtres
           </Link>
         </div>

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { cacheTag, cacheLife } from "next/cache";
 import { db } from "@/lib/db";
 import { Card, CardContent } from "@/components/ui/card";
+import { StatCard } from "@/components/ui/StatCard";
 import { Badge } from "@/components/ui/badge";
 import { FactCheckCard } from "@/components/factchecks/FactCheckCard";
 import { FactChecksFilterBar } from "@/components/factchecks/FactChecksFilterBar";
@@ -267,64 +268,34 @@ export default async function FactChecksPage({ searchParams }: PageProps) {
 
       {/* Stats cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-        <Card className="border-l-4" style={{ borderLeftColor: VERDICT_ACCENT.total.border }}>
-          <CardContent className="p-3 py-3">
-            <div
-              className="text-3xl font-display font-extrabold tracking-tight"
-              style={{ color: VERDICT_ACCENT.total.border }}
-            >
-              {stats.totalFactChecks}
-            </div>
-            <div className="text-sm font-semibold mt-0.5 leading-tight">Fact-checks</div>
-            <div className="text-xs text-muted-foreground mt-1 leading-snug">
-              Total des vérifications
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-l-4" style={{ borderLeftColor: VERDICT_ACCENT.faux.border }}>
-          <CardContent className="p-3 py-3">
-            <div
-              className="text-3xl font-display font-extrabold tracking-tight"
-              style={{ color: VERDICT_ACCENT.faux.border }}
-            >
-              {(stats.byRating["FALSE"] || 0) + (stats.byRating["MOSTLY_FALSE"] || 0)}
-            </div>
-            <div className="text-sm font-semibold mt-0.5 leading-tight">Faux / Plutôt faux</div>
-            <div className="text-xs text-muted-foreground mt-1 leading-snug">
-              Déclarations réfutées
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-l-4" style={{ borderLeftColor: VERDICT_ACCENT.trompeur.border }}>
-          <CardContent className="p-3 py-3">
-            <div
-              className="text-3xl font-display font-extrabold tracking-tight"
-              style={{ color: VERDICT_ACCENT.trompeur.border }}
-            >
-              {(stats.byRating["HALF_TRUE"] || 0) +
-                (stats.byRating["MISLEADING"] || 0) +
-                (stats.byRating["OUT_OF_CONTEXT"] || 0)}
-            </div>
-            <div className="text-sm font-semibold mt-0.5 leading-tight">Trompeur / Partiel</div>
-            <div className="text-xs text-muted-foreground mt-1 leading-snug">
-              Contexte incomplet
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-l-4" style={{ borderLeftColor: VERDICT_ACCENT.vrai.border }}>
-          <CardContent className="p-3 py-3">
-            <div
-              className="text-3xl font-display font-extrabold tracking-tight"
-              style={{ color: VERDICT_ACCENT.vrai.border }}
-            >
-              {(stats.byRating["TRUE"] || 0) + (stats.byRating["MOSTLY_TRUE"] || 0)}
-            </div>
-            <div className="text-sm font-semibold mt-0.5 leading-tight">Vrai / Plutôt vrai</div>
-            <div className="text-xs text-muted-foreground mt-1 leading-snug">
-              Déclarations vérifiées
-            </div>
-          </CardContent>
-        </Card>
+        <StatCard
+          count={stats.totalFactChecks}
+          label="Fact-checks"
+          description="Total des vérifications"
+          accent={VERDICT_ACCENT.total}
+        />
+        <StatCard
+          count={(stats.byRating["FALSE"] || 0) + (stats.byRating["MOSTLY_FALSE"] || 0)}
+          label="Faux / Plutôt faux"
+          description="Déclarations réfutées"
+          accent={VERDICT_ACCENT.faux}
+        />
+        <StatCard
+          count={
+            (stats.byRating["HALF_TRUE"] || 0) +
+            (stats.byRating["MISLEADING"] || 0) +
+            (stats.byRating["OUT_OF_CONTEXT"] || 0)
+          }
+          label="Trompeur / Partiel"
+          description="Contexte incomplet"
+          accent={VERDICT_ACCENT.trompeur}
+        />
+        <StatCard
+          count={(stats.byRating["TRUE"] || 0) + (stats.byRating["MOSTLY_TRUE"] || 0)}
+          label="Vrai / Plutôt vrai"
+          description="Déclarations vérifiées"
+          accent={VERDICT_ACCENT.vrai}
+        />
       </div>
 
       {/* Verdict legend */}

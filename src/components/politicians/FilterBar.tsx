@@ -2,12 +2,11 @@
 
 import { useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Badge } from "@/components/ui/badge";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
 
 export type SortOption = "prominence" | "alpha" | "alpha-desc" | "recent" | "affairs";
 export type MandateFilter = "" | "depute" | "senateur" | "gouvernement" | "dirigeants";
-export type StatusFilter = "" | "active" | "former";
+export type StatusFilter = "" | "active" | "former"; // kept for backward compat — unused in UI
 
 const SORT_OPTIONS: Record<SortOption, string> = {
   prominence: "Importance",
@@ -28,14 +27,11 @@ const MANDATE_OPTIONS: Record<MandateFilter, string> = {
 interface FilterBarProps {
   currentSort: SortOption;
   currentMandate: MandateFilter;
-  currentStatus: StatusFilter;
   counts: {
     deputes: number;
     senateurs: number;
     gouvernement: number;
     dirigeants: number;
-    active: number;
-    former: number;
   };
   onLoadingChange?: (loading: boolean) => void;
 }
@@ -43,7 +39,6 @@ interface FilterBarProps {
 export function FilterBar({
   currentSort,
   currentMandate,
-  currentStatus,
   counts,
   onLoadingChange,
 }: FilterBarProps) {
@@ -122,51 +117,6 @@ export function FilterBar({
             );
           })}
         </select>
-      </div>
-
-      {/* Status filter (active/former) */}
-      <div
-        className="flex items-center gap-2 sm:border-l sm:pl-4 w-full sm:w-auto"
-        role="group"
-        aria-label="Filtrer par statut"
-      >
-        <Badge
-          variant={currentStatus === "" ? "default" : "outline"}
-          className="cursor-pointer hover:bg-primary/10 transition-colors"
-          onClick={() => updateParams("status", "")}
-          role="button"
-          tabIndex={0}
-          aria-pressed={currentStatus === ""}
-          onKeyDown={(e) => e.key === "Enter" && updateParams("status", "")}
-        >
-          Tous
-        </Badge>
-        <Badge
-          variant={currentStatus === "active" ? "default" : "outline"}
-          className="cursor-pointer hover:bg-primary/10 transition-colors"
-          onClick={() => updateParams("status", currentStatus === "active" ? "" : "active")}
-          role="button"
-          tabIndex={0}
-          aria-pressed={currentStatus === "active"}
-          onKeyDown={(e) =>
-            e.key === "Enter" && updateParams("status", currentStatus === "active" ? "" : "active")
-          }
-        >
-          Actifs ({counts.active})
-        </Badge>
-        <Badge
-          variant={currentStatus === "former" ? "secondary" : "outline"}
-          className="cursor-pointer hover:bg-muted transition-colors"
-          onClick={() => updateParams("status", currentStatus === "former" ? "" : "former")}
-          role="button"
-          tabIndex={0}
-          aria-pressed={currentStatus === "former"}
-          onKeyDown={(e) =>
-            e.key === "Enter" && updateParams("status", currentStatus === "former" ? "" : "former")
-          }
-        >
-          Anciens ({counts.former})
-        </Badge>
       </div>
 
       {/* Loading indicator — at the end so it doesn't displace filters */}

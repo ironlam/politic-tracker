@@ -2,11 +2,7 @@ import { Metadata } from "next";
 import Link from "next/link";
 import { cacheTag, cacheLife } from "next/cache";
 import { db } from "@/lib/db";
-import {
-  type SortOption,
-  type MandateFilter,
-  type StatusFilter,
-} from "@/components/politicians/FilterBar";
+import { type SortOption, type MandateFilter } from "@/components/politicians/FilterBar";
 import { MandateType } from "@/generated/prisma";
 import { Card, CardContent } from "@/components/ui/card";
 import { SearchForm } from "@/components/politicians/SearchForm";
@@ -97,7 +93,6 @@ async function queryPoliticians(
   partyId?: string,
   withConviction?: boolean,
   mandateFilter?: MandateFilter,
-  statusFilter?: StatusFilter,
   sortOption: SortOption = "alpha",
   page = 1
 ) {
@@ -158,20 +153,6 @@ async function queryPoliticians(
           isCurrent: true,
         },
       },
-    });
-  } else if (statusFilter === "active") {
-    // Has any current mandate OR significant party role
-    conditions.push({
-      OR: [
-        { mandates: { some: { isCurrent: true } } },
-        { partyHistory: { some: { endDate: null, role: { not: "MEMBER" } } } },
-      ],
-    });
-  } else if (statusFilter === "former") {
-    // No current mandate AND no significant party role
-    conditions.push({
-      mandates: { none: { isCurrent: true } },
-      partyHistory: { none: { endDate: null, role: { not: "MEMBER" } } },
     });
   }
 
@@ -282,22 +263,13 @@ async function getPoliticiansFiltered(
   partyId?: string,
   withConviction?: boolean,
   mandateFilter?: MandateFilter,
-  statusFilter?: StatusFilter,
   sortOption: SortOption = "alpha",
   page = 1
 ) {
   "use cache";
   cacheTag("politicians");
   cacheLife("minutes");
-  return queryPoliticians(
-    undefined,
-    partyId,
-    withConviction,
-    mandateFilter,
-    statusFilter,
-    sortOption,
-    page
-  );
+  return queryPoliticians(undefined, partyId, withConviction, mandateFilter, sortOption, page);
 }
 
 // Uncached path — free-text search creates unbounded key space
@@ -306,19 +278,10 @@ async function searchPoliticians(
   partyId?: string,
   withConviction?: boolean,
   mandateFilter?: MandateFilter,
-  statusFilter?: StatusFilter,
   sortOption: SortOption = "alpha",
   page = 1
 ) {
-  return queryPoliticians(
-    search,
-    partyId,
-    withConviction,
-    mandateFilter,
-    statusFilter,
-    sortOption,
-    page
-  );
+  return queryPoliticians(search, partyId, withConviction, mandateFilter, sortOption, page);
 }
 
 // Router: use cached path when no search, uncached when searching
@@ -327,29 +290,13 @@ async function getPoliticians(
   partyId?: string,
   withConviction?: boolean,
   mandateFilter?: MandateFilter,
-  statusFilter?: StatusFilter,
   sortOption: SortOption = "alpha",
   page = 1
 ) {
   if (search) {
-    return searchPoliticians(
-      search,
-      partyId,
-      withConviction,
-      mandateFilter,
-      statusFilter,
-      sortOption,
-      page
-    );
+    return searchPoliticians(search, partyId, withConviction, mandateFilter, sortOption, page);
   }
-  return getPoliticiansFiltered(
-    partyId,
-    withConviction,
-    mandateFilter,
-    statusFilter,
-    sortOption,
-    page
-  );
+  return getPoliticiansFiltered(partyId, withConviction, mandateFilter, sortOption, page);
 }
 
 async function getParties() {
@@ -442,28 +389,7 @@ async function getFilterCounts() {
           WHERE pm."politicianId" = p.id AND pm."endDate" IS NULL AND pm.role != 'MEMBER'
         )
       ) AS dirigeants,
-      -- Active (has current mandate OR significant party role)
-      COUNT(DISTINCT p.id) FILTER (
-        WHERE EXISTS (
-          SELECT 1 FROM "Mandate" m
-          WHERE m."politicianId" = p.id AND m."isCurrent" = true
-        )
-        OR EXISTS (
-          SELECT 1 FROM "PartyMembership" pm
-          WHERE pm."politicianId" = p.id AND pm."endDate" IS NULL AND pm.role != 'MEMBER'
-        )
-      ) AS active,
-      -- Former (no current mandate AND no significant party role)
-      COUNT(DISTINCT p.id) FILTER (
-        WHERE NOT EXISTS (
-          SELECT 1 FROM "Mandate" m
-          WHERE m."politicianId" = p.id AND m."isCurrent" = true
-        )
-        AND NOT EXISTS (
-          SELECT 1 FROM "PartyMembership" pm
-          WHERE pm."politicianId" = p.id AND pm."endDate" IS NULL AND pm.role != 'MEMBER'
-        )
-      ) AS former
+      -- (active/former counts removed — filter was not useful with 98% active)
     FROM "Politician" p
     WHERE p."publicationStatus" = 'PUBLISHED'
   `;
@@ -475,8 +401,6 @@ async function getFilterCounts() {
     senateurs: Number(counts.senateurs),
     gouvernement: Number(counts.gouvernement),
     dirigeants: Number(counts.dirigeants),
-    active: Number(counts.active),
-    former: Number(counts.former),
   };
 }
 
@@ -489,28 +413,17 @@ export default async function PolitiquesPage({ searchParams }: PageProps) {
   const mandateFilter = (
     rawMandate === "president_parti" ? "dirigeants" : rawMandate
   ) as MandateFilter;
-  const statusFilter = (params.status ?? "") as StatusFilter;
   const sortOption = (params.sort || "prominence") as SortOption;
   const page = parseInt(params.page || "1", 10);
 
   const [{ politicians, total, totalPages }, parties, counts] = await Promise.all([
-    getPoliticians(
-      search,
-      partyFilter,
-      convictionFilter,
-      mandateFilter,
-      statusFilter,
-      sortOption,
-      page
-    ),
+    getPoliticians(search, partyFilter, convictionFilter, mandateFilter, sortOption, page),
     getParties(),
     getFilterCounts(),
   ]);
 
   // Count active filters
-  const activeFilterCount = [partyFilter, convictionFilter, mandateFilter, statusFilter].filter(
-    Boolean
-  ).length;
+  const activeFilterCount = [partyFilter, convictionFilter, mandateFilter].filter(Boolean).length;
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -598,7 +511,6 @@ export default async function PolitiquesPage({ searchParams }: PageProps) {
           partyFilter={partyFilter}
           convictionFilter={convictionFilter}
           mandateFilter={mandateFilter}
-          statusFilter={statusFilter}
           sortOption={sortOption}
         />
       </div>
@@ -616,7 +528,6 @@ export default async function PolitiquesPage({ searchParams }: PageProps) {
           partyFilter,
           convictionFilter,
           mandateFilter,
-          statusFilter,
           sortOption,
         }}
         showMissingDeclarationBadge

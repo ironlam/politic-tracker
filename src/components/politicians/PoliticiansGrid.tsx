@@ -3,7 +3,7 @@
 import { useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { PoliticianCard } from "./PoliticianCard";
-import { FilterBar, type SortOption, type MandateFilter, type StatusFilter } from "./FilterBar";
+import { FilterBar, type SortOption, type MandateFilter } from "./FilterBar";
 import { Badge } from "@/components/ui/badge";
 import { PartySelect } from "./PartySelect";
 import type { PoliticianWithPartyAndCounts, Party } from "@/types";
@@ -20,15 +20,12 @@ interface PoliticiansGridProps {
     senateurs: number;
     gouvernement: number;
     dirigeants: number;
-    active: number;
-    former: number;
   };
   filters: {
     search: string;
     partyFilter: string;
     convictionFilter: boolean;
     mandateFilter: MandateFilter;
-    statusFilter: StatusFilter;
     sortOption: SortOption;
   };
   showMissingDeclarationBadge?: boolean;
@@ -48,8 +45,7 @@ export function PoliticiansGrid({
   const _searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
 
-  const { search, partyFilter, convictionFilter, mandateFilter, statusFilter, sortOption } =
-    filters;
+  const { search, partyFilter, convictionFilter, mandateFilter, sortOption } = filters;
 
   // Build URL with current filters
   function buildUrl(newParams: Record<string, string | undefined>) {
@@ -59,7 +55,7 @@ export function PoliticiansGrid({
       party: partyFilter || undefined,
       conviction: convictionFilter ? "true" : undefined,
       mandate: mandateFilter || undefined,
-      status: statusFilter || undefined,
+      status: undefined,
       sort: sortOption !== "alpha" ? sortOption : undefined,
       page: undefined,
       ...newParams,
@@ -80,9 +76,7 @@ export function PoliticiansGrid({
   };
 
   // Count active filters
-  const activeFilterCount = [partyFilter, convictionFilter, mandateFilter, statusFilter].filter(
-    Boolean
-  ).length;
+  const activeFilterCount = [partyFilter, convictionFilter, mandateFilter].filter(Boolean).length;
 
   return (
     <>
@@ -92,14 +86,11 @@ export function PoliticiansGrid({
         <FilterBar
           currentSort={sortOption}
           currentMandate={mandateFilter}
-          currentStatus={statusFilter}
           counts={{
             deputes: counts.deputes,
             senateurs: counts.senateurs,
             gouvernement: counts.gouvernement,
             dirigeants: counts.dirigeants,
-            active: counts.active,
-            former: counts.former,
           }}
         />
 

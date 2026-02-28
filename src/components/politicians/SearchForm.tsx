@@ -9,7 +9,6 @@ interface SearchFormProps {
   partyFilter: string;
   convictionFilter: boolean;
   mandateFilter: string;
-  statusFilter: string;
   sortOption: string;
 }
 
@@ -18,7 +17,6 @@ export function SearchForm({
   partyFilter,
   convictionFilter,
   mandateFilter,
-  statusFilter,
   sortOption,
 }: SearchFormProps) {
   const router = useRouter();
@@ -29,15 +27,13 @@ export function SearchForm({
     if (partyFilter) params.set("party", partyFilter);
     if (convictionFilter) params.set("conviction", "true");
     if (mandateFilter) params.set("mandate", mandateFilter);
-    if (statusFilter) params.set("status", statusFilter);
     if (sortOption && sortOption !== "alpha") params.set("sort", sortOption);
 
     const queryString = params.toString();
     router.push(`/politiques${queryString ? `?${queryString}` : ""}`);
   };
 
-  const hasFilters =
-    defaultSearch || partyFilter || convictionFilter || mandateFilter || statusFilter;
+  const hasFilters = defaultSearch || partyFilter || convictionFilter || mandateFilter;
 
   return (
     <div className="rounded-lg border bg-muted/40 p-4">

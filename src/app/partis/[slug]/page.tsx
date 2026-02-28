@@ -1,11 +1,9 @@
-import { cache } from "react";
 import Image from "next/image";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { cacheTag, cacheLife } from "next/cache";
-import { db } from "@/lib/db";
 import { isFeatureEnabled } from "@/lib/feature-flags";
+import { getParty, getPartyLeadership, getPartyRoles } from "@/lib/data/parties";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/utils";
@@ -28,75 +26,6 @@ import { ensureContrast } from "@/lib/contrast";
 interface PageProps {
   params: Promise<{ slug: string }>;
 }
-
-const getParty = cache(async function getParty(slug: string) {
-  "use cache";
-  cacheTag(`party:${slug}`, "parties");
-  cacheLife("minutes");
-
-  return db.party.findUnique({
-    where: { slug },
-    include: {
-      // Current members
-      politicians: {
-        orderBy: { fullName: "asc" },
-        include: {
-          mandates: {
-            where: { isCurrent: true },
-            take: 1,
-          },
-          _count: {
-            select: {
-              affairs: {
-                where: {
-                  publicationStatus: "PUBLISHED",
-                  involvement: { notIn: ["VICTIM", "PLAINTIFF"] },
-                  status: "CONDAMNATION_DEFINITIVE",
-                },
-              },
-            },
-          },
-        },
-      },
-      // Membership history (for people who were members but aren't currently)
-      partyMemberships: {
-        include: {
-          politician: true,
-        },
-        orderBy: { startDate: "desc" },
-      },
-      // Affairs that happened when politician was in this party
-      affairsAtTime: {
-        where: { publicationStatus: "PUBLISHED" },
-        include: {
-          politician: true,
-        },
-        orderBy: { verdictDate: "desc" },
-      },
-      // Party evolution
-      predecessor: true,
-      successors: true,
-      // External IDs
-      externalIds: true,
-      // Press mentions
-      pressMentions: {
-        orderBy: { article: { publishedAt: "desc" } },
-        take: 5,
-        include: {
-          article: {
-            select: {
-              id: true,
-              title: true,
-              url: true,
-              feedSource: true,
-              publishedAt: true,
-            },
-          },
-        },
-      },
-    },
-  });
-});
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
@@ -133,43 +62,6 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       images: party.logoUrl ? [party.logoUrl] : undefined,
     },
   };
-}
-
-async function getPartyLeadership(partyId: string, partyName: string) {
-  "use cache";
-  cacheTag(`party-leadership:${partyId}`, "parties");
-  cacheLife("minutes");
-
-  return db.mandate.findMany({
-    where: {
-      type: "PRESIDENT_PARTI",
-      OR: [
-        { partyId },
-        { institution: partyName, partyId: null }, // Fallback for non-migrated data
-      ],
-    },
-    include: {
-      politician: true,
-    },
-    orderBy: { startDate: "desc" },
-  });
-}
-
-async function getPartyRoles(partyId: string) {
-  "use cache";
-  cacheTag(`party-roles:${partyId}`, "parties");
-  cacheLife("minutes");
-
-  return db.partyMembership.findMany({
-    where: {
-      partyId,
-      role: { not: "MEMBER" },
-    },
-    include: {
-      politician: true,
-    },
-    orderBy: { startDate: "desc" },
-  });
 }
 
 export default async function PartyPage({ params }: PageProps) {

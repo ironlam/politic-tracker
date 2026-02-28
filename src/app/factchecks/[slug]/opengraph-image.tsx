@@ -1,9 +1,10 @@
 import { ImageResponse } from "next/og";
 import { db } from "@/lib/db";
+import { OgLayout, OgCategoryLabel, OgBadge, OG_SIZE, truncateOg } from "@/lib/og-utils";
 import type { FactCheckRating } from "@/generated/prisma";
 
 export const alt = "Fact-check sur Poligraph";
-export const size = { width: 1200, height: 630 };
+export const size = OG_SIZE;
 export const contentType = "image/png";
 
 const RATING_LABELS: Partial<Record<FactCheckRating, string>> = {
@@ -42,22 +43,21 @@ export default async function Image({ params }: { params: Promise<{ slug: string
 
   if (!factCheck) {
     return new ImageResponse(
-      <div
-        style={{
-          display: "flex",
-          width: "100%",
-          height: "100%",
-          background: "linear-gradient(135deg, #1e3a5f 0%, #0f1f3a 100%)",
-          alignItems: "center",
-          justifyContent: "center",
-          color: "white",
-          fontSize: 32,
-          fontFamily: "system-ui, sans-serif",
-        }}
-      >
-        Fact-check non trouvé
-      </div>,
-      { ...size }
+      <OgLayout>
+        <div
+          style={{
+            display: "flex",
+            flex: 1,
+            alignItems: "center",
+            justifyContent: "center",
+            color: "white",
+            fontSize: 32,
+          }}
+        >
+          Fact-check non trouvé
+        </div>
+      </OgLayout>,
+      { ...OG_SIZE }
     );
   }
 
@@ -65,95 +65,43 @@ export default async function Image({ params }: { params: Promise<{ slug: string
   const ratingColor = RATING_COLORS[factCheck.verdictRating] || "#94a3b8";
 
   return new ImageResponse(
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        width: "100%",
-        height: "100%",
-        background: "linear-gradient(135deg, #1e3a5f 0%, #0f1f3a 100%)",
-        padding: 60,
-        fontFamily: "system-ui, sans-serif",
-        justifyContent: "center",
-      }}
-    >
-      {/* Label */}
-      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
-        <span style={{ fontSize: 32 }}>🔍</span>
-        <span
-          style={{
-            fontSize: 22,
-            color: "#64748b",
-            fontWeight: 600,
-            textTransform: "uppercase",
-            letterSpacing: 2,
-          }}
-        >
-          Fact-check
-        </span>
-      </div>
+    <OgLayout>
+      <OgCategoryLabel emoji="🔍" label="Fact-check" />
 
       {/* Claim */}
       {factCheck.claimText && (
         <div
           style={{
-            fontSize: 28,
-            color: "#94a3b8",
+            fontSize: 30,
+            color: "#cbd5e1",
             marginBottom: 20,
             fontStyle: "italic",
-            lineClamp: 2,
-            overflow: "hidden",
-            maxHeight: 80,
           }}
         >
-          «{" "}
-          {factCheck.claimText.length > 120
-            ? factCheck.claimText.slice(0, 120) + "..."
-            : factCheck.claimText}{" "}
-          »
+          « {truncateOg(factCheck.claimText, 150)} »
         </div>
       )}
 
       {/* Title */}
       <div
         style={{
-          fontSize: 38,
+          fontSize: 36,
           fontWeight: 700,
           color: "white",
           marginBottom: 28,
-          lineClamp: 2,
-          overflow: "hidden",
-          maxHeight: 110,
         }}
       >
-        {factCheck.title.length > 100 ? factCheck.title.slice(0, 100) + "..." : factCheck.title}
+        {truncateOg(factCheck.title, 120)}
       </div>
 
-      {/* Rating badge */}
+      {/* Verdict badge + source */}
       <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            padding: "10px 24px",
-            borderRadius: 999,
-            background: `${ratingColor}22`,
-            border: `2px solid ${ratingColor}`,
-            color: ratingColor,
-            fontSize: 24,
-            fontWeight: 700,
-          }}
-        >
-          Verdict : {ratingLabel}
-        </div>
+        <OgBadge label={`Verdict : ${ratingLabel}`} color={ratingColor} />
         {factCheck.source && (
           <span style={{ fontSize: 20, color: "#64748b" }}>Source : {factCheck.source}</span>
         )}
       </div>
-
-      {/* Footer */}
-      <div style={{ fontSize: 20, color: "#475569", marginTop: "auto" }}>poligraph.fr</div>
-    </div>,
-    { ...size }
+    </OgLayout>,
+    { ...OG_SIZE }
   );
 }

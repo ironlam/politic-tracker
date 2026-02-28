@@ -1,9 +1,10 @@
 import { ImageResponse } from "next/og";
 import { db } from "@/lib/db";
+import { OgLayout, OgCategoryLabel, OgBadge, OG_SIZE, truncateOg } from "@/lib/og-utils";
 import type { ElectionType, ElectionStatus } from "@/generated/prisma";
 
 export const alt = "Élection sur Poligraph";
-export const size = { width: 1200, height: 630 };
+export const size = OG_SIZE;
 export const contentType = "image/png";
 
 const TYPE_LABELS: Record<ElectionType, string> = {
@@ -52,22 +53,21 @@ export default async function Image({ params }: { params: Promise<{ slug: string
 
   if (!election) {
     return new ImageResponse(
-      <div
-        style={{
-          display: "flex",
-          width: "100%",
-          height: "100%",
-          background: "linear-gradient(135deg, #1e3a5f 0%, #0f1f3a 100%)",
-          alignItems: "center",
-          justifyContent: "center",
-          color: "white",
-          fontSize: 32,
-          fontFamily: "system-ui, sans-serif",
-        }}
-      >
-        Élection non trouvée
-      </div>,
-      { ...size }
+      <OgLayout>
+        <div
+          style={{
+            display: "flex",
+            flex: 1,
+            alignItems: "center",
+            justifyContent: "center",
+            color: "white",
+            fontSize: 32,
+          }}
+        >
+          Élection non trouvée
+        </div>
+      </OgLayout>,
+      { ...OG_SIZE }
     );
   }
 
@@ -83,67 +83,25 @@ export default async function Image({ params }: { params: Promise<{ slug: string
     : null;
 
   return new ImageResponse(
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        width: "100%",
-        height: "100%",
-        background: "linear-gradient(135deg, #1e3a5f 0%, #0f1f3a 100%)",
-        padding: 60,
-        fontFamily: "system-ui, sans-serif",
-        justifyContent: "center",
-      }}
-    >
-      {/* Type badge */}
-      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
-        <span style={{ fontSize: 36 }}>🗳️</span>
-        <span
-          style={{
-            fontSize: 22,
-            color: "#64748b",
-            fontWeight: 600,
-            textTransform: "uppercase",
-            letterSpacing: 2,
-          }}
-        >
-          {typeLabel}
-        </span>
-      </div>
+    <OgLayout>
+      <OgCategoryLabel emoji="🗳️" label={typeLabel} />
 
-      {/* Title */}
       <div
         style={{
-          fontSize: 46,
+          fontSize: 42,
           fontWeight: 700,
           color: "white",
           marginBottom: 24,
         }}
       >
-        {election.title.length > 80 ? election.title.slice(0, 80) + "..." : election.title}
+        {truncateOg(election.title, 90)}
       </div>
 
-      {/* Date + Status */}
       <div style={{ display: "flex", alignItems: "center", gap: 24, marginBottom: 20 }}>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            padding: "10px 24px",
-            borderRadius: 999,
-            background: `${statusColor}22`,
-            border: `2px solid ${statusColor}`,
-            color: statusColor,
-            fontSize: 24,
-            fontWeight: 600,
-          }}
-        >
-          {statusLabel}
-        </div>
-        {date && <span style={{ fontSize: 24, color: "#94a3b8" }}>{date}</span>}
+        <OgBadge label={statusLabel} color={statusColor} />
+        {date && <span style={{ fontSize: 22, color: "#94a3b8" }}>{date}</span>}
       </div>
 
-      {/* Candidacies count */}
       {election._count.candidacies > 0 && (
         <div style={{ display: "flex", gap: 8, fontSize: 22, color: "#94a3b8" }}>
           <span>👤</span>
@@ -152,10 +110,7 @@ export default async function Image({ params }: { params: Promise<{ slug: string
           </span>
         </div>
       )}
-
-      {/* Footer */}
-      <div style={{ fontSize: 20, color: "#475569", marginTop: "auto" }}>poligraph.fr</div>
-    </div>,
-    { ...size }
+    </OgLayout>,
+    { ...OG_SIZE }
   );
 }

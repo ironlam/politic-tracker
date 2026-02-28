@@ -1,9 +1,10 @@
 import { ImageResponse } from "next/og";
 import { db } from "@/lib/db";
 import { getDepartmentBySlug } from "@/config/departments";
+import { OgLayout, OgCategoryLabel, OG_SIZE } from "@/lib/og-utils";
 
 export const alt = "Département sur Poligraph";
-export const size = { width: 1200, height: 630 };
+export const size = OG_SIZE;
 export const contentType = "image/png";
 
 export default async function Image({ params }: { params: Promise<{ slug: string }> }) {
@@ -12,22 +13,21 @@ export default async function Image({ params }: { params: Promise<{ slug: string
 
   if (!dept) {
     return new ImageResponse(
-      <div
-        style={{
-          display: "flex",
-          width: "100%",
-          height: "100%",
-          background: "linear-gradient(135deg, #1e3a5f 0%, #0f1f3a 100%)",
-          alignItems: "center",
-          justifyContent: "center",
-          color: "white",
-          fontSize: 32,
-          fontFamily: "system-ui, sans-serif",
-        }}
-      >
-        Département non trouvé
-      </div>,
-      { ...size }
+      <OgLayout>
+        <div
+          style={{
+            display: "flex",
+            flex: 1,
+            alignItems: "center",
+            justifyContent: "center",
+            color: "white",
+            fontSize: 32,
+          }}
+        >
+          Département non trouvé
+        </div>
+      </OgLayout>,
+      { ...OG_SIZE }
     );
   }
 
@@ -58,30 +58,21 @@ export default async function Image({ params }: { params: Promise<{ slug: string
   ]);
 
   return new ImageResponse(
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        width: "100%",
-        height: "100%",
-        background: "linear-gradient(135deg, #1e3a5f 0%, #0f1f3a 100%)",
-        padding: 60,
-        fontFamily: "system-ui, sans-serif",
-        justifyContent: "center",
-      }}
-    >
+    <OgLayout>
+      <OgCategoryLabel emoji="📍" label="Département" />
+
       {/* Department code */}
       <div
         style={{
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          width: 100,
-          height: 100,
+          width: 120,
+          height: 120,
           borderRadius: 20,
           background: "linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)",
-          marginBottom: 32,
-          fontSize: 40,
+          marginBottom: 28,
+          fontSize: 56,
           fontWeight: 700,
           color: "white",
           boxShadow: "0 20px 40px rgba(0,0,0,0.3)",
@@ -93,7 +84,7 @@ export default async function Image({ params }: { params: Promise<{ slug: string
       {/* Name */}
       <div
         style={{
-          fontSize: 48,
+          fontSize: 44,
           fontWeight: 700,
           color: "white",
           marginBottom: 12,
@@ -103,7 +94,7 @@ export default async function Image({ params }: { params: Promise<{ slug: string
       </div>
 
       {/* Region */}
-      <div style={{ fontSize: 26, color: "#94a3b8", marginBottom: 32 }}>{dept.region}</div>
+      <div style={{ fontSize: 24, color: "#94a3b8", marginBottom: 28 }}>{dept.region}</div>
 
       {/* Stats */}
       <div style={{ display: "flex", gap: 40, fontSize: 22, color: "#94a3b8" }}>
@@ -124,10 +115,7 @@ export default async function Image({ params }: { params: Promise<{ slug: string
           </div>
         )}
       </div>
-
-      {/* Footer */}
-      <div style={{ fontSize: 20, color: "#475569", marginTop: "auto" }}>poligraph.fr</div>
-    </div>,
-    { ...size }
+    </OgLayout>,
+    { ...OG_SIZE }
   );
 }

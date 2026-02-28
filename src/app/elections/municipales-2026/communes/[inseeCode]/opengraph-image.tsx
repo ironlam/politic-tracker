@@ -1,8 +1,9 @@
 import { ImageResponse } from "next/og";
 import { db } from "@/lib/db";
+import { OgLayout, OgCategoryLabel, OgBadge, OG_SIZE } from "@/lib/og-utils";
 
 export const alt = "Municipales 2026 sur Poligraph";
-export const size = { width: 1200, height: 630 };
+export const size = OG_SIZE;
 export const contentType = "image/png";
 
 export default async function Image({ params }: { params: Promise<{ inseeCode: string }> }) {
@@ -20,22 +21,21 @@ export default async function Image({ params }: { params: Promise<{ inseeCode: s
 
   if (!commune) {
     return new ImageResponse(
-      <div
-        style={{
-          display: "flex",
-          width: "100%",
-          height: "100%",
-          background: "linear-gradient(135deg, #1e3a5f 0%, #0f1f3a 100%)",
-          alignItems: "center",
-          justifyContent: "center",
-          color: "white",
-          fontSize: 32,
-          fontFamily: "system-ui, sans-serif",
-        }}
-      >
-        Commune non trouvée
-      </div>,
-      { ...size }
+      <OgLayout>
+        <div
+          style={{
+            display: "flex",
+            flex: 1,
+            alignItems: "center",
+            justifyContent: "center",
+            color: "white",
+            fontSize: 32,
+          }}
+        >
+          Commune non trouvée
+        </div>
+      </OgLayout>,
+      { ...OG_SIZE }
     );
   }
 
@@ -64,82 +64,30 @@ export default async function Image({ params }: { params: Promise<{ inseeCode: s
     ? commune.population.toLocaleString("fr-FR")
     : null;
 
-  return new ImageResponse(
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        width: "100%",
-        height: "100%",
-        background: "linear-gradient(135deg, #1e3a5f 0%, #0f1f3a 100%)",
-        padding: 60,
-        fontFamily: "system-ui, sans-serif",
-        justifyContent: "center",
-      }}
-    >
-      {/* Type badge */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
-          marginBottom: 24,
-        }}
-      >
-        <span style={{ fontSize: 36 }}>🏛️</span>
-        <span
-          style={{
-            fontSize: 22,
-            color: "#64748b",
-            fontWeight: 600,
-            textTransform: "uppercase",
-            letterSpacing: 2,
-          }}
-        >
-          Municipales 2026
-        </span>
-      </div>
+  const title =
+    commune.name.length > 60
+      ? `Municipales 2026 à ${commune.name.slice(0, 40)}...`
+      : `Municipales 2026 à ${commune.name}`;
 
-      {/* Title */}
+  return new ImageResponse(
+    <OgLayout>
+      <OgCategoryLabel emoji="🏛️" label="Municipales 2026" />
+
       <div
         style={{
-          fontSize: 46,
+          fontSize: 42,
           fontWeight: 700,
           color: "white",
           marginBottom: 24,
         }}
       >
-        {commune.name.length > 60
-          ? `Municipales 2026 à ${commune.name.slice(0, 40)}...`
-          : `Municipales 2026 à ${commune.name}`}
+        {title}
       </div>
 
-      {/* Department badge */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          marginBottom: 20,
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            padding: "10px 24px",
-            borderRadius: 999,
-            background: "#3b82f622",
-            border: "2px solid #3b82f6",
-            color: "#3b82f6",
-            fontSize: 24,
-            fontWeight: 600,
-          }}
-        >
-          {commune.departmentName} ({commune.departmentCode})
-        </div>
+      <div style={{ display: "flex", marginBottom: 20 }}>
+        <OgBadge label={`${commune.departmentName} (${commune.departmentCode})`} color="#3b82f6" />
       </div>
 
-      {/* Stats line */}
       {(listCount > 0 || candidateCount > 0) && (
         <div
           style={{
@@ -158,7 +106,6 @@ export default async function Image({ params }: { params: Promise<{ inseeCode: s
         </div>
       )}
 
-      {/* Population */}
       {populationFormatted && (
         <div
           style={{
@@ -172,10 +119,7 @@ export default async function Image({ params }: { params: Promise<{ inseeCode: s
           <span>{populationFormatted} habitants</span>
         </div>
       )}
-
-      {/* Footer */}
-      <div style={{ fontSize: 20, color: "#475569", marginTop: "auto" }}>poligraph.fr</div>
-    </div>,
-    { ...size }
+    </OgLayout>,
+    { ...OG_SIZE }
   );
 }

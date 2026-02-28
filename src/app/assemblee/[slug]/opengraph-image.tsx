@@ -1,9 +1,10 @@
 import { ImageResponse } from "next/og";
 import { db } from "@/lib/db";
 import type { DossierStatus } from "@/generated/prisma";
+import { OgLayout, OgCategoryLabel, OgBadge, OG_SIZE, truncateOg } from "@/lib/og-utils";
 
 export const alt = "Dossier législatif sur Poligraph";
-export const size = { width: 1200, height: 630 };
+export const size = OG_SIZE;
 export const contentType = "image/png";
 
 const STATUS_LABELS: Record<DossierStatus, string> = {
@@ -44,22 +45,21 @@ export default async function Image({ params }: { params: Promise<{ slug: string
 
   if (!dossier) {
     return new ImageResponse(
-      <div
-        style={{
-          display: "flex",
-          width: "100%",
-          height: "100%",
-          background: "linear-gradient(135deg, #1e3a5f 0%, #0f1f3a 100%)",
-          alignItems: "center",
-          justifyContent: "center",
-          color: "white",
-          fontSize: 32,
-          fontFamily: "system-ui, sans-serif",
-        }}
-      >
-        Dossier non trouvé
-      </div>,
-      { ...size }
+      <OgLayout>
+        <div
+          style={{
+            display: "flex",
+            flex: 1,
+            alignItems: "center",
+            justifyContent: "center",
+            color: "white",
+            fontSize: 32,
+          }}
+        >
+          Dossier non trouvé
+        </div>
+      </OgLayout>,
+      { ...OG_SIZE }
     );
   }
 
@@ -68,35 +68,10 @@ export default async function Image({ params }: { params: Promise<{ slug: string
   const displayTitle = dossier.shortTitle || dossier.title;
 
   return new ImageResponse(
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        width: "100%",
-        height: "100%",
-        background: "linear-gradient(135deg, #1e3a5f 0%, #0f1f3a 100%)",
-        padding: 60,
-        fontFamily: "system-ui, sans-serif",
-        justifyContent: "center",
-      }}
-    >
-      {/* Icon + label */}
-      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
-        <span style={{ fontSize: 32 }}>📜</span>
-        <span
-          style={{
-            fontSize: 22,
-            color: "#64748b",
-            fontWeight: 600,
-            textTransform: "uppercase",
-            letterSpacing: 2,
-          }}
-        >
-          Dossier législatif
-        </span>
-      </div>
+    <OgLayout>
+      <OgCategoryLabel emoji="📜" label="Dossier législatif" />
 
-      {/* Number badge */}
+      {/* Number badge — monospace pill */}
       {dossier.number && (
         <div style={{ display: "flex", marginBottom: 20 }}>
           <div
@@ -106,7 +81,7 @@ export default async function Image({ params }: { params: Promise<{ slug: string
               borderRadius: 8,
               background: "#ffffff15",
               color: "#94a3b8",
-              fontSize: 22,
+              fontSize: 24,
               fontFamily: "monospace",
             }}
           >
@@ -118,40 +93,20 @@ export default async function Image({ params }: { params: Promise<{ slug: string
       {/* Title */}
       <div
         style={{
-          fontSize: 40,
+          fontSize: 36,
           fontWeight: 700,
           color: "white",
-          marginBottom: 28,
-          lineClamp: 3,
-          overflow: "hidden",
-          maxHeight: 170,
+          marginBottom: 24,
         }}
       >
-        {displayTitle.length > 120 ? displayTitle.slice(0, 120) + "..." : displayTitle}
+        {truncateOg(displayTitle, 130)}
       </div>
 
       {/* Status badge */}
       <div style={{ display: "flex" }}>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            padding: "10px 24px",
-            borderRadius: 999,
-            background: `${statusColor}22`,
-            border: `2px solid ${statusColor}`,
-            color: statusColor,
-            fontSize: 24,
-            fontWeight: 600,
-          }}
-        >
-          {statusLabel}
-        </div>
+        <OgBadge label={statusLabel} color={statusColor} />
       </div>
-
-      {/* Footer */}
-      <div style={{ fontSize: 20, color: "#475569", marginTop: "auto" }}>poligraph.fr</div>
-    </div>,
-    { ...size }
+    </OgLayout>,
+    { ...OG_SIZE }
   );
 }

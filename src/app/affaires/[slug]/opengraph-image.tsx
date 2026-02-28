@@ -1,9 +1,10 @@
 import { ImageResponse } from "next/og";
 import { db } from "@/lib/db";
+import { OgLayout, OgCategoryLabel, OgBadge, OG_SIZE, truncateOg } from "@/lib/og-utils";
 import type { AffairStatus } from "@/generated/prisma";
 
 export const alt = "Affaire judiciaire sur Poligraph";
-export const size = { width: 1200, height: 630 };
+export const size = OG_SIZE;
 export const contentType = "image/png";
 
 const STATUS_LABELS: Partial<Record<AffairStatus, string>> = {
@@ -47,22 +48,21 @@ export default async function Image({ params }: { params: Promise<{ slug: string
 
   if (!affair) {
     return new ImageResponse(
-      <div
-        style={{
-          display: "flex",
-          width: "100%",
-          height: "100%",
-          background: "linear-gradient(135deg, #1e3a5f 0%, #0f1f3a 100%)",
-          alignItems: "center",
-          justifyContent: "center",
-          color: "white",
-          fontSize: 32,
-          fontFamily: "system-ui, sans-serif",
-        }}
-      >
-        Affaire non trouvée
-      </div>,
-      { ...size }
+      <OgLayout>
+        <div
+          style={{
+            display: "flex",
+            flex: 1,
+            alignItems: "center",
+            justifyContent: "center",
+            color: "white",
+            fontSize: 32,
+          }}
+        >
+          Affaire non trouvée
+        </div>
+      </OgLayout>,
+      { ...OG_SIZE }
     );
   }
 
@@ -70,63 +70,28 @@ export default async function Image({ params }: { params: Promise<{ slug: string
   const statusColor = STATUS_COLORS[affair.status] || "#94a3b8";
 
   return new ImageResponse(
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        width: "100%",
-        height: "100%",
-        background: "linear-gradient(135deg, #1e3a5f 0%, #0f1f3a 100%)",
-        padding: 60,
-        fontFamily: "system-ui, sans-serif",
-        justifyContent: "center",
-      }}
-    >
-      {/* Icon */}
-      <div style={{ fontSize: 48, marginBottom: 24 }}>&#9878;&#65039;</div>
+    <OgLayout>
+      <OgCategoryLabel emoji="⚖️" label="Affaire judiciaire" />
 
-      {/* Title (truncated) */}
       <div
         style={{
-          fontSize: 42,
+          fontSize: 38,
           fontWeight: 700,
           color: "white",
-          marginBottom: 20,
-          lineClamp: 2,
-          overflow: "hidden",
-          maxHeight: 120,
+          marginBottom: 16,
         }}
       >
-        {affair.title.length > 80 ? affair.title.slice(0, 80) + "..." : affair.title}
+        {truncateOg(affair.title, 100)}
       </div>
 
-      {/* Politician */}
-      <div style={{ fontSize: 28, color: "#94a3b8", marginBottom: 20 }}>
+      <div style={{ fontSize: 26, color: "#94a3b8", marginBottom: 24 }}>
         {affair.politician.firstName} {affair.politician.lastName}
       </div>
 
-      {/* Status badge */}
       <div style={{ display: "flex" }}>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            padding: "8px 20px",
-            borderRadius: 999,
-            background: `${statusColor}22`,
-            border: `2px solid ${statusColor}`,
-            color: statusColor,
-            fontSize: 22,
-            fontWeight: 600,
-          }}
-        >
-          {statusLabel}
-        </div>
+        <OgBadge label={statusLabel} color={statusColor} />
       </div>
-
-      {/* Footer */}
-      <div style={{ fontSize: 20, color: "#475569", marginTop: "auto" }}>poligraph.fr</div>
-    </div>,
-    { ...size }
+    </OgLayout>,
+    { ...OG_SIZE }
   );
 }

@@ -41,6 +41,7 @@ const SUPER_CATEGORY_ACCENT: Record<AffairSuperCategory, { border: string; bg: s
 
 interface PageProps {
   searchParams: Promise<{
+    search?: string;
     sort?: string;
     status?: string;
     supercat?: string;
@@ -116,7 +117,9 @@ async function getPartiesWithAffairs() {
   return parties;
 }
 
-async function getAffairs(
+// Tier 1: Core query — accepts free-text search (never cached directly)
+async function queryAffairs(
+  search?: string,
   status?: string,
   superCategory?: AffairSuperCategory,
   category?: string,
@@ -126,10 +129,6 @@ async function getAffairs(
   partySlug?: string,
   sort?: string
 ) {
-  "use cache";
-  cacheTag("affairs");
-  cacheLife("minutes");
-
   const limit = 20;
   const skip = (page - 1) * limit;
 
@@ -148,6 +147,12 @@ async function getAffairs(
     ...(categoryFilter && { category: { in: categoryFilter } }),
     ...(severity && { severity }),
     ...(partySlug && { partyAtTime: { slug: partySlug } }),
+    ...(search && {
+      OR: [
+        { title: { contains: search, mode: "insensitive" as const } },
+        { description: { contains: search, mode: "insensitive" as const } },
+      ],
+    }),
   };
 
   const orderBy =
@@ -195,6 +200,95 @@ async function getAffairs(
     page,
     totalPages: Math.ceil(total / limit),
   };
+}
+
+// Tier 2: Cached path — bounded params only (no free-text search)
+async function getAffairsFiltered(
+  status?: string,
+  superCategory?: AffairSuperCategory,
+  category?: string,
+  severity?: AffairSeverity,
+  page = 1,
+  involvements: Involvement[] = ["DIRECT"],
+  partySlug?: string,
+  sort?: string
+) {
+  "use cache";
+  cacheTag("affairs");
+  cacheLife("minutes");
+  return queryAffairs(
+    undefined,
+    status,
+    superCategory,
+    category,
+    severity,
+    page,
+    involvements,
+    partySlug,
+    sort
+  );
+}
+
+// Tier 3: Uncached path — free-text search
+async function searchAffairs(
+  search: string,
+  status?: string,
+  superCategory?: AffairSuperCategory,
+  category?: string,
+  severity?: AffairSeverity,
+  page = 1,
+  involvements: Involvement[] = ["DIRECT"],
+  partySlug?: string,
+  sort?: string
+) {
+  return queryAffairs(
+    search,
+    status,
+    superCategory,
+    category,
+    severity,
+    page,
+    involvements,
+    partySlug,
+    sort
+  );
+}
+
+// Router — decides cached vs uncached
+async function getAffairs(
+  search?: string,
+  status?: string,
+  superCategory?: AffairSuperCategory,
+  category?: string,
+  severity?: AffairSeverity,
+  page = 1,
+  involvements: Involvement[] = ["DIRECT"],
+  partySlug?: string,
+  sort?: string
+) {
+  if (search) {
+    return searchAffairs(
+      search,
+      status,
+      superCategory,
+      category,
+      severity,
+      page,
+      involvements,
+      partySlug,
+      sort
+    );
+  }
+  return getAffairsFiltered(
+    status,
+    superCategory,
+    category,
+    severity,
+    page,
+    involvements,
+    partySlug,
+    sort
+  );
 }
 
 async function getSuperCategoryCounts() {
@@ -260,6 +354,7 @@ async function getSeverityCounts() {
 
 export default async function AffairesPage({ searchParams }: PageProps) {
   const params = await searchParams;
+  const searchFilter = params.search || "";
   const sortFilter = params.sort || "";
   const statusFilter = params.status || "";
   const superCatFilter = (params.supercat || "") as AffairSuperCategory | "";
@@ -286,6 +381,7 @@ export default async function AffairesPage({ searchParams }: PageProps) {
     partiesWithAffairs,
   ] = await Promise.all([
     getAffairs(
+      searchFilter || undefined,
       statusFilter,
       superCatFilter || undefined,
       categoryFilter,
@@ -381,6 +477,7 @@ export default async function AffairesPage({ searchParams }: PageProps) {
       {/* Compact filter bar */}
       <AffairesFilterBar
         currentFilters={{
+          search: searchFilter,
           sort: sortFilter,
           severity: severityFilter,
           parti: partiFilter,
@@ -399,9 +496,15 @@ export default async function AffairesPage({ searchParams }: PageProps) {
       />
 
       {/* Active filters summary */}
-      {(superCatFilter || statusFilter || severityFilter || involvementFilter || partiFilter) && (
+      {(searchFilter ||
+        superCatFilter ||
+        statusFilter ||
+        severityFilter ||
+        involvementFilter ||
+        partiFilter) && (
         <div className="mb-6 flex items-center gap-2 text-sm flex-wrap">
           <span className="text-muted-foreground">Filtres actifs :</span>
+          {searchFilter && <Badge variant="outline">Recherche : {searchFilter}</Badge>}
           {partiFilter && (
             <Badge variant="outline">
               Parti :{" "}
@@ -568,6 +671,7 @@ export default async function AffairesPage({ searchParams }: PageProps) {
               {page > 1 && (
                 <Link
                   href={buildUrl({
+                    search: searchFilter,
                     page: String(page - 1),
                     sort: sortFilter,
                     status: statusFilter,
@@ -587,6 +691,7 @@ export default async function AffairesPage({ searchParams }: PageProps) {
               {page < totalPages && (
                 <Link
                   href={buildUrl({
+                    search: searchFilter,
                     page: String(page + 1),
                     sort: sortFilter,
                     status: statusFilter,
@@ -608,7 +713,7 @@ export default async function AffairesPage({ searchParams }: PageProps) {
           <CardContent className="py-12 text-center">
             <p className="text-muted-foreground mb-2">
               Aucune affaire documentée
-              {statusFilter || superCatFilter ? " avec ces filtres" : ""}
+              {searchFilter || statusFilter || superCatFilter ? " avec ces filtres" : ""}
             </p>
             <p className="text-sm text-muted-foreground">
               Les affaires sont ajoutées avec des sources vérifiables. Notre base est enrichie

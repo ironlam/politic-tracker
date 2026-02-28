@@ -28,3 +28,7 @@ ON "LocalOfficial" USING gin ("fullName" gin_trgm_ops);
 
 CREATE INDEX CONCURRENTLY IF NOT EXISTS "LocalOfficial_lastName_trgm"
 ON "LocalOfficial" USING gin ("lastName" gin_trgm_ops);
+
+-- 6. Trigram index on Affair.title for /affaires search
+CREATE INDEX CONCURRENTLY IF NOT EXISTS "Affair_title_trgm"
+ON "Affair" USING gin ("title" gin_trgm_ops);

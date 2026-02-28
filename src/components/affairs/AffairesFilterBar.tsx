@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
+import { useTransition, useRef, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -14,6 +14,7 @@ import type { AffairStatus, AffairSeverity } from "@/types";
 
 interface AffairesFilterBarProps {
   currentFilters: {
+    search: string;
     sort: string;
     severity: string;
     parti: string;
@@ -68,6 +69,21 @@ export function AffairesFilterBar({
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(null);
+
+  // Sync input with URL on back/forward navigation + cleanup debounce
+  useEffect(() => {
+    if (inputRef.current && inputRef.current.value !== currentFilters.search) {
+      inputRef.current.value = currentFilters.search;
+    }
+  }, [currentFilters.search]);
+
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, []);
 
   const updateParams = (key: string, value: string) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -90,6 +106,13 @@ export function AffairesFilterBar({
         .split(",")
         .filter((v) => VALID_GROUPS.includes(v as InvolvementGroup)) as InvolvementGroup[])
     : ["mise-en-cause"];
+
+  const handleSearchInput = (value: string) => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      updateParams("search", value.trim());
+    }, 300);
+  };
 
   const toggleGroup = (group: InvolvementGroup) => {
     const current = new Set(activeGroups);
@@ -134,6 +157,25 @@ export function AffairesFilterBar({
           </div>
         </div>
       )}
+
+      {/* Search input */}
+      <div>
+        <label
+          htmlFor="search-affairs"
+          className="text-xs font-medium text-muted-foreground mb-1 block"
+        >
+          Recherche
+        </label>
+        <input
+          ref={inputRef}
+          id="search-affairs"
+          type="search"
+          placeholder="Rechercher une affaire..."
+          defaultValue={currentFilters.search}
+          onChange={(e) => handleSearchInput(e.target.value)}
+          className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 placeholder:text-muted-foreground"
+        />
+      </div>
 
       {/* Dropdowns grid: 2 cols mobile, 4 cols desktop */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">

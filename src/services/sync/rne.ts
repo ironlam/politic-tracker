@@ -221,6 +221,8 @@ export async function syncRNEMaires(
   console.log(`  Found ${currentMayorsFromDB.length} current mayors in DB`);
 
   const seenCommuneIds = new Set<string>();
+  // Map<inseeCode, communeName> — populated during Phase 1 parsing
+  const communeNameByInsee = new Map<string, string>();
 
   // Pre-load existing commune IDs for FK validation
   // Many of the 35k communes may not exist in our Commune table (only
@@ -273,6 +275,8 @@ export async function syncRNEMaires(
 
     const inseeCode = buildInseeCode(deptCode, codeCommune);
     seenCommuneIds.add(inseeCode);
+    const communeLabel = row["Libellé de la commune"]?.trim();
+    if (communeLabel) communeNameByInsee.set(inseeCode, communeLabel);
     const communeId = communeIdSet.has(inseeCode) ? inseeCode : null;
     const normalizedFirstName = normalizeName(prenom);
     const normalizedLastName = normalizeName(nom);
@@ -437,7 +441,12 @@ export async function syncRNEMaires(
       });
 
       const inseeCode = official.externalId || official.communeId;
-      const mandateTitle = `Maire (${inseeCode || official.departmentCode})`;
+      const communeName = inseeCode ? communeNameByInsee.get(inseeCode) : undefined;
+      const mandateTitle = communeName
+        ? `Maire de ${communeName}`
+        : `Maire (${inseeCode || official.departmentCode})`;
+      const constituency =
+        communeName && inseeCode ? `${communeName} (${inseeCode})` : inseeCode || undefined;
       const startDate = official.functionStart || official.mandateStart || new Date(2020, 4, 18); // Default: May 2020 municipal
 
       // Create or update mandate
@@ -454,7 +463,7 @@ export async function syncRNEMaires(
           where: { id: existingMandate.id },
           data: {
             title: mandateTitle,
-            constituency: inseeCode || undefined,
+            constituency,
             departmentCode: official.departmentCode,
             startDate,
           },
@@ -467,7 +476,7 @@ export async function syncRNEMaires(
             type: MandateType.MAIRE,
             title: mandateTitle,
             institution: "Commune",
-            constituency: inseeCode || undefined,
+            constituency,
             departmentCode: official.departmentCode,
             startDate,
             isCurrent: true,

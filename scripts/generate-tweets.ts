@@ -336,51 +336,131 @@ async function recentAffairs(): Promise<TweetDraft[]> {
   });
 }
 
+const VERDICT_LABELS: Record<string, string> = {
+  TRUE: "vrai",
+  MOSTLY_TRUE: "plutôt vrai",
+  HALF_TRUE: "à nuancer",
+  MISLEADING: "trompeur",
+  OUT_OF_CONTEXT: "hors contexte",
+  MOSTLY_FALSE: "plutôt faux",
+  FALSE: "faux",
+  UNVERIFIABLE: "invérifiable",
+};
+
 async function factchecks(): Promise<TweetDraft[]> {
   const sevenDaysAgo = new Date();
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
   const recent = await db.factCheck.findMany({
     where: { publishedAt: { gte: sevenDaysAgo } },
-    select: { verdictRating: true, claimant: true, title: true, source: true },
+    select: {
+      slug: true,
+      title: true,
+      claimText: true,
+      claimant: true,
+      verdict: true,
+      verdictRating: true,
+      source: true,
+      publishedAt: true,
+      mentions: {
+        where: { isClaimant: true },
+        include: {
+          politician: {
+            select: {
+              fullName: true,
+              slug: true,
+              currentParty: { select: { shortName: true } },
+            },
+          },
+        },
+        take: 1,
+      },
+    },
+    orderBy: { publishedAt: "desc" },
   });
 
-  if (recent.length < 3) return [];
+  if (recent.length === 0) return [];
 
-  const truthy = recent.filter((f) => ["TRUE", "MOSTLY_TRUE"].includes(f.verdictRating)).length;
-  const misleading = recent.filter((f) =>
-    ["HALF_TRUE", "MISLEADING", "OUT_OF_CONTEXT"].includes(f.verdictRating)
-  ).length;
-  const falsy = recent.filter((f) => ["MOSTLY_FALSE", "FALSE"].includes(f.verdictRating)).length;
+  const drafts: TweetDraft[] = [];
 
-  // Pick one notable false claim for the hook
-  const notableFalse = recent.find(
-    (f) => ["MOSTLY_FALSE", "FALSE"].includes(f.verdictRating) && f.claimant
-  );
+  // --- Tweet 1: One notable factcheck with context ---
+
+  // Prefer a factcheck linked to a known politician, or a notable false claim
+  const notable =
+    recent.find(
+      (f) => ["MOSTLY_FALSE", "FALSE"].includes(f.verdictRating) && f.mentions.length > 0
+    ) ||
+    recent.find((f) => f.mentions.length > 0) ||
+    recent.find((f) => ["MOSTLY_FALSE", "FALSE"].includes(f.verdictRating) && f.claimant) ||
+    recent[0];
+
+  const verdictLabel = VERDICT_LABELS[notable.verdictRating] || notable.verdict;
+  const politician = notable.mentions[0]?.politician;
+  const party = politician?.currentParty?.shortName;
 
   let content = `🔍 `;
-  if (notableFalse) {
-    content += `« ${notableFalse.title} »\n`;
-    if (notableFalse.claimant) content += `— ${notableFalse.claimant}`;
-    content += `\n\nVerdict : faux`;
-    if (notableFalse.source) content += ` (source : ${notableFalse.source})`;
-    content += `.\n\n`;
+  if (politician) {
+    content += `Vérifié — ${politician.fullName}`;
+    if (party) content += ` (${party})`;
+    content += ` a déclaré :\n\n`;
+  } else if (notable.claimant) {
+    // Skip generic claimants like "utilisateurs de réseaux sociaux"
+    const isGenericClaimant = /utilisateur|réseaux|social|internet|viral/i.test(notable.claimant);
+    if (isGenericClaimant) {
+      content += `Cette affirmation circule en ligne :\n\n`;
+    } else {
+      content += `Vérifié — ${notable.claimant} a déclaré :\n\n`;
+    }
   } else {
-    content += `${falsy} déclaration${falsy > 1 ? "s" : ""} politique${falsy > 1 ? "s" : ""} épinglée${falsy > 1 ? "s" : ""} cette semaine.\n\n`;
+    content += `Cette affirmation circule en ligne :\n\n`;
   }
-  content += `Bilan des ${recent.length} déclarations vérifiées :\n`;
-  content += `✅ ${truthy} ${plural(truthy, "vraie")}\n`;
-  content += `⚠️ ${misleading} ${plural(misleading, "trompeuse")}\n`;
-  content += `❌ ${falsy} ${plural(falsy, "fausse")}`;
 
-  return [
-    {
+  // Use claimText (the actual claim) if available, otherwise title
+  const claim = notable.claimText || notable.title;
+  const claimTruncated = claim.length > 300 ? claim.substring(0, 297) + "..." : claim;
+  content += `« ${claimTruncated} »\n\n`;
+  content += `Verdict : ${verdictLabel}`;
+  if (notable.source) content += ` (vérifié par ${notable.source})`;
+  content += `.`;
+
+  // Link to the specific factcheck page, or the politician's page
+  const link = notable.slug
+    ? `${SITE_URL}/factchecks/${notable.slug}`
+    : politician?.slug
+      ? `${SITE_URL}/politiques/${politician.slug}`
+      : `${SITE_URL}/factchecks`;
+
+  drafts.push({
+    category: "🔍 Fact-checks",
+    content,
+    link,
+    hashtags: CATEGORY_HASHTAGS.factchecks,
+  });
+
+  // --- Tweet 2 (optional): Weekly summary if enough data ---
+
+  if (recent.length >= 3) {
+    const truthy = recent.filter((f) => ["TRUE", "MOSTLY_TRUE"].includes(f.verdictRating)).length;
+    const misleading = recent.filter((f) =>
+      ["HALF_TRUE", "MISLEADING", "OUT_OF_CONTEXT"].includes(f.verdictRating)
+    ).length;
+    const falsy = recent.filter((f) => ["MOSTLY_FALSE", "FALSE"].includes(f.verdictRating)).length;
+
+    let summary = `🔍 ${recent.length} déclarations politiques vérifiées cette semaine.\n\n`;
+    summary += `✅ ${truthy} ${plural(truthy, "vraie")}\n`;
+    summary += `⚠️ ${misleading} ${plural(misleading, "trompeuse")}\n`;
+    summary += `❌ ${falsy} ${plural(falsy, "fausse")}\n\n`;
+    summary += `Qui dit vrai ? Qui déforme la réalité ? Les fact-checks compilés sur une seule page.`;
+
+    drafts.push({
       category: "🔍 Fact-checks",
-      content,
+      content: summary,
       link: `${SITE_URL}/factchecks`,
       hashtags: CATEGORY_HASHTAGS.factchecks,
-    },
-  ];
+    });
+  }
+
+  return drafts;
 }
 
 async function deputySpotlight(): Promise<TweetDraft[]> {

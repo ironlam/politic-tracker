@@ -36,8 +36,8 @@ const TWITTER_HANDLE = process.env.TWITTER_HANDLE || "poligraph_fr";
 
 // Twitter counts URLs as 23 chars (t.co shortening)
 const TCO_URL_LENGTH = 23;
-// Standard X limit (280 free, 4000+ premium)
-const TWITTER_MAX_CHARS = 280;
+// X Premium allows up to 25 000 chars (free = 280)
+const TWITTER_MAX_CHARS = 25_000;
 
 // --- Parse tweet drafts from markdown ---
 

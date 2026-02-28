@@ -18,6 +18,7 @@ import {
   Menu,
   X,
   ExternalLink,
+  ShieldX,
 } from "lucide-react";
 
 const STORAGE_KEY = "admin-sidebar-collapsed";
@@ -32,6 +33,7 @@ interface NavItem {
 const contentItems: NavItem[] = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/affaires", label: "Affaires", icon: Scale },
+  { href: "/admin/press/rejections", label: "Rejets presse", icon: ShieldX },
   { href: "/admin/politiques", label: "Politiques", icon: Users },
   { href: "/admin/partis", label: "Partis", icon: Building2 },
   { href: "/admin/dossiers", label: "Dossiers", icon: FileText },

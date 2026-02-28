@@ -146,13 +146,21 @@ export class ArticleScraper {
         method: "POST",
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
+          "User-Agent":
+            "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
         },
         body: new URLSearchParams({
-          _username: email,
-          _password: password,
+          email,
+          password,
         }).toString(),
         redirect: "manual", // Don't follow redirect, we want the Set-Cookie
       });
+
+      // Detect invalid credentials (distinct from other failures)
+      if (response.headers.get("x-http-auth-error") === "true") {
+        console.error("  ✗ Mediapart auth: invalid credentials");
+        return null;
+      }
 
       const setCookies = response.headers.getSetCookie?.() ?? [];
       if (setCookies.length === 0) {

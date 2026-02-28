@@ -6,7 +6,7 @@ import { getAllThemeSlugs } from "@/lib/theme-utils";
 const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://poligraph.fr";
 
 export async function generateSitemaps() {
-  return [{ id: 0 }, { id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }];
+  return [{ id: 0 }, { id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }, { id: 5 }];
 }
 
 export default async function sitemap(props: {
@@ -24,6 +24,8 @@ export default async function sitemap(props: {
       return buildScrutinsWithSummarySitemap();
     case 4:
       return buildScrutinsWithoutSummarySitemap();
+    case 5:
+      return buildCommunesSitemap();
     default:
       return [];
   }
@@ -157,6 +159,30 @@ async function buildStaticAndPoliticiansSitemap(): Promise<MetadataRoute.Sitemap
       lastModified: new Date(),
       changeFrequency: "yearly",
       priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/elections/municipales-2026`,
+      lastModified: new Date(),
+      changeFrequency: "daily",
+      priority: 0.9,
+    },
+    {
+      url: `${baseUrl}/elections/municipales-2026/carte`,
+      lastModified: new Date(),
+      changeFrequency: "weekly",
+      priority: 0.7,
+    },
+    {
+      url: `${baseUrl}/elections/municipales-2026/parite`,
+      lastModified: new Date(),
+      changeFrequency: "weekly",
+      priority: 0.7,
+    },
+    {
+      url: `${baseUrl}/elections/municipales-2026/cumul`,
+      lastModified: new Date(),
+      changeFrequency: "weekly",
+      priority: 0.7,
     },
   ];
 
@@ -311,4 +337,23 @@ async function buildScrutinsWithoutSummarySitemap(): Promise<MetadataRoute.Sitem
       changeFrequency: "monthly" as const,
       priority: 0.2,
     }));
+}
+
+// Sitemap 5: Commune pages for municipales 2026 (priority 0.6)
+async function buildCommunesSitemap(): Promise<MetadataRoute.Sitemap> {
+  // Only include communes that have at least 1 candidacy
+  // Use a raw query for efficiency — we don't want to load 35K communes unnecessarily
+  const communes: Array<{ id: string }> = await db.$queryRaw`
+    SELECT DISTINCT c.id
+    FROM "Commune" c
+    INNER JOIN "Candidacy" ca ON ca."communeId" = c.id
+    ORDER BY c.id
+  `;
+
+  return communes.map((c) => ({
+    url: `${baseUrl}/elections/municipales-2026/communes/${c.id}`,
+    lastModified: new Date(),
+    changeFrequency: "weekly" as const,
+    priority: 0.6,
+  }));
 }

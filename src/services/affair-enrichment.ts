@@ -18,6 +18,7 @@ import { AFFAIR_STATUSES, AFFAIR_CATEGORIES } from "./affair-moderation";
 import { JSDOM } from "jsdom";
 import { Readability } from "@mozilla/readability";
 import { invalidateEntity } from "@/lib/cache";
+import { extractDateFromUrl } from "@/lib/extract-date-from-url";
 
 const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
 const MODEL = "claude-sonnet-4-5-20250929";
@@ -448,7 +449,10 @@ export async function enrichAffair(affairId: string): Promise<EnrichmentResult> 
     .filter((s) => !existingUrls.has(s.url))
     .map((s) => {
       const parsedDate = s.published_date ? new Date(s.published_date) : null;
-      const publishedAt = parsedDate && !isNaN(parsedDate.getTime()) ? parsedDate : new Date();
+      const publishedAt =
+        parsedDate && !isNaN(parsedDate.getTime())
+          ? parsedDate
+          : (extractDateFromUrl(s.url) ?? new Date());
       // Prefer real article title from scraping/Brave over AI-generated title
       const realTitle = titleByUrl.get(s.url) || s.title;
       return {

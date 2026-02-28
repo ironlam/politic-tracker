@@ -3,6 +3,41 @@ import { Prisma } from "@/generated/prisma";
 import { db } from "@/lib/db";
 
 // ============================================
+// Incumbent mayor helper
+// ============================================
+
+/** Fetch the incumbent mayor for a commune + check if they're running again in 2026. */
+async function getIncumbentMayor(communeId: string, electionId: string) {
+  const mayor = await db.localOfficial.findFirst({
+    where: { role: "MAIRE", communeId, isCurrent: true },
+    include: {
+      politician: {
+        select: { slug: true, fullName: true, photoUrl: true, blobPhotoUrl: true },
+      },
+      party: { select: { shortName: true, color: true } },
+    },
+  });
+
+  if (!mayor) return null;
+
+  // Check if running again: match by lastName in candidacies for this commune
+  const candidacy = await db.candidacy.findFirst({
+    where: {
+      electionId,
+      communeId,
+      candidateName: { contains: mayor.lastName, mode: "insensitive" },
+    },
+    select: { id: true, listName: true, listPosition: true },
+  });
+
+  return {
+    mayor,
+    isRunningAgain: !!candidacy,
+    candidacy,
+  };
+}
+
+// ============================================
 // Shared types
 // ============================================
 
@@ -56,6 +91,7 @@ export const getCommune = cache(async function getCommune(inseeCode: string) {
       electionId: null,
       round1Date: null,
       lists: [],
+      incumbentMayor: null,
       stats: {
         listCount: 0,
         candidateCount: 0,
@@ -116,6 +152,9 @@ export const getCommune = cache(async function getCommune(inseeCode: string) {
     }
   }
 
+  // Fetch incumbent mayor (sequential to respect pool limit of 2)
+  const incumbentMayor = await getIncumbentMayor(inseeCode, election.id);
+
   // Group candidacies by list
   type EnrichedCandidacy = (typeof candidacies)[number] & {
     participationRate?: number | null;
@@ -154,6 +193,7 @@ export const getCommune = cache(async function getCommune(inseeCode: string) {
     electionId: election.id,
     round1Date: election.round1Date,
     lists,
+    incumbentMayor,
     stats: {
       listCount: lists.length,
       candidateCount: totalCandidates,

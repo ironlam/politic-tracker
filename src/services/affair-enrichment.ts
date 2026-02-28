@@ -19,6 +19,7 @@ import { JSDOM } from "jsdom";
 import { Readability } from "@mozilla/readability";
 import { invalidateEntity } from "@/lib/cache";
 import { extractDateFromUrl } from "@/lib/extract-date-from-url";
+import { removeSidebarElements } from "@/lib/parsing/html-utils";
 
 const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
 const MODEL = "claude-sonnet-4-5-20250929";
@@ -579,6 +580,7 @@ async function scrapeTopArticles(results: BraveSearchResult[]): Promise<ScrapedA
 
       const html = await response.text();
       const dom = new JSDOM(html, { url: result.url });
+      removeSidebarElements(dom.window.document);
       const reader = new Readability(dom.window.document);
       const article = reader.parse();
 

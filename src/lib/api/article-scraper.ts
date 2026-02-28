@@ -14,7 +14,7 @@
 import { JSDOM } from "jsdom";
 import { Readability } from "@mozilla/readability";
 import { HTTPClient } from "./http-client";
-import { decodeHtmlEntities } from "@/lib/parsing/html-utils";
+import { decodeHtmlEntities, removeSidebarElements } from "@/lib/parsing/html-utils";
 
 const MAX_CONTENT_LENGTH = 16_000; // Truncate to 16k chars (sufficient for AI analysis)
 const SCRAPE_RATE_LIMIT_MS = 2000; // Be polite: 2s between scrapes
@@ -192,6 +192,7 @@ export class ArticleScraper {
   private parseWithReadability(html: string, url: string): ArticleContent | null {
     try {
       const dom = new JSDOM(decodeHtmlEntities(html), { url });
+      removeSidebarElements(dom.window.document);
       const reader = new Readability(dom.window.document);
       const article = reader.parse();
 

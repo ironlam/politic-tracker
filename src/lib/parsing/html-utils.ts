@@ -179,3 +179,62 @@ export function containsHtml(text: string): boolean {
   if (!text) return false;
   return /<[a-z][\s\S]*>/i.test(text);
 }
+
+/**
+ * Selectors for non-article content to remove before Readability extraction.
+ *
+ * Targets sidebar, related articles, navigation, and recommendation sections
+ * that Readability sometimes fails to exclude (e.g. Mediapart's "à ne pas manquer").
+ */
+const NOISE_SELECTORS = [
+  // Semantic HTML5 non-article elements
+  "aside",
+  "nav",
+
+  // ARIA landmark roles
+  '[role="complementary"]',
+  '[role="navigation"]',
+
+  // Related / recommended article sections (French news sites)
+  '[class*="related"]',
+  '[class*="linked-content"]',
+  '[class*="recommended"]',
+  '[class*="lire-aussi"]',
+  '[class*="read-also"]',
+  '[class*="a-lire"]',
+  '[class*="sur-le-meme"]',
+  '[class*="ne-pas-manquer"]',
+  '[class*="a-la-une"]',
+  '[class*="inread"]',
+  '[id*="related"]',
+
+  // Newsletter signup widgets
+  '[class*="newsletter"]',
+];
+
+/**
+ * Remove sidebar, related-article, and other non-content elements from a DOM document.
+ *
+ * Call this BEFORE passing the document to @mozilla/readability.
+ * Readability uses heuristics that can fail on news sites where recommendation
+ * sections (e.g. "à ne pas manquer") are embedded inside the article container.
+ *
+ * @param document - A JSDOM Document instance
+ * @returns The number of elements removed
+ *
+ * @example
+ * const dom = new JSDOM(html, { url });
+ * removeSidebarElements(dom.window.document);
+ * const reader = new Readability(dom.window.document);
+ */
+export function removeSidebarElements(document: { querySelectorAll: (s: string) => ArrayLike<{ remove: () => void }> }): number {
+  let removed = 0;
+  for (const selector of NOISE_SELECTORS) {
+    const elements = document.querySelectorAll(selector);
+    for (let i = 0; i < elements.length; i++) {
+      elements[i].remove();
+      removed++;
+    }
+  }
+  return removed;
+}

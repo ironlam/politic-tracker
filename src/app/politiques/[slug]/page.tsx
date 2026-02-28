@@ -35,6 +35,7 @@ import { DeclarationCard } from "@/components/declarations/DeclarationCard";
 import type { DeclarationDetails } from "@/types/hatvp";
 import { BetaDisclaimer } from "@/components/BetaDisclaimer";
 import { ProfileTabs } from "@/components/politicians/ProfileTabs";
+import { CareerTimeline } from "@/components/politicians/CareerTimeline";
 import { getPoliticianVotingStats, getPoliticianParliamentaryCard } from "@/services/voteStats";
 
 export const revalidate = 3600; // ISR: revalidate every hour
@@ -900,10 +901,13 @@ export default async function PoliticianPage({ params }: PageProps) {
                 </div>
               }
               careerContent={
-                <div className="text-center py-12 text-muted-foreground">
-                  <p className="text-lg font-medium">Timeline carrière</p>
-                  <p className="text-sm mt-1">Bientôt disponible</p>
-                </div>
+                <CareerTimeline
+                  mandates={politician.mandates}
+                  partyHistory={politician.partyHistory}
+                  affairs={directAffairs}
+                  birthDate={politician.birthDate}
+                  deathDate={politician.deathDate}
+                />
               }
               votesContent={
                 (voteData && voteData.stats.total > 0) || parliamentaryCard

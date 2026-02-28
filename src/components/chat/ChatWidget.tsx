@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { MessageSquare, X, Minimize2, Maximize2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,24 @@ export function ChatWidget() {
   const [isMinimized, setIsMinimized] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false);
   const pathname = usePathname();
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  // Focus first focusable element when panel opens
+  useEffect(() => {
+    if (isOpen) {
+      requestAnimationFrame(() => {
+        const focusable =
+          panelRef.current?.querySelector<HTMLElement>("input, textarea, button");
+        focusable?.focus();
+      });
+    }
+  }, [isOpen]);
+
+  function handleClose() {
+    setIsOpen(false);
+    requestAnimationFrame(() => triggerRef.current?.focus());
+  }
 
   // Don't show on /chat page
   const isOnChatPage = pathname === "/chat";
@@ -34,6 +52,7 @@ export function ChatWidget() {
       {/* Floating button */}
       {!isOpen && (
         <button
+          ref={triggerRef}
           onClick={() => {
             setIsOpen(true);
             setHasInteracted(true);
@@ -56,6 +75,7 @@ export function ChatWidget() {
       {/* Chat panel */}
       {isOpen && (
         <div
+          ref={panelRef}
           className={cn(
             "fixed z-50 bg-background border rounded-lg shadow-2xl",
             "flex flex-col overflow-hidden",
@@ -102,7 +122,7 @@ export function ChatWidget() {
                 variant="ghost"
                 size="icon"
                 className="h-8 w-8"
-                onClick={() => setIsOpen(false)}
+                onClick={handleClose}
                 aria-label="Fermer"
               >
                 <X className="w-4 h-4" />
@@ -123,7 +143,8 @@ export function ChatWidget() {
       {isOpen && !isMinimized && (
         <div
           className="fixed inset-0 bg-black/20 z-40 sm:hidden"
-          onClick={() => setIsOpen(false)}
+          aria-hidden="true"
+          onClick={handleClose}
         />
       )}
     </>

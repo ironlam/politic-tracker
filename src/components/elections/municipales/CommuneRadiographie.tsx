@@ -76,7 +76,7 @@ export function CommuneRadiographie({
 
           {/* Competition */}
           <div>
-            <dt className="text-muted-foreground text-sm">Competition</dt>
+            <dt className="text-muted-foreground text-sm">Compétition</dt>
             <dd className="mt-1">
               <Badge className={competition.className}>{competition.label}</Badge>
             </dd>
@@ -84,7 +84,7 @@ export function CommuneRadiographie({
 
           {/* Parity */}
           <div>
-            <dt className="text-muted-foreground text-sm">Parite F/H</dt>
+            <dt className="text-muted-foreground text-sm">Parité F/H</dt>
             <dd className={`text-2xl md:text-3xl font-bold tabular-nums ${parity.className}`}>
               {parity.label}
             </dd>
@@ -93,7 +93,7 @@ export function CommuneRadiographie({
           {/* Seats */}
           {totalSeats != null && (
             <div>
-              <dt className="text-muted-foreground text-sm">Sieges a pourvoir</dt>
+              <dt className="text-muted-foreground text-sm">Sièges à pourvoir</dt>
               <dd className="text-2xl md:text-3xl font-bold tabular-nums">{totalSeats}</dd>
             </div>
           )}
@@ -101,7 +101,7 @@ export function CommuneRadiographie({
           {/* National politicians */}
           {nationalPoliticiansCount > 0 && (
             <div>
-              <dt className="text-muted-foreground text-sm">Personnalites nationales</dt>
+              <dt className="text-muted-foreground text-sm">Personnalités nationales</dt>
               <dd className="text-2xl md:text-3xl font-bold tabular-nums">
                 {nationalPoliticiansCount}
               </dd>

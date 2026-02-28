@@ -22,7 +22,7 @@ function GenderDot({ gender }: { gender: string | null }) {
         "w-2.5 h-2.5 rounded-full shrink-0",
         gender === "F" ? "bg-pink-400" : gender === "M" ? "bg-blue-400" : "bg-gray-300"
       )}
-      aria-label={gender === "F" ? "Femme" : gender === "M" ? "Homme" : "Non renseigne"}
+      aria-label={gender === "F" ? "Femme" : gender === "M" ? "Homme" : "Non renseigné"}
     />
   );
 }

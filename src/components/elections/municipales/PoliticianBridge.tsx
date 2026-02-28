@@ -94,7 +94,7 @@ export function PoliticianBridge({
           prefetch={false}
           className="text-xs text-primary/80 hover:text-primary transition-colors"
         >
-          Voir la fiche complete &rarr;
+          Voir la fiche complète &rarr;
         </Link>
       </div>
     </div>
@@ -124,8 +124,8 @@ export function AlerteCumul({ count, mandateTypes }: AlerteCumulProps) {
       <span aria-hidden="true" className="mr-1">
         &#9888;
       </span>
-      {count} candidat{count > 1 ? "e" : ""}(s) sur cette commune{" "}
-      {count > 1 ? "exercent" : "exerce"} un mandat national ({formattedTypes}).
+      {count} candidat{count > 1 ? "s" : ""} sur cette commune {count > 1 ? "exercent" : "exerce"}{" "}
+      un mandat national ({formattedTypes}).
     </div>
   );
 }

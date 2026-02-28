@@ -103,9 +103,6 @@ async function getPolitician(slug: string) {
         take: 20,
       },
       partyHistory: {
-        where: {
-          role: { not: "MEMBER" },
-        },
         include: {
           party: {
             select: { name: true, shortName: true, slug: true, color: true },
@@ -550,7 +547,7 @@ export default async function PoliticianPage({ params }: PageProps) {
                 </Badge>
               )}
               {politician.partyHistory
-                .filter((ph) => !ph.endDate)
+                .filter((ph) => !ph.endDate && ph.role !== "MEMBER")
                 .map((ph) => (
                   <Badge key={ph.id} variant="outline" className="text-sm">
                     {feminizePartyRole(PARTY_ROLE_LABELS[ph.role], politician.civility)}

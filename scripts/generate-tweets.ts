@@ -18,10 +18,45 @@ interface TweetDraft {
   category: string; // emoji + titre de section
   content: string; // texte du tweet
   link?: string; // lien poligraph.fr
+  hashtags?: string[]; // hashtags (sans #)
+  mentions?: string[]; // comptes Twitter à tagger (sans @)
 }
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://poligraph.fr";
 const MAX_CHARS = 4000; // X Premium
+
+// --- Hashtags par catégorie ---
+
+const CATEGORY_HASHTAGS: Record<string, string[]> = {
+  votes: ["DirectAN", "PolitiqueFR"],
+  consensus: ["DirectAN", "PolitiqueFR"],
+  chiffres: ["DataPolitique", "OpenData", "PolitiqueFR"],
+  affaires: ["Justice", "PolitiqueFR"],
+  factchecks: ["FactCheck", "PolitiqueFR"],
+  profil: ["PolitiqueFR"],
+  elections: ["Municipales2026", "Elections", "PolitiqueFR"],
+  presse: ["PolitiqueFR"],
+  presence: ["DirectAN", "Absenteisme", "PolitiqueFR"],
+};
+
+// --- Comptes Twitter des médias et institutions ---
+
+const MEDIA_TWITTER: Record<string, string> = {
+  lemonde: "lemondefr",
+  lefigaro: "Le_Figaro",
+  mediapart: "Mediapart",
+  liberation: "libe",
+  bfmtv: "BFMTV",
+  france24: "France24_fr",
+  lcp: "LCP",
+  ouest_france: "OuestFrance",
+};
+
+// Handles institutionnels pour les votes selon la chambre
+const CHAMBER_TWITTER: Record<string, string> = {
+  AN: "AssembleeNat",
+  SENAT: "Senat",
+};
 
 // --- Helpers ---
 
@@ -129,10 +164,13 @@ async function divisiveVotes(): Promise<TweetDraft[]> {
       content += `\n\n${s.summary}`;
     }
 
+    const chamberHandle = CHAMBER_TWITTER[s.chamber || "AN"];
     drafts.push({
       category: "🗳️ Votes clivants",
       content,
       link: `${SITE_URL}/votes/${s.slug || s.id}`,
+      hashtags: s.chamber === "SENAT" ? ["DirectSenat", "PolitiqueFR"] : CATEGORY_HASHTAGS.votes,
+      mentions: chamberHandle ? [chamberHandle] : [],
     });
 
     if (drafts.length >= 2) break;
@@ -206,6 +244,7 @@ async function partyStats(): Promise<TweetDraft[]> {
       category: "📊 Chiffres",
       content,
       link: `${SITE_URL}/statistiques`,
+      hashtags: CATEGORY_HASHTAGS.chiffres,
     },
   ];
 
@@ -229,6 +268,7 @@ async function partyStats(): Promise<TweetDraft[]> {
       category: "📊 Chiffres",
       content: condContent,
       link: `${SITE_URL}/affaires`,
+      hashtags: ["Justice", "DataPolitique", "PolitiqueFR"],
     });
   }
 
@@ -291,6 +331,7 @@ async function recentAffairs(): Promise<TweetDraft[]> {
       category: "⚖️ Affaires récentes",
       content,
       link: `${SITE_URL}/affaires/${a.slug}`,
+      hashtags: CATEGORY_HASHTAGS.affaires,
     };
   });
 }
@@ -337,6 +378,7 @@ async function factchecks(): Promise<TweetDraft[]> {
       category: "🔍 Fact-checks",
       content,
       link: `${SITE_URL}/factchecks`,
+      hashtags: CATEGORY_HASHTAGS.factchecks,
     },
   ];
 }
@@ -414,6 +456,7 @@ async function deputySpotlight(): Promise<TweetDraft[]> {
       category: "👤 Profil du jour",
       content,
       link: `${SITE_URL}/politiques/${politician.slug}`,
+      hashtags: CATEGORY_HASHTAGS.profil,
     },
   ];
 }
@@ -456,6 +499,7 @@ async function elections(): Promise<TweetDraft[]> {
         category: "🗳️ Élections",
         content,
         link: `${SITE_URL}/elections/${upcoming.slug}`,
+        hashtags: CATEGORY_HASHTAGS.elections,
       },
     ];
   }
@@ -475,6 +519,7 @@ async function elections(): Promise<TweetDraft[]> {
         category: "🗳️ Élections",
         content,
         link: `${SITE_URL}/elections/${recent.slug}`,
+        hashtags: CATEGORY_HASHTAGS.elections,
       },
     ];
   }
@@ -567,11 +612,20 @@ async function recentPress(): Promise<TweetDraft[]> {
     }
   }
 
+  // Collect media Twitter handles from cited sources
+  const mediaMentions = uniqueArticles
+    .map((m) => MEDIA_TWITTER[m.article.feedSource])
+    .filter(Boolean);
+  // Deduplicate
+  const uniqueMentions = [...new Set(mediaMentions)];
+
   return [
     {
       category: "📰 Revue de presse",
       content,
       link: `${SITE_URL}/politiques/${pol.slug}`,
+      hashtags: CATEGORY_HASHTAGS.presse,
+      mentions: uniqueMentions,
     },
   ];
 }
@@ -628,6 +682,7 @@ async function participationRanking(): Promise<TweetDraft[]> {
       category: "📉 Présence au Parlement",
       content,
       link: `${SITE_URL}/statistiques`,
+      hashtags: CATEGORY_HASHTAGS.presence,
     });
   }
 
@@ -645,6 +700,7 @@ async function participationRanking(): Promise<TweetDraft[]> {
       category: "📈 Présence au Parlement",
       content,
       link: `${SITE_URL}/statistiques`,
+      hashtags: CATEGORY_HASHTAGS.presence,
     });
   }
 
@@ -695,10 +751,13 @@ async function unanimousVotes(): Promise<TweetDraft[]> {
       content += `\n\n${sum}`;
     }
 
+    const chamberTag = s.chamber === "SENAT" ? "DirectSenat" : "DirectAN";
     drafts.push({
       category: "🤝 Consensus",
       content,
       link: `${SITE_URL}/votes/${s.slug || s.id}`,
+      hashtags: [chamberTag, "PolitiqueFR"],
+      mentions: CHAMBER_TWITTER[s.chamber] ? [CHAMBER_TWITTER[s.chamber]] : [],
     });
 
     if (drafts.length >= 1) break;
@@ -725,7 +784,16 @@ function renderMarkdown(drafts: TweetDraft[]): string {
   for (const [category, tweets] of grouped) {
     md += `## ${category}\n\n`;
     for (const t of tweets) {
-      const fullText = t.link ? `${t.content}\n\n👉 ${t.link}` : t.content;
+      // Build the full tweet text with tags
+      let fullText = t.content;
+      if (t.link) fullText += `\n\n👉 ${t.link}`;
+
+      // Add mentions and hashtags on the last line
+      const tagParts: string[] = [];
+      if (t.mentions?.length) tagParts.push(t.mentions.map((m) => `@${m}`).join(" "));
+      if (t.hashtags?.length) tagParts.push(t.hashtags.map((h) => `#${h}`).join(" "));
+      if (tagParts.length > 0) fullText += `\n\n${tagParts.join(" ")}`;
+
       const charCount = fullText.length;
       const status = charCount > MAX_CHARS ? "⚠️ TROP LONG" : "✅";
       md += `### Tweet ${tweetNum}\n\n`;

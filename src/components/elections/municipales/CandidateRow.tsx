@@ -13,6 +13,8 @@ interface CandidateRowProps {
     currentParty: { shortName: string; color: string | null } | null;
     mandates: Array<{ type: string }>;
   } | null;
+  isIncumbentMayor?: boolean;
+  incumbentMayorGender?: string | null;
 }
 
 function GenderDot({ gender }: { gender: string | null }) {
@@ -27,7 +29,14 @@ function GenderDot({ gender }: { gender: string | null }) {
   );
 }
 
-export function CandidateRow({ position, name, gender, politician }: CandidateRowProps) {
+export function CandidateRow({
+  position,
+  name,
+  gender,
+  politician,
+  isIncumbentMayor,
+  incumbentMayorGender,
+}: CandidateRowProps) {
   return (
     <div className="flex items-center gap-3 py-1.5 px-2 text-sm">
       {/* Position */}
@@ -52,6 +61,13 @@ export function CandidateRow({ position, name, gender, politician }: CandidateRo
           name
         )}
       </span>
+
+      {/* Incumbent mayor badge */}
+      {isIncumbentMayor && (
+        <Badge variant="outline" className="shrink-0 text-xs">
+          Maire sortant{incumbentMayorGender === "F" ? "e" : ""}
+        </Badge>
+      )}
 
       {/* Fiche PoliGraph badge */}
       {politician && (

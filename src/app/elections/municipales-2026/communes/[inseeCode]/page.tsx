@@ -6,6 +6,7 @@ import { getCommune } from "@/lib/data/municipales";
 import { CommuneRadiographie } from "@/components/elections/municipales/CommuneRadiographie";
 import { ListCard } from "@/components/elections/municipales/ListCard";
 import { AlerteCumul } from "@/components/elections/municipales/PoliticianBridge";
+import { IncumbentMayorCard } from "@/components/elections/municipales/IncumbentMayorCard";
 import { EventJsonLd, BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 
 export const revalidate = 3600; // ISR: revalidate every hour
@@ -139,6 +140,16 @@ export default async function CommuneDetailPage({ params }: PageProps) {
             );
           })()}
 
+        {/* Incumbent mayor */}
+        {commune.incumbentMayor && (
+          <div className="mb-6">
+            <IncumbentMayorCard
+              mayor={commune.incumbentMayor.mayor}
+              isRunningAgain={commune.incumbentMayor.isRunningAgain}
+            />
+          </div>
+        )}
+
         {/* Radiographie */}
         <section className="mb-8">
           <CommuneRadiographie
@@ -165,6 +176,8 @@ export default async function CommuneDetailPage({ params }: PageProps) {
                   femaleCount={list.femaleCount}
                   teteDeListe={list.teteDeListe}
                   members={list.members}
+                  incumbentMayorLastName={commune.incumbentMayor?.mayor.lastName ?? null}
+                  incumbentMayorGender={commune.incumbentMayor?.mayor.gender ?? null}
                 />
               ))}
             </div>

@@ -75,6 +75,7 @@ const MANDATE_GROUPS: Record<string, MandateType[]> = {
   senateur: ["SENATEUR"],
   gouvernement: ["MINISTRE", "PREMIER_MINISTRE", "MINISTRE_DELEGUE", "SECRETAIRE_ETAT"],
   dirigeants: ["PRESIDENT_PARTI"], // Also includes significant party roles (handled separately)
+  maire: ["MAIRE"],
 };
 
 // Sort configurations - using 'any' to handle complex Prisma orderBy types
@@ -332,6 +333,7 @@ async function getFilterCounts() {
         senateurs: bigint;
         gouvernement: bigint;
         dirigeants: bigint;
+        maires: bigint;
       },
     ]
   >`
@@ -385,7 +387,14 @@ async function getFilterCounts() {
           SELECT 1 FROM "PartyMembership" pm
           WHERE pm."politicianId" = p.id AND pm."endDate" IS NULL AND pm.role != 'MEMBER'
         )
-      ) AS dirigeants
+      ) AS dirigeants,
+      -- Maires
+      COUNT(DISTINCT p.id) FILTER (
+        WHERE EXISTS (
+          SELECT 1 FROM "Mandate" m
+          WHERE m."politicianId" = p.id AND m.type = 'MAIRE' AND m."isCurrent" = true
+        )
+      ) AS maires
     FROM "Politician" p
     WHERE p."publicationStatus" = 'PUBLISHED'
   `;
@@ -397,6 +406,7 @@ async function getFilterCounts() {
     senateurs: Number(counts.senateurs),
     gouvernement: Number(counts.gouvernement),
     dirigeants: Number(counts.dirigeants),
+    maires: Number(counts.maires),
   };
 }
 

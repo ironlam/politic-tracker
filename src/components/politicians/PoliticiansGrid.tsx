@@ -20,6 +20,7 @@ interface PoliticiansGridProps {
     senateurs: number;
     gouvernement: number;
     dirigeants: number;
+    maires: number;
   };
   filters: {
     search: string;
@@ -91,6 +92,7 @@ export function PoliticiansGrid({
             senateurs: counts.senateurs,
             gouvernement: counts.gouvernement,
             dirigeants: counts.dirigeants,
+            maires: counts.maires,
           }}
         />
 

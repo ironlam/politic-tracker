@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
 
 export type SortOption = "prominence" | "alpha" | "alpha-desc" | "recent" | "affairs";
-export type MandateFilter = "" | "depute" | "senateur" | "gouvernement" | "dirigeants";
+export type MandateFilter = "" | "depute" | "senateur" | "gouvernement" | "dirigeants" | "maire";
 export type StatusFilter = "" | "active" | "former"; // kept for backward compat — unused in UI
 
 const SORT_OPTIONS: Record<SortOption, string> = {
@@ -22,6 +22,7 @@ const MANDATE_OPTIONS: Record<MandateFilter, string> = {
   senateur: "Sénateurs",
   gouvernement: "Gouvernement",
   dirigeants: "Dirigeants de parti",
+  maire: "Maires",
 };
 
 interface FilterBarProps {
@@ -32,6 +33,7 @@ interface FilterBarProps {
     senateurs: number;
     gouvernement: number;
     dirigeants: number;
+    maires: number;
   };
   onLoadingChange?: (loading: boolean) => void;
 }
@@ -108,7 +110,9 @@ export function FilterBar({
                     ? counts.gouvernement
                     : value === "dirigeants"
                       ? counts.dirigeants
-                      : null;
+                      : value === "maire"
+                        ? counts.maires
+                        : null;
             return (
               <option key={value} value={value}>
                 {label}

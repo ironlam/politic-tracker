@@ -51,12 +51,12 @@ const getElection = cache(async function getElection() {
 });
 
 export const metadata: Metadata = {
-  title: "Municipales 2026 — Candidats, listes et resultats | Poligraph",
+  title: "Municipales 2026 — Candidats, listes et résultats | Poligraph",
   description:
-    "Decouvrez les candidats et listes aux elections municipales 2026 dans votre commune. Recherche par ville, carte des forces politiques, parite et cumul des mandats.",
+    "Découvrez les candidats et listes aux élections municipales 2026 dans votre commune. Recherche par ville, carte des forces politiques, parité et cumul des mandats.",
   openGraph: {
-    title: "Municipales 2026 — Qui se presente chez vous ?",
-    description: "Decouvrez les candidats aux elections municipales 2026 dans votre commune.",
+    title: "Municipales 2026 — Qui se présente chez vous ?",
+    description: "Découvrez les candidats aux élections municipales 2026 dans votre commune.",
   },
 };
 
@@ -81,7 +81,7 @@ export default async function MunicipalesLandingPage() {
           <li aria-hidden="true">/</li>
           <li>
             <Link href="/elections" className="hover:text-foreground transition-colors">
-              Elections
+              Élections
             </Link>
           </li>
           <li aria-hidden="true">/</li>
@@ -108,7 +108,7 @@ export default async function MunicipalesLandingPage() {
       {/* Chiffres */}
       {stats && (
         <section className="py-8">
-          <h2 className="text-xl font-bold mb-4">Les chiffres cles</h2>
+          <h2 className="text-xl font-bold mb-4">Les chiffres clés</h2>
           <MunicipalesChiffres
             communesWithCompetition={stats.communesWithCompetition}
             totalCommunes={stats.totalCommunes}
@@ -122,9 +122,9 @@ export default async function MunicipalesLandingPage() {
       {/* Most contested communes */}
       {stats && stats.mostContestedCommunes.length > 0 && (
         <section className="py-8">
-          <h2 className="text-xl font-bold mb-4">Les courses a suivre</h2>
+          <h2 className="text-xl font-bold mb-4">Les courses à suivre</h2>
           <p className="text-muted-foreground mb-6">
-            Les communes avec le plus de listes en competition
+            Les communes avec le plus de listes en compétition
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {stats.mostContestedCommunes.map((commune) => (
@@ -162,7 +162,7 @@ export default async function MunicipalesLandingPage() {
               <span className="text-2xl font-bold tabular-nums text-amber-700 dark:text-amber-300">
                 {stats.communesUncontested.toLocaleString("fr-FR")}
               </span>{" "}
-              communes n&apos;ont qu&apos;une seule liste en lice. Les electeurs n&apos;auront pas
+              communes n&apos;ont qu&apos;une seule liste en lice. Les électeurs n&apos;auront pas
               de choix entre des candidatures concurrentes.
             </p>
           </div>

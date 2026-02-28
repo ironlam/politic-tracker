@@ -16,10 +16,11 @@ interface HorizontalBarsProps {
 }
 
 export function HorizontalBars({ bars, title, maxValue: globalMax }: HorizontalBarsProps) {
+  const descId = `chart-desc-${title.replace(/\s+/g, "-").toLowerCase()}`;
   const max = globalMax ?? Math.max(...bars.map((b) => b.maxValue ?? b.value), 1);
 
   return (
-    <div role="img" aria-label={title}>
+    <div role="img" aria-label={title} aria-describedby={descId}>
       <div className="space-y-3">
         {bars.map((bar) => {
           const pct = Math.min((bar.value / max) * 100, 100);
@@ -61,7 +62,7 @@ export function HorizontalBars({ bars, title, maxValue: globalMax }: HorizontalB
         })}
       </div>
       {/* Screen reader table */}
-      <table className="sr-only">
+      <table className="sr-only" id={descId}>
         <caption>{title}</caption>
         <thead>
           <tr>

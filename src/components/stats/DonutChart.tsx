@@ -1,5 +1,6 @@
 "use client";
 
+import { useId } from "react";
 import { arc, pie } from "d3-shape";
 
 interface DonutSegment {
@@ -15,6 +16,7 @@ interface DonutChartProps {
 }
 
 export function DonutChart({ segments, size = 200, title }: DonutChartProps) {
+  const descId = useId();
   const total = segments.reduce((s, d) => s + d.value, 0);
   if (total === 0) return null;
 
@@ -39,6 +41,7 @@ export function DonutChart({ segments, size = 200, title }: DonutChartProps) {
         viewBox={`0 0 ${size} ${size}`}
         role="img"
         aria-label={`${title} : ${segments.map((s) => `${s.label} ${s.value}`).join(", ")}`}
+        aria-describedby={descId}
         className="mx-auto"
       >
         <g transform={`translate(${radius}, ${radius})`}>
@@ -54,7 +57,7 @@ export function DonutChart({ segments, size = 200, title }: DonutChartProps) {
         </g>
       </svg>
       {/* Screen reader table */}
-      <table className="sr-only">
+      <table className="sr-only" id={descId}>
         <caption>{title}</caption>
         <thead>
           <tr>

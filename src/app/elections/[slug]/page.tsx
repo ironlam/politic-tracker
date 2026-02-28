@@ -183,6 +183,27 @@ export default async function ElectionDetailPage({ params }: PageProps) {
               </div>
             </div>
 
+            {/* Municipales 2026 portal banner */}
+            {slug === "municipales-2026" && (
+              <div className="bg-gradient-to-r from-primary/10 to-accent/10 border border-primary/20 rounded-xl p-4 flex items-center gap-4">
+                <span className="text-2xl" aria-hidden="true">
+                  🏛️
+                </span>
+                <div className="flex-1">
+                  <p className="font-semibold">Portail Municipales 2026</p>
+                  <p className="text-sm text-muted-foreground">
+                    Découvrez les candidats, la carte politique, la parité et les cumuls de mandats.
+                  </p>
+                </div>
+                <Link
+                  href="/elections/municipales-2026"
+                  className="shrink-0 text-sm font-medium text-primary hover:underline"
+                >
+                  Explorer &rarr;
+                </Link>
+              </div>
+            )}
+
             {/* Countdown */}
             {showCountdown && (
               <ElectionCountdown

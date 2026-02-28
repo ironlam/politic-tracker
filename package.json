@@ -124,6 +124,8 @@
     "sync:elections:municipales:stats": "tsx scripts/sync-candidatures.ts --stats",
     "seed:fixtures": "tsx scripts/seed-fixtures.ts",
     "seed:fixtures:clean": "tsx scripts/seed-fixtures.ts --clean",
+    "seed:communes": "npx dotenv -e .env -- npx tsx scripts/seed-communes.ts",
+    "compute:municipales-stats": "npx dotenv -e .env -- npx tsx scripts/compute-election-stats.ts",
     "seed:elections": "tsx scripts/seed-elections.ts",
     "seed:parliamentary-groups": "tsx scripts/seed-parliamentary-groups.ts",
     "migrate:groups-to-parties": "tsx scripts/migrate-groups-to-parties.ts",

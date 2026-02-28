@@ -12,13 +12,7 @@ export const postSocial = inngest.createFunction(
     { cron: "0 17 * * *" }, // 17:00 UTC = 18:00 Paris
   ],
   async ({ step }) => {
-    // Step 1: Pick category via round-robin
-    const category = await step.run("pick-category", async () => {
-      const { getNextCategory } = await import("@/lib/social/rotation");
-      return getNextCategory();
-    });
-
-    // Step 2: Generate tweet — try current category, skip if empty (max 3 attempts)
+    // Step 1 + 2: Generate tweet — try current category, skip if empty (max 3 attempts)
     const draft = await step.run("generate", async () => {
       const { generateForCategory } = await import("@/lib/social/generators");
       const { SOCIAL_CATEGORIES } = await import("@/lib/social/config");

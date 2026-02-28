@@ -2,11 +2,8 @@ import { db } from "@/lib/db";
 import {
   AFFAIR_STATUS_LABELS,
   AFFAIR_STATUS_NEEDS_PRESUMPTION,
-  AFFAIR_CATEGORY_LABELS,
   VOTING_RESULT_LABELS,
   MANDATE_TYPE_LABELS,
-  ELECTION_TYPE_LABELS,
-  ELECTION_STATUS_LABELS,
 } from "@/config/labels";
 import { SITE_URL } from "./config";
 
@@ -387,7 +384,6 @@ async function recentAffairs(): Promise<TweetDraft[]> {
 
   return affairs.map((a) => {
     const statusLabel = AFFAIR_STATUS_LABELS[a.status];
-    const categoryLabel = AFFAIR_CATEGORY_LABELS[a.category];
     const needsPresumption = AFFAIR_STATUS_NEEDS_PRESUMPTION[a.status];
     const party = a.politician.currentParty?.shortName || "";
     const mandate = a.politician.mandates[0];
@@ -661,7 +657,6 @@ async function elections(): Promise<TweetDraft[]> {
   });
 
   if (recent) {
-    const typeLabel = ELECTION_TYPE_LABELS[recent.type];
     let content = `\u{1F5F3}\uFE0F ${recent.title}\n\n`;
     content += `R\u00E9sultats, \u00E9lus, candidats \u2014 tout est en ligne.`;
 

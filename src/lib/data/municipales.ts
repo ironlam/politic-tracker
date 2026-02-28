@@ -1,4 +1,5 @@
 import { cache } from "react";
+import { Prisma } from "@/generated/prisma";
 import { db } from "@/lib/db";
 
 export const getCommune = cache(async function getCommune(inseeCode: string) {
@@ -126,4 +127,56 @@ export const getCommune = cache(async function getCommune(inseeCode: string) {
       nationalPoliticiansCount,
     },
   };
+});
+
+export const getDepartmentPartyData = cache(async function getDepartmentPartyData() {
+  const election = await db.election.findUnique({
+    where: { slug: "municipales-2026" },
+    select: { id: true },
+  });
+  if (!election) return [];
+
+  // Raw SQL: for each department, count distinct lists per partyLabel
+  const rows = await db.$queryRaw<
+    Array<{
+      departmentCode: string;
+      departmentName: string;
+      partyLabel: string;
+      listCount: number;
+    }>
+  >(Prisma.sql`
+    SELECT co."departmentCode", co."departmentName", c."partyLabel", COUNT(DISTINCT c."listName")::int as "listCount"
+    FROM "Candidacy" c
+    JOIN "Commune" co ON c."communeId" = co.id
+    WHERE c."electionId" = ${election.id} AND c."partyLabel" IS NOT NULL
+    GROUP BY co."departmentCode", co."departmentName", c."partyLabel"
+    ORDER BY co."departmentCode", "listCount" DESC
+  `);
+
+  // Aggregate: for each department, find the dominant party and build parties list
+  const deptMap = new Map<
+    string,
+    {
+      code: string;
+      name: string;
+      parties: Array<{ label: string; listCount: number }>;
+      totalLists: number;
+    }
+  >();
+  for (const row of rows) {
+    const existing = deptMap.get(row.departmentCode) || {
+      code: row.departmentCode,
+      name: row.departmentName,
+      parties: [],
+      totalLists: 0,
+    };
+    existing.parties.push({ label: row.partyLabel, listCount: row.listCount });
+    existing.totalLists += row.listCount;
+    deptMap.set(row.departmentCode, existing);
+  }
+
+  return Array.from(deptMap.values()).map((dept) => ({
+    ...dept,
+    dominantParty: dept.parties[0]?.label ?? null, // Already sorted by listCount DESC
+  }));
 });

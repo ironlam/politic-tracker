@@ -188,8 +188,13 @@ export function CommuneSearch({
           setIsGeolocating(false);
         }
       },
-      () => {
-        setGeoError("La géolocalisation a échoué");
+      (error) => {
+        const messages: Record<number, string> = {
+          1: "Vous avez refusé l'accès à votre position",
+          2: "Votre position n'a pas pu être déterminée",
+          3: "La demande de géolocalisation a expiré",
+        };
+        setGeoError(messages[error.code] ?? "La géolocalisation a échoué");
         setIsGeolocating(false);
       },
       { enableHighAccuracy: false, timeout: 10000 }

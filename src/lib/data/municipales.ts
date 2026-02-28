@@ -53,12 +53,50 @@ export const getCommune = cache(async function getCommune(inseeCode: string) {
     orderBy: [{ listName: "asc" }, { listPosition: "asc" }],
   });
 
+  // After candidacies fetch, load participation stats for linked politicians
+  const politicianIds = candidacies
+    .filter((c) => c.politicianId != null)
+    .map((c) => c.politicianId!);
+
+  const participationMap = new Map<string, number>();
+  const affairsCountMap = new Map<string, number>();
+
+  if (politicianIds.length > 0) {
+    const participations = await db.politicianParticipation.findMany({
+      where: { politicianId: { in: politicianIds } },
+      select: { politicianId: true, participationRate: true },
+    });
+    for (const p of participations) {
+      participationMap.set(p.politicianId, p.participationRate);
+    }
+
+    // Count affairs per politician
+    const affairsCounts = await db.affair.groupBy({
+      by: ["politicianId"],
+      where: { politicianId: { in: politicianIds } },
+      _count: true,
+    });
+    for (const a of affairsCounts) {
+      affairsCountMap.set(a.politicianId, a._count);
+    }
+  }
+
   // Group candidacies by list
-  const listsMap = new Map<string, typeof candidacies>();
+  type EnrichedCandidacy = (typeof candidacies)[number] & {
+    participationRate?: number | null;
+    affairsCount?: number;
+  };
+
+  const listsMap = new Map<string, EnrichedCandidacy[]>();
   for (const c of candidacies) {
     const key = c.listName || "Sans liste";
     const list = listsMap.get(key) || [];
-    list.push(c);
+    const enriched: EnrichedCandidacy = {
+      ...c,
+      participationRate: c.politicianId ? (participationMap.get(c.politicianId) ?? null) : null,
+      affairsCount: c.politicianId ? (affairsCountMap.get(c.politicianId) ?? 0) : 0,
+    };
+    list.push(enriched);
     listsMap.set(key, list);
   }
 

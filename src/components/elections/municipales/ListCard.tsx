@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { CandidateRow } from "@/components/elections/municipales/CandidateRow";
+import { PoliticianBridge } from "@/components/elections/municipales/PoliticianBridge";
 
 interface ListCardProps {
   name: string;
@@ -31,6 +32,8 @@ interface ListCardProps {
       currentParty: { shortName: string; color: string | null } | null;
       mandates: Array<{ type: string }>;
     } | null;
+    participationRate?: number | null;
+    affairsCount?: number;
   }>;
 }
 
@@ -147,13 +150,21 @@ export function ListCard({
         {expanded && (
           <div className="mt-4 border-t pt-3 space-y-0.5">
             {members.map((member) => (
-              <CandidateRow
-                key={member.id}
-                position={member.listPosition}
-                name={member.candidateName}
-                gender={member.candidate?.gender ?? null}
-                politician={member.politician}
-              />
+              <div key={member.id}>
+                <CandidateRow
+                  position={member.listPosition}
+                  name={member.candidateName}
+                  gender={member.candidate?.gender ?? null}
+                  politician={member.politician}
+                />
+                {member.politician && (
+                  <PoliticianBridge
+                    politician={member.politician}
+                    participationRate={member.participationRate}
+                    affairsCount={member.affairsCount}
+                  />
+                )}
+              </div>
             ))}
           </div>
         )}

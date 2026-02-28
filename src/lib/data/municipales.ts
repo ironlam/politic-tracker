@@ -221,6 +221,97 @@ export const getParityBySize = cache(async function getParityBySize() {
   }));
 });
 
+export const getCumulCandidates = cache(async function getCumulCandidates() {
+  const election = await db.election.findUnique({
+    where: { slug: "municipales-2026" },
+    select: { id: true },
+  });
+  if (!election) return [];
+
+  // Get candidacies with linked politicians who have active national mandates
+  const candidacies = await db.candidacy.findMany({
+    where: {
+      electionId: election.id,
+      politicianId: { not: null },
+      politician: {
+        mandates: {
+          some: {
+            isCurrent: true,
+            type: {
+              in: [
+                "DEPUTE",
+                "SENATEUR",
+                "DEPUTE_EUROPEEN",
+                "MINISTRE",
+                "SECRETAIRE_ETAT",
+                "PREMIER_MINISTRE",
+              ],
+            },
+          },
+        },
+      },
+    },
+    select: {
+      id: true,
+      candidateName: true,
+      listName: true,
+      listPosition: true,
+      communeId: true,
+      commune: { select: { name: true, departmentCode: true } },
+      politician: {
+        select: {
+          id: true,
+          slug: true,
+          fullName: true,
+          photoUrl: true,
+          currentParty: { select: { shortName: true, color: true } },
+          mandates: {
+            where: { isCurrent: true },
+            select: { type: true },
+          },
+        },
+      },
+    },
+    orderBy: { candidateName: "asc" },
+  });
+
+  return candidacies;
+});
+
+export const getMissingMayors = cache(async function getMissingMayors() {
+  const election = await db.election.findUnique({
+    where: { slug: "municipales-2026" },
+    select: { id: true },
+  });
+  if (!election) return [];
+
+  // Politicians with MAIRE mandate who are NOT in the candidacy list
+  const rows = await db.$queryRaw<
+    Array<{
+      id: string;
+      slug: string;
+      fullName: string;
+      photoUrl: string | null;
+      partyShortName: string | null;
+      partyColor: string | null;
+      mandateStartDate: string | null;
+    }>
+  >(Prisma.sql`
+    SELECT p.id, p.slug, p."fullName", p."photoUrl",
+           pa."shortName" as "partyShortName", pa.color as "partyColor",
+           m."startDate"::text as "mandateStartDate"
+    FROM "Politician" p
+    JOIN "Mandate" m ON m."politicianId" = p.id AND m."isCurrent" = true AND m.type = 'MAIRE'
+    LEFT JOIN "Party" pa ON pa.id = p."currentPartyId"
+    WHERE NOT EXISTS (
+      SELECT 1 FROM "Candidacy" c WHERE c."politicianId" = p.id AND c."electionId" = ${election.id}
+    )
+    ORDER BY p."fullName" ASC
+  `);
+
+  return rows;
+});
+
 export const getParityOutliers = cache(async function getParityOutliers() {
   const election = await db.election.findUnique({
     where: { slug: "municipales-2026" },

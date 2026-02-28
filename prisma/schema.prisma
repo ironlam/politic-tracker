@@ -1367,6 +1367,34 @@ model StatsSnapshot {
 }
 
 // ============================================
+// SOCIAL AUTO-POSTING
+// ============================================
+
+enum SocialPostStatus {
+  PENDING_REVIEW
+  POSTED
+  REJECTED
+  FAILED
+}
+
+model SocialPost {
+  id         String           @id @default(cuid())
+  category   String
+  content    String           @db.Text
+  link       String?
+  status     SocialPostStatus @default(PENDING_REVIEW)
+  blueskyUrl String?
+  twitterUrl String?
+  error      String?
+  postedAt   DateTime?
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+// ============================================
 // COMMUNES (reference table for municipal elections)
 // ============================================
 

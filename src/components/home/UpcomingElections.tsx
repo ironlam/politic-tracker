@@ -46,6 +46,30 @@ export function UpcomingElections({ elections }: UpcomingElectionsProps) {
           />
         )}
 
+        {/* Municipales 2026 portal CTA */}
+        <div className="my-8">
+          <Link href="/elections/municipales-2026" className="block">
+            <Card className="bg-gradient-to-r from-primary/10 via-background to-accent/10 border-primary/20 hover:shadow-lg transition-all">
+              <CardContent className="py-6">
+                <div className="flex items-center gap-4">
+                  <span className="text-3xl" aria-hidden="true">
+                    🏛️
+                  </span>
+                  <div className="flex-1">
+                    <p className="font-bold text-lg">Municipales 2026</p>
+                    <p className="text-muted-foreground text-sm">
+                      Explorer les candidats dans votre commune &rarr;
+                    </p>
+                  </div>
+                  <Badge variant="outline" className="shrink-0">
+                    Nouveau
+                  </Badge>
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
+        </div>
+
         {/* Compact cards for other upcoming elections */}
         {otherElections.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

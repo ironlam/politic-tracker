@@ -36,7 +36,8 @@ export default async function MairesPage({ searchParams }: PageProps) {
   const deptFilter = params.dept || "";
   const partyFilter = params.party || "";
   const genderFilter = params.gender || "";
-  const page = parseInt(params.page || "1", 10);
+  const rawPage = parseInt(params.page || "1", 10);
+  const page = Number.isFinite(rawPage) && rawPage >= 1 ? rawPage : 1;
 
   const [stats, { maires, total, totalPages }, parties] = await Promise.all([
     getMaireStats(),
@@ -62,11 +63,8 @@ export default async function MairesPage({ searchParams }: PageProps) {
       ...overrides,
     };
     for (const [k, v] of Object.entries(merged)) {
-      if ((v && v !== "1") || (k === "page" && v !== "1")) {
-        if (v) p.set(k, v);
-      }
+      if (v) p.set(k, v);
     }
-    // Remove page=1
     if (p.get("page") === "1") p.delete("page");
     const qs = p.toString();
     return `/elections/municipales-2026/maires${qs ? `?${qs}` : ""}`;
@@ -105,7 +103,9 @@ export default async function MairesPage({ searchParams }: PageProps) {
             </Link>
           </li>
           <li aria-hidden="true">/</li>
-          <li className="text-foreground font-medium">Maires</li>
+          <li className="text-foreground font-medium" aria-current="page">
+            Maires
+          </li>
         </ol>
       </nav>
 

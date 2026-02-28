@@ -21,3 +21,10 @@ ON "Politician" USING gin ("lastName" gin_trgm_ops);
 -- Covers: { title: { contains: search, mode: "insensitive" } }
 CREATE INDEX CONCURRENTLY IF NOT EXISTS "Scrutin_title_trgm"
 ON "Scrutin" USING gin ("title" gin_trgm_ops);
+
+-- 5. Trigram indexes on LocalOfficial for maires search (/maires page)
+CREATE INDEX CONCURRENTLY IF NOT EXISTS "LocalOfficial_fullName_trgm"
+ON "LocalOfficial" USING gin ("fullName" gin_trgm_ops);
+
+CREATE INDEX CONCURRENTLY IF NOT EXISTS "LocalOfficial_lastName_trgm"
+ON "LocalOfficial" USING gin ("lastName" gin_trgm_ops);

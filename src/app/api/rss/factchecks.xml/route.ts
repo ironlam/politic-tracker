@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { buildRss, createRssResponse } from "@/lib/rss";
+import { FACTCHECK_ALLOWED_SOURCES } from "@/config/labels";
 
 export const revalidate = 300;
 
@@ -7,6 +8,7 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://poligraph.fr";
 
 export async function GET() {
   const factchecks = await db.factCheck.findMany({
+    where: { source: { in: FACTCHECK_ALLOWED_SOURCES } },
     orderBy: { publishedAt: "desc" },
     take: 50,
     select: {

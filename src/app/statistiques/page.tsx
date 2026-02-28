@@ -8,6 +8,7 @@ import {
   CATEGORY_TO_SUPER,
   AFFAIR_CATEGORY_LABELS,
   VERDICT_GROUPS,
+  FACTCHECK_ALLOWED_SOURCES,
   type AffairSuperCategory,
 } from "@/config/labels";
 import type { AffairStatus, AffairCategory } from "@/types";
@@ -231,20 +232,25 @@ async function getFactCheckData() {
   cacheLife("minutes");
 
   const [total, byRating, bySource, allMentions] = await Promise.all([
-    db.factCheck.count(),
+    db.factCheck.count({ where: { source: { in: FACTCHECK_ALLOWED_SOURCES } } }),
     db.factCheck.groupBy({
       by: ["verdictRating"],
+      where: { source: { in: FACTCHECK_ALLOWED_SOURCES } },
       _count: true,
       orderBy: { _count: { verdictRating: "desc" } },
     }),
     db.factCheck.groupBy({
       by: ["source"],
+      where: { source: { in: FACTCHECK_ALLOWED_SOURCES } },
       _count: true,
       orderBy: { _count: { source: "desc" } },
     }),
     // Fetch only claimant mentions (politician actually made the claim)
     db.factCheckMention.findMany({
-      where: { isClaimant: true },
+      where: {
+        isClaimant: true,
+        factCheck: { source: { in: FACTCHECK_ALLOWED_SOURCES } },
+      },
       select: {
         factCheck: { select: { verdictRating: true } },
         politician: {

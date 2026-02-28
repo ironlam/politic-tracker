@@ -10,6 +10,7 @@ import { Heart } from "lucide-react";
 import { HexPattern } from "@/components/ui/HexPattern";
 import { FadeIn } from "@/components/motion";
 import { isFeatureEnabled } from "@/lib/feature-flags";
+import { FACTCHECK_ALLOWED_SOURCES } from "@/config/labels";
 
 async function getRecentFactChecks() {
   "use cache";
@@ -17,6 +18,7 @@ async function getRecentFactChecks() {
   cacheLife("minutes");
 
   const factChecks = await db.factCheck.findMany({
+    where: { source: { in: FACTCHECK_ALLOWED_SOURCES } },
     take: 5,
     orderBy: { publishedAt: "desc" },
     select: {

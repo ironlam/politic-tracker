@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { FactCheckRating } from "@/generated/prisma";
 import { withCache } from "@/lib/cache";
+import { FACTCHECK_ALLOWED_SOURCES } from "@/config/labels";
 
 /**
  * @openapi
@@ -64,7 +65,9 @@ export async function GET(request: NextRequest) {
   const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") || "20", 10)));
   const skip = (page - 1) * limit;
 
-  const where: Record<string, unknown> = {};
+  const where: Record<string, unknown> = {
+    source: source || { in: FACTCHECK_ALLOWED_SOURCES },
+  };
 
   if (search) {
     where.OR = [
@@ -79,10 +82,6 @@ export async function GET(request: NextRequest) {
         politician: { slug: politician },
       },
     };
-  }
-
-  if (source) {
-    where.source = source;
   }
 
   if (verdict && Object.values(FactCheckRating).includes(verdict as FactCheckRating)) {

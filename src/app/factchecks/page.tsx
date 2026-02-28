@@ -12,7 +12,9 @@ import {
   FACTCHECK_RATING_LABELS,
   FACTCHECK_RATING_COLORS,
   FACTCHECK_RATING_DESCRIPTIONS,
+  FACTCHECK_ALLOWED_SOURCES,
 } from "@/config/labels";
+import { Prisma } from "@/generated/prisma";
 import type { FactCheckRating } from "@/types";
 
 export const revalidate = 300; // 5 minutes — CDN edge cache with ISR
@@ -97,7 +99,7 @@ async function getFactChecks(params: {
   const skip = (page - 1) * limit;
 
   const where = {
-    ...(source && { source }),
+    source: source || { in: FACTCHECK_ALLOWED_SOURCES },
     ...(verdict && { verdictRating: verdict as FactCheckRating }),
     ...(politicianSlug && {
       mentions: {
@@ -148,21 +150,25 @@ async function getStats() {
   cacheLife("minutes");
 
   const [totalFactChecks, byRating, bySource, topPoliticians] = await Promise.all([
-    db.factCheck.count(),
+    db.factCheck.count({ where: { source: { in: FACTCHECK_ALLOWED_SOURCES } } }),
     db.factCheck.groupBy({
       by: ["verdictRating"],
+      where: { source: { in: FACTCHECK_ALLOWED_SOURCES } },
       _count: true,
       orderBy: { _count: { verdictRating: "desc" } },
     }),
     db.factCheck.groupBy({
       by: ["source"],
+      where: { source: { in: FACTCHECK_ALLOWED_SOURCES } },
       _count: true,
       orderBy: { _count: { source: "desc" } },
     }),
     db.$queryRaw<Array<{ fullName: string; slug: string; count: bigint }>>`
       SELECT p."fullName", p.slug, COUNT(*) as count
       FROM "FactCheckMention" m
+      JOIN "FactCheck" fc ON m."factCheckId" = fc.id
       JOIN "Politician" p ON m."politicianId" = p.id
+      WHERE fc.source IN (${Prisma.join(FACTCHECK_ALLOWED_SOURCES)})
       GROUP BY p.id, p."fullName", p.slug
       ORDER BY count DESC
       LIMIT 10
@@ -190,6 +196,7 @@ async function getSources() {
 
   const sources = await db.factCheck.groupBy({
     by: ["source"],
+    where: { source: { in: FACTCHECK_ALLOWED_SOURCES } },
     _count: true,
     orderBy: { _count: { source: "desc" } },
   });

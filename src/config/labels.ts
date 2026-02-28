@@ -1047,6 +1047,27 @@ export const FACTCHECK_RATING_DESCRIPTIONS: Record<FactCheckRating, string> = {
 };
 
 /**
+ * Whitelist of francophone fact-checking sources.
+ * Non-francophone sources (Snopes, PolitiFact, Full Fact, Indian outlets, etc.)
+ * are kept in DB but excluded from display queries.
+ * Includes known name variants from the Google Fact Check API.
+ */
+export const FACTCHECK_ALLOWED_SOURCES = [
+  "TF1 Info",
+  "AFP Factuel",
+  "Franceinfo",
+  "20 Minutes",
+  "Le Monde",
+  "Libération",
+  "Le Dauphiné Libéré",
+  "Numerama",
+  "DE FACTO",
+  "Science Feedback",
+  "RTBF",
+  "Fasocheck",
+];
+
+/**
  * Detect if a fact-check claimant is a specific person (politician)
  * vs a generic source (social media, multiple sources, etc.)
  */

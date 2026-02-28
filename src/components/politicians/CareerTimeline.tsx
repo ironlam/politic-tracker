@@ -361,6 +361,7 @@ export function CareerTimeline({
         tooltip={tooltip}
         xScale={xScale}
         yearMarkers={yearMarkers}
+        mandates={mandates}
         mandateRows={mandateRows}
         timelineAffairs={timelineAffairs}
         partyHistory={partyHistory}
@@ -395,6 +396,7 @@ function DesktopTimeline({
   tooltip,
   xScale,
   yearMarkers,
+  mandates,
   mandateRows,
   timelineAffairs,
   partyHistory,
@@ -410,6 +412,7 @@ function DesktopTimeline({
   tooltip: TooltipData | null;
   xScale: ReturnType<typeof scaleTime<number, number>>;
   yearMarkers: number[];
+  mandates: SerializedMandate[];
   mandateRows: {
     row: number;
     label: string;
@@ -451,7 +454,7 @@ function DesktopTimeline({
         ref={containerRef}
         className="relative overflow-x-auto"
         role="img"
-        aria-label={`Chronologie de carrière de ${minDate.getFullYear()} à ${maxDate.getFullYear()}`}
+        aria-label={`Chronologie politique de ${minDate.getFullYear()} à ${maxDate.getFullYear()} avec ${mandateRows.reduce((sum, r) => sum + r.mandates.length, 0)} mandats${timelineAffairs.length > 0 ? ` et ${timelineAffairs.length} affaires` : ""}`}
       >
         {/* Tooltip */}
         {tooltip && (
@@ -673,6 +676,14 @@ function DesktopTimeline({
 
       {/* ─── Legend ─── */}
       <TimelineLegend />
+
+      {/* ─── Screen reader summary ─── */}
+      <ScreenReaderSummary
+        mandates={mandates}
+        timelineAffairs={timelineAffairs}
+        minYear={minDate.getFullYear()}
+        maxYear={maxDate.getFullYear()}
+      />
     </div>
   );
 }
@@ -718,6 +729,14 @@ function MobileTimeline({
     return all.sort((a, b) => a.date.getTime() - b.date.getTime());
   }, [mandates, partyHistory, timelineAffairs, deathDate]);
 
+  const { minYear, maxYear } = useMemo(() => {
+    if (events.length === 0) return { minYear: 0, maxYear: 0 };
+    return {
+      minYear: events[0].date.getFullYear(),
+      maxYear: events[events.length - 1].date.getFullYear(),
+    };
+  }, [events]);
+
   if (events.length === 0) {
     return (
       <div className="text-center py-12 text-muted-foreground">
@@ -736,6 +755,14 @@ function MobileTimeline({
 
       {/* ─── Legend ─── */}
       <TimelineLegend />
+
+      {/* ─── Screen reader summary ─── */}
+      <ScreenReaderSummary
+        mandates={mandates}
+        timelineAffairs={timelineAffairs}
+        minYear={minYear}
+        maxYear={maxYear}
+      />
     </div>
   );
 }
@@ -869,6 +896,54 @@ function DiamondMarker({ color }: { color: string }) {
         clipPath: "polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)",
       }}
     />
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// Screen reader summary (shared between desktop and mobile)
+// ═══════════════════════════════════════════════════════════════════════
+
+function ScreenReaderSummary({
+  mandates,
+  timelineAffairs,
+  minYear,
+  maxYear,
+}: {
+  mandates: SerializedMandate[];
+  timelineAffairs: TimelineAffair[];
+  minYear: number;
+  maxYear: number;
+}) {
+  return (
+    <div className="sr-only">
+      <h3>Résumé de la chronologie</h3>
+      <p>
+        Période : {minYear} à {maxYear}
+      </p>
+      <h4>Mandats ({mandates.length})</h4>
+      <ul>
+        {mandates.map((m) => (
+          <li key={m.id}>
+            {MANDATE_TYPE_LABELS[m.type]}
+            {m.constituency && `, ${m.constituency}`} :{" "}
+            {new Date(m.startDate).getFullYear()} -{" "}
+            {m.isCurrent ? "présent" : m.endDate ? new Date(m.endDate).getFullYear() : ""}
+          </li>
+        ))}
+      </ul>
+      {timelineAffairs.length > 0 && (
+        <>
+          <h4>Affaires ({timelineAffairs.length})</h4>
+          <ul>
+            {timelineAffairs.map((a) => (
+              <li key={a.id}>
+                {a.title} : {AFFAIR_STATUS_LABELS[a.status]}, {formatDate(a.date)}
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+    </div>
   );
 }
 

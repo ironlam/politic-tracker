@@ -21,6 +21,7 @@ npm run setup
 ```
 
 Le script `setup` :
+
 - Installe les dépendances npm
 - Crée `.env` avec PostgreSQL local pré-configuré
 - Démarre PostgreSQL via Docker Compose
@@ -51,10 +52,10 @@ npm run dev
 
 Le fichier `.env.example` est organisé en 3 sections :
 
-| Section | Nécessaire pour... |
-|---------|-------------------|
+| Section      | Nécessaire pour...                     |
+| ------------ | -------------------------------------- |
 | **REQUIRED** | Faire tourner l'app (DB + URL + admin) |
-| **OPTIONAL** | IA, analytics, social posting |
+| **OPTIONAL** | IA, analytics, social posting          |
 | **ADVANCED** | Scripts de synchronisation spécifiques |
 
 Pour contribuer au frontend ou aux composants, seule la section **REQUIRED** est nécessaire.
@@ -112,15 +113,15 @@ prisma/            # Schéma Prisma
 
 ### Zones idéales pour commencer
 
-| Zone | Risque | Exemples |
-|------|--------|----------|
-| `src/components/ui/` | Faible | Nouveaux composants UI, améliorations visuelles |
-| `src/config/labels.ts` | Faible | Traductions, labels manquants |
-| `tests/` | Faible | Nouveaux tests unitaires |
-| `src/components/*/` | Moyen | Composants de page (politicians, affairs...) |
-| `src/app/*/page.tsx` | Moyen | Pages publiques |
-| `src/lib/data/` | Élevé | Couche de données (nécessite connaissance caching) |
-| `scripts/` | Élevé | Scripts de synchronisation (nécessite accès API) |
+| Zone                   | Risque | Exemples                                           |
+| ---------------------- | ------ | -------------------------------------------------- |
+| `src/components/ui/`   | Faible | Nouveaux composants UI, améliorations visuelles    |
+| `src/config/labels.ts` | Faible | Traductions, labels manquants                      |
+| `tests/`               | Faible | Nouveaux tests unitaires                           |
+| `src/components/*/`    | Moyen  | Composants de page (politicians, affairs...)       |
+| `src/app/*/page.tsx`   | Moyen  | Pages publiques                                    |
+| `src/lib/data/`        | Élevé  | Couche de données (nécessite connaissance caching) |
+| `scripts/`             | Élevé  | Scripts de synchronisation (nécessite accès API)   |
 
 ## Commandes utiles
 

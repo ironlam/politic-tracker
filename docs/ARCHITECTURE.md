@@ -53,20 +53,20 @@ graph TB
 
 ## 2. Stack technique
 
-| Composant | Technologie | Version |
-|-----------|------------|---------|
-| Framework | Next.js (App Router) | 16.x |
-| Langage | TypeScript (strict) | 5.x |
-| Base de données | PostgreSQL | 16+ |
-| ORM | Prisma | 7.x |
-| UI Components | shadcn/ui + Radix | - |
-| Styling | Tailwind CSS | 4.x |
-| Charts | D3.js (SVG) | 7.x |
-| Tests | Vitest + React Testing Library | - |
-| Hébergement | Vercel | - |
-| BDD managée | Supabase (PostgreSQL) | - |
-| Jobs async | Inngest | - |
-| CI | GitHub Actions | - |
+| Composant       | Technologie                    | Version |
+| --------------- | ------------------------------ | ------- |
+| Framework       | Next.js (App Router)           | 16.x    |
+| Langage         | TypeScript (strict)            | 5.x     |
+| Base de données | PostgreSQL                     | 16+     |
+| ORM             | Prisma                         | 7.x     |
+| UI Components   | shadcn/ui + Radix              | -       |
+| Styling         | Tailwind CSS                   | 4.x     |
+| Charts          | D3.js (SVG)                    | 7.x     |
+| Tests           | Vitest + React Testing Library | -       |
+| Hébergement     | Vercel                         | -       |
+| BDD managée     | Supabase (PostgreSQL)          | -       |
+| Jobs async      | Inngest                        | -       |
+| CI              | GitHub Actions                 | -       |
 
 ---
 
@@ -275,11 +275,11 @@ export const getPolitician = cache(async function getPolitician(slug: string) {
 
 ### 6.2 Cache — 3 niveaux
 
-| Niveau | Quand l'utiliser | Exemple |
-|--------|-----------------|---------|
-| `"use cache"` + `cacheLife("minutes")` | Pages détail, params bornés | `getPolitician(slug)` |
-| `revalidate = 300` (ISR) | Pages listing avec search | `/politiques?page=2` |
-| `React.cache()` | Déduplication dans un même render | `generateMetadata()` + `page()` |
+| Niveau                                 | Quand l'utiliser                  | Exemple                         |
+| -------------------------------------- | --------------------------------- | ------------------------------- |
+| `"use cache"` + `cacheLife("minutes")` | Pages détail, params bornés       | `getPolitician(slug)`           |
+| `revalidate = 300` (ISR)               | Pages listing avec search         | `/politiques?page=2`            |
+| `React.cache()`                        | Déduplication dans un même render | `generateMetadata()` + `page()` |
 
 **Règle d'or** : ne JAMAIS mettre `"use cache"` sur une fonction avec un paramètre `search` libre (cache explosion).
 
@@ -306,17 +306,17 @@ const label = AFFAIR_STATUS_LABELS[affair.status]; // "Enquête préliminaire"
 
 ## 7. Zones de contribution
 
-| Zone | Difficulté | Description |
-|------|-----------|-------------|
-| `src/components/ui/` | Facile | Composants shadcn/ui, amélioration visuelle |
-| `src/config/labels.ts` | Facile | Labels, traductions manquantes |
-| `tests/` | Facile | Tests unitaires (beaucoup de composants non testés) |
-| `src/components/stats/` | Moyen | Charts et visualisations |
-| `src/components/politicians/` | Moyen | Composants profil politicien |
-| `src/app/*/page.tsx` | Moyen | Pages publiques |
-| `src/lib/data/` | Avancé | Couche données + caching |
-| `scripts/` | Avancé | Scripts de synchronisation (APIs externes) |
-| `src/services/sync/` | Avancé | Pipelines de sync |
+| Zone                          | Difficulté | Description                                         |
+| ----------------------------- | ---------- | --------------------------------------------------- |
+| `src/components/ui/`          | Facile     | Composants shadcn/ui, amélioration visuelle         |
+| `src/config/labels.ts`        | Facile     | Labels, traductions manquantes                      |
+| `tests/`                      | Facile     | Tests unitaires (beaucoup de composants non testés) |
+| `src/components/stats/`       | Moyen      | Charts et visualisations                            |
+| `src/components/politicians/` | Moyen      | Composants profil politicien                        |
+| `src/app/*/page.tsx`          | Moyen      | Pages publiques                                     |
+| `src/lib/data/`               | Avancé     | Couche données + caching                            |
+| `scripts/`                    | Avancé     | Scripts de synchronisation (APIs externes)          |
+| `src/services/sync/`          | Avancé     | Pipelines de sync                                   |
 
 ---
 

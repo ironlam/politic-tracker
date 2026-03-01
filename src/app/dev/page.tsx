@@ -48,15 +48,9 @@ export default function DevPlayground() {
           <Badge variant="secondary">Secondary</Badge>
           <Badge variant="destructive">Destructive</Badge>
           <Badge variant="outline">Outline</Badge>
-          <Badge className="bg-amber-100 text-amber-800 border-amber-200">
-            Judiciaire
-          </Badge>
-          <Badge className="bg-green-100 text-green-800 border-green-200">
-            Publié
-          </Badge>
-          <Badge className="bg-blue-100 text-blue-800 border-blue-200">
-            Député
-          </Badge>
+          <Badge className="bg-amber-100 text-amber-800 border-amber-200">Judiciaire</Badge>
+          <Badge className="bg-green-100 text-green-800 border-green-200">Publié</Badge>
+          <Badge className="bg-blue-100 text-blue-800 border-blue-200">Député</Badge>
         </div>
       </Section>
 
@@ -95,11 +89,7 @@ export default function DevPlayground() {
             description="Assemblée nationale"
             accent={{ border: "#2563EB", bg: "#2563EB0a" }}
           />
-          <StatCard
-            count={348}
-            label="Sénateurs"
-            accent={{ border: "#7C3AED", bg: "#7C3AED0a" }}
-          />
+          <StatCard count={348} label="Sénateurs" accent={{ border: "#7C3AED", bg: "#7C3AED0a" }} />
           <StatCard
             count={42}
             label="Affaires"
@@ -168,7 +158,11 @@ export default function DevPlayground() {
           <ColorSwatch color="bg-green-500" label="Succès / Pour" />
           <ColorSwatch color="bg-red-500" label="Destructive / Contre" />
           <ColorSwatch color="bg-muted" label="Muted" textClass="text-muted-foreground" />
-          <ColorSwatch color="bg-secondary" label="Secondary" textClass="text-secondary-foreground" />
+          <ColorSwatch
+            color="bg-secondary"
+            label="Secondary"
+            textClass="text-secondary-foreground"
+          />
         </div>
       </Section>
 
@@ -184,9 +178,7 @@ export default function DevPlayground() {
           <p className="text-sm text-muted-foreground">
             Small muted — descriptions, labels secondaires
           </p>
-          <p className="text-xs text-muted-foreground">
-            Extra small — metadata, timestamps
-          </p>
+          <p className="text-xs text-muted-foreground">Extra small — metadata, timestamps</p>
         </div>
       </Section>
     </div>

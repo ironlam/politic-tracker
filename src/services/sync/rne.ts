@@ -6,6 +6,7 @@ import type { MaireRNECSV, RNESyncResult } from "./types";
 import { HTTPClient } from "@/lib/api/http-client";
 import { DATA_GOUV_RATE_LIMIT_MS } from "@/config/rate-limits";
 import { NUANCE_POLITIQUE_MAPPING } from "@/config/labels";
+import { resolve } from "@/lib/identity";
 
 const client = new HTTPClient({ rateLimitMs: DATA_GOUV_RATE_LIMIT_MS });
 
@@ -89,100 +90,6 @@ async function fetchRNECSV(): Promise<MaireRNECSV[]> {
 
   console.log(`Parsed ${records.length} maire records`);
   return records;
-}
-
-/**
- * Pre-loaded politician data for in-memory matching.
- * Avoids 35k individual DB queries — load once, match in O(1).
- */
-interface PoliticianCandidate {
-  id: string;
-  birthDate: Date | null;
-  mandateDepts: Set<string>;
-}
-
-type PoliticianLookup = Map<string, PoliticianCandidate[]>;
-
-/**
- * Build an in-memory lookup map of all politicians, keyed by lowercase "firstName|lastName".
- * This is ~580 politicians — fits easily in memory.
- */
-async function buildPoliticianLookup(): Promise<PoliticianLookup> {
-  const politicians = await db.politician.findMany({
-    select: {
-      id: true,
-      firstName: true,
-      lastName: true,
-      birthDate: true,
-      mandates: {
-        where: { departmentCode: { not: null } },
-        select: { departmentCode: true },
-      },
-    },
-  });
-
-  const lookup: PoliticianLookup = new Map();
-  for (const p of politicians) {
-    const key = `${p.firstName.toLowerCase()}|${p.lastName.toLowerCase()}`;
-    const entry: PoliticianCandidate = {
-      id: p.id,
-      birthDate: p.birthDate,
-      mandateDepts: new Set(p.mandates.map((m) => m.departmentCode!)),
-    };
-    const existing = lookup.get(key);
-    if (existing) {
-      existing.push(entry);
-    } else {
-      lookup.set(key, [entry]);
-    }
-  }
-
-  return lookup;
-}
-
-/**
- * Match a politician from the pre-loaded lookup by name, birthDate, and department.
- */
-function matchPolitician(
-  lookup: PoliticianLookup,
-  firstName: string,
-  lastName: string,
-  birthDate: Date | null,
-  deptCode: string
-): string | null {
-  const key = `${firstName.toLowerCase()}|${lastName.toLowerCase()}`;
-  const candidates = lookup.get(key);
-
-  if (!candidates || candidates.length === 0) return null;
-
-  // Single candidate: verify birthDate if both sides have one to prevent homonym mismatches
-  // (e.g., two "Thierry Cousin" — one in RNE, one already in DB from Wikidata)
-  if (candidates.length === 1) {
-    const c = candidates[0]!;
-    if (birthDate && c.birthDate) {
-      const diff = Math.abs(c.birthDate.getTime() - birthDate.getTime());
-      if (diff > 86400000) return null; // Birthdate mismatch → different person
-    }
-    return c.id;
-  }
-
-  // Multiple matches: prefer by birthDate match
-  if (birthDate) {
-    for (const c of candidates) {
-      if (c.birthDate) {
-        const diff = Math.abs(c.birthDate.getTime() - birthDate.getTime());
-        if (diff <= 86400000) return c.id; // 1 day tolerance
-      }
-    }
-  }
-
-  // Prefer candidate with existing mandate in same department
-  for (const c of candidates) {
-    if (c.mandateDepts.has(deptCode)) return c.id;
-  }
-
-  // No reliable disambiguator → don't guess
-  return null;
 }
 
 /**
@@ -393,15 +300,9 @@ export async function syncRNEMaires(
   }
 
   // ========================================
-  // Phase 2: Reconcile with Politician
+  // Phase 2: Reconcile with Politician (via IdentityResolver)
   // ========================================
   console.log("\n--- Phase 2: Reconcile LocalOfficials with Politicians ---");
-
-  // Pre-load all politicians into memory for O(1) name lookup
-  const politicianLookup = await buildPoliticianLookup();
-  console.log(
-    `  Loaded ${[...politicianLookup.values()].reduce((sum, v) => sum + v.length, 0)} politicians into lookup`
-  );
 
   const unmatchedOfficials = await db.localOfficial.findMany({
     where: {
@@ -425,19 +326,32 @@ export async function syncRNEMaires(
   console.log(`  Found ${unmatchedOfficials.length} unmatched officials to reconcile`);
 
   for (let i = 0; i < unmatchedOfficials.length; i++) {
-    const official = unmatchedOfficials[i];
+    const official = unmatchedOfficials[i]!;
 
-    // In-memory name match — no DB query per official
-    const politicianId = matchPolitician(
-      politicianLookup,
-      official!.firstName,
-      official!.lastName,
-      official!.birthDate,
-      official!.departmentCode
-    );
+    // Use IdentityResolver for matching — provides audit trail, NOT_SAME blocking,
+    // and confidence scoring. ~3 DB queries per call, acceptable for <100 unmatched.
+    const resolveResult = await resolve({
+      firstName: official.firstName,
+      lastName: official.lastName,
+      birthDate: official.birthDate,
+      source: DataSource.RNE,
+      sourceId: official.externalId ?? official.communeId ?? "",
+      department: official.departmentCode,
+      mandateType: MandateType.MAIRE,
+      context: {
+        commune: communeNameByInsee.get(official.externalId ?? "") ?? null,
+      },
+    });
+
+    const politicianId = resolveResult.politicianId;
 
     if (!politicianId) {
       politiciansNotFound++;
+      if (verbose && resolveResult.blocked) {
+        console.log(
+          `  Blocked: ${official.firstName} ${official.lastName} (${official.externalId}) — NOT_SAME decision exists`
+        );
+      }
       continue;
     }
 
@@ -446,18 +360,18 @@ export async function syncRNEMaires(
     try {
       // Link official to politician
       await db.localOfficial.update({
-        where: { id: official!.id },
+        where: { id: official.id },
         data: { politicianId },
       });
 
-      const inseeCode = official!.externalId || official!.communeId;
+      const inseeCode = official.externalId || official.communeId;
       const communeName = inseeCode ? communeNameByInsee.get(inseeCode) : undefined;
       const mandateTitle = communeName
         ? `Maire de ${communeName}`
-        : `Maire (${inseeCode || official!.departmentCode})`;
+        : `Maire (${inseeCode || official.departmentCode})`;
       const constituency =
         communeName && inseeCode ? `${communeName} (${inseeCode})` : inseeCode || undefined;
-      const startDate = official!.functionStart || official!.mandateStart || new Date(2020, 4, 18); // Default: May 2020 municipal
+      const startDate = official.functionStart || official.mandateStart || new Date(2020, 4, 18); // Default: May 2020 municipal
 
       // Create or update mandate
       const existingMandate = await db.mandate.findFirst({
@@ -474,7 +388,7 @@ export async function syncRNEMaires(
           data: {
             title: mandateTitle,
             constituency,
-            departmentCode: official!.departmentCode,
+            departmentCode: official.departmentCode,
             startDate,
           },
         });
@@ -487,7 +401,7 @@ export async function syncRNEMaires(
             title: mandateTitle,
             institution: "Commune",
             constituency,
-            departmentCode: official!.departmentCode,
+            departmentCode: official.departmentCode,
             startDate,
             isCurrent: true,
             source: DataSource.RNE,
@@ -498,11 +412,11 @@ export async function syncRNEMaires(
 
       if (verbose) {
         console.log(
-          `  Matched: ${official!.firstName} ${official!.lastName} (${inseeCode}) -> politician ${politicianId}`
+          `  Matched: ${official.firstName} ${official.lastName} (${inseeCode}) -> politician ${politicianId} [${resolveResult.method}, confidence=${resolveResult.confidence}]`
         );
       }
     } catch (error) {
-      errors.push(`Reconcile ${official!.firstName} ${official!.lastName}: ${error}`);
+      errors.push(`Reconcile ${official.firstName} ${official.lastName}: ${error}`);
     }
   }
 

@@ -9,6 +9,7 @@
  */
 
 import { db } from "@/lib/db";
+import type { Prisma, AffairStatus, AffairCategory } from "@/generated/prisma";
 import {
   searchBrave,
   buildAffairSearchQuery,
@@ -355,8 +356,7 @@ export async function enrichAffair(affairId: string): Promise<EnrichmentResult> 
 
   // 5. Update affair in DB
   const changes: string[] = [];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const affairUpdate: Record<string, any> = {};
+  const affairUpdate: Prisma.AffairUncheckedUpdateInput = {};
 
   if (aiResult.enriched_title && aiResult.enriched_title !== affair.title) {
     affairUpdate.title = aiResult.enriched_title;
@@ -373,7 +373,7 @@ export async function enrichAffair(affairId: string): Promise<EnrichmentResult> 
       aiResult.corrected_status as (typeof AFFAIR_STATUSES)[number]
     );
     if (validStatus) {
-      affairUpdate.status = aiResult.corrected_status;
+      affairUpdate.status = aiResult.corrected_status as AffairStatus;
       changes.push(`Statut: ${affair.status} → ${aiResult.corrected_status}`);
     }
   }
@@ -383,7 +383,7 @@ export async function enrichAffair(affairId: string): Promise<EnrichmentResult> 
       aiResult.corrected_category as (typeof AFFAIR_CATEGORIES)[number]
     );
     if (validCategory) {
-      affairUpdate.category = aiResult.corrected_category;
+      affairUpdate.category = aiResult.corrected_category as AffairCategory;
       changes.push(`Catégorie: ${affair.category} → ${aiResult.corrected_category}`);
     }
   }
@@ -534,7 +534,7 @@ export async function enrichAffair(affairId: string): Promise<EnrichmentResult> 
           confidence: aiResult.confidence,
           sourcesAdded: sourcesToAdd.length,
           ...affairUpdate,
-        },
+        } as Prisma.InputJsonValue,
       },
     });
   });

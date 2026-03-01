@@ -4,7 +4,7 @@ import { withAdminAuth } from "@/lib/api/with-admin-auth";
 import { invalidateEntity } from "@/lib/cache";
 import { applyModerationSchema } from "@/lib/validations/affairs";
 import { trackStatusChange } from "@/services/affairs/status-tracking";
-import type { SourceType } from "@/generated/prisma";
+import type { SourceType, Prisma } from "@/generated/prisma";
 
 // ─── GET: list pending moderation reviews ───────────────────────────
 
@@ -95,8 +95,7 @@ export const POST = withAdminAuth(async (request: NextRequest) => {
 
   for (const review of reviews) {
     const affair = review.affair;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const affairUpdate: Record<string, any> = {};
+    const affairUpdate: Prisma.AffairUncheckedUpdateInput = {};
 
     // Publication status based on recommendation
     if (review.recommendation === "PUBLISH") {
@@ -157,7 +156,7 @@ export const POST = withAdminAuth(async (request: NextRequest) => {
           source: "auto-moderation",
           recommendation: review.recommendation,
           ...affairUpdate,
-        },
+        } as Prisma.InputJsonValue,
       },
     });
 

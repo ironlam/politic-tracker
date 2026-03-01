@@ -154,7 +154,17 @@ function matchPolitician(
   const candidates = lookup.get(key);
 
   if (!candidates || candidates.length === 0) return null;
-  if (candidates.length === 1) return candidates[0]!.id;
+
+  // Single candidate: verify birthDate if both sides have one to prevent homonym mismatches
+  // (e.g., two "Thierry Cousin" — one in RNE, one already in DB from Wikidata)
+  if (candidates.length === 1) {
+    const c = candidates[0]!;
+    if (birthDate && c.birthDate) {
+      const diff = Math.abs(c.birthDate.getTime() - birthDate.getTime());
+      if (diff > 86400000) return null; // Birthdate mismatch → different person
+    }
+    return c.id;
+  }
 
   // Multiple matches: prefer by birthDate match
   if (birthDate) {
@@ -171,8 +181,8 @@ function matchPolitician(
     if (c.mandateDepts.has(deptCode)) return c.id;
   }
 
-  // Fall back to first match
-  return candidates[0]!.id;
+  // No reliable disambiguator → don't guess
+  return null;
 }
 
 /**

@@ -247,7 +247,7 @@ Features:
       // Process each politician
       for (let i = startIndex; i < externalIds.length; i++) {
         const extId = externalIds[i];
-        const politician = extId.politician;
+        const politician = extId!.politician;
         if (!politician) {
           progress.tick();
           continue;
@@ -255,7 +255,7 @@ Features:
 
         stats.processed++;
 
-        const positions = positionsMap.get(extId.externalId) || [];
+        const positions = positionsMap.get(extId!.externalId) || [];
 
         for (const pos of positions) {
           const startDate = pos.startDate;
@@ -294,7 +294,7 @@ Features:
             } else {
               // No overlapping mandate found — create a new one with the role
               const positionLabel = labels.get(pos.positionId) || pos.positionId;
-              const externalMandateId = `wikidata-${extId.externalId}-${pos.positionId}-${startDate.toISOString().split("T")[0]}`;
+              const externalMandateId = `wikidata-${extId!.externalId}-${pos.positionId}-${startDate.toISOString().split("T")[0]}`;
 
               if (dryRun) {
                 console.log(
@@ -317,7 +317,7 @@ Features:
                       startDate,
                       endDate,
                       isCurrent: !endDate,
-                      sourceUrl: `https://www.wikidata.org/wiki/${extId.externalId}`,
+                      sourceUrl: `https://www.wikidata.org/wiki/${extId!.externalId}`,
                       officialUrl: null,
                       externalId: externalMandateId,
                     },
@@ -363,7 +363,7 @@ Features:
             continue;
           }
 
-          const externalMandateId = `wikidata-${extId.externalId}-${pos.positionId}-${startDate.toISOString().split("T")[0]}`;
+          const externalMandateId = `wikidata-${extId!.externalId}-${pos.positionId}-${startDate.toISOString().split("T")[0]}`;
 
           if (dryRun) {
             console.log(`[DRY-RUN] ${politician.fullName} - ${title} (${startDate.getFullYear()})`);
@@ -380,7 +380,7 @@ Features:
                   startDate,
                   endDate,
                   isCurrent: !endDate,
-                  sourceUrl: `https://www.wikidata.org/wiki/${extId.externalId}`,
+                  sourceUrl: `https://www.wikidata.org/wiki/${extId!.externalId}`,
                   officialUrl: null,
                   externalId: externalMandateId,
                 },
@@ -393,7 +393,7 @@ Features:
         }
 
         progress.tick();
-        checkpoint.tick(extId.externalId, i);
+        checkpoint.tick(extId!.externalId, i);
       }
 
       progress.finish();

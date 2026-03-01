@@ -29,7 +29,7 @@ function buildCrumbs(pathname: string): Crumb[] {
   const crumbs: Crumb[] = [];
 
   for (let i = 0; i < segments.length; i++) {
-    const segment = segments[i];
+    const segment = segments[i]!;
     const href = "/" + segments.slice(0, i + 1).join("/");
 
     // Skip "admin" as first segment — it becomes "Dashboard"
@@ -39,8 +39,9 @@ function buildCrumbs(pathname: string): Crumb[] {
     }
 
     // Known labels
-    if (SEGMENT_LABELS[segment]) {
-      crumbs.push({ label: SEGMENT_LABELS[segment], href });
+    const knownLabel = SEGMENT_LABELS[segment];
+    if (knownLabel) {
+      crumbs.push({ label: knownLabel, href });
       continue;
     }
 

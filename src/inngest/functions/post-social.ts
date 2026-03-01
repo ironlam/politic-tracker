@@ -21,7 +21,7 @@ export const postSocial = inngest.createFunction(
       let idx = await getRotationIndex();
       for (let attempt = 0; attempt < 3; attempt++) {
         const cat = SOCIAL_CATEGORIES[idx % SOCIAL_CATEGORIES.length];
-        const result = await generateForCategory(cat);
+        const result = await generateForCategory(cat!);
         if (result) return { ...result, resolvedCategory: cat };
         idx++;
       }
@@ -39,7 +39,7 @@ export const postSocial = inngest.createFunction(
     const { resolvedCategory, ...tweetDraft } = draft;
     const { isSensitiveCategory } = await import("@/lib/social/config");
 
-    if (isSensitiveCategory(resolvedCategory)) {
+    if (isSensitiveCategory(resolvedCategory!)) {
       // Queue for editorial review
       const postId = await step.run("queue-review", async () => {
         const { db } = await import("@/lib/db");
@@ -63,7 +63,7 @@ export const postSocial = inngest.createFunction(
 
         await notifySlackReview({
           id: post.id,
-          category: resolvedCategory,
+          category: resolvedCategory!,
           content: fullText,
           link: tweetDraft.link,
         });
@@ -91,18 +91,14 @@ export const postSocial = inngest.createFunction(
       }
 
       if (!isAutoPostEnabled()) {
-        console.log(
-          `[social] Dry-run [${resolvedCategory}]: ${fullText.substring(0, 100)}...`
-        );
+        console.log(`[social] Dry-run [${resolvedCategory}]: ${fullText.substring(0, 100)}...`);
         await advanceRotation();
         return { status: "dry_run", category: resolvedCategory };
       }
 
       const postResult = await postToBothPlatforms(fullText, tweetDraft.link);
       const status = postResult.blueskyUrl || postResult.twitterUrl ? "POSTED" : "FAILED";
-      const error = [postResult.blueskyError, postResult.twitterError]
-        .filter(Boolean)
-        .join("; ");
+      const error = [postResult.blueskyError, postResult.twitterError].filter(Boolean).join("; ");
 
       await db.socialPost.create({
         data: {

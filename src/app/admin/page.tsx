@@ -121,7 +121,7 @@ function formatDuration(start: Date | null, end: Date | null): string {
 
 const ACTION_ICONS: Record<string, { icon: typeof Plus; className: string }> = {
   CREATE: { icon: Plus, className: "text-emerald-600 bg-emerald-50" },
-  UPDATE: { icon: RefreshCw, className: "text-blue-600 bg-blue-50" },
+  UPDATE: { icon: RefreshCw, className: "text-primary bg-primary/10" },
   DELETE: { icon: XCircle, className: "text-red-600 bg-red-50" },
 };
 
@@ -276,10 +276,12 @@ export default async function AdminDashboard() {
                 <ul className="divide-y divide-border">
                   {data.recentActivity.slice(0, 10).map((entry) => {
                     const actionMeta = ACTION_ICONS[entry.action] || ACTION_ICONS.UPDATE;
-                    const ActionIcon = actionMeta.icon;
+                    const ActionIcon = actionMeta!.icon;
                     return (
                       <li key={entry.id} className="px-4 py-3 flex items-start gap-3">
-                        <div className={`p-1.5 rounded-md shrink-0 mt-0.5 ${actionMeta.className}`}>
+                        <div
+                          className={`p-1.5 rounded-md shrink-0 mt-0.5 ${actionMeta!.className}`}
+                        >
                           <ActionIcon className="w-3 h-3" aria-hidden="true" />
                         </div>
                         <div className="min-w-0 flex-1">

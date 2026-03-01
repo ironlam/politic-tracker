@@ -171,7 +171,7 @@ export function CommuneSearch({
           const data: CommuneResult[] = await response.json();
           if (data.length === 1) {
             // Single result: redirect directly
-            router.push(`/elections/municipales-2026/communes/${data[0].id}`);
+            router.push(`/elections/municipales-2026/communes/${data[0]!.id}`);
           } else if (data.length > 0) {
             const limited = data.slice(0, 8);
             setResults(limited);

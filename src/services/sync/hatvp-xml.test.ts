@@ -122,27 +122,27 @@ describe("parseHATVPXml", () => {
   describe("financial participations", () => {
     it("parses company name", () => {
       expect(result.financialParticipations).toHaveLength(1);
-      expect(result.financialParticipations[0].company).toBe("AXA");
+      expect(result.financialParticipations[0]!.company).toBe("AXA");
     });
 
     it("parses evaluation as number", () => {
-      expect(result.financialParticipations[0].evaluation).toBe(13520);
+      expect(result.financialParticipations[0]!.evaluation).toBe(13520);
     });
 
     it("parses shares count", () => {
-      expect(result.financialParticipations[0].shares).toBe(400);
+      expect(result.financialParticipations[0]!.shares).toBe(400);
     });
 
     it("parses capital percentage", () => {
-      expect(result.financialParticipations[0].capitalPercent).toBe(0);
+      expect(result.financialParticipations[0]!.capitalPercent).toBe(0);
     });
 
     it("parses dividends as string", () => {
-      expect(result.financialParticipations[0].dividends).toBe("572 dividendes 2021");
+      expect(result.financialParticipations[0]!.dividends).toBe("572 dividendes 2021");
     });
 
     it("parses board membership (Non → false)", () => {
-      expect(result.financialParticipations[0].isBoardMember).toBe(false);
+      expect(result.financialParticipations[0]!.isBoardMember).toBe(false);
     });
 
     it("parses board membership (Oui → true)", () => {
@@ -162,24 +162,24 @@ describe("parseHATVPXml", () => {
         </declaration>
       `;
       const r = parseHATVPXml(xml);
-      expect(r.financialParticipations[0].isBoardMember).toBe(true);
+      expect(r.financialParticipations[0]!.isBoardMember).toBe(true);
     });
   });
 
   describe("professional activities", () => {
     it("parses description and employer", () => {
       expect(result.professionalActivities).toHaveLength(1);
-      expect(result.professionalActivities[0].description).toBe("PHARMACIEN");
-      expect(result.professionalActivities[0].employer).toBe("PHARMACIE JENNER");
+      expect(result.professionalActivities[0]!.description).toBe("PHARMACIEN");
+      expect(result.professionalActivities[0]!.employer).toBe("PHARMACIE JENNER");
     });
 
     it("parses start and end dates", () => {
-      expect(result.professionalActivities[0].startDate).toBe("06/2017");
-      expect(result.professionalActivities[0].endDate).toBe("06/2022");
+      expect(result.professionalActivities[0]!.startDate).toBe("06/2017");
+      expect(result.professionalActivities[0]!.endDate).toBe("06/2022");
     });
 
     it("parses annual revenues", () => {
-      expect(result.professionalActivities[0].annualRevenues).toEqual([
+      expect(result.professionalActivities[0]!.annualRevenues).toEqual([
         { year: 2023, amount: 80000 },
       ]);
     });
@@ -188,33 +188,35 @@ describe("parseHATVPXml", () => {
   describe("electoral mandates", () => {
     it("parses mandate description", () => {
       expect(result.electoralMandates).toHaveLength(1);
-      expect(result.electoralMandates[0].mandate).toBe("Député de la 7ème circ. de Seine-Maritime");
+      expect(result.electoralMandates[0]!.mandate).toBe(
+        "Député de la 7ème circ. de Seine-Maritime"
+      );
     });
 
     it("parses start date and null end date", () => {
-      expect(result.electoralMandates[0].startDate).toBe("06/2022");
-      expect(result.electoralMandates[0].endDate).toBeNull();
+      expect(result.electoralMandates[0]!.startDate).toBe("06/2022");
+      expect(result.electoralMandates[0]!.endDate).toBeNull();
     });
 
     it("parses French formatted revenue amounts", () => {
-      expect(result.electoralMandates[0].annualRevenues).toEqual([{ year: 2023, amount: 62389 }]);
+      expect(result.electoralMandates[0]!.annualRevenues).toEqual([{ year: 2023, amount: 62389 }]);
     });
   });
 
   describe("directorships", () => {
     it("parses company and role", () => {
       expect(result.directorships).toHaveLength(1);
-      expect(result.directorships[0].company).toBe("PHARMACIE JENNER");
-      expect(result.directorships[0].role).toBe("Pharmacienne titulaire");
+      expect(result.directorships[0]!.company).toBe("PHARMACIE JENNER");
+      expect(result.directorships[0]!.role).toBe("Pharmacienne titulaire");
     });
 
     it("parses dates", () => {
-      expect(result.directorships[0].startDate).toBe("06/2017");
-      expect(result.directorships[0].endDate).toBe("06/2022");
+      expect(result.directorships[0]!.startDate).toBe("06/2017");
+      expect(result.directorships[0]!.endDate).toBe("06/2022");
     });
 
     it("parses revenues", () => {
-      expect(result.directorships[0].annualRevenues).toEqual([{ year: 2023, amount: 0 }]);
+      expect(result.directorships[0]!.annualRevenues).toEqual([{ year: 2023, amount: 0 }]);
     });
   });
 
@@ -278,8 +280,8 @@ describe("parseHATVPXml", () => {
       expect(r.financialParticipations).toHaveLength(2);
       expect(r.totalPortfolioValue).toBe(38520);
       expect(r.totalCompanies).toBe(2);
-      expect(r.financialParticipations[1].company).toBe("TOTAL");
-      expect(r.financialParticipations[1].isBoardMember).toBe(true);
+      expect(r.financialParticipations[1]!.company).toBe("TOTAL");
+      expect(r.financialParticipations[1]!.isBoardMember).toBe(true);
     });
   });
 
@@ -301,10 +303,10 @@ describe("parseHATVPXml", () => {
         </declaration>
       `;
       const r = parseHATVPXml(xml);
-      expect(r.financialParticipations[0].evaluation).toBeNull();
-      expect(r.financialParticipations[0].shares).toBeNull();
-      expect(r.financialParticipations[0].capitalPercent).toBeNull();
-      expect(r.financialParticipations[0].dividends).toBeNull();
+      expect(r.financialParticipations[0]!.evaluation).toBeNull();
+      expect(r.financialParticipations[0]!.shares).toBeNull();
+      expect(r.financialParticipations[0]!.capitalPercent).toBeNull();
+      expect(r.financialParticipations[0]!.dividends).toBeNull();
     });
 
     it("treats redacted revenue amounts as excluded from totals", () => {
@@ -325,7 +327,7 @@ describe("parseHATVPXml", () => {
         </declaration>
       `;
       const r = parseHATVPXml(xml);
-      expect(r.electoralMandates[0].annualRevenues).toEqual([]);
+      expect(r.electoralMandates[0]!.annualRevenues).toEqual([]);
       expect(r.latestAnnualIncome).toBeNull();
     });
   });
@@ -391,7 +393,7 @@ describe("parseHATVPXml", () => {
         </declaration>
       `;
       const r = parseHATVPXml(xml);
-      expect(r.professionalActivities[0].annualRevenues).toEqual([
+      expect(r.professionalActivities[0]!.annualRevenues).toEqual([
         { year: 2022, amount: 70000 },
         { year: 2023, amount: 75000 },
       ]);

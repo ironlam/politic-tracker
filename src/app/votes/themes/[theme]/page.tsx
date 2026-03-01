@@ -129,7 +129,7 @@ export default async function ThemePage({
           <p className="text-sm text-muted-foreground">Rejetes</p>
         </div>
         <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 text-center">
-          <p className="text-2xl font-bold text-blue-600">{adoptedPercent}%</p>
+          <p className="text-2xl font-bold text-primary">{adoptedPercent}%</p>
           <p className="text-sm text-muted-foreground">Taux d&apos;adoption</p>
         </div>
       </div>

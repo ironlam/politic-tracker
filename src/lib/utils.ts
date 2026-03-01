@@ -76,7 +76,7 @@ export function generateDateSlug(
   const titleSlug = generateSlug(title);
 
   // 10 chars for date (YYYY-MM-DD) + 1 for dash
-  const availableLength = maxLength - datePrefix.length - 1;
+  const availableLength = maxLength - datePrefix!.length - 1;
 
   let truncatedTitle = titleSlug;
   if (titleSlug.length > availableLength) {

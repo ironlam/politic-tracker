@@ -115,7 +115,7 @@ async function generateSummaries(options: {
   // Process each dossier
   for (let i = 0; i < dossiers.length; i++) {
     const dossier = dossiers[i];
-    const progressMsg = `${renderProgressBar(i + 1, total)} Processing ${i + 1}/${total}: ${dossier.number || dossier.externalId}`;
+    const progressMsg = `${renderProgressBar(i + 1, total)} Processing ${i + 1}/${total}: ${dossier!.number || dossier!.externalId}`;
     updateLine(progressMsg);
 
     try {
@@ -128,9 +128,9 @@ async function generateSummaries(options: {
 
       // Generate summary using exposé des motifs if available, else title
       const summary: SummaryResponse = await summarizeDossier({
-        title: dossier.title,
-        content: dossier.exposeDesMotifs || dossier.title,
-        procedure: dossier.category || undefined,
+        title: dossier!.title,
+        content: dossier!.exposeDesMotifs || dossier!.title,
+        procedure: dossier!.category || undefined,
       });
 
       // Format summary with key points
@@ -138,7 +138,7 @@ async function generateSummaries(options: {
 
       // Update dossier
       await db.legislativeDossier.update({
-        where: { id: dossier.id },
+        where: { id: dossier!.id },
         data: {
           summary: formattedSummary,
           summaryDate: new Date(),
@@ -154,7 +154,7 @@ async function generateSummaries(options: {
       }
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : String(err);
-      stats.errors.push(`${dossier.externalId}: ${errorMsg}`);
+      stats.errors.push(`${dossier!.externalId}: ${errorMsg}`);
       stats.processed++;
 
       // If rate limited, wait longer
@@ -289,7 +289,7 @@ Features:
   let limit: number | undefined;
   const limitArg = args.find((a) => a.startsWith("--limit="));
   if (limitArg) {
-    limit = parseInt(limitArg.split("=")[1], 10);
+    limit = parseInt(limitArg.split("=")[1]!, 10);
     if (isNaN(limit) || limit < 1) {
       console.error("Invalid limit number");
       process.exit(1);

@@ -213,8 +213,8 @@ function computeLayout(
       const pos = positions[posIdx];
       layoutNodes.push({
         id: graphNode.id,
-        x: pos.x,
-        y: pos.y,
+        x: pos!.x,
+        y: pos!.y,
         radius: nodeRadius,
         node: graphNode,
         clusterType: cluster.type,
@@ -237,8 +237,8 @@ function computeLayout(
       };
       layoutNodes.push({
         id: overflowNode.id,
-        x: overflowPos.x,
-        y: overflowPos.y,
+        x: overflowPos!.x,
+        y: overflowPos!.y,
         radius: nodeRadius,
         node: overflowNode,
         clusterType: cluster.type,

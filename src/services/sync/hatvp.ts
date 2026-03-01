@@ -315,28 +315,30 @@ export async function syncHATVP(): Promise<HATVPSyncResult> {
 
       // Try to find politician by external ID first
       let politicianId = await findPoliticianByExternalId(
-        firstDecl.id_origine,
-        firstDecl.type_mandat
+        firstDecl!.id_origine,
+        firstDecl!.type_mandat
       );
 
       // Fallback to name matching
       if (!politicianId) {
-        politicianId = await findPoliticianByName(firstDecl.prenom, firstDecl.nom);
+        politicianId = await findPoliticianByName(firstDecl!.prenom, firstDecl!.nom);
       }
 
       if (!politicianId) {
         result.politiciansNotFound++;
-        notFoundPoliticians.push(`${firstDecl.prenom} ${firstDecl.nom} (${firstDecl.type_mandat})`);
+        notFoundPoliticians.push(
+          `${firstDecl!.prenom} ${firstDecl!.nom} (${firstDecl!.type_mandat})`
+        );
         continue;
       }
 
       result.politiciansMatched++;
 
       // Update photo if available
-      await updatePhotoFromHATVP(politicianId, firstDecl.url_photo);
+      await updatePhotoFromHATVP(politicianId, firstDecl!.url_photo);
 
       // Create HATVP external ID (classement = canonical HATVP person ID)
-      await upsertHATVPExternalId(politicianId, firstDecl.classement, firstDecl.url_dossier);
+      await upsertHATVPExternalId(politicianId, firstDecl!.classement, firstDecl!.url_dossier);
 
       // Sync all declarations for this politician
       for (const decl of declarations) {
@@ -362,7 +364,7 @@ export async function syncHATVP(): Promise<HATVPSyncResult> {
         const status = await syncDeclaration(decl, politicianId, details);
         if (status === "created") result.declarationsCreated++;
         else if (status === "updated") result.declarationsUpdated++;
-        else result.errors.push(`Declaration for ${firstDecl.prenom} ${firstDecl.nom}`);
+        else result.errors.push(`Declaration for ${firstDecl!.prenom} ${firstDecl!.nom}`);
       }
     }
 

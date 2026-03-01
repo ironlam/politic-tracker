@@ -9,11 +9,7 @@ import type {
   AffairStatus,
   MandateType,
 } from "@/types";
-import {
-  MANDATE_TYPE_LABELS,
-  AFFAIR_STATUS_LABELS,
-  AFFAIR_CATEGORY_LABELS,
-} from "@/config/labels";
+import { MANDATE_TYPE_LABELS, AFFAIR_STATUS_LABELS, AFFAIR_CATEGORY_LABELS } from "@/config/labels";
 import {
   MANDATE_TYPE_COLORS,
   AFFAIR_STATUS_MARKER_COLORS,
@@ -111,7 +107,7 @@ function computeOverlapOffsets(mandates: SerializedMandate[]): Map<string, numbe
     // Find first lane where our start >= lane end
     let placed = false;
     for (let i = 0; i < lanes.length; i++) {
-      if (start >= lanes[i]) {
+      if (start >= lanes[i]!) {
         lanes[i] = m.endDate ? new Date(m.endDate) : new Date();
         offsets.set(m.id, i);
         placed = true;
@@ -143,8 +139,7 @@ export function CareerTimeline({
   // ─── Responsive detection ───────────────────────────────────────────
   useEffect(() => {
     const mql = window.matchMedia("(min-width: 1024px)");
-    const handler = (e: MediaQueryListEvent | MediaQueryList) =>
-      setIsDesktop(e.matches);
+    const handler = (e: MediaQueryListEvent | MediaQueryList) => setIsDesktop(e.matches);
     handler(mql);
     mql.addEventListener("change", handler);
     return () => mql.removeEventListener("change", handler);
@@ -253,7 +248,7 @@ export function CareerTimeline({
         const maxLanes = Math.max(0, ...offsets.values()) + 1;
         ordered.push({
           row: i,
-          label: MANDATE_ROW_LABELS[i],
+          label: MANDATE_ROW_LABELS[i]!,
           mandates: rowMandates,
           overlapOffsets: offsets,
           maxLanes,
@@ -278,19 +273,16 @@ export function CareerTimeline({
   }, [affairs]);
 
   // ─── Tooltip handlers ──────────────────────────────────────────────
-  const showTooltip = useCallback(
-    (event: React.MouseEvent, content: React.ReactNode) => {
-      const containerRect = containerRef.current?.getBoundingClientRect();
-      if (!containerRect) return;
-      const rect = event.currentTarget.getBoundingClientRect();
-      setTooltip({
-        x: rect.left - containerRect.left + rect.width / 2,
-        y: rect.top - containerRect.top,
-        content,
-      });
-    },
-    []
-  );
+  const showTooltip = useCallback((event: React.MouseEvent, content: React.ReactNode) => {
+    const containerRect = containerRef.current?.getBoundingClientRect();
+    if (!containerRect) return;
+    const rect = event.currentTarget.getBoundingClientRect();
+    setTooltip({
+      x: rect.left - containerRect.left + rect.width / 2,
+      y: rect.top - containerRect.top,
+      content,
+    });
+  }, []);
 
   const handleMandateHover = useCallback(
     (mandate: SerializedMandate, event: React.MouseEvent) => {
@@ -345,11 +337,7 @@ export function CareerTimeline({
 
   // ─── Empty state ────────────────────────────────────────────────────
   if (mandates.length === 0 && affairs.length === 0 && partyHistory.length === 0) {
-    return (
-      <div className="text-center py-12 text-muted-foreground">
-        Aucun mandat enregistré
-      </div>
-    );
+    return <div className="text-center py-12 text-muted-foreground">Aucun mandat enregistré</div>;
   }
 
   // ─── Desktop: Horizontal Timeline ──────────────────────────────────
@@ -511,9 +499,7 @@ function DesktopTimeline({
               }}
             >
               <div className="w-2 h-2 rounded-full bg-muted-foreground" />
-              <span className="text-[9px] text-muted-foreground mt-0.5">
-                Décès
-              </span>
+              <span className="text-[9px] text-muted-foreground mt-0.5">Décès</span>
             </div>
           )}
 
@@ -571,9 +557,7 @@ function DesktopTimeline({
               const color = MANDATE_TYPE_COLORS[mandate.type];
               const laneOffset = overlapOffsets.get(mandate.id) ?? 0;
               const top =
-                rowYPositions[rowIndex] +
-                laneOffset * ROW_HEIGHT +
-                (ROW_HEIGHT - BAR_HEIGHT) / 2;
+                rowYPositions[rowIndex]! + laneOffset * ROW_HEIGHT + (ROW_HEIGHT - BAR_HEIGHT) / 2;
 
               return (
                 <div
@@ -642,10 +626,7 @@ function DesktopTimeline({
                 // Offset overlapping markers
                 const prevOverlaps = timelineAffairs
                   .slice(0, index)
-                  .filter(
-                    (a) =>
-                      Math.abs(xScale(a.date) - x) < MARKER_SIZE
-                  ).length;
+                  .filter((a) => Math.abs(xScale(a.date) - x) < MARKER_SIZE).length;
                 const offsetY = prevOverlaps * (MARKER_SIZE + 2);
 
                 return (
@@ -658,8 +639,7 @@ function DesktopTimeline({
                       width: MARKER_SIZE,
                       height: MARKER_SIZE,
                       backgroundColor: color,
-                      clipPath:
-                        "polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)",
+                      clipPath: "polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)",
                     }}
                     role="button"
                     tabIndex={0}
@@ -732,17 +712,13 @@ function MobileTimeline({
   const { minYear, maxYear } = useMemo(() => {
     if (events.length === 0) return { minYear: 0, maxYear: 0 };
     return {
-      minYear: events[0].date.getFullYear(),
-      maxYear: events[events.length - 1].date.getFullYear(),
+      minYear: events[0]!.date.getFullYear(),
+      maxYear: events[events.length - 1]!.date.getFullYear(),
     };
   }, [events]);
 
   if (events.length === 0) {
-    return (
-      <div className="text-center py-12 text-muted-foreground">
-        Aucun mandat enregistré
-      </div>
-    );
+    return <div className="text-center py-12 text-muted-foreground">Aucun mandat enregistré</div>;
   }
 
   return (
@@ -775,17 +751,11 @@ function MobileEventCard({ event }: { event: MobileEvent }) {
         <div className="relative">
           <DotMarker color={color} />
           <div className="text-sm">
-            <p className="font-medium">
-              Début : {MANDATE_TYPE_LABELS[event.mandate.type]}
-            </p>
+            <p className="font-medium">Début : {MANDATE_TYPE_LABELS[event.mandate.type]}</p>
             {event.mandate.constituency && (
-              <p className="text-xs text-muted-foreground">
-                {event.mandate.constituency}
-              </p>
+              <p className="text-xs text-muted-foreground">{event.mandate.constituency}</p>
             )}
-            <p className="text-xs text-muted-foreground mt-0.5">
-              {formatDate(event.date)}
-            </p>
+            <p className="text-xs text-muted-foreground mt-0.5">{formatDate(event.date)}</p>
             {event.mandate.isCurrent && (
               <Badge variant="outline" className="text-xs mt-1 border-green-500 text-green-600">
                 En cours
@@ -804,13 +774,9 @@ function MobileEventCard({ event }: { event: MobileEvent }) {
               Fin : {MANDATE_TYPE_LABELS[event.mandate.type]}
             </p>
             {event.mandate.constituency && (
-              <p className="text-xs text-muted-foreground">
-                {event.mandate.constituency}
-              </p>
+              <p className="text-xs text-muted-foreground">{event.mandate.constituency}</p>
             )}
-            <p className="text-xs text-muted-foreground mt-0.5">
-              {formatDate(event.date)}
-            </p>
+            <p className="text-xs text-muted-foreground mt-0.5">{formatDate(event.date)}</p>
           </div>
         </div>
       );
@@ -821,15 +787,9 @@ function MobileEventCard({ event }: { event: MobileEvent }) {
         <div className="relative">
           <DotMarker color={color} />
           <div className="text-sm">
-            <p className="font-medium">
-              Rejoint {event.party.party.shortName}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {event.party.party.name}
-            </p>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              {formatDate(event.date)}
-            </p>
+            <p className="font-medium">Rejoint {event.party.party.shortName}</p>
+            <p className="text-xs text-muted-foreground">{event.party.party.name}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">{formatDate(event.date)}</p>
           </div>
         </div>
       );
@@ -866,9 +826,7 @@ function MobileEventCard({ event }: { event: MobileEvent }) {
           <DotMarker color="#6b7280" />
           <div className="text-sm">
             <p className="font-medium text-muted-foreground">Décès</p>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              {formatDate(event.date)}
-            </p>
+            <p className="text-xs text-muted-foreground mt-0.5">{formatDate(event.date)}</p>
           </div>
         </div>
       );
@@ -925,8 +883,7 @@ function ScreenReaderSummary({
         {mandates.map((m) => (
           <li key={m.id}>
             {MANDATE_TYPE_LABELS[m.type]}
-            {m.constituency && `, ${m.constituency}`} :{" "}
-            {new Date(m.startDate).getFullYear()} -{" "}
+            {m.constituency && `, ${m.constituency}`} : {new Date(m.startDate).getFullYear()} -{" "}
             {m.isCurrent ? "présent" : m.endDate ? new Date(m.endDate).getFullYear() : ""}
           </li>
         ))}

@@ -72,7 +72,7 @@ export const PATCH = withAdminAuth(async (request: NextRequest, context) => {
     data: {
       action: "UPDATE",
       entityType: "PartyMembership",
-      entityId: membershipId,
+      entityId: membershipId!,
       changes: {
         startDate: updateData.startDate ? String(updateData.startDate) : undefined,
         endDate: updateData.endDate !== undefined ? String(updateData.endDate) : undefined,
@@ -133,7 +133,7 @@ export const DELETE = withAdminAuth(async (_request: NextRequest, context) => {
     data: {
       action: "DELETE",
       entityType: "PartyMembership",
-      entityId: membershipId,
+      entityId: membershipId!,
       changes: { partyId: membership.partyId },
     },
   });

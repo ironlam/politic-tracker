@@ -82,8 +82,8 @@ async function getScrutinListForSession(session: number): Promise<string[]> {
   let match;
 
   while ((match = regex.exec(html)) !== null) {
-    if (!numbers.includes(match[1])) {
-      numbers.push(match[1]);
+    if (!numbers.includes(match[1]!)) {
+      numbers.push(match[1]!);
     }
   }
 
@@ -108,7 +108,7 @@ function parseScrutinMetadata(
 
     let title = `Scrutin n°${number}`;
     if (pageLeadMatch) {
-      const leadText = pageLeadMatch[1]
+      const leadText = pageLeadMatch[1]!
         .replace(/<[^>]+>/g, " ")
         .replace(/\s+/g, " ")
         .trim();
@@ -116,7 +116,7 @@ function parseScrutinMetadata(
         title = leadText;
       }
     } else if (h1Match) {
-      const h1Text = h1Match[1]
+      const h1Text = h1Match[1]!
         .replace(/<[^>]+>/g, " ")
         .replace(/\s*En savoir plus\s*/gi, " ")
         .replace(/\s+/g, " ")
@@ -132,9 +132,9 @@ function parseScrutinMetadata(
     let date = new Date();
 
     if (dateMatch) {
-      const day = parseInt(dateMatch[1]);
-      const monthName = dateMatch[2].toLowerCase();
-      const year = parseInt(dateMatch[3]);
+      const day = parseInt(dateMatch[1]!);
+      const monthName = dateMatch[2]!.toLowerCase();
+      const year = parseInt(dateMatch[3]!);
 
       const months: Record<string, number> = {
         janvier: 0,
@@ -168,9 +168,9 @@ function parseScrutinMetadata(
       textContent.match(/abstention[s]?\s*:?\s*(\d+)/i) ||
       html.match(/<strong>\s*(\d+)\s*<\/strong>\s*abstention/i);
 
-    const votesFor = forMatch ? parseInt(forMatch[1]) : 0;
-    const votesAgainst = againstMatch ? parseInt(againstMatch[1]) : 0;
-    const votesAbstain = abstainMatch ? parseInt(abstainMatch[1]) : 0;
+    const votesFor = forMatch ? parseInt(forMatch[1]!) : 0;
+    const votesAgainst = againstMatch ? parseInt(againstMatch[1]!) : 0;
+    const votesAbstain = abstainMatch ? parseInt(abstainMatch[1]!) : 0;
 
     // Determine result
     const hasAdoption = /Le\s+Sénat\s+a\s+adopté|a\s+été\s+adopté/i.test(textContent);
@@ -369,7 +369,7 @@ export async function syncVotesSenat(
 
       for (let i = 0; i < scrutinNumbers.length; i++) {
         const number = scrutinNumbers[i];
-        const numInt = parseInt(number, 10);
+        const numInt = parseInt(number!, 10);
 
         // Skip scrutins already processed (cursor-based)
         if (!force && !todayOnly && cursorNum > 0 && numInt <= cursorNum) {
@@ -386,7 +386,7 @@ export async function syncVotesSenat(
           );
 
           // Parse metadata
-          const metadata = parseScrutinMetadata(html, currentSession, number);
+          const metadata = parseScrutinMetadata(html, currentSession, number!);
           if (!metadata) {
             stats.scrutinsSkipped++;
             progress.tick();
@@ -397,7 +397,7 @@ export async function syncVotesSenat(
           if (todayOnly) {
             const today = new Date().toISOString().split("T")[0];
             const scrutinDate = metadata.date.toISOString().split("T")[0];
-            if (scrutinDate < today) break;
+            if (scrutinDate! < today!) break;
             if (scrutinDate !== today) {
               stats.scrutinsSkipped++;
               progress.tick();
@@ -406,7 +406,7 @@ export async function syncVotesSenat(
           }
 
           // Fetch votes JSON
-          const votes = await fetchVotesJson(currentSession, number);
+          const votes = await fetchVotesJson(currentSession, number!);
 
           const externalId = `SENAT-${currentSession}-${number}`;
 

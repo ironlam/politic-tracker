@@ -72,7 +72,7 @@ export const PUT = withAdminAuth(async (request: NextRequest, context) => {
   if (body.predecessorId) {
     // Check if the predecessor would create a cycle
     let currentId = body.predecessorId;
-    const visited = new Set<string>([id]);
+    const visited = new Set<string>([id!]);
 
     while (currentId) {
       if (visited.has(currentId)) {
@@ -129,7 +129,7 @@ export const PUT = withAdminAuth(async (request: NextRequest, context) => {
     data: {
       action: "UPDATE",
       entityType: "Party",
-      entityId: id,
+      entityId: id!,
       changes: { name: updatedParty.name, shortName: updatedParty.shortName },
     },
   });
@@ -206,7 +206,7 @@ export const DELETE = withAdminAuth(async (_request: NextRequest, context) => {
     data: {
       action: "DELETE",
       entityType: "Party",
-      entityId: id,
+      entityId: id!,
       changes: { name: party.name, shortName: party.shortName },
     },
   });

@@ -150,12 +150,12 @@ async function main() {
     for (const m of toClose) {
       if (DRY_RUN) {
         console.log(
-          `  [DRY-RUN] ${row.fullName}: close old ${m.party.shortName} (keep ${keep.party.shortName})`
+          `  [DRY-RUN] ${row.fullName}: close old ${m.party.shortName} (keep ${keep!.party.shortName})`
         );
       } else {
         await db.partyMembership.update({
           where: { id: m.id },
-          data: { endDate: keep.startDate || new Date() },
+          data: { endDate: keep!.startDate || new Date() },
         });
       }
       membershipsClosed++;

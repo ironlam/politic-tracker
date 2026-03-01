@@ -231,7 +231,7 @@ export async function getSuperCategoryCounts() {
   for (const { category, _count } of categoryCounts) {
     const superCat = CATEGORY_TO_SUPER[category as AffairCategory];
     if (superCat) {
-      superCounts[superCat] += _count.category;
+      superCounts[superCat]! += _count.category;
     }
   }
 

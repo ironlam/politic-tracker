@@ -215,7 +215,7 @@ export default async function PressePage({ searchParams }: PageProps) {
           <p className="text-sm text-muted-foreground">Articles</p>
         </div>
         <div className="bg-blue-50 rounded-lg p-4 text-center">
-          <p className="text-2xl font-bold text-blue-600">{stats.totalMentions}</p>
+          <p className="text-2xl font-bold text-primary">{stats.totalMentions}</p>
           <p className="text-sm text-muted-foreground">Politiciens cités</p>
         </div>
         <div className="bg-purple-50 rounded-lg p-4 text-center">

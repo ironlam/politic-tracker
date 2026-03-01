@@ -87,33 +87,33 @@ export async function findPotentialDuplicates(): Promise<PotentialDuplicate[]> {
         const b = group[j];
 
         // Skip if already dismissed
-        const pairKey = [a.id, b.id].sort().join(":");
+        const pairKey = [a!.id, b!.id].sort().join(":");
         if (dismissedSet.has(pairKey)) continue;
 
         // Use affair B as a candidate to match against A
         const matches = await findMatchingAffairs({
-          politicianId: b.politicianId,
-          title: b.title,
-          ecli: b.ecli,
-          pourvoiNumber: b.pourvoiNumber,
-          caseNumbers: b.caseNumbers,
-          category: b.category,
-          verdictDate: b.verdictDate,
+          politicianId: b!.politicianId,
+          title: b!.title,
+          ecli: b!.ecli,
+          pourvoiNumber: b!.pourvoiNumber,
+          caseNumbers: b!.caseNumbers,
+          category: b!.category,
+          verdictDate: b!.verdictDate,
         });
 
         // Check if affair A appears in the matches
-        const matchForA = matches.find((m) => m.affairId === a.id);
+        const matchForA = matches.find((m) => m.affairId === a!.id);
         if (matchForA) {
           duplicates.push({
             affairA: {
-              id: a.id,
-              title: a.title,
-              sources: [...new Set(a.sources.map((s) => s.sourceType))],
+              id: a!.id,
+              title: a!.title,
+              sources: [...new Set(a!.sources.map((s) => s.sourceType))],
             },
             affairB: {
-              id: b.id,
-              title: b.title,
-              sources: [...new Set(b.sources.map((s) => s.sourceType))],
+              id: b!.id,
+              title: b!.title,
+              sources: [...new Set(b!.sources.map((s) => s.sourceType))],
             },
             confidence: matchForA.confidence,
             matchedBy: matchForA.matchedBy,
@@ -252,8 +252,8 @@ export async function dismissDuplicate(affairIdA: string, affairIdB: string): Pr
   // Always store with sorted IDs to avoid duplicates
   const [idA, idB] = [affairIdA, affairIdB].sort();
   await db.dismissedDuplicate.upsert({
-    where: { affairIdA_affairIdB: { affairIdA: idA, affairIdB: idB } },
-    create: { affairIdA: idA, affairIdB: idB },
+    where: { affairIdA_affairIdB: { affairIdA: idA!, affairIdB: idB! } },
+    create: { affairIdA: idA!, affairIdB: idB! },
     update: {},
   });
 }

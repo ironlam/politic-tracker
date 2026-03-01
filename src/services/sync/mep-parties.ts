@@ -26,13 +26,19 @@ function findCurrentAffiliation(
   if (affiliations.length === 0) return null;
 
   const current = affiliations.filter((a) => !a.endDate);
-  if (current.length === 1) return current[0];
+  if (current.length === 1) return current[0] ?? null;
 
   if (current.length > 1) {
-    return current.sort((a, b) => (b.startDate?.getTime() ?? 0) - (a.startDate?.getTime() ?? 0))[0];
+    return (
+      current.sort((a, b) => (b.startDate?.getTime() ?? 0) - (a.startDate?.getTime() ?? 0))[0] ??
+      null
+    );
   }
 
-  return affiliations.sort((a, b) => (b.endDate?.getTime() ?? 0) - (a.endDate?.getTime() ?? 0))[0];
+  return (
+    affiliations.sort((a, b) => (b.endDate?.getTime() ?? 0) - (a.endDate?.getTime() ?? 0))[0] ??
+    null
+  );
 }
 
 export async function syncMepParties(options?: {

@@ -159,7 +159,7 @@ async function importMemberships(results: WikidataMembershipResult[]): Promise<{
   console.log(`Processing ${byPerson.size} politicians with memberships...`);
 
   for (const [wikidataPersonId, memberships] of byPerson) {
-    const personName = memberships[0].personLabel.value;
+    const personName = memberships[0]!.personLabel.value;
 
     // Find politician in our DB
     const politicianId = await findPolitician(wikidataPersonId, personName);

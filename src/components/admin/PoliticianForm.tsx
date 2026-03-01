@@ -57,7 +57,6 @@ const DATA_SOURCES: DataSource[] = [
   "MANUAL",
 ];
 
-
 export function PoliticianForm({ initialData, parties }: PoliticianFormProps) {
   const router = useRouter();
 
@@ -72,7 +71,7 @@ export function PoliticianForm({ initialData, parties }: PoliticianFormProps) {
 
   function updateExternalId(index: number, field: keyof ExternalIdData, value: string) {
     const newIds = [...formData.externalIds];
-    newIds[index] = { ...newIds[index], [field]: value };
+    newIds[index]! = { ...newIds[index]!, [field]: value };
     setFormData((prev) => ({ ...prev, externalIds: newIds }));
   }
 

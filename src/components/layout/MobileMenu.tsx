@@ -77,13 +77,13 @@ export function MobileMenu({ enabledFlags = [] }: MobileMenuProps) {
           // Shift+Tab: if on first element, go to last
           if (document.activeElement === firstElement) {
             event.preventDefault();
-            lastElement.focus();
+            lastElement!.focus();
           }
         } else {
           // Tab: if on last element, go to first
           if (document.activeElement === lastElement) {
             event.preventDefault();
-            firstElement.focus();
+            firstElement!.focus();
           }
         }
       }
@@ -100,7 +100,7 @@ export function MobileMenu({ enabledFlags = [] }: MobileMenuProps) {
         const focusableElements = getFocusableElements(menuRef.current);
         if (focusableElements.length > 0) {
           // Small delay to ensure DOM is ready
-          setTimeout(() => focusableElements[0].focus(), 10);
+          setTimeout(() => focusableElements[0]!.focus(), 10);
         }
       }
       return () => document.removeEventListener("keydown", handleKeyDown);
@@ -249,7 +249,7 @@ export function MobileMenu({ enabledFlags = [] }: MobileMenuProps) {
                           {item.icon &&
                             ICON_MAP[item.icon] &&
                             (() => {
-                              const Icon = ICON_MAP[item.icon!];
+                              const Icon = ICON_MAP[item.icon!]!;
                               return <Icon className="h-5 w-5 shrink-0" />;
                             })()}
                           <div>

@@ -49,7 +49,7 @@ export default async function CartePage() {
   const legendParties: Array<{ label: string; color: string }> = [];
   for (const key of predefinedKeys) {
     if (allPartyLabels.has(key)) {
-      legendParties.push({ label: key, color: PARTY_COLORS[key] });
+      legendParties.push({ label: key, color: PARTY_COLORS[key]! });
     }
   }
   for (const label of allPartyLabels) {

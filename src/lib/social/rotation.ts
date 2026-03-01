@@ -14,7 +14,7 @@ export async function getRotationIndex(): Promise<number> {
 /** Get the next category to post. */
 export async function getNextCategory(): Promise<SocialCategory> {
   const idx = await getRotationIndex();
-  return SOCIAL_CATEGORIES[idx];
+  return SOCIAL_CATEGORIES[idx]!;
 }
 
 /** Advance the rotation index by 1 (modulo 9). */

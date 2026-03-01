@@ -66,7 +66,7 @@ function countSnapshots(): { total: number; byProject: Record<string, number> } 
         // Extract project from filename (e.g., "homepage-chromium-linux.png" -> "chromium")
         const match = file.match(/-(chromium|mobile-chrome)-/);
         const project = match ? match[1] : "unknown";
-        byProject[project] = (byProject[project] || 0) + 1;
+        byProject[project!] = (byProject[project!] || 0) + 1;
       }
     }
   }

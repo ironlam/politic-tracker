@@ -626,7 +626,7 @@ async function rejectLowConfidenceAffair(
  */
 function resolvePolitician(name: string, index: PoliticianName[]): string | null {
   const matches = findMentions(name, index);
-  return matches.length > 0 ? matches[0].politicianId : null;
+  return matches.length > 0 ? matches[0]!.politicianId : null;
 }
 
 // ============================================

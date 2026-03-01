@@ -155,7 +155,7 @@ export default async function AdminPartyPage({ params }: PageProps) {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-3 gap-4 text-center">
               <div className="p-4 bg-blue-50 rounded-lg">
-                <p className="text-2xl font-bold text-blue-600">{party._count.politicians}</p>
+                <p className="text-2xl font-bold text-primary">{party._count.politicians}</p>
                 <p className="text-sm text-muted-foreground">Membres actuels</p>
               </div>
               <div className="p-4 bg-green-50 rounded-lg">

@@ -503,7 +503,7 @@ export async function summarizeBatch(
 
   for (let i = 0; i < requests.length; i++) {
     try {
-      const result = await summarizeDossier(requests[i]);
+      const result = await summarizeDossier(requests[i]!);
       results.push(result);
     } catch (err) {
       if (onError) {

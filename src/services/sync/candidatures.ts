@@ -83,14 +83,14 @@ async function matchPolitician(
   });
 
   if (candidates.length === 0) return null;
-  if (candidates.length === 1) return candidates[0].id;
+  if (candidates.length === 1) return candidates[0]!.id;
 
   // Multiple: prefer candidate with mandate in same department
   for (const c of candidates) {
     if (c.mandates.length > 0) return c.id;
   }
 
-  return candidates[0].id;
+  return candidates[0]!.id;
 }
 
 /**
@@ -282,21 +282,21 @@ export async function syncCandidaturesMunicipales(
 
   for (let i = 0; i < toProcess.length; i++) {
     const row = toProcess[i];
-    const nom = row["Nom candidat"];
-    const prenom = row["Prénom candidat"];
+    const nom = row!["Nom candidat"];
+    const prenom = row!["Prénom candidat"];
 
     if (!nom || !prenom) {
       parseErrors.push(`Row ${i + 1}: missing candidate name`);
       continue;
     }
 
-    const deptCode = row["Code du département"];
-    const codeCommune = row["Code commune"];
-    const nuanceCode = row["Nuance Liste"];
-    const rawListName = row["Libellé Etendu Liste"] || row["Libellé abrégé liste"];
-    const rawListPosition = parseInt(row["N° candidat"], 10);
-    const gender = row["Sexe candidat"] || null;
-    const nationality = row["Nationalité"] || null;
+    const deptCode = row!["Code du département"];
+    const codeCommune = row!["Code commune"];
+    const nuanceCode = row!["Nuance Liste"];
+    const rawListName = row!["Libellé Etendu Liste"] || row!["Libellé abrégé liste"];
+    const rawListPosition = parseInt(row!["N° candidat"], 10);
+    const gender = row!["Sexe candidat"] || null;
+    const nationality = row!["Nationalité"] || null;
 
     parsedRows.push({
       index: i,
@@ -308,11 +308,11 @@ export async function syncCandidaturesMunicipales(
       nationality: nationality || null,
       deptCode,
       codeCommune,
-      communeName: row["Libellé commune"],
+      communeName: row!["Libellé commune"],
       nuanceCode,
       listName: rawListName || null,
       listPosition: isNaN(rawListPosition) ? null : rawListPosition,
-      partyLabel: row["Libellé abrégé liste"] || nuanceCode || null,
+      partyLabel: row!["Libellé abrégé liste"] || nuanceCode || null,
       candidateName: `${prenom} ${nom}`,
       constituencyCode: `${deptCode}-${codeCommune}`,
       inseeCode: buildInseeCode(deptCode, codeCommune),
@@ -470,17 +470,17 @@ export async function syncCandidaturesMunicipales(
         const politicianId = rowPoliticianIds[j];
 
         try {
-          const candidateKey = `${row.normalizedFirstName}|${row.normalizedLastName}`;
+          const candidateKey = `${row!.normalizedFirstName}|${row!.normalizedLastName}`;
           const candidateId = candidateIdMap.get(candidateKey) ?? null;
 
           // Resolve commune
-          const communeId = communeSet.has(row.inseeCode) ? row.inseeCode : null;
+          const communeId = communeSet.has(row!.inseeCode) ? row!.inseeCode : null;
           if (communeId) candidaciesWithCommune++;
 
           // Resolve party from cache
-          const partyId = partyCache.get(row.nuanceCode) ?? null;
+          const partyId = partyCache.get(row!.nuanceCode) ?? null;
 
-          const existingKey = `${row.candidateName}|${row.constituencyCode}`;
+          const existingKey = `${row!.candidateName}|${row!.constituencyCode}`;
           const existingId = existingCandidacyMap.get(existingKey);
 
           if (existingId) {
@@ -490,10 +490,10 @@ export async function syncCandidaturesMunicipales(
               data: {
                 politicianId,
                 partyId,
-                partyLabel: row.partyLabel,
-                listName: row.listName,
-                listPosition: row.listPosition,
-                constituencyName: row.communeName,
+                partyLabel: row!.partyLabel,
+                listName: row!.listName,
+                listPosition: row!.listPosition,
+                constituencyName: row!.communeName,
                 candidateId,
                 communeId,
               },
@@ -505,18 +505,18 @@ export async function syncCandidaturesMunicipales(
               electionId: electionRecord.id,
               politicianId,
               partyId,
-              candidateName: row.candidateName,
-              partyLabel: row.partyLabel,
-              listName: row.listName,
-              listPosition: row.listPosition,
-              constituencyCode: row.constituencyCode,
-              constituencyName: row.communeName,
+              candidateName: row!.candidateName,
+              partyLabel: row!.partyLabel,
+              listName: row!.listName,
+              listPosition: row!.listPosition,
+              constituencyCode: row!.constituencyCode,
+              constituencyName: row!.communeName,
               candidateId,
               communeId,
             });
           }
         } catch (error) {
-          errors.push(`Row ${row.index + 1}: ${error}`);
+          errors.push(`Row ${row!.index + 1}: ${error}`);
         }
       }
 

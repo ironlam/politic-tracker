@@ -95,8 +95,8 @@ async function classifyDossiers(
       let theme: ThemeCategoryValue | null = null;
 
       // Phase 1: Try pre-mapping from category
-      if (dossier.category && CATEGORY_TO_THEME[dossier.category]) {
-        theme = CATEGORY_TO_THEME[dossier.category] as ThemeCategoryValue;
+      if (dossier!.category && CATEGORY_TO_THEME[dossier!.category]) {
+        theme = CATEGORY_TO_THEME[dossier!.category] as ThemeCategoryValue;
         stats.dossiers.premapped++;
       }
 
@@ -108,11 +108,15 @@ async function classifyDossiers(
           continue;
         }
 
-        const context = dossier.exposeDesMotifs
-          ? dossier.exposeDesMotifs.substring(0, 500)
+        const context = dossier!.exposeDesMotifs
+          ? dossier!.exposeDesMotifs.substring(0, 500)
           : undefined;
 
-        theme = await classifyTheme(dossier.shortTitle || dossier.title, dossier.summary, context);
+        theme = await classifyTheme(
+          dossier!.shortTitle || dossier!.title,
+          dossier!.summary,
+          context
+        );
 
         if (theme) stats.dossiers.aiClassified++;
 
@@ -124,7 +128,7 @@ async function classifyDossiers(
 
       if (theme && !opts.dryRun) {
         await db.legislativeDossier.update({
-          where: { id: dossier.id },
+          where: { id: dossier!.id },
           data: { theme: theme as ThemeCategory },
         });
       }
@@ -172,11 +176,11 @@ async function classifyScrutins(
         continue;
       }
 
-      const theme = await classifyTheme(scrutin.title, scrutin.summary);
+      const theme = await classifyTheme(scrutin!.title, scrutin!.summary);
 
       if (theme) {
         await db.scrutin.update({
-          where: { id: scrutin.id },
+          where: { id: scrutin!.id },
           data: { theme: theme as ThemeCategory },
         });
         stats.scrutins.aiClassified++;

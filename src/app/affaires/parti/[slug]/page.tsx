@@ -495,7 +495,7 @@ export default async function PartyAffairsPage({ params }: PageProps) {
                       <PoliticianAvatar photoUrl={pol.photoUrl} fullName={pol.fullName} size="sm" />
                       <div className="min-w-0 flex-1">
                         <p className="font-medium truncate">{pol.fullName}</p>
-                        <p className="text-xs text-blue-600 dark:text-blue-400">
+                        <p className="text-xs text-primary">
                           Victime dans {pol.count} affaire{pol.count > 1 ? "s" : ""}
                         </p>
                       </div>

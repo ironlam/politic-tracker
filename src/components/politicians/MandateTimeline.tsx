@@ -255,11 +255,11 @@ export function MandateTimeline({ mandates, civility }: MandateTimelineProps) {
             })}
 
             {/* Other mandates not in categories */}
-            {pastByCategory.other?.length > 0 && (
+            {(pastByCategory.other?.length ?? 0) > 0 && (
               <div>
                 <p className="text-xs font-medium text-muted-foreground mb-2">Autres mandats</p>
                 <div className="space-y-2">
-                  {pastByCategory.other.map((mandate) => (
+                  {pastByCategory.other!.map((mandate) => (
                     <div
                       key={mandate.id}
                       className="relative pl-6 border-l border-muted-foreground/20"

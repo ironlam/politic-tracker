@@ -91,7 +91,7 @@ export default function SoutenirPage() {
               </Button>
             ))}
           </div>
-          <p className="text-sm text-muted-foreground mt-4">{DONATION_PLATFORMS[0].description}</p>
+          <p className="text-sm text-muted-foreground mt-4">{DONATION_PLATFORMS[0]!.description}</p>
         </CardContent>
       </Card>
 

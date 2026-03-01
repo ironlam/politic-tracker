@@ -3,10 +3,7 @@ import { isAuthenticated } from "@/lib/auth";
 
 type RouteContext = { params: Promise<Record<string, string>> };
 
-type RouteHandler = (
-  request: NextRequest,
-  context: RouteContext
-) => Promise<NextResponse>;
+type RouteHandler = (request: NextRequest, context: RouteContext) => Promise<NextResponse>;
 
 /**
  * HOF wrapper for admin API routes.

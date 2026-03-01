@@ -52,7 +52,7 @@ function computeSeverity(category: string, isRelatedToMandate: boolean): string 
   const base = CATEGORY_DEFAULT_SEVERITY[category] || "SIGNIFICATIF";
   if (!isRelatedToMandate) return base;
   const idx = SEVERITY_ORDER.indexOf(base);
-  return idx > 0 ? SEVERITY_ORDER[idx - 1] : base;
+  return idx > 0 ? SEVERITY_ORDER[idx - 1]! : base;
 }
 
 async function main() {

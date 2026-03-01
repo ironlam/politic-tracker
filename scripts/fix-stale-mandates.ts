@@ -435,11 +435,11 @@ async function fixDoublePM(stats: Stats, apply: boolean) {
 
   const [current, ...stale] = pmMandates;
   console.log(
-    `  ✓ PM actuel: ${current.politician.fullName} (${current.startDate?.toISOString().split("T")[0]})`
+    `  ✓ PM actuel: ${current!.politician.fullName} (${current!.startDate?.toISOString().split("T")[0]})`
   );
 
   for (const mandate of stale) {
-    const endDate = current.startDate || new Date();
+    const endDate = current!.startDate || new Date();
     console.log(
       `  ✗ ${mandate.politician.fullName} (${mandate.startDate?.toISOString().split("T")[0]}) → fermé au ${endDate.toISOString().split("T")[0]}`
     );
@@ -510,11 +510,11 @@ async function fixDoubleMandates(stats: Stats, apply: boolean) {
 
     const [current, ...stale] = pol.mandates;
     console.log(
-      `  ${pol.fullName}: garde ${current.type} (${current.startDate?.toISOString().split("T")[0]})`
+      `  ${pol.fullName}: garde ${current!.type} (${current!.startDate?.toISOString().split("T")[0]})`
     );
 
     for (const mandate of stale) {
-      const endDate = current.startDate || new Date();
+      const endDate = current!.startDate || new Date();
       console.log(
         `    ✗ ferme ${mandate.type} (${mandate.startDate?.toISOString().split("T")[0]}) → ${endDate.toISOString().split("T")[0]}`
       );

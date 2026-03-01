@@ -28,8 +28,8 @@ export function PoliticianBridge({
 }: PoliticianBridgeProps) {
   const mandateLabel =
     politician.mandates.length > 0
-      ? (MANDATE_TYPE_LABELS[politician.mandates[0].type as MandateType] ??
-        politician.mandates[0].type)
+      ? (MANDATE_TYPE_LABELS[politician.mandates[0]!.type as MandateType] ??
+        politician.mandates[0]!.type)
       : null;
 
   return (

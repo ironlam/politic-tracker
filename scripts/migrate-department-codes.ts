@@ -197,7 +197,7 @@ function extractDepartmentCode(constituency: string | null, type: MandateType): 
   const nameMatch = constituency.match(/^([^(]+?)(?:\s*\((?:\d+(?:e|ère|re|ème)?|Série \d+)\))?$/);
   if (!nameMatch) return null;
 
-  const deptName = nameMatch[1].trim();
+  const deptName = nameMatch[1]!.trim();
 
   // Try direct match
   if (DEPARTMENT_NAME_TO_CODE[deptName]) {

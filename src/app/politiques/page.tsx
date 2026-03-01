@@ -471,7 +471,7 @@ export default async function PolitiquesPage({ searchParams }: PageProps) {
             { key: "conviction", count: counts.withConviction, mandate: "" },
           ] as const
         ).map(({ key, count, mandate }) => {
-          const accent = MANDATE_ACCENT[key];
+          const accent = MANDATE_ACCENT[key]!;
           const isActive = key === "conviction" ? convictionFilter : mandateFilter === mandate;
           const href =
             key === "conviction"
@@ -485,8 +485,8 @@ export default async function PolitiquesPage({ searchParams }: PageProps) {
             <StatCard
               key={key}
               count={count}
-              label={accent.label}
-              description={accent.desc}
+              label={accent!.label}
+              description={accent!.desc}
               accent={accent}
               href={href}
               isActive={isActive}

@@ -46,7 +46,7 @@ export default async function ChatPage() {
           <span>Sources vérifiées</span>
         </div>
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <MessageSquare className="w-4 h-4 text-blue-600" />
+          <MessageSquare className="w-4 h-4 text-primary" />
           <span>Réponses factuelles</span>
         </div>
       </div>

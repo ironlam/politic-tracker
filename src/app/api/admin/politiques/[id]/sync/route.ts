@@ -68,7 +68,7 @@ export const POST = withAdminAuth(async (request: NextRequest, context) => {
       data: {
         action: "SYNC",
         entityType: "Politician",
-        entityId: id,
+        entityId: id!,
         changes: { type, stats: JSON.parse(JSON.stringify(stats)), durationMs },
       },
     });

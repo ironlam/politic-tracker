@@ -37,12 +37,12 @@ export function UpcomingElections({ elections }: UpcomingElectionsProps) {
         </div>
 
         {/* Countdown for the next election */}
-        {nextElection.round1Date && (
+        {nextElection!.round1Date && (
           <ElectionCountdown
-            targetDate={nextElection.round1Date.toISOString()}
-            electionTitle={nextElection.title}
-            electionIcon={ELECTION_TYPE_ICONS[nextElection.type]}
-            dateConfirmed={nextElection.dateConfirmed}
+            targetDate={nextElection!.round1Date.toISOString()}
+            electionTitle={nextElection!.title}
+            electionIcon={ELECTION_TYPE_ICONS[nextElection!.type]}
+            dateConfirmed={nextElection!.dateConfirmed}
           />
         )}
 

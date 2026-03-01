@@ -158,7 +158,7 @@ export const DELETE = withAdminAuth(async (_request: NextRequest, context) => {
     data: {
       action: "DELETE",
       entityType: "Mandate",
-      entityId: id,
+      entityId: id!,
       changes: {
         type: existing.type,
         title: existing.title,

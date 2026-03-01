@@ -99,12 +99,12 @@ async function main() {
     for (const m of toClose) {
       if (DRY_RUN) {
         console.log(
-          `  [DRY-RUN] Would close duplicate: ${m.politician.fullName} - "${m.title}" (keep: "${keep.title}")`
+          `  [DRY-RUN] Would close duplicate: ${m.politician.fullName} - "${m.title}" (keep: "${keep!.title}")`
         );
       } else {
         await db.mandate.update({
           where: { id: m.id },
-          data: { isCurrent: false, endDate: keep.startDate },
+          data: { isCurrent: false, endDate: keep!.startDate },
         });
       }
       deputyDupsRemoved++;
@@ -165,7 +165,7 @@ async function main() {
       } else {
         await db.mandate.update({
           where: { id: m.id },
-          data: { isCurrent: false, endDate: sorted[0].startDate },
+          data: { isCurrent: false, endDate: sorted[0]!.startDate },
         });
       }
       mepDupsRemoved++;

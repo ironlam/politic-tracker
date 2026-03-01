@@ -107,26 +107,26 @@ async function migrateScrutins(): Promise<{ updated: number; skipped: number }> 
 
   for (let i = 0; i < scrutins.length; i++) {
     const scrutin = scrutins[i];
-    updateLine(`${renderProgressBar(i + 1, scrutins.length)} Processing ${scrutin.externalId}`);
+    updateLine(`${renderProgressBar(i + 1, scrutins.length)} Processing ${scrutin!.externalId}`);
 
     try {
-      const baseSlug = generateDateSlug(scrutin.votingDate, scrutin.title);
+      const baseSlug = generateDateSlug(scrutin!.votingDate, scrutin!.title);
       const uniqueSlug = await getUniqueSlug(baseSlug, existingSlugs, async (slug) => {
         const exists = await db.scrutin.findUnique({ where: { slug } });
         return exists !== null;
       });
 
       if (dryRun) {
-        console.log(`\n  [DRY RUN] ${scrutin.externalId} → ${uniqueSlug}`);
+        console.log(`\n  [DRY RUN] ${scrutin!.externalId} → ${uniqueSlug}`);
       } else {
         await db.scrutin.update({
-          where: { id: scrutin.id },
+          where: { id: scrutin!.id },
           data: { slug: uniqueSlug },
         });
       }
       updated++;
     } catch (error) {
-      console.error(`\n  Error processing ${scrutin.externalId}:`, error);
+      console.error(`\n  Error processing ${scrutin!.externalId}:`, error);
       skipped++;
     }
   }
@@ -175,28 +175,28 @@ async function migrateDossiers(): Promise<{ updated: number; skipped: number }> 
 
   for (let i = 0; i < dossiers.length; i++) {
     const dossier = dossiers[i];
-    updateLine(`${renderProgressBar(i + 1, dossiers.length)} Processing ${dossier.externalId}`);
+    updateLine(`${renderProgressBar(i + 1, dossiers.length)} Processing ${dossier!.externalId}`);
 
     try {
       // Prefer shortTitle for slug, fallback to title
-      const titleForSlug = dossier.shortTitle || dossier.title;
-      const baseSlug = generateDateSlug(dossier.filingDate, titleForSlug);
+      const titleForSlug = dossier!.shortTitle || dossier!.title;
+      const baseSlug = generateDateSlug(dossier!.filingDate, titleForSlug);
       const uniqueSlug = await getUniqueSlug(baseSlug, existingSlugs, async (slug) => {
         const exists = await db.legislativeDossier.findUnique({ where: { slug } });
         return exists !== null;
       });
 
       if (dryRun) {
-        console.log(`\n  [DRY RUN] ${dossier.externalId} → ${uniqueSlug}`);
+        console.log(`\n  [DRY RUN] ${dossier!.externalId} → ${uniqueSlug}`);
       } else {
         await db.legislativeDossier.update({
-          where: { id: dossier.id },
+          where: { id: dossier!.id },
           data: { slug: uniqueSlug },
         });
       }
       updated++;
     } catch (error) {
-      console.error(`\n  Error processing ${dossier.externalId}:`, error);
+      console.error(`\n  Error processing ${dossier!.externalId}:`, error);
       skipped++;
     }
   }

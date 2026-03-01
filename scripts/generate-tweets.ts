@@ -2,7 +2,8 @@ import "dotenv/config";
 import * as fs from "fs";
 import * as path from "path";
 import { db } from "../src/lib/db";
-import { GENERATORS, formatDate, type TweetDraft } from "../src/lib/social/generators";
+import { GENERATORS, type TweetDraft } from "../src/lib/social/generators";
+import { formatDate } from "../src/lib/utils";
 
 const MAX_CHARS = 4000; // X Premium
 

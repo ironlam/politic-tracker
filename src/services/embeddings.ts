@@ -46,7 +46,7 @@ export async function generateEmbedding(
     throw new Error("No embedding returned from Voyage AI");
   }
 
-  return response.data[0].embedding as number[];
+  return response.data[0]!.embedding as number[];
 }
 
 /**
@@ -60,9 +60,9 @@ function cosineSimilarity(a: number[], b: number[]): number {
   let normB = 0;
 
   for (let i = 0; i < a.length; i++) {
-    dotProduct += a[i] * b[i];
-    normA += a[i] * a[i];
-    normB += b[i] * b[i];
+    dotProduct += a[i]! * b[i]!;
+    normA += a[i]! * a[i]!;
+    normB += b[i]! * b[i]!;
   }
 
   if (normA === 0 || normB === 0) return 0;
@@ -197,8 +197,8 @@ export async function rerankResults(
   return response.data
     .filter((item) => item.index !== undefined)
     .map((item) => ({
-      ...results[item.index!],
-      similarity: item.relevanceScore ?? results[item.index!].similarity,
+      ...results[item.index!]!,
+      similarity: item.relevanceScore ?? results[item.index!]!.similarity,
     }));
 }
 
@@ -762,16 +762,16 @@ export async function indexAllOfType(
   ) {
     for (let i = 0; i < entities.length; i++) {
       const entity = entities[i];
-      if (!needsReindex(entity.id, entity.updatedAt)) {
+      if (!needsReindex(entity!.id, entity!.updatedAt)) {
         skipped++;
         onProgress?.(i + 1, entities.length);
         continue;
       }
       try {
-        await indexFn(entity.id);
+        await indexFn(entity!.id);
         indexed++;
       } catch (e) {
-        console.error(`Error indexing ${typeName} ${entity.id}:`, e);
+        console.error(`Error indexing ${typeName} ${entity!.id}:`, e);
         errors++;
       }
       onProgress?.(i + 1, entities.length);

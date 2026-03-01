@@ -144,6 +144,7 @@ export function PostalCodeSearch() {
         <button
           onClick={handleSearch}
           disabled={isSearching || postalCode.length !== 5}
+          aria-label="Rechercher par code postal"
           className="h-12 px-6 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
         >
           {isSearching ? (

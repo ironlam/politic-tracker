@@ -37,7 +37,7 @@ export const POST = withAdminAuth(async (request: NextRequest, context) => {
     return NextResponse.json({ error: "Rôle invalide" }, { status: 400 });
   }
 
-  await setCurrentParty(id, body.partyId, {
+  await setCurrentParty(id!, body.partyId, {
     startDate: body.startDate ? new Date(body.startDate) : new Date(),
     role: body.role || undefined,
   });
@@ -46,7 +46,7 @@ export const POST = withAdminAuth(async (request: NextRequest, context) => {
     data: {
       action: "UPDATE",
       entityType: "Politician",
-      entityId: id,
+      entityId: id!,
       changes: { partyChanged: body.partyId, startDate: body.startDate },
     },
   });
@@ -75,13 +75,13 @@ export const DELETE = withAdminAuth(async (request: NextRequest, context) => {
   const body = await request.json().catch(() => ({}));
   const endDate = body.endDate ? new Date(body.endDate) : new Date();
 
-  await removeParty(id, endDate);
+  await removeParty(id!, endDate);
 
   await db.auditLog.create({
     data: {
       action: "UPDATE",
       entityType: "Politician",
-      entityId: id,
+      entityId: id!,
       changes: {
         partyRemoved: politician.currentPartyId,
         endDate: endDate.toISOString(),

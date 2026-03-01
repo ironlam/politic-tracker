@@ -127,8 +127,8 @@ export function PartyLeadershipEditor({ partyId, partyShortName }: PartyLeadersh
       party: null,
     });
     setTitle(mandate.title);
-    setStartDate(mandate.startDate.split("T")[0]);
-    setEndDate(mandate.endDate ? mandate.endDate.split("T")[0] : "");
+    setStartDate(mandate.startDate.split("T")[0]!);
+    setEndDate(mandate.endDate ? mandate.endDate.split("T")[0]! : "");
     setSourceUrl("");
     setShowForm(true);
   }

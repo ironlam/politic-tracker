@@ -607,12 +607,12 @@ function renderInlineFormatting(text: string): React.ReactNode {
       const [, linkText, url] = linkMatch;
       // Fix malformed URLs (http:/www -> https://www)
       let fixedUrl = url;
-      if (url.startsWith("http:/www") || url.startsWith("http:/assemblee")) {
-        fixedUrl = url.replace("http:/", "https://");
-      } else if (url.startsWith("www.") || url.startsWith("assemblee-nationale")) {
+      if (url!.startsWith("http:/www") || url!.startsWith("http:/assemblee")) {
+        fixedUrl = url!.replace("http:/", "https://");
+      } else if (url!.startsWith("www.") || url!.startsWith("assemblee-nationale")) {
         fixedUrl = `https://${url}`;
       }
-      const isExternal = fixedUrl.startsWith("http");
+      const isExternal = fixedUrl!.startsWith("http");
       return (
         <a
           key={segIndex}
@@ -700,7 +700,7 @@ function extractUrl(text: string): string {
   const match = text.match(/(\/[a-z][a-z0-9-/]*|https?:\/\/[^\s]+)/i);
   if (match) {
     // Clean trailing punctuation
-    return match[1].replace(/[.,;:!?]+$/, "");
+    return match[1]!.replace(/[.,;:!?]+$/, "");
   }
   return "#";
 }

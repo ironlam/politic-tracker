@@ -75,7 +75,7 @@ const PUBLICATION_STATUS_LABELS: Record<string, string> = {
 
 function formatDateForInput(date: Date | null): string {
   if (!date) return "";
-  return new Date(date).toISOString().split("T")[0];
+  return new Date(date).toISOString().split("T")[0]!;
 }
 
 export function EditableCivilStatusCard({ politician }: EditableCivilStatusCardProps) {

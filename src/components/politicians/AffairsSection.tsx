@@ -153,9 +153,7 @@ export function AffairsSection({ affairs, civility }: AffairsSectionProps) {
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap mb-1">
-                          <Badge
-                            className={INVOLVEMENT_COLORS[affair.involvement as Involvement]}
-                          >
+                          <Badge className={INVOLVEMENT_COLORS[affair.involvement as Involvement]}>
                             {INVOLVEMENT_LABELS[affair.involvement as Involvement]}
                           </Badge>
                           <Link
@@ -171,10 +169,7 @@ export function AffairsSection({ affairs, civility }: AffairsSectionProps) {
                           </p>
                         )}
                       </div>
-                      <Badge
-                        variant="outline"
-                        className="text-xs self-start whitespace-nowrap"
-                      >
+                      <Badge variant="outline" className="text-xs self-start whitespace-nowrap">
                         {AFFAIR_STATUS_LABELS[affair.status as AffairStatus]}
                       </Badge>
                     </div>
@@ -205,10 +200,7 @@ export function AffairsSection({ affairs, civility }: AffairsSectionProps) {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1 flex-wrap">
                           {(affair.verdictDate || affair.startDate || affair.factsDate) && (
-                            <Badge
-                              variant="secondary"
-                              className="font-mono text-base font-bold"
-                            >
+                            <Badge variant="secondary" className="font-mono text-base font-bold">
                               {new Date(
                                 affair.verdictDate || affair.startDate || affair.factsDate!
                               ).getFullYear()}

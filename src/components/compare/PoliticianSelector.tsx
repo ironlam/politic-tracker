@@ -199,7 +199,7 @@ export function PoliticianSelector({
         case "Enter":
           e.preventDefault();
           if (activeIndex >= 0 && activeIndex < results.length) {
-            selectPolitician(results[activeIndex]);
+            selectPolitician(results[activeIndex]!);
           }
           break;
         case "Escape":

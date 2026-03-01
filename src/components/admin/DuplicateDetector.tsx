@@ -219,7 +219,7 @@ function DuplicateGroupCard({
   onDismiss: () => void;
 }) {
   const [expanded, setExpanded] = useState(group.score >= 70);
-  const [primaryId, setPrimaryId] = useState<string>(group.affairs[0].id);
+  const [primaryId, setPrimaryId] = useState<string>(group.affairs[0]!.id);
   const [merging, setMerging] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
 
@@ -250,9 +250,9 @@ function DuplicateGroupCard({
         {/* Titles preview */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 text-sm">
-            <span className="font-medium truncate">{group.affairs[0].title}</span>
+            <span className="font-medium truncate">{group.affairs[0]!.title}</span>
             <span className="text-muted-foreground shrink-0">↔</span>
-            <span className="font-medium truncate">{group.affairs[1].title}</span>
+            <span className="font-medium truncate">{group.affairs[1]!.title}</span>
           </div>
           <div className="flex flex-wrap gap-1.5 mt-1">
             {group.reasons.map((r, i) => (
@@ -464,7 +464,7 @@ export function DuplicateDetector({ politicianId, affairCount }: DuplicateDetect
             const originalIndex = groups.indexOf(group);
             return (
               <DuplicateGroupCard
-                key={`${group.affairs[0].id}-${group.affairs[1].id}`}
+                key={`${group.affairs[0]!.id}-${group.affairs[1]!.id}`}
                 group={group}
                 onMerge={handleMerge}
                 onDelete={handleDelete}

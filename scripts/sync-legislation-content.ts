@@ -215,7 +215,7 @@ Features:
 
     for (let i = 0; i < dossiers.length; i++) {
       const dossier = dossiers[i];
-      const docId = dossier.documentExternalId!;
+      const docId = dossier!.documentExternalId!;
 
       const progress = `[${i + 1}/${total}]`;
       process.stdout.write(`\r${progress} Downloading ${docId}...                    `);
@@ -245,7 +245,7 @@ Features:
 
         if (expose) {
           await db.legislativeDossier.update({
-            where: { id: dossier.id },
+            where: { id: dossier!.id },
             data: {
               exposeDesMotifs: expose,
               exposeSource: "docparl",
@@ -258,7 +258,7 @@ Features:
 
         stats.processed++;
       } catch (err) {
-        const msg = `${dossier.externalId}: ${err instanceof Error ? err.message : String(err)}`;
+        const msg = `${dossier!.externalId}: ${err instanceof Error ? err.message : String(err)}`;
         errors.push(msg);
         stats.processed++;
       }

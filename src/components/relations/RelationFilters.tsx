@@ -17,7 +17,7 @@ interface RelationFiltersProps {
 /** Short label for mobile compact mode: take the last word of the label */
 function shortLabel(label: string): string {
   const words = label.split(" ");
-  return words[words.length - 1];
+  return words[words.length - 1]!;
 }
 
 export function RelationFilters({

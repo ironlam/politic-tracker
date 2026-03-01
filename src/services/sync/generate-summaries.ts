@@ -79,15 +79,15 @@ export async function generateSummaries(options?: {
 
     try {
       const summary: SummaryResponse = await summarizeDossier({
-        title: dossier.title,
-        content: dossier.exposeDesMotifs || dossier.title,
-        procedure: dossier.category || undefined,
+        title: dossier!.title,
+        content: dossier!.exposeDesMotifs || dossier!.title,
+        procedure: dossier!.category || undefined,
       });
 
       const formattedSummary = formatSummary(summary);
 
       await db.legislativeDossier.update({
-        where: { id: dossier.id },
+        where: { id: dossier!.id },
         data: {
           summary: formattedSummary,
           summaryDate: new Date(),
@@ -102,7 +102,7 @@ export async function generateSummaries(options?: {
       }
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : String(err);
-      stats.errors.push(`${dossier.externalId}: ${errorMsg}`);
+      stats.errors.push(`${dossier!.externalId}: ${errorMsg}`);
       stats.processed++;
 
       if (errorMsg.includes("429") || errorMsg.includes("rate")) {

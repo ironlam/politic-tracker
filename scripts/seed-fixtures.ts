@@ -558,7 +558,7 @@ async function seed() {
       data: {
         politicianId: politician.id,
         partyId,
-        startDate: pol.mandates[0].startDate,
+        startDate: pol.mandates[0]!.startDate,
         role: "MEMBER",
       },
     });
@@ -594,12 +594,12 @@ async function seed() {
     );
     const positions = ["POUR", "CONTRE", "ABSTENTION", "POUR", "CONTRE"] as const;
     for (let i = 0; i < deputies.length; i++) {
-      const polId = politicianMap.get(deputies[i].lastName)!;
+      const polId = politicianMap.get(deputies[i]!.lastName)!;
       await db.vote.create({
         data: {
           scrutinId: scrutin.id,
           politicianId: polId,
-          position: positions[i % positions.length],
+          position: positions[i % positions.length]!,
         },
       });
     }
@@ -632,8 +632,8 @@ async function seed() {
         date: a.startDate,
         type: "REVELATION",
         title: "Révélation médiatique",
-        sourceUrl: a.sources[0].url,
-        sourceTitle: a.sources[0].title,
+        sourceUrl: a.sources[0]!.url,
+        sourceTitle: a.sources[0]!.title,
       },
     });
   }

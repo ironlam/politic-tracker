@@ -49,23 +49,23 @@ function parseTweetsFromMarkdown(filePath: string): ParsedTweet[] {
 
   for (let i = 1; i < sections.length; i++) {
     const section = sections[i];
-    const numberMatch = section.match(/^(\d+)/);
+    const numberMatch = section!.match(/^(\d+)/);
     if (!numberMatch) continue;
 
-    const number = parseInt(numberMatch[1]);
+    const number = parseInt(numberMatch[1]!);
 
     // Find the category (last ## heading before this tweet)
     const beforeSection = md.substring(0, md.indexOf(`### Tweet ${number}`));
     const allCategories = [...beforeSection.matchAll(/^## ([^\n]+)/gm)];
     if (allCategories.length > 0) {
-      currentCategory = allCategories[allCategories.length - 1][1].trim();
+      currentCategory = allCategories[allCategories.length - 1]![1]!.trim();
     }
 
     // Extract content (between tweet header and **Caractères**)
-    const contentMatch = section.match(/\d+\s*\n\n([\s\S]*?)\n\n\*\*Caractères\*\*/);
+    const contentMatch = section!.match(/\d+\s*\n\n([\s\S]*?)\n\n\*\*Caractères\*\*/);
     if (!contentMatch) continue;
 
-    let fullContent = contentMatch[1].trim();
+    let fullContent = contentMatch[1]!.trim();
 
     // Separate link from content
     let link: string | undefined;
@@ -94,7 +94,7 @@ async function main() {
   const shouldPost = args.includes("--post");
   const pickIndex = args.indexOf("--pick");
   const pickNumbers =
-    pickIndex !== -1 && args[pickIndex + 1] ? args[pickIndex + 1].split(",").map(Number) : null;
+    pickIndex !== -1 && args[pickIndex + 1] ? args[pickIndex + 1]!.split(",").map(Number) : null;
 
   // Find today's tweets file
   const tweetsDir = path.join(process.cwd(), "tweets");

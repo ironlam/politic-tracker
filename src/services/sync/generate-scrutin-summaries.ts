@@ -80,19 +80,19 @@ export async function generateScrutinSummaries(options?: {
 
     try {
       const summary: SummaryResponse = await summarizeScrutin({
-        title: scrutin.title,
-        chamber: scrutin.chamber as "AN" | "SENAT",
-        votingDate: scrutin.votingDate.toISOString().split("T")[0],
-        result: scrutin.result as "ADOPTED" | "REJECTED",
-        votesFor: scrutin.votesFor,
-        votesAgainst: scrutin.votesAgainst,
-        votesAbstain: scrutin.votesAbstain,
+        title: scrutin!.title,
+        chamber: scrutin!.chamber as "AN" | "SENAT",
+        votingDate: scrutin!.votingDate.toISOString().split("T")[0]!,
+        result: scrutin!.result as "ADOPTED" | "REJECTED",
+        votesFor: scrutin!.votesFor,
+        votesAgainst: scrutin!.votesAgainst,
+        votesAbstain: scrutin!.votesAbstain,
       });
 
       const formattedSummary = formatSummary(summary);
 
       await db.scrutin.update({
-        where: { id: scrutin.id },
+        where: { id: scrutin!.id },
         data: {
           summary: formattedSummary,
           summaryDate: new Date(),
@@ -107,7 +107,7 @@ export async function generateScrutinSummaries(options?: {
       }
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : String(err);
-      stats.errors.push(`${scrutin.externalId}: ${errorMsg}`);
+      stats.errors.push(`${scrutin!.externalId}: ${errorMsg}`);
       stats.processed++;
 
       if (errorMsg.includes("429") || errorMsg.includes("rate")) {

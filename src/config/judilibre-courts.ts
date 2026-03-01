@@ -81,5 +81,5 @@ export function extractJurisdictionName(text: string): string | null {
   const pattern =
     /(?:cour d'appel|cour d'assises|tribunal(?:\s+[\wÀ-ÿ]+)+?)\s+d[e']\s*([A-ZÀ-Ÿ][\wÀ-ÿ]+(?:[- ][\wÀ-ÿ]+)*)/i;
   const match = text.match(pattern);
-  return match ? match[1] : null;
+  return match ? match[1]! : null;
 }

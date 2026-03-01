@@ -278,7 +278,7 @@ async function handleGeolocation(latStr: string, lonStr: string): Promise<Respon
       return NextResponse.json([]);
     }
 
-    const inseeCode = geoData[0].code;
+    const inseeCode = geoData[0]!.code;
 
     const commune = await db.commune.findUnique({
       where: { id: inseeCode },

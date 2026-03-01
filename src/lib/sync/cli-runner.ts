@@ -58,7 +58,7 @@ function parseArgs(args: string[], customOptions?: SyncHandler["options"]): Sync
           .replace(/^--/, "")
           .replace(/-([a-z])/g, (_, c) => c.toUpperCase());
         if (optDef.type === "number") {
-          options[optName] = parseInt(value, 10);
+          options[optName] = parseInt(value!, 10);
         } else {
           options[optName] = value;
         }

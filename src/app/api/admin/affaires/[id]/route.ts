@@ -105,7 +105,7 @@ export const PUT = withAdminAuth(async (request: NextRequest, context) => {
 
   // Track status change for audit trail
   if (existing.status !== data.status) {
-    await trackStatusChange(id, existing.status, data.status, {
+    await trackStatusChange(id!, existing.status, data.status, {
       type: "MANUAL",
       title: "Modification manuelle via l'admin",
     });
@@ -117,14 +117,14 @@ export const PUT = withAdminAuth(async (request: NextRequest, context) => {
 
   await db.source.createMany({
     data: data.sources.map((s) => ({
-      affairId: id,
+      affairId: id!,
       url: s.url,
       title: s.title,
       publisher: s.publisher,
       publishedAt: new Date(s.publishedAt),
       excerpt: s.excerpt || null,
       sourceType: s.sourceType || "MANUAL",
-    })),
+    }))!,
   });
 
   // Log action
@@ -168,7 +168,7 @@ export const DELETE = withAdminAuth(async (_request: NextRequest, context) => {
     data: {
       action: "DELETE",
       entityType: "Affair",
-      entityId: id,
+      entityId: id!,
       changes: { title: affair.title },
     },
   });

@@ -279,13 +279,13 @@ export default async function FactChecksPage({ searchParams }: PageProps) {
           count={stats.totalFactChecks}
           label="Fact-checks"
           description="Total des vérifications"
-          accent={VERDICT_ACCENT.total}
+          accent={VERDICT_ACCENT.total!}
         />
         <StatCard
           count={(stats.byRating["FALSE"] || 0) + (stats.byRating["MOSTLY_FALSE"] || 0)}
           label="Faux / Plutôt faux"
           description="Déclarations réfutées"
-          accent={VERDICT_ACCENT.faux}
+          accent={VERDICT_ACCENT.faux!}
         />
         <StatCard
           count={
@@ -295,13 +295,13 @@ export default async function FactChecksPage({ searchParams }: PageProps) {
           }
           label="Trompeur / Partiel"
           description="Contexte incomplet"
-          accent={VERDICT_ACCENT.trompeur}
+          accent={VERDICT_ACCENT.trompeur!}
         />
         <StatCard
           count={(stats.byRating["TRUE"] || 0) + (stats.byRating["MOSTLY_TRUE"] || 0)}
           label="Vrai / Plutôt vrai"
           description="Déclarations vérifiées"
-          accent={VERDICT_ACCENT.vrai}
+          accent={VERDICT_ACCENT.vrai!}
         />
       </div>
 

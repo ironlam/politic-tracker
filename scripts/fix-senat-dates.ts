@@ -39,9 +39,9 @@ function parseDateFromTitle(title: string): Date | null {
   const match = title.match(/séance\s+du\s+(\d{1,2})\s+([\wÀ-ÿ]+)\s+(\d{4})/i);
   if (!match) return null;
 
-  const day = parseInt(match[1]);
-  const monthName = match[2].toLowerCase();
-  const year = parseInt(match[3]);
+  const day = parseInt(match[1]!);
+  const monthName = match[2]!.toLowerCase();
+  const year = parseInt(match[3]!);
 
   const month = MONTHS[monthName];
   if (month === undefined) {

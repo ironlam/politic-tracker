@@ -205,7 +205,7 @@ export function AdminCommandPalette() {
   const grouped = items.reduce(
     (acc, item, index) => {
       if (!acc[item.category]) acc[item.category] = [];
-      acc[item.category].push({ ...item, flatIndex: index });
+      acc[item.category]!.push({ ...item, flatIndex: index });
       return acc;
     },
     {} as Record<string, Array<NavigableItem & { flatIndex: number }>>

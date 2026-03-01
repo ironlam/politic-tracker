@@ -126,9 +126,9 @@ export async function GET(request: NextRequest) {
       // Set dominant party only if the top party has strictly more representatives than the second
       if (
         dept.parties.length === 1 ||
-        (dept.parties.length > 1 && dept.parties[0].count > dept.parties[1].count)
+        (dept.parties.length > 1 && dept.parties[0]!.count > dept.parties[1]!.count)
       ) {
-        dept.dominantParty = dept.parties[0];
+        dept.dominantParty = dept.parties[0]!;
       }
     }
 

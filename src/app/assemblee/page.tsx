@@ -140,13 +140,13 @@ export default async function AssembleePage({ searchParams }: PageProps) {
             <strong className="text-foreground">{totalDossiers}</strong> dossiers
           </span>
           <span>
-            <strong className="text-blue-600">{activeCount}</strong> en cours
+            <strong className="text-primary">{activeCount}</strong> en cours
           </span>
           <a
             href="https://www.assemblee-nationale.fr/dyn/17/dossiers"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1 hover:text-blue-600"
+            className="flex items-center gap-1 hover:text-primary"
           >
             Source : assemblee-nationale.fr
             <ExternalLink className="h-3 w-3" />

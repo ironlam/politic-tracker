@@ -519,8 +519,8 @@ export default function SyncsPage() {
                               </td>
                               <td className="px-4 py-3 font-medium">{scriptLabel(job.script)}</td>
                               <td className="px-4 py-3">
-                                <Badge variant="outline" className={status.className}>
-                                  {status.label}
+                                <Badge variant="outline" className={status!.className}>
+                                  {status!.label}
                                 </Badge>
                               </td>
                               <td className="px-4 py-3 text-muted-foreground text-xs tabular-nums">

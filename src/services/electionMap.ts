@@ -72,9 +72,9 @@ export async function getElectionMapData(electionSlug = "legislatives-2024"): Pr
     dept.parties.sort((a, b) => b.seats - a.seats);
     if (
       dept.parties.length === 1 ||
-      (dept.parties.length > 1 && dept.parties[0].seats > dept.parties[1].seats)
+      (dept.parties.length > 1 && dept.parties[0]!.seats > dept.parties[1]!.seats)
     ) {
-      dept.winningParty = dept.parties[0];
+      dept.winningParty = dept.parties[0]!;
     }
   }
 

@@ -96,7 +96,7 @@ const PATTERNS: QueryPattern[] = [
       const postalMatch = q.match(/\b(\d{5})\b/);
       if (postalMatch) {
         const postal = postalMatch[1];
-        const deptCode = postal.startsWith("97") ? postal.slice(0, 3) : postal.slice(0, 2);
+        const deptCode = postal!.startsWith("97") ? postal!.slice(0, 3) : postal!.slice(0, 2);
         const dept = DEPARTMENTS[deptCode];
         if (dept) {
           return await fetchElusByDepartment(deptCode, dept.name);
@@ -108,7 +108,7 @@ const PATTERNS: QueryPattern[] = [
         /(?:d[ée]put[ée]s?|[ée]lus?|s[ée]nateurs?)\s+(?:de |du |des |d'|en |dans (?:le |la |l')?)([a-zA-ZÀ-ÿ\s'-]+)/i
       );
       if (deptNameMatch) {
-        const deptName = deptNameMatch[1].trim();
+        const deptName = deptNameMatch[1]!.trim();
         const code = findDepartmentCode(deptName);
         if (code) {
           const dept = DEPARTMENTS[code];
@@ -135,7 +135,7 @@ const PATTERNS: QueryPattern[] = [
         /(?:qui est|informations? sur|fiche (?:de |d')|parle[z-]?\s*moi (?:de |d')|pr[ée]sente[z-]?\s*moi|(?:tu |vous )(?:connais|connaissez))\s+(.+)/i
       ),
     handler: async (_q, match) => {
-      const searchName = extractPersonName(match[1]);
+      const searchName = extractPersonName(match[1]!);
       return await fetchPoliticianProfile(searchName);
     },
   },
@@ -203,13 +203,13 @@ const PATTERNS: QueryPattern[] = [
     handler: async (_q, match) => {
       const raw = match[1];
       // Try to separate name from topic: "Mélenchon sur la retraite"
-      const nameTopicMatch = raw.match(/^(.+?)\s+(?:sur|pour|contre)\s+(.+)/i);
+      const nameTopicMatch = raw!.match(/^(.+?)\s+(?:sur|pour|contre)\s+(.+)/i);
       if (nameTopicMatch) {
-        const name = extractPersonName(nameTopicMatch[1]);
-        const topic = nameTopicMatch[2].trim();
+        const name = extractPersonName(nameTopicMatch[1]!);
+        const topic = nameTopicMatch[2]!.trim();
         return await fetchPoliticianVotes(name, topic);
       }
-      const name = extractPersonName(raw);
+      const name = extractPersonName(raw!);
       return await fetchPoliticianVotes(name, null);
     },
   },
@@ -222,8 +222,8 @@ const PATTERNS: QueryPattern[] = [
         /(?:compar(?:er|aison)|diff[ée]rence(?:s)? entre)\s+(.+?)\s+(?:et|vs|versus|avec)\s+(.+)/i
       ),
     handler: async (_q, match) => {
-      const name1 = extractPersonName(match[1]);
-      const name2 = extractPersonName(match[2]);
+      const name1 = extractPersonName(match[1]!);
+      const name2 = extractPersonName(match[2]!);
 
       const [p1, p2] = await Promise.all([
         db.politician.findFirst({
@@ -269,7 +269,7 @@ const PATTERNS: QueryPattern[] = [
       ),
     handler: async (_q, match) => {
       const partySearch = match[1];
-      return await fetchPartyMembers(partySearch);
+      return await fetchPartyMembers(partySearch!);
     },
   },
 
@@ -546,9 +546,9 @@ async function fetchPoliticianProfile(searchName: string): Promise<string | null
 
   if (politician.declarations.length > 0) {
     const decl = politician.declarations[0];
-    context += `\n**Déclaration HATVP** (${decl.year}) :\n`;
-    if (decl.totalNet)
-      context += `• Patrimoine net déclaré : ${formatCurrency(Number(decl.totalNet))}\n`;
+    context += `\n**Déclaration HATVP** (${decl!.year}) :\n`;
+    if (decl!.totalNet)
+      context += `• Patrimoine net déclaré : ${formatCurrency(Number(decl!.totalNet))}\n`;
   }
 
   if (politician.affairs.length > 0) {

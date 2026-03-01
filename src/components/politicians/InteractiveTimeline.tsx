@@ -117,7 +117,7 @@ export function InteractiveTimeline({
       if (rows.has(i)) {
         orderedRows.push({
           row: i,
-          label: MANDATE_ROW_LABELS[i],
+          label: MANDATE_ROW_LABELS[i]!,
           mandates: rows.get(i)!,
         });
       }

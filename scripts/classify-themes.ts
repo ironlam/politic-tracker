@@ -104,7 +104,7 @@ Features:
   let limit: number | undefined;
   const limitArg = args.find((a) => a.startsWith("--limit="));
   if (limitArg) {
-    limit = parseInt(limitArg.split("=")[1], 10);
+    limit = parseInt(limitArg.split("=")[1]!, 10);
     if (isNaN(limit) || limit < 1) {
       console.error("Invalid limit number");
       process.exit(1);
@@ -115,7 +115,7 @@ Features:
   const targetArg = args.find((a) => a.startsWith("--target="));
   if (targetArg) {
     const value = targetArg.split("=")[1];
-    if (!["all", "dossiers", "scrutins"].includes(value)) {
+    if (!["all", "dossiers", "scrutins"].includes(value!)) {
       console.error("Invalid target. Use --target=dossiers, --target=scrutins, or --target=all");
       process.exit(1);
     }

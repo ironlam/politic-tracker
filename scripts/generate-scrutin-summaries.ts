@@ -145,7 +145,7 @@ async function generateScrutinSummaries(options: {
   // Process each scrutin
   for (let i = 0; i < scrutins.length; i++) {
     const scrutin = scrutins[i];
-    const progressMsg = `${renderProgressBar(i + 1, total)} Processing ${i + 1}/${total}: ${scrutin.externalId}`;
+    const progressMsg = `${renderProgressBar(i + 1, total)} Processing ${i + 1}/${total}: ${scrutin!.externalId}`;
     updateLine(progressMsg);
 
     try {
@@ -157,13 +157,13 @@ async function generateScrutinSummaries(options: {
 
       // Generate summary
       const summary: SummaryResponse = await summarizeScrutin({
-        title: scrutin.title,
-        chamber: scrutin.chamber as "AN" | "SENAT",
-        votingDate: scrutin.votingDate.toISOString().split("T")[0],
-        result: scrutin.result as "ADOPTED" | "REJECTED",
-        votesFor: scrutin.votesFor,
-        votesAgainst: scrutin.votesAgainst,
-        votesAbstain: scrutin.votesAbstain,
+        title: scrutin!.title,
+        chamber: scrutin!.chamber as "AN" | "SENAT",
+        votingDate: scrutin!.votingDate.toISOString().split("T")[0]!,
+        result: scrutin!.result as "ADOPTED" | "REJECTED",
+        votesFor: scrutin!.votesFor,
+        votesAgainst: scrutin!.votesAgainst,
+        votesAbstain: scrutin!.votesAbstain,
       });
 
       // Format summary with key points
@@ -171,7 +171,7 @@ async function generateScrutinSummaries(options: {
 
       // Update scrutin
       await db.scrutin.update({
-        where: { id: scrutin.id },
+        where: { id: scrutin!.id },
         data: {
           summary: formattedSummary,
           summaryDate: new Date(),
@@ -187,7 +187,7 @@ async function generateScrutinSummaries(options: {
       }
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : String(err);
-      stats.errors.push(`${scrutin.externalId}: ${errorMsg}`);
+      stats.errors.push(`${scrutin!.externalId}: ${errorMsg}`);
       stats.processed++;
 
       // If rate limited, wait longer
@@ -323,7 +323,7 @@ Features:
   let limit: number | undefined;
   const limitArg = args.find((a) => a.startsWith("--limit="));
   if (limitArg) {
-    limit = parseInt(limitArg.split("=")[1], 10);
+    limit = parseInt(limitArg.split("=")[1]!, 10);
     if (isNaN(limit) || limit < 1) {
       console.error("Invalid limit number");
       process.exit(1);
@@ -333,7 +333,7 @@ Features:
   let chamber: "AN" | "SENAT" | undefined;
   const chamberArg = args.find((a) => a.startsWith("--chamber="));
   if (chamberArg) {
-    const value = chamberArg.split("=")[1].toUpperCase();
+    const value = chamberArg.split("=")[1]!.toUpperCase();
     if (value !== "AN" && value !== "SENAT") {
       console.error("Invalid chamber. Use --chamber=AN or --chamber=SENAT");
       process.exit(1);

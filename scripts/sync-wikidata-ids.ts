@@ -172,12 +172,12 @@ Features:
 
       try {
         // Search by name
-        const searchResults = await wikidata.searchByName(politician.fullName, { limit: 5 });
+        const searchResults = await wikidata.searchByName(politician!.fullName, { limit: 5 });
 
         if (searchResults.length === 0) {
           stats.noMatch++;
           progress.tick();
-          checkpoint.tick(politician.id, i);
+          checkpoint.tick(politician!.id, i);
           continue;
         }
 
@@ -203,17 +203,17 @@ Features:
         if (candidates.length === 0) {
           stats.noMatch++;
           progress.tick();
-          checkpoint.tick(politician.id, i);
+          checkpoint.tick(politician!.id, i);
           continue;
         }
 
         // Find best match
-        const bestMatch = findBestMatch(candidates, politician.birthDate);
+        const bestMatch = findBestMatch(candidates, politician!.birthDate);
 
         if (!bestMatch) {
           stats.multipleMatches++;
           progress.tick();
-          checkpoint.tick(politician.id, i);
+          checkpoint.tick(politician!.id, i);
           continue;
         }
 
@@ -221,7 +221,7 @@ Features:
         const matchReason = bestMatch.isPolitician ? "(politician)" : "";
 
         if (dryRun) {
-          console.log(`[DRY-RUN] ${politician.fullName} -> ${wikidataId} ${matchReason}`);
+          console.log(`[DRY-RUN] ${politician!.fullName} -> ${wikidataId} ${matchReason}`);
           stats.idsCreated++;
         } else {
           // Check if this Wikidata ID is already used
@@ -237,27 +237,27 @@ Features:
           if (existing) {
             stats.alreadyUsed++;
             progress.tick();
-            checkpoint.tick(politician.id, i);
+            checkpoint.tick(politician!.id, i);
             continue;
           }
 
           await db.externalId.create({
             data: {
-              politicianId: politician.id,
+              politicianId: politician!.id,
               source: DataSource.WIKIDATA,
               externalId: wikidataId,
               url: `https://www.wikidata.org/wiki/${wikidataId}`,
             },
           });
           stats.idsCreated++;
-          console.log(`✓ ${politician.fullName} -> ${wikidataId} ${matchReason}`);
+          console.log(`✓ ${politician!.fullName} -> ${wikidataId} ${matchReason}`);
         }
       } catch (error) {
-        errors.push(`${politician.fullName}: ${error}`);
+        errors.push(`${politician!.fullName}: ${error}`);
       }
 
       progress.tick();
-      checkpoint.tick(politician.id, i);
+      checkpoint.tick(politician!.id, i);
     }
 
     progress.finish();
@@ -280,7 +280,7 @@ function findBestMatch(
   politicianBirthDate: Date | null
 ): CandidateInfo | null {
   if (candidates.length === 1) {
-    return candidates[0];
+    return candidates[0] ?? null;
   }
 
   // Strategy 1: Match by birth date
@@ -296,7 +296,7 @@ function findBestMatch(
   const politicianCandidates = candidates.filter((c) => c.isPolitician);
 
   if (politicianCandidates.length === 1) {
-    return politicianCandidates[0];
+    return politicianCandidates[0] ?? null;
   }
 
   if (politicianCandidates.length > 1 && politicianBirthDate) {
@@ -309,7 +309,7 @@ function findBestMatch(
 
   // Strategy 3: If only one French person, take it
   if (candidates.length === 1) {
-    return candidates[0];
+    return candidates[0] ?? null;
   }
 
   return null;

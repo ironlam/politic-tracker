@@ -48,7 +48,7 @@ async function getClientIP(): Promise<string> {
   const realIP = headersList.get("x-real-ip");
 
   if (forwarded) {
-    return forwarded.split(",")[0].trim();
+    return forwarded.split(",")[0]!.trim();
   }
   if (realIP) {
     return realIP;

@@ -317,7 +317,9 @@ export default async function PoliticianPage({ params }: PageProps) {
                   {politician.biography && (
                     <Card id="biographie">
                       <CardContent className="pt-6">
-                        <p className="text-muted-foreground leading-relaxed">{politician.biography}</p>
+                        <p className="text-muted-foreground leading-relaxed">
+                          {politician.biography}
+                        </p>
                         <div className="flex items-center gap-2 mt-3 pt-3 border-t border-dashed text-xs text-muted-foreground">
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -344,12 +346,15 @@ export default async function PoliticianPage({ params }: PageProps) {
                       <CardHeader>
                         <h2 className="leading-none font-semibold">Parcours politique</h2>
                         <p className="text-xs text-muted-foreground mt-1">
-                          Liste des mandats nationaux et européens connus. Les mandats locaux (maire,
-                          conseiller, etc.) peuvent ne pas être listés.
+                          Liste des mandats nationaux et européens connus. Les mandats locaux
+                          (maire, conseiller, etc.) peuvent ne pas être listés.
                         </p>
                       </CardHeader>
                       <CardContent>
-                        <MandateTimeline mandates={politician.mandates} civility={politician.civility} />
+                        <MandateTimeline
+                          mandates={politician.mandates}
+                          civility={politician.civility}
+                        />
                       </CardContent>
                     </Card>
                   )}
@@ -383,11 +388,12 @@ export default async function PoliticianPage({ params }: PageProps) {
                             Aucune déclaration publiée
                           </p>
                           <p className="text-sm text-amber-700 dark:text-amber-300 leading-relaxed">
-                            Tout député et sénateur est tenu de déposer une déclaration d&apos;intérêts et
-                            d&apos;activités dans les 2 mois suivant son élection (loi n°2013-907 du 11
-                            octobre 2013). Le non-dépôt est passible de 3 ans d&apos;emprisonnement, 45
-                            000 € d&apos;amende et 10 ans d&apos;inéligibilité. Seules les déclarations
-                            publiées par la HATVP sont affichées ici.
+                            Tout député et sénateur est tenu de déposer une déclaration
+                            d&apos;intérêts et d&apos;activités dans les 2 mois suivant son élection
+                            (loi n°2013-907 du 11 octobre 2013). Le non-dépôt est passible de 3 ans
+                            d&apos;emprisonnement, 45 000 € d&apos;amende et 10 ans
+                            d&apos;inéligibilité. Seules les déclarations publiées par la HATVP sont
+                            affichées ici.
                           </p>
                           <a
                             href="https://www.hatvp.fr/consulter-les-declarations/"
@@ -406,14 +412,20 @@ export default async function PoliticianPage({ params }: PageProps) {
                   {politician.factCheckMentions.length > 0 &&
                     (() => {
                       const directClaims = politician.factCheckMentions.filter((m) => m.isClaimant);
-                      const otherMentions = politician.factCheckMentions.filter((m) => !m.isClaimant);
+                      const otherMentions = politician.factCheckMentions.filter(
+                        (m) => !m.isClaimant
+                      );
 
                       // Verdict distribution for direct claims
                       const verdictCounts = directClaims.reduce(
                         (acc, m) => {
                           const r = m.factCheck.verdictRating;
                           if (r === "TRUE" || r === "MOSTLY_TRUE") acc.vrai++;
-                          else if (r === "HALF_TRUE" || r === "MISLEADING" || r === "OUT_OF_CONTEXT")
+                          else if (
+                            r === "HALF_TRUE" ||
+                            r === "MISLEADING" ||
+                            r === "OUT_OF_CONTEXT"
+                          )
                             acc.mitige++;
                           else if (r === "FALSE" || r === "MOSTLY_FALSE") acc.faux++;
                           else acc.autre++;
@@ -494,7 +506,9 @@ export default async function PoliticianPage({ params }: PageProps) {
                                     </div>
                                     <div className="flex justify-between text-xs text-muted-foreground mt-1">
                                       {verdictCounts.faux > 0 && (
-                                        <span className="text-red-600">Faux : {verdictCounts.faux}</span>
+                                        <span className="text-red-600">
+                                          Faux : {verdictCounts.faux}
+                                        </span>
                                       )}
                                       {verdictCounts.mitige > 0 && (
                                         <span className="text-yellow-600">
@@ -650,10 +664,7 @@ export default async function PoliticianPage({ params }: PageProps) {
                 ) : null
               }
               affairsContent={
-                <AffairsSection
-                  affairs={politician.affairs}
-                  civility={politician.civility}
-                />
+                <AffairsSection affairs={politician.affairs} civility={politician.civility} />
               }
             />
           </div>
@@ -689,7 +700,7 @@ export default async function PoliticianPage({ params }: PageProps) {
                 {victimAffairs.length > 0 && (
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Victime</span>
-                    <span className="font-semibold text-blue-600">{victimAffairs.length}</span>
+                    <span className="font-semibold text-primary">{victimAffairs.length}</span>
                   </div>
                 )}
                 <div className="flex justify-between">
@@ -729,7 +740,7 @@ export default async function PoliticianPage({ params }: PageProps) {
                 </p>
                 <Link
                   href="/sources"
-                  className="text-xs text-blue-600 hover:underline mt-2 inline-block"
+                  className="text-xs text-primary hover:underline mt-2 inline-block"
                 >
                   Voir notre méthodologie
                 </Link>

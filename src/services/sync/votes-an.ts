@@ -330,7 +330,7 @@ export async function syncVotesAN(
       const file = jsonFiles[i];
 
       try {
-        const filePath = path.join(jsonDir, file);
+        const filePath = path.join(jsonDir, file!);
         const content = readFileSync(filePath, "utf-8");
         const data: ANScrutin = JSON.parse(content);
         const s = data.scrutin;

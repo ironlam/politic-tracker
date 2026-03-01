@@ -148,7 +148,7 @@ async function runPhase1Wikidata(
   const progress = new ProgressTracker({ total: withQid.length, label: "Phase 1 — Wikidata" });
 
   for (const politician of withQid) {
-    const qid = politician.externalIds[0].externalId;
+    const qid = politician.externalIds[0]!.externalId;
 
     try {
       const entities = await wikidataService.getEntities([qid]);

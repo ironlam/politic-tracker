@@ -180,7 +180,7 @@ function extractNumber(dossier: ANDossier): string | null {
   const procedure = dossier.dossierParlementaire.procedureParlementaire?.libelle || "";
   const match = uid.match(/N(\d+)$/);
   if (!match) return null;
-  const num = match[1];
+  const num = match[1]!;
   if (procedure.toLowerCase().includes("projet")) return `PJL ${num}`;
   if (procedure.toLowerCase().includes("proposition")) return `PPL ${num}`;
   return num;
@@ -345,7 +345,7 @@ export async function syncLegislation(options?: {
 
         if (todayOnly && allDates.length > 0) {
           const today = new Date().toISOString().split("T")[0];
-          const mostRecent = allDates[allDates.length - 1].toISOString().split("T")[0];
+          const mostRecent = allDates[allDates.length - 1]!.toISOString().split("T")[0];
           if (mostRecent !== today) {
             stats.dossiersSkipped++;
             continue;
@@ -380,7 +380,7 @@ export async function syncLegislation(options?: {
             ...dossierData,
           };
           if (!existing.slug) {
-            updateData.slug = await generateUniqueDossierSlug(filingDate, shortTitle || title);
+            updateData.slug = await generateUniqueDossierSlug(filingDate!, shortTitle || title);
           }
           await db.legislativeDossier.update({
             where: { id: existing.id },
@@ -388,7 +388,7 @@ export async function syncLegislation(options?: {
           });
           stats.dossiersUpdated++;
         } else {
-          const slug = await generateUniqueDossierSlug(filingDate, shortTitle || title);
+          const slug = await generateUniqueDossierSlug(filingDate!, shortTitle || title);
           await db.legislativeDossier.create({
             data: { ...dossierData, slug },
           });

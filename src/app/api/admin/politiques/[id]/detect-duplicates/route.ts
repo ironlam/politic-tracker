@@ -196,11 +196,11 @@ export const GET = withAdminAuth(async (_request: NextRequest, context) => {
 
   for (let i = 0; i < affairs.length; i++) {
     for (let j = i + 1; j < affairs.length; j++) {
-      const pairKey = `${affairs[i].id}:${affairs[j].id}`;
+      const pairKey = `${affairs[i]!.id}:${affairs[j]!.id}`;
       if (seen.has(pairKey)) continue;
       seen.add(pairKey);
 
-      const result = calculatePairScore(affairs[i], affairs[j]);
+      const result = calculatePairScore(affairs[i]!, affairs[j]!);
       if (!result) continue;
 
       const format = (a: AffairForComparison) => ({
@@ -222,7 +222,7 @@ export const GET = withAdminAuth(async (_request: NextRequest, context) => {
       groups.push({
         score: result.score,
         reasons: result.reasons,
-        affairs: [format(affairs[i]), format(affairs[j])],
+        affairs: [format(affairs[i]!), format(affairs[j]!)],
       });
     }
   }

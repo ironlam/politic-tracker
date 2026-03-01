@@ -24,7 +24,7 @@ function formatMandateShort(
   if (mandate.constituency) {
     // Extract department name from "Département (numéro)"
     const match = mandate.constituency.match(/^([^(]+)/);
-    const dept = match ? match[1].trim() : mandate.constituency;
+    const dept = match ? match[1]!.trim() : mandate.constituency;
     return `${typeLabel} · ${dept}`;
   }
 

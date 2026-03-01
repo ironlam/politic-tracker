@@ -69,7 +69,7 @@ async function main() {
   if (duplicates.length > 0) {
     console.log(`\n${duplicates.length} doublon(s) potentiel(s) trouvé(s):`);
     for (let i = 0; i < duplicates.length; i++) {
-      displayDuplicate(duplicates[i], i);
+      displayDuplicate(duplicates[i]!, i);
     }
   }
 

@@ -52,7 +52,7 @@ async function main() {
 
   for (const line of lines) {
     const parts = line.split(" ");
-    const freq = parseInt(parts[parts.length - 1]);
+    const freq = parseInt(parts[parts.length - 1]!);
     const word = parts.slice(0, -1).join(" ");
 
     // Must be >= MIN_LENGTH chars

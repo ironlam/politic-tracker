@@ -388,10 +388,10 @@ export class WikidataService {
     const timeStr = timeValue.time.replace(/^\+/, "").split("T")[0];
 
     // Handle partial dates (1977-00-00 → January 1st)
-    const parts = timeStr.split("-");
-    const year = parseInt(parts[0], 10);
-    const month = parseInt(parts[1], 10) || 1;
-    const day = parseInt(parts[2], 10) || 1;
+    const parts = timeStr!.split("-");
+    const year = parseInt(parts[0]!, 10);
+    const month = parseInt(parts[1]!, 10) || 1;
+    const day = parseInt(parts[2]!, 10) || 1;
 
     if (isNaN(year) || year < 1800 || year > 2100) return null;
 

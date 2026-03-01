@@ -6,6 +6,7 @@ import {
   MANDATE_TYPE_LABELS,
 } from "@/config/labels";
 import { SITE_URL } from "./config";
+import { formatDate } from "@/lib/utils";
 
 // --- Types ---
 
@@ -83,14 +84,6 @@ export const VERDICT_LABELS: Record<string, string> = {
 export function daysUntil(date: Date): number {
   const now = new Date();
   return Math.ceil((date.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-}
-
-export function formatDate(d: Date): string {
-  return d.toLocaleDateString("fr-FR", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
 }
 
 export function plural(n: number, singular: string, pluralForm?: string): string {
@@ -249,7 +242,7 @@ async function unanimousVotes(): Promise<TweetDraft[]> {
       content,
       link: `${SITE_URL}/votes/${s.slug || s.id}`,
       hashtags: [chamberTag, "PolitiqueFR"],
-      mentions: CHAMBER_TWITTER[s.chamber] ? [CHAMBER_TWITTER[s.chamber]] : [],
+      mentions: CHAMBER_TWITTER[s.chamber] ? [CHAMBER_TWITTER[s.chamber]!] : [],
     });
 
     if (drafts.length >= 1) break;
@@ -461,8 +454,8 @@ async function factchecks(): Promise<TweetDraft[]> {
     recent.find((f) => ["MOSTLY_FALSE", "FALSE"].includes(f.verdictRating) && f.claimant) ||
     recent[0];
 
-  const verdictLabel = VERDICT_LABELS[notable.verdictRating] || notable.verdict;
-  const politician = notable.mentions[0]?.politician;
+  const verdictLabel = VERDICT_LABELS[notable!.verdictRating] || notable!.verdict;
+  const politician = notable!.mentions[0]?.politician;
   const party = politician?.currentParty?.shortName;
 
   let content = `\u{1F50D} `;
@@ -470,29 +463,31 @@ async function factchecks(): Promise<TweetDraft[]> {
     content += `V\u00E9rifi\u00E9 \u2014 ${politician.fullName}`;
     if (party) content += ` (${party})`;
     content += ` a d\u00E9clar\u00E9 :\n\n`;
-  } else if (notable.claimant) {
+  } else if (notable!.claimant) {
     // Skip generic claimants like "utilisateurs de reseaux sociaux"
-    const isGenericClaimant = /utilisateur|r\u00E9seaux|social|internet|viral/i.test(notable.claimant);
+    const isGenericClaimant = /utilisateur|r\u00E9seaux|social|internet|viral/i.test(
+      notable!.claimant
+    );
     if (isGenericClaimant) {
       content += `Cette affirmation circule en ligne :\n\n`;
     } else {
-      content += `V\u00E9rifi\u00E9 \u2014 ${notable.claimant} a d\u00E9clar\u00E9 :\n\n`;
+      content += `V\u00E9rifi\u00E9 \u2014 ${notable!.claimant} a d\u00E9clar\u00E9 :\n\n`;
     }
   } else {
     content += `Cette affirmation circule en ligne :\n\n`;
   }
 
   // Use claimText (the actual claim) if available, otherwise title
-  const claim = notable.claimText || notable.title;
+  const claim = notable!.claimText || notable!.title;
   const claimTruncated = claim.length > 300 ? claim.substring(0, 297) + "..." : claim;
   content += `\u00AB ${claimTruncated} \u00BB\n\n`;
   content += `Verdict : ${verdictLabel}`;
-  if (notable.source) content += ` (v\u00E9rifi\u00E9 par ${notable.source})`;
+  if (notable!.source) content += ` (v\u00E9rifi\u00E9 par ${notable!.source})`;
   content += `.`;
 
   // Link to the specific factcheck page, or the politician's page
-  const link = notable.slug
-    ? `${SITE_URL}/factchecks/${notable.slug}`
+  const link = notable!.slug
+    ? `${SITE_URL}/factchecks/${notable!.slug}`
     : politician?.slug
       ? `${SITE_URL}/politiques/${politician.slug}`
       : `${SITE_URL}/factchecks`;
@@ -712,7 +707,7 @@ async function recentPress(): Promise<TweetDraft[]> {
   if (!topEntry) return [];
 
   const [, pMentions] = topEntry;
-  const pol = pMentions[0].politician;
+  const pol = pMentions[0]!.politician;
   const party = pol.currentParty?.shortName ? ` (${pol.currentParty.shortName})` : "";
 
   // Deduplicate by feedSource, take top 5
@@ -728,9 +723,9 @@ async function recentPress(): Promise<TweetDraft[]> {
   // Lead with the first headline
   const firstArticle = uniqueArticles[0];
   const firstSource =
-    FEED_NAMES[firstArticle.article.feedSource] || firstArticle.article.feedSource;
+    FEED_NAMES[firstArticle!.article.feedSource] || firstArticle!.article.feedSource;
 
-  let content = `\u{1F4F0} \u00AB ${firstArticle.article.title} \u00BB\n${firstSource}\n\n`;
+  let content = `\u{1F4F0} \u00AB ${firstArticle!.article.title} \u00BB\n${firstSource}\n\n`;
   content += `${pol.fullName}${party} \u2014 ${pMentions.length} ${plural(pMentions.length, "mention")} presse en 48h.`;
 
   if (uniqueArticles.length > 1) {
@@ -744,7 +739,7 @@ async function recentPress(): Promise<TweetDraft[]> {
   // Collect media Twitter handles from cited sources
   const mediaMentions = uniqueArticles
     .map((m) => MEDIA_TWITTER[m.article.feedSource])
-    .filter(Boolean);
+    .filter((x): x is string => Boolean(x));
   // Deduplicate
   const uniqueMentions = [...new Set(mediaMentions)];
 
@@ -791,9 +786,9 @@ async function participationRanking(): Promise<TweetDraft[]> {
 
   if (bottomAN.length >= 3) {
     const worst = bottomAN[0];
-    let content = `\u{1F4C9} ${worst.firstName} ${worst.lastName} a particip\u00E9 \u00E0 ${Math.round(worst.participationRate)}% des scrutins.\n\n`;
-    content += `${worst.votesCount} votes sur ${worst.eligibleScrutins} possibles`;
-    if (worst.groupName) content += ` (${worst.groupName})`;
+    let content = `\u{1F4C9} ${worst!.firstName} ${worst!.lastName} a particip\u00E9 \u00E0 ${Math.round(worst!.participationRate)}% des scrutins.\n\n`;
+    content += `${worst!.votesCount} votes sur ${worst!.eligibleScrutins} possibles`;
+    if (worst!.groupName) content += ` (${worst!.groupName})`;
     content += `.\n\nLes 5 taux de participation les plus bas (Assembl\u00E9e nationale) :\n`;
     for (const p of bottomAN) {
       content += `\u2022 ${p.firstName} ${p.lastName} \u2014 ${Math.round(p.participationRate)}%\n`;
@@ -809,9 +804,9 @@ async function participationRanking(): Promise<TweetDraft[]> {
 
   if (topAN.length >= 3) {
     const best = topAN[0];
-    let content = `\u{1F4C8} ${best.firstName} ${best.lastName} : ${Math.round(best.participationRate)}% de participation aux scrutins.\n\n`;
-    content += `${best.votesCount} votes sur ${best.eligibleScrutins}`;
-    if (best.groupName) content += ` (${best.groupName})`;
+    let content = `\u{1F4C8} ${best!.firstName} ${best!.lastName} : ${Math.round(best!.participationRate)}% de participation aux scrutins.\n\n`;
+    content += `${best!.votesCount} votes sur ${best!.eligibleScrutins}`;
+    if (best!.groupName) content += ` (${best!.groupName})`;
     content += `.\n\nLes 5 parlementaires les plus assidus (Assembl\u00E9e nationale) :\n`;
     for (const p of topAN) {
       content += `\u2022 ${p.firstName} ${p.lastName} \u2014 ${Math.round(p.participationRate)}%\n`;

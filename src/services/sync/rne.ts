@@ -154,7 +154,7 @@ function matchPolitician(
   const candidates = lookup.get(key);
 
   if (!candidates || candidates.length === 0) return null;
-  if (candidates.length === 1) return candidates[0].id;
+  if (candidates.length === 1) return candidates[0]!.id;
 
   // Multiple matches: prefer by birthDate match
   if (birthDate) {
@@ -172,7 +172,7 @@ function matchPolitician(
   }
 
   // Fall back to first match
-  return candidates[0].id;
+  return candidates[0]!.id;
 }
 
 /**
@@ -259,10 +259,10 @@ export async function syncRNEMaires(
   const parsedRows: ParsedRow[] = [];
   for (let i = 0; i < toProcess.length; i++) {
     const row = toProcess[i];
-    const nom = row["Nom de l'élu"];
-    const prenom = row["Prénom de l'élu"];
-    const codeCommune = row["Code de la commune"];
-    const deptCode = row["Code du département"];
+    const nom = row!["Nom de l'élu"];
+    const prenom = row!["Prénom de l'élu"];
+    const codeCommune = row!["Code de la commune"];
+    const deptCode = row!["Code du département"];
 
     if (!nom || !prenom) {
       errors.push(`Row ${i + 1}: missing name`);
@@ -275,12 +275,12 @@ export async function syncRNEMaires(
 
     const inseeCode = buildInseeCode(deptCode, codeCommune);
     seenCommuneIds.add(inseeCode);
-    const communeLabel = row["Libellé de la commune"]?.trim();
+    const communeLabel = row!["Libellé de la commune"]?.trim();
     if (communeLabel) communeNameByInsee.set(inseeCode, communeLabel);
     const communeId = communeIdSet.has(inseeCode) ? inseeCode : null;
     const normalizedFirstName = normalizeName(prenom);
     const normalizedLastName = normalizeName(nom);
-    const genderCode = row["Code sexe"];
+    const genderCode = row!["Code sexe"];
 
     parsedRows.push({
       inseeCode,
@@ -289,10 +289,10 @@ export async function syncRNEMaires(
       lastName: normalizedLastName,
       fullName: `${normalizedFirstName} ${normalizedLastName}`,
       gender: genderCode === "M" ? "M" : genderCode === "F" ? "F" : null,
-      birthDate: parseFrenchDate(row["Date de naissance"]),
+      birthDate: parseFrenchDate(row!["Date de naissance"]),
       deptCode,
-      mandateStart: parseFrenchDate(row["Date de début du mandat"]),
-      functionStart: parseFrenchDate(row["Date de début de la fonction"]),
+      mandateStart: parseFrenchDate(row!["Date de début du mandat"]),
+      functionStart: parseFrenchDate(row!["Date de début de la fonction"]),
     });
   }
 
@@ -420,10 +420,10 @@ export async function syncRNEMaires(
     // In-memory name match — no DB query per official
     const politicianId = matchPolitician(
       politicianLookup,
-      official.firstName,
-      official.lastName,
-      official.birthDate,
-      official.departmentCode
+      official!.firstName,
+      official!.lastName,
+      official!.birthDate,
+      official!.departmentCode
     );
 
     if (!politicianId) {
@@ -436,18 +436,18 @@ export async function syncRNEMaires(
     try {
       // Link official to politician
       await db.localOfficial.update({
-        where: { id: official.id },
+        where: { id: official!.id },
         data: { politicianId },
       });
 
-      const inseeCode = official.externalId || official.communeId;
+      const inseeCode = official!.externalId || official!.communeId;
       const communeName = inseeCode ? communeNameByInsee.get(inseeCode) : undefined;
       const mandateTitle = communeName
         ? `Maire de ${communeName}`
-        : `Maire (${inseeCode || official.departmentCode})`;
+        : `Maire (${inseeCode || official!.departmentCode})`;
       const constituency =
         communeName && inseeCode ? `${communeName} (${inseeCode})` : inseeCode || undefined;
-      const startDate = official.functionStart || official.mandateStart || new Date(2020, 4, 18); // Default: May 2020 municipal
+      const startDate = official!.functionStart || official!.mandateStart || new Date(2020, 4, 18); // Default: May 2020 municipal
 
       // Create or update mandate
       const existingMandate = await db.mandate.findFirst({
@@ -464,7 +464,7 @@ export async function syncRNEMaires(
           data: {
             title: mandateTitle,
             constituency,
-            departmentCode: official.departmentCode,
+            departmentCode: official!.departmentCode,
             startDate,
           },
         });
@@ -477,7 +477,7 @@ export async function syncRNEMaires(
             title: mandateTitle,
             institution: "Commune",
             constituency,
-            departmentCode: official.departmentCode,
+            departmentCode: official!.departmentCode,
             startDate,
             isCurrent: true,
             source: DataSource.RNE,
@@ -488,11 +488,11 @@ export async function syncRNEMaires(
 
       if (verbose) {
         console.log(
-          `  Matched: ${official.firstName} ${official.lastName} (${inseeCode}) -> politician ${politicianId}`
+          `  Matched: ${official!.firstName} ${official!.lastName} (${inseeCode}) -> politician ${politicianId}`
         );
       }
     } catch (error) {
-      errors.push(`Reconcile ${official.firstName} ${official.lastName}: ${error}`);
+      errors.push(`Reconcile ${official!.firstName} ${official!.lastName}: ${error}`);
     }
   }
 

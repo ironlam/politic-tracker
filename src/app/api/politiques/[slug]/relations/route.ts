@@ -181,9 +181,9 @@ export async function GET(request: NextRequest, context: RouteContext) {
             label: govName,
           }));
 
-          const dateRange = mandate.endDate
-            ? `(${mandate.startDate.getFullYear()}-${mandate.endDate.getFullYear()})`
-            : `(depuis ${mandate.startDate.getFullYear()})`;
+          const dateRange = mandate!.endDate
+            ? `(${mandate!.startDate.getFullYear()}-${mandate!.endDate.getFullYear()})`
+            : `(depuis ${mandate!.startDate.getFullYear()})`;
 
           clusters.push({
             type: "SAME_GOVERNMENT",
@@ -300,7 +300,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
 
         if (sameDept.length > 0) {
           const deptName =
-            deptMandate.constituency?.split("(")[0].trim() || deptMandate.departmentCode;
+            deptMandate.constituency?.split("(")[0]!.trim() || deptMandate.departmentCode;
 
           const nodes = sameDept.map(toGraphNode);
           const links: GraphLink[] = nodes.map((n) => ({

@@ -48,8 +48,8 @@ Flags are passed as event data (e.g., --limit=50)
   // Parse event name: normalize ":" to "/" and ensure "sync/" prefix
   const rawName = args[0];
   let eventName: string;
-  if (rawName.includes("/") || rawName.includes(":")) {
-    eventName = rawName.replace(":", "/");
+  if (rawName!.includes("/") || rawName!.includes(":")) {
+    eventName = rawName!.replace(":", "/");
   } else {
     // Bare script name like "sync-assemblee"
     eventName = `sync/${rawName}`;

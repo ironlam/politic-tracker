@@ -81,9 +81,7 @@ export function VotesSection({
                 <p className="text-xs text-muted-foreground">Contre</p>
               </div>
               <div className="p-2 bg-yellow-50 rounded-lg">
-                <p className="text-lg font-bold text-yellow-600">
-                  {voteData.stats.abstention}
-                </p>
+                <p className="text-lg font-bold text-yellow-600">{voteData.stats.abstention}</p>
                 <p className="text-xs text-muted-foreground">Abstention</p>
               </div>
               <div className="p-2 bg-slate-50 rounded-lg">
@@ -99,12 +97,21 @@ export function VotesSection({
             {/* Participation bar */}
             <div>
               <div className="flex justify-between text-sm mb-1">
-                <span className="text-muted-foreground">Participation</span>
+                <span id="participation-label" className="text-muted-foreground">
+                  Participation
+                </span>
                 <span className="font-medium">{voteData.stats.participationRate}%</span>
               </div>
-              <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+              <div
+                className="h-2 bg-gray-100 rounded-full overflow-hidden"
+                role="progressbar"
+                aria-labelledby="participation-label"
+                aria-valuenow={voteData.stats.participationRate}
+                aria-valuemin={0}
+                aria-valuemax={100}
+              >
                 <div
-                  className="h-full bg-blue-500"
+                  className="h-full bg-primary"
                   style={{ width: `${voteData.stats.participationRate}%` }}
                 />
               </div>
@@ -120,10 +127,7 @@ export function VotesSection({
                       <span
                         className={`w-2 h-2 mt-1.5 shrink-0 rounded-full ${VOTE_POSITION_DOT_COLORS[vote.position]}`}
                       />
-                      <Link
-                        href={`/votes/${vote.scrutin.id}`}
-                        className="flex-1 hover:underline"
-                      >
+                      <Link href={`/votes/${vote.scrutin.id}`} className="flex-1 hover:underline">
                         {vote.scrutin.title}
                       </Link>
                       <VotePositionBadge position={vote.position} size="sm" />

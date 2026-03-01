@@ -485,7 +485,7 @@ export async function getSearchFilterOptions() {
 
   // Extract unique department names
   const uniqueDepartments = [
-    ...new Set(departments.map((d) => d.constituency?.split("(")[0].trim()).filter(Boolean)),
+    ...new Set(departments.map((d) => d.constituency?.split("(")[0]!.trim()).filter(Boolean)),
   ].sort();
 
   return {

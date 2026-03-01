@@ -19,7 +19,7 @@ import { execSync } from "child_process";
 const DRY_RUN = process.argv.includes("--dry-run");
 const SKIP_AI = process.argv.includes("--skip-ai");
 const fromArg = process.argv.find((a) => a.startsWith("--from="));
-const FROM_STEP = fromArg ? parseInt(fromArg.split("=")[1], 10) : 1;
+const FROM_STEP = fromArg ? parseInt(fromArg.split("=")[1]!, 10) : 1;
 
 const dryRunFlag = DRY_RUN ? " --dry-run" : "";
 

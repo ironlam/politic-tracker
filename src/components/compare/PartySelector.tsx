@@ -165,7 +165,7 @@ export function PartySelector({ position, selectedParty, otherPartyId }: PartySe
         case "Enter":
           e.preventDefault();
           if (activeIndex >= 0 && activeIndex < results.length) {
-            selectParty(results[activeIndex]);
+            selectParty(results[activeIndex]!);
           }
           break;
         case "Escape":

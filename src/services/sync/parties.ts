@@ -62,7 +62,7 @@ function normalizeWikimediaUrl(url: string): string {
   // Convert Special:FilePath to direct URL
   const match = normalized.match(/Special:FilePath\/(.+)$/);
   if (match) {
-    const filename = decodeURIComponent(match[1]).replace(/ /g, "_");
+    const filename = decodeURIComponent(match[1]!).replace(/ /g, "_");
     const hash = createHash("md5").update(filename).digest("hex");
     const encodedFilename = encodeURIComponent(filename).replace(/%2F/g, "/");
     normalized = `https://upload.wikimedia.org/wikipedia/commons/${hash[0]}/${hash.slice(0, 2)}/${encodedFilename}`;

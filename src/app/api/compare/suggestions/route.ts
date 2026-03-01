@@ -127,18 +127,18 @@ async function getPoliticianSuggestions() {
       for (let j = i + 1; j < top.length; j++) {
         const a = top[i];
         const b = top[j];
-        if (a.currentPartyId === b.currentPartyId) continue;
+        if (a!.currentPartyId === b!.currentPartyId) continue;
 
         const distance = oppositionDistance(
-          a.currentParty?.politicalPosition as PoliticalPosition | null,
-          b.currentParty?.politicalPosition as PoliticalPosition | null
+          a!.currentParty?.politicalPosition as PoliticalPosition | null,
+          b!.currentParty?.politicalPosition as PoliticalPosition | null
         );
-        const score = distance * 100 + (a.prominenceScore || 0) + (b.prominenceScore || 0);
+        const score = distance * 100 + (a!.prominenceScore || 0) + (b!.prominenceScore || 0);
         candidates.push({
-          leftSlug: a.slug,
-          leftName: a.fullName,
-          rightSlug: b.slug,
-          rightName: b.fullName,
+          leftSlug: a!.slug,
+          leftName: a!.fullName,
+          rightSlug: b!.slug,
+          rightName: b!.fullName,
           score,
         });
       }
@@ -207,15 +207,15 @@ async function getPartySuggestions() {
         const a = parties[i];
         const b = parties[j];
         const distance = oppositionDistance(
-          a.politicalPosition as PoliticalPosition | null,
-          b.politicalPosition as PoliticalPosition | null
+          a!.politicalPosition as PoliticalPosition | null,
+          b!.politicalPosition as PoliticalPosition | null
         );
-        const score = distance * 100 + a._count.politicians + b._count.politicians;
+        const score = distance * 100 + a!._count.politicians + b!._count.politicians;
         candidates.push({
-          leftSlug: a.slug as string,
-          leftName: a.shortName || a.name,
-          rightSlug: b.slug as string,
-          rightName: b.shortName || b.name,
+          leftSlug: a!.slug as string,
+          leftName: a!.shortName || a!.name,
+          rightSlug: b!.slug as string,
+          rightName: b!.shortName || b!.name,
           score,
         });
       }

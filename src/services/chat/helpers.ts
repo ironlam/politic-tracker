@@ -40,7 +40,7 @@ export function extractTemporalModifiers(query: string): {
   // "en 2025", "en 2024"
   const yearMatch = lower.match(/en\s+(20\d{2})/);
   if (yearMatch) {
-    const year = parseInt(yearMatch[1]);
+    const year = parseInt(yearMatch[1]!);
     return { year, label: `en ${year}` };
   }
 

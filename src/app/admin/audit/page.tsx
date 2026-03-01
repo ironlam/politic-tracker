@@ -336,7 +336,7 @@ export default function AuditLogPage() {
             <div className="space-y-1">
               {entries.map((entry) => {
                 const config = ACTION_CONFIG[entry.action] || ACTION_CONFIG.UPDATE;
-                const Icon = config.icon;
+                const Icon = config!.icon;
                 const isOpen = expanded.has(entry.id);
                 const diffs = parseDiff(entry.changes);
                 const hasDiff = diffs.length > 0;
@@ -347,7 +347,7 @@ export default function AuditLogPage() {
                   <div key={entry.id} className="relative pl-12" role="listitem">
                     {/* Timeline dot */}
                     <div
-                      className={`absolute left-3 top-4 w-3.5 h-3.5 rounded-full border-2 border-background ${config.dotColor} ring-2 ring-background`}
+                      className={`absolute left-3 top-4 w-3.5 h-3.5 rounded-full border-2 border-background ${config!.dotColor} ring-2 ring-background`}
                       aria-hidden="true"
                     />
 
@@ -384,8 +384,8 @@ export default function AuditLogPage() {
                           {/* Main content */}
                           <div className="flex-1 min-w-0">
                             <div className="flex flex-wrap items-center gap-2">
-                              <Badge variant="outline" className={config.className}>
-                                {config.label}
+                              <Badge variant="outline" className={config!.className}>
+                                {config!.label}
                               </Badge>
                               <span className="text-sm font-medium">{entityLabel}</span>
                               {entityRoute ? (

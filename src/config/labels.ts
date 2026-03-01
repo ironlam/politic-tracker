@@ -384,7 +384,7 @@ export function computeSeverity(
   if (!isRelatedToMandate) return base;
   // Promote by one tier
   const idx = SEVERITY_ORDER.indexOf(base);
-  return idx > 0 ? SEVERITY_ORDER[idx - 1] : base;
+  return idx > 0 ? SEVERITY_ORDER[idx - 1]! : base;
 }
 
 /**

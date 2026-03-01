@@ -233,24 +233,24 @@ async function runEnrich(politician: PoliticianTarget): Promise<SyncTypeResult> 
     const affair = eligible[i];
 
     if (isDryRun) {
-      console.log(`    [DRY-RUN] "${affair.title}"`);
+      console.log(`    [DRY-RUN] "${affair!.title}"`);
       continue;
     }
 
     try {
-      const enrichResult = await enrichAffair(affair.id);
+      const enrichResult = await enrichAffair(affair!.id);
 
       if (enrichResult.enriched) {
-        result.stats.enriched++;
+        result.stats.enriched!++;
         if (isVerbose) {
           console.log(
-            `    ✓ "${affair.title}" — ${enrichResult.sourcesAdded} source(s) ajoutée(s)`
+            `    ✓ "${affair!.title}" — ${enrichResult.sourcesAdded} source(s) ajoutée(s)`
           );
         }
       } else {
-        result.stats.noSource++;
+        result.stats.noSource!++;
         if (isVerbose) {
-          console.log(`    - "${affair.title}" — pas de source trouvée`);
+          console.log(`    - "${affair!.title}" — pas de source trouvée`);
         }
       }
 
@@ -259,10 +259,10 @@ async function runEnrich(politician: PoliticianTarget): Promise<SyncTypeResult> 
         await sleep(BRAVE_SEARCH_RATE_LIMIT_MS);
       }
     } catch (error) {
-      result.stats.errors++;
+      result.stats.errors!++;
       const msg = error instanceof Error ? error.message : String(error);
-      result.errors.push(`enrich "${affair.title}": ${msg}`);
-      if (isVerbose) console.error(`    ✗ "${affair.title}" — ${msg}`);
+      result.errors.push(`enrich "${affair!.title}": ${msg}`);
+      if (isVerbose) console.error(`    ✗ "${affair!.title}" — ${msg}`);
     }
   }
 
@@ -406,16 +406,16 @@ async function main() {
     const politician = politicians[pi];
 
     console.log("-".repeat(60));
-    console.log(`[${pi + 1}/${politicians.length}] ${politician.fullName} (${politician.slug})`);
+    console.log(`[${pi + 1}/${politicians.length}] ${politician!.fullName} (${politician!.slug})`);
     console.log("-".repeat(60));
 
-    const politicianResult: PoliticianSyncResult = { politician, results: [] };
+    const politicianResult: PoliticianSyncResult = { politician: politician!, results: [] };
 
     for (const type of requestedTypes) {
       console.log(`\n  ${type.toUpperCase()}`);
 
       const runner = SYNC_RUNNERS[type];
-      const result = await runner(politician);
+      const result = await runner(politician!);
       politicianResult.results.push(result);
 
       // Display inline stats

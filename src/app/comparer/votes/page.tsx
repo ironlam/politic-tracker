@@ -363,11 +363,11 @@ export default async function VotesComparisonPage({ searchParams }: PageProps) {
 
       {/* Stats cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-        <Card className="border-l-4" style={{ borderLeftColor: COMPARISON_ACCENT.total.border }}>
+        <Card className="border-l-4" style={{ borderLeftColor: COMPARISON_ACCENT.total!.border }}>
           <CardContent className="p-3 py-3">
             <div
               className="text-3xl font-display font-extrabold tracking-tight"
-              style={{ color: COMPARISON_ACCENT.total.border }}
+              style={{ color: COMPARISON_ACCENT.total!.border }}
             >
               {stats.total}
             </div>
@@ -376,33 +376,36 @@ export default async function VotesComparisonPage({ searchParams }: PageProps) {
             </div>
           </CardContent>
         </Card>
-        <Card className="border-l-4" style={{ borderLeftColor: COMPARISON_ACCENT.agree.border }}>
+        <Card className="border-l-4" style={{ borderLeftColor: COMPARISON_ACCENT.agree!.border }}>
           <CardContent className="p-3 py-3">
             <div
               className="text-3xl font-display font-extrabold tracking-tight"
-              style={{ color: COMPARISON_ACCENT.agree.border }}
+              style={{ color: COMPARISON_ACCENT.agree!.border }}
             >
               {stats.agree}
             </div>
             <div className="text-sm font-semibold mt-0.5 leading-tight">D&apos;accord</div>
           </CardContent>
         </Card>
-        <Card className="border-l-4" style={{ borderLeftColor: COMPARISON_ACCENT.disagree.border }}>
+        <Card
+          className="border-l-4"
+          style={{ borderLeftColor: COMPARISON_ACCENT.disagree!.border }}
+        >
           <CardContent className="p-3 py-3">
             <div
               className="text-3xl font-display font-extrabold tracking-tight"
-              style={{ color: COMPARISON_ACCENT.disagree.border }}
+              style={{ color: COMPARISON_ACCENT.disagree!.border }}
             >
               {stats.disagree}
             </div>
             <div className="text-sm font-semibold mt-0.5 leading-tight">En désaccord</div>
           </CardContent>
         </Card>
-        <Card className="border-l-4" style={{ borderLeftColor: COMPARISON_ACCENT.partial.border }}>
+        <Card className="border-l-4" style={{ borderLeftColor: COMPARISON_ACCENT.partial!.border }}>
           <CardContent className="p-3 py-3">
             <div
               className="text-3xl font-display font-extrabold tracking-tight"
-              style={{ color: COMPARISON_ACCENT.partial.border }}
+              style={{ color: COMPARISON_ACCENT.partial!.border }}
             >
               {stats.partial}
             </div>

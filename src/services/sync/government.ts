@@ -72,9 +72,9 @@ function parseFrenchDate(dateStr: string): Date | null {
     if (parts.length < 4) return null;
 
     // Format: "day dayNum month year" -> we need dayNum, month, year
-    const dayNum = parseInt(parts[1], 10);
-    const monthName = parts[2].toLowerCase();
-    const year = parseInt(parts[3], 10);
+    const dayNum = parseInt(parts[1]!, 10);
+    const monthName = parts[2]!.toLowerCase();
+    const year = parseInt(parts[3]!, 10);
 
     const month = FRENCH_MONTHS[monthName];
     if (month === undefined || isNaN(dayNum) || isNaN(year)) return null;

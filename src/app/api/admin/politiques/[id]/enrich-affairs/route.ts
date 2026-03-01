@@ -46,15 +46,15 @@ export const POST = withAdminAuth(async (_request: NextRequest, context) => {
   for (let i = 0; i < candidates.length; i++) {
     const affair = candidates[i];
     try {
-      const result = await enrichAffair(affair.id);
+      const result = await enrichAffair(affair!.id);
       results.push({
-        title: affair.title,
+        title: affair!.title,
         ...result,
       });
     } catch (error) {
       results.push({
-        affairId: affair.id,
-        title: affair.title,
+        affairId: affair!.id,
+        title: affair!.title,
         enriched: false,
         error: error instanceof Error ? error.message : "Unknown error",
       });

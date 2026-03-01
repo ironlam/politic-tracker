@@ -43,7 +43,7 @@ export const MANDATE_CATEGORY_ORDER: MandateType[][] = [
 
 export function getMandateRow(type: MandateType): number {
   for (let i = 0; i < MANDATE_CATEGORY_ORDER.length; i++) {
-    if (MANDATE_CATEGORY_ORDER[i].includes(type)) {
+    if (MANDATE_CATEGORY_ORDER[i]!.includes(type)) {
       return i;
     }
   }

@@ -78,11 +78,11 @@ export function parseFrenchDate(input: string | null | undefined): Date | null {
   const match = normalized.match(/(\d{1,2})(?:er)?\s+([a-zàâäéèêëïîôùûüçœæ]+)\s+(\d{4})/);
   if (!match) return null;
 
-  const day = parseInt(match[1], 10);
+  const day = parseInt(match[1]!, 10);
   const monthName = match[2];
-  const year = parseInt(match[3], 10);
+  const year = parseInt(match[3]!, 10);
 
-  const month = (FRENCH_MONTHS as Record<string, number>)[monthName];
+  const month = (FRENCH_MONTHS as Record<string, number>)[monthName!];
   if (month === undefined) return null;
 
   if (!isReasonableYear(year)) return null;
@@ -125,7 +125,7 @@ export function parsePartialISO(input: string | null | undefined): Date | null {
   const parts = input.split("-");
   if (parts.length < 1) return null;
 
-  const year = parseInt(parts[0], 10);
+  const year = parseInt(parts[0]!, 10);
   const month = parts[1] ? parseInt(parts[1], 10) || 1 : 1;
   const day = parts[2] ? parseInt(parts[2], 10) || 1 : 1;
 

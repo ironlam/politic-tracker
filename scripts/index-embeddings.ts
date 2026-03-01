@@ -43,7 +43,7 @@ async function main() {
     if (arg.startsWith("--type=")) {
       entityType = arg.split("=")[1] as EmbeddingType;
     } else if (arg.startsWith("--limit=")) {
-      limit = parseInt(arg.split("=")[1], 10);
+      limit = parseInt(arg.split("=")[1]!, 10);
     }
   }
 

@@ -65,12 +65,12 @@ async function main() {
     datePairs.sort((a, b) => a.date.getTime() - b.date.getTime());
 
     // startDate = earliest source date (revelation date)
-    const startDate = datePairs[0].date;
+    const startDate = datePairs[0]!.date;
 
     // verdictDate = latest source date IF the status implies a verdict
     const hasVerdict = VERDICT_STATUSES.includes(affair.status);
     const verdictDate =
-      hasVerdict && datePairs.length > 1 ? datePairs[datePairs.length - 1].date : null;
+      hasVerdict && datePairs.length > 1 ? datePairs[datePairs.length - 1]!.date : null;
 
     // Don't set verdictDate if it's the same as startDate
     const finalVerdictDate =
@@ -81,7 +81,7 @@ async function main() {
 
     console.log(`UPDATE: ${affair.title}`);
     console.log(
-      `  startDate: ${startDate.toISOString().split("T")[0]} (from ${datePairs[0].url.substring(0, 80)}...)`
+      `  startDate: ${startDate.toISOString().split("T")[0]} (from ${datePairs[0]!.url.substring(0, 80)}...)`
     );
     if (finalVerdictDate) {
       console.log(

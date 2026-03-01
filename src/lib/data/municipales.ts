@@ -180,7 +180,7 @@ export const getCommune = cache(async function getCommune(inseeCode: string) {
     partyLabel: members[0]?.partyLabel || null,
     candidateCount: members.length,
     femaleCount: members.filter((m) => m.candidate?.gender === "F").length,
-    teteDeListe: members.find((m) => m.listPosition === 1) || members[0],
+    teteDeListe: (members.find((m) => m.listPosition === 1) || members[0])!,
     members,
   }));
 

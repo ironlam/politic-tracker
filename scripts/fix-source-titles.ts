@@ -15,7 +15,7 @@ const args = process.argv.slice(2);
 const DRY_RUN = args.includes("--dry-run");
 const VERBOSE = args.includes("--verbose");
 const limitArg = args.find((a) => a.startsWith("--limit="));
-const LIMIT = limitArg ? parseInt(limitArg.split("=")[1]) : undefined;
+const LIMIT = limitArg ? parseInt(limitArg.split("=")[1]!) : undefined;
 
 const BRAVE_DELAY_MS = 250; // Brave free tier: 1 req/s, stay safe at 250ms
 const BRAVE_SEARCH_URL = "https://api.search.brave.com/res/v1/web/search";
@@ -72,9 +72,9 @@ async function fetchTitleViaBrave(url: string): Promise<string | null> {
 
     // If no exact match, use first result if it's from the same domain
     if (results.length > 0) {
-      const firstHostname = new URL(results[0].url).hostname.replace(/^www\./, "");
-      if (firstHostname === hostname && results[0].title.length > 5) {
-        return results[0].title.trim();
+      const firstHostname = new URL(results[0]!.url).hostname.replace(/^www\./, "");
+      if (firstHostname === hostname && results[0]!.title.length > 5) {
+        return results[0]!.title.trim();
       }
     }
 
@@ -185,18 +185,18 @@ async function main() {
     const progress = `[${i + 1}/${toProcess.length}]`;
 
     // Try Brave first, then scraping
-    let realTitle = await fetchTitleViaBrave(source.url);
+    let realTitle = await fetchTitleViaBrave(source!.url);
     let method = "Brave";
 
     if (!realTitle) {
-      realTitle = await fetchTitleViaScraping(source.url);
+      realTitle = await fetchTitleViaScraping(source!.url);
       method = "scraping";
     }
 
-    if (!realTitle || realTitle === source.currentTitle) {
+    if (!realTitle || realTitle === source!.currentTitle) {
       if (VERBOSE) {
         console.log(
-          `${progress} SKIP ${source.publisher} — ${realTitle ? "same title" : "not found"}`
+          `${progress} SKIP ${source!.publisher} — ${realTitle ? "same title" : "not found"}`
         );
       }
       skipped++;
@@ -205,16 +205,16 @@ async function main() {
     }
 
     if (DRY_RUN) {
-      console.log(`${progress} WOULD FIX ${source.publisher} (via ${method})`);
-      console.log(`  Old: ${source.currentTitle}`);
+      console.log(`${progress} WOULD FIX ${source!.publisher} (via ${method})`);
+      console.log(`  Old: ${source!.currentTitle}`);
       console.log(`  New: ${realTitle}`);
       fixed++;
     } else {
       await db.source.update({
-        where: { id: source.id },
+        where: { id: source!.id },
         data: { title: realTitle },
       });
-      console.log(`${progress} FIXED ${source.publisher} (via ${method})`);
+      console.log(`${progress} FIXED ${source!.publisher} (via ${method})`);
       if (VERBOSE) {
         console.log(`  "${realTitle}"`);
       }

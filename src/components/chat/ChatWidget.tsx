@@ -20,8 +20,7 @@ export function ChatWidget() {
   useEffect(() => {
     if (isOpen) {
       requestAnimationFrame(() => {
-        const focusable =
-          panelRef.current?.querySelector<HTMLElement>("input, textarea, button");
+        const focusable = panelRef.current?.querySelector<HTMLElement>("input, textarea, button");
         focusable?.focus();
       });
     }

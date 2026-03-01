@@ -32,15 +32,21 @@ function findCurrentAffiliation(
 
   // Prefer affiliations with no end date (= current)
   const current = affiliations.filter((a) => !a.endDate);
-  if (current.length === 1) return current[0];
+  if (current.length === 1) return current[0] ?? null;
 
   // If multiple current, pick the one with the latest start date
   if (current.length > 1) {
-    return current.sort((a, b) => (b.startDate?.getTime() ?? 0) - (a.startDate?.getTime() ?? 0))[0];
+    return (
+      current.sort((a, b) => (b.startDate?.getTime() ?? 0) - (a.startDate?.getTime() ?? 0))[0] ??
+      null
+    );
   }
 
   // All have end dates → pick the most recent one
-  return affiliations.sort((a, b) => (b.endDate?.getTime() ?? 0) - (a.endDate?.getTime() ?? 0))[0];
+  return (
+    affiliations.sort((a, b) => (b.endDate?.getTime() ?? 0) - (a.endDate?.getTime() ?? 0))[0] ??
+    null
+  );
 }
 
 const handler: SyncHandler = {

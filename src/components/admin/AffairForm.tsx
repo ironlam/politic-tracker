@@ -112,7 +112,7 @@ export function AffairForm({ politicians, initialData }: AffairFormProps) {
 
   function updateSource(index: number, field: keyof Source, value: string) {
     const newSources = [...formData.sources];
-    newSources[index] = { ...newSources[index], [field]: value };
+    newSources[index]! = { ...newSources[index]!, [field]: value };
     setFormData((prev) => ({ ...prev, sources: newSources }));
   }
 

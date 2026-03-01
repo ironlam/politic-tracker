@@ -144,7 +144,7 @@ export function buildTitleFromDecision(decision: JudilibreDecisionSummary): stri
 
   if (decision.themes.length > 0) {
     const theme = decision.themes[0];
-    return theme.charAt(0).toUpperCase() + theme.slice(1);
+    return theme!.charAt(0).toUpperCase() + theme!.slice(1);
   }
 
   return `Décision Cour de cassation (${decision.solution})`;

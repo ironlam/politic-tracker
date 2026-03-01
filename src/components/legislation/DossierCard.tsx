@@ -58,7 +58,7 @@ export function DossierCard({
             )}
             <CategoryBadge category={category} theme={theme} showIcon={false} />
           </div>
-          <Link href={href} className="text-sm font-medium hover:text-blue-600 line-clamp-1">
+          <Link href={href} className="text-sm font-medium hover:text-primary line-clamp-1">
             {displayTitle}
           </Link>
         </div>
@@ -95,7 +95,7 @@ export function DossierCard({
           {/* Title */}
           <div>
             <h3 className="text-lg font-semibold mb-1">
-              <Link href={href} className="hover:text-blue-600">
+              <Link href={href} className="hover:text-primary">
                 {displayTitle}
               </Link>
             </h3>
@@ -141,7 +141,7 @@ export function DossierCard({
                   href={sourceUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-sm text-muted-foreground hover:text-blue-600 flex items-center gap-1"
+                  className="text-sm text-muted-foreground hover:text-primary flex items-center gap-1"
                 >
                   Voir sur AN.fr
                   <ExternalLink className="h-3 w-3" />

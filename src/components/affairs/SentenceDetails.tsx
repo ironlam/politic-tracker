@@ -139,7 +139,7 @@ export function SentenceDetails({ affair }: SentenceDetailsProps) {
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 20 20"
               fill="currentColor"
-              className="w-4 h-4 text-blue-600 dark:text-blue-400"
+              className="w-4 h-4 text-primary"
             >
               <path
                 fillRule="evenodd"

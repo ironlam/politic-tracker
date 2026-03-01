@@ -79,7 +79,7 @@ describe("AffairTimeline", () => {
   });
 
   it("should sort events by date (oldest first)", () => {
-    const unsortedEvents = [mockEvents[2], mockEvents[0], mockEvents[1]];
+    const unsortedEvents = [mockEvents[2]!, mockEvents[0]!, mockEvents[1]!];
     render(<AffairTimeline events={unsortedEvents} />);
 
     const titles = screen.getAllByRole("listitem");

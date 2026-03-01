@@ -153,7 +153,7 @@ export async function searchDatabaseByKeywords(query: string): Promise<string | 
       let info = `**${p.civility || ""} ${p.fullName}**`;
       if (p.currentParty) info += ` (${p.currentParty.shortName || p.currentParty.name})`;
       if (p.mandates.length > 0) {
-        info += ` — ${p.mandates[0].title}`;
+        info += ` — ${p.mandates[0]!.title}`;
       }
       info += `\n→ /politiques/${p.slug}`;
       results.push(info);

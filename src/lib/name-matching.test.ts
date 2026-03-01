@@ -244,7 +244,7 @@ describe("findMentions", () => {
   it("should not produce duplicate matches", () => {
     const result = findMentions("Emmanuel Macron et Macron ont parlé", politicians);
     expect(result).toHaveLength(1);
-    expect(result[0].politicianId).toBe("1");
+    expect(result[0]!.politicianId).toBe("1");
   });
 
   it("should match accented text", () => {
@@ -441,7 +441,7 @@ describe("findPartyMentions", () => {
   it("should not produce duplicate matches", () => {
     const result = findPartyMentions("La France Insoumise, aussi appelée LFI, a voté", parties);
     expect(result).toHaveLength(1);
-    expect(result[0].partyId).toBe("p2");
+    expect(result[0]!.partyId).toBe("p2");
   });
 
   it("should match multiple parties in same text", () => {

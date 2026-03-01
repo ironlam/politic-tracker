@@ -321,7 +321,7 @@ async function main() {
   for (const r of results) {
     console.log(`  ${r.id.padEnd(12)} ${r.label}${r.description ? ` — ${r.description}` : ""}`);
   }
-  console.log(`\nPour plus de détails: npx tsx scripts/wikidata-lookup.ts ${results[0].id} --all`);
+  console.log(`\nPour plus de détails: npx tsx scripts/wikidata-lookup.ts ${results[0]!.id} --all`);
 }
 
 main().catch(console.error);

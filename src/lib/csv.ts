@@ -50,7 +50,7 @@ export function toCSV<T extends Record<string, unknown>>(
 export function formatDateForCSV(date: Date | string | null | undefined): string {
   if (!date) return "";
   const d = date instanceof Date ? date : new Date(date);
-  return d.toISOString().split("T")[0];
+  return d.toISOString().split("T")[0]!;
 }
 
 /**

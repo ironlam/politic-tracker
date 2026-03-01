@@ -37,7 +37,7 @@ interface EditablePartyCardProps {
 
 function formatDateForInput(date: Date | null): string {
   if (!date) return "";
-  return new Date(date).toISOString().split("T")[0];
+  return new Date(date).toISOString().split("T")[0]!;
 }
 
 function formatDateDisplay(date: Date | null): string {
@@ -111,7 +111,7 @@ export function EditablePartyCard({
     try {
       const body: Record<string, string> = {
         partyId: partyForm.partyId,
-        startDate: partyForm.startDate,
+        startDate: partyForm.startDate!,
       };
       if (partyForm.role) {
         body.role = partyForm.role;

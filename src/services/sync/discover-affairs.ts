@@ -180,7 +180,7 @@ async function runPhase1Wikidata(
   console.log(`Phase 1: Wikidata - ${withQid.length} politicians with Q-ID`);
 
   for (const politician of withQid) {
-    const qid = politician.externalIds[0].externalId;
+    const qid = politician.externalIds[0]!.externalId;
 
     try {
       const entities = await wikidataService.getEntities([qid]);

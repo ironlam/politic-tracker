@@ -105,7 +105,7 @@ export default async function FactCheckDetailPage({ params }: PageProps) {
         claimant={factCheck.claimant}
         verdict={factCheck.verdict}
         verdictRating={factCheck.verdictRating}
-        reviewDate={factCheck.publishedAt.toISOString().split("T")[0]}
+        reviewDate={factCheck.publishedAt.toISOString().split("T")[0]!}
         source={factCheck.source}
         sourceUrl={factCheck.sourceUrl}
       />

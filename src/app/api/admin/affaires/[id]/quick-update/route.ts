@@ -89,7 +89,7 @@ export const PATCH = withAdminAuth(async (request: NextRequest, context) => {
     data: {
       action: "UPDATE",
       entityType: "Affair",
-      entityId: id,
+      entityId: id!,
       changes: updateData,
     },
   });

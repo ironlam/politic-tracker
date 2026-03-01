@@ -273,7 +273,7 @@ Note: Supabase Pro ($25/mo) includes daily automatic backups + PITR (7 days)
 
   const cleanArg = args.find((a) => a.startsWith("--clean="));
   if (cleanArg) {
-    const days = parseInt(cleanArg.split("=")[1], 10);
+    const days = parseInt(cleanArg.split("=")[1]!, 10);
     if (isNaN(days) || days < 1) {
       console.error("Invalid number of days");
       process.exit(1);

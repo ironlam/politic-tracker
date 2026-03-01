@@ -184,7 +184,7 @@ function extractLinks(text: string): string[] {
   // Markdown links [text](url)
   const mdMatches = text.matchAll(/\[([^\]]+)\]\(([^)]+)\)/g);
   for (const match of mdMatches) {
-    links.push(match[2]);
+    links.push(match[2]!);
   }
 
   return [...new Set(links)];

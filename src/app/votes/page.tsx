@@ -252,7 +252,7 @@ export default async function VotesPage({ searchParams }: PageProps) {
           <p className="text-sm text-muted-foreground">Rejetés</p>
         </div>
         <div className="bg-blue-50 rounded-lg p-4 text-center">
-          <p className="text-2xl font-bold text-blue-600">{legislatures.length}</p>
+          <p className="text-2xl font-bold text-primary">{legislatures.length}</p>
           <p className="text-sm text-muted-foreground">Législatures</p>
         </div>
       </div>

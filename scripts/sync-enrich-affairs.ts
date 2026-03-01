@@ -29,7 +29,7 @@ const isDryRun = args.includes("--dry-run");
 const isStats = args.includes("--stats");
 const isVerbose = args.includes("--verbose");
 const limitArg = args.find((a) => a.startsWith("--limit="));
-const limit = limitArg ? parseInt(limitArg.split("=")[1], 10) : 0;
+const limit = limitArg ? parseInt(limitArg.split("=")[1]!, 10) : 0;
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -128,7 +128,7 @@ async function main() {
 
   for (let i = 0; i < reviews.length; i++) {
     const review = reviews[i];
-    const affair = review.affair;
+    const affair = review!.affair;
     const label = `[${i + 1}/${reviews.length}] "${affair.title}" (${affair.politician.fullName})`;
 
     try {

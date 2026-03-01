@@ -227,14 +227,14 @@ async function matchPolitician(
   });
 
   if (candidates.length === 0) return null;
-  if (candidates.length === 1) return candidates[0].id;
+  if (candidates.length === 1) return candidates[0]!.id;
 
   // Multiple matches: prefer the one with a mandate in the same department
   for (const c of candidates) {
     if (c.mandates.length > 0) return c.id;
   }
 
-  return candidates[0].id;
+  return candidates[0]!.id;
 }
 
 // ---------------------------------------------------------------------------
@@ -314,17 +314,17 @@ async function importLegislatives2024(options: ImportOptions = {}): Promise<Impo
     result.constituenciesProcessed++;
 
     // Constituency code: "dept-circo" (e.g. "01-01", "75-01", "ZZ-01")
-    const constituencyCode = `${row.deptCode}-${row.circoCode}`;
-    const constituencyName = `${row.circoName} (${row.deptName})`;
+    const constituencyCode = `${row!.deptCode}-${row!.circoCode}`;
+    const constituencyName = `${row!.circoName} (${row!.deptName})`;
 
-    for (const candidate of row.candidates) {
+    for (const candidate of row!.candidates) {
       result.totalCandidates++;
 
       try {
         const candidateName = `${candidate.prenom} ${candidate.nom}`;
 
         // Match politician
-        const politicianId = await matchPolitician(candidate.prenom, candidate.nom, row.deptCode);
+        const politicianId = await matchPolitician(candidate.prenom, candidate.nom, row!.deptCode);
 
         if (politicianId) {
           result.politiciansMatched++;
@@ -406,7 +406,7 @@ async function importLegislatives2024(options: ImportOptions = {}): Promise<Impo
         }
       } catch (error) {
         result.errors.push(
-          `${row.deptCode}-${row.circoCode} ${candidate.prenom} ${candidate.nom}: ${error}`
+          `${row!.deptCode}-${row!.circoCode} ${candidate.prenom} ${candidate.nom}: ${error}`
         );
       }
     }
@@ -473,7 +473,7 @@ function parseArgs(args: string[]): ImportOptions & { help?: boolean; stats?: bo
     else if (arg === "--dry-run") options.dryRun = true;
     else if (arg === "--verbose" || arg === "-v") options.verbose = true;
     else if (arg.startsWith("--limit=")) {
-      options.limit = parseInt(arg.split("=")[1], 10);
+      options.limit = parseInt(arg.split("=")[1]!, 10);
     }
   }
 

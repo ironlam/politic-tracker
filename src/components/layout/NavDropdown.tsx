@@ -154,7 +154,7 @@ export function NavDropdown({ group }: NavDropdownProps) {
                   {item.icon &&
                     ICON_MAP[item.icon] &&
                     (() => {
-                      const Icon = ICON_MAP[item.icon!];
+                      const Icon = ICON_MAP[item.icon!]!;
                       return <Icon className="h-4 w-4 text-muted-foreground" />;
                     })()}
                   <span className={cn("font-medium", isActive && "text-primary")}>

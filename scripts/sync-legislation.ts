@@ -307,7 +307,7 @@ function extractNumber(dossier: ANDossier): string | null {
   const match = uid.match(/N(\d+)$/);
   if (!match) return null;
 
-  const num = match[1];
+  const num = match[1]!;
 
   // Determine prefix based on procedure
   if (procedure.toLowerCase().includes("projet")) {
@@ -436,7 +436,7 @@ async function syncLegislation(
       }
 
       try {
-        const filePath = path.join(jsonDir, file);
+        const filePath = path.join(jsonDir, file!);
         const content = readFileSync(filePath, "utf-8");
 
         // Skip empty files
@@ -493,7 +493,7 @@ async function syncLegislation(
         // Filter by today: only process dossiers whose most recent date is today
         if (todayOnly && allDates.length > 0) {
           const today = new Date().toISOString().split("T")[0];
-          const mostRecent = allDates[allDates.length - 1].toISOString().split("T")[0];
+          const mostRecent = allDates[allDates.length - 1]!.toISOString().split("T")[0];
           if (mostRecent !== today) {
             stats.dossiersSkipped++;
             continue;
@@ -536,7 +536,7 @@ async function syncLegislation(
             // Update existing dossier, generate slug if missing
             const updateData: typeof dossierData & { slug?: string } = { ...dossierData };
             if (!existing.slug) {
-              updateData.slug = await generateUniqueDossierSlug(filingDate, shortTitle || title);
+              updateData.slug = await generateUniqueDossierSlug(filingDate!, shortTitle || title);
             }
             await db.legislativeDossier.update({
               where: { id: existing.id },
@@ -545,7 +545,7 @@ async function syncLegislation(
             stats.dossiersUpdated++;
           } else {
             // Create new dossier with slug
-            const slug = await generateUniqueDossierSlug(filingDate, shortTitle || title);
+            const slug = await generateUniqueDossierSlug(filingDate!, shortTitle || title);
             await db.legislativeDossier.create({
               data: { ...dossierData, slug },
             });

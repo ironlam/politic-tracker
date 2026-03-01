@@ -40,7 +40,7 @@ export default async function EditPoliticianPage({ params }: PageProps) {
     firstName: politician.firstName,
     lastName: politician.lastName,
     fullName: politician.fullName,
-    birthDate: politician.birthDate ? politician.birthDate.toISOString().split("T")[0] : null,
+    birthDate: politician.birthDate ? politician.birthDate.toISOString().split("T")[0]! : null,
     birthPlace: politician.birthPlace,
     photoUrl: politician.photoUrl,
     photoSource: politician.photoSource,

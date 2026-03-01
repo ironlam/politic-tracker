@@ -165,7 +165,7 @@ export function extractAttribute(html: string, attribute: string): string | null
   const pattern = new RegExp(`${attribute}=["']([^"']+)["']`, "i");
   const match = html.match(pattern);
 
-  return match ? match[1] : null;
+  return match ? match[1]! : null;
 }
 
 /**
@@ -227,12 +227,14 @@ const NOISE_SELECTORS = [
  * removeSidebarElements(dom.window.document);
  * const reader = new Readability(dom.window.document);
  */
-export function removeSidebarElements(document: { querySelectorAll: (s: string) => ArrayLike<{ remove: () => void }> }): number {
+export function removeSidebarElements(document: {
+  querySelectorAll: (s: string) => ArrayLike<{ remove: () => void }>;
+}): number {
   let removed = 0;
   for (const selector of NOISE_SELECTORS) {
     const elements = document.querySelectorAll(selector);
     for (let i = 0; i < elements.length; i++) {
-      elements[i].remove();
+      elements[i]!.remove();
       removed++;
     }
   }

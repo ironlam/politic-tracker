@@ -205,7 +205,7 @@ export function mapCrimeToCategory(crime: string): AffairCategory {
 export function parseName(fullName: string): { firstName: string; lastName: string } {
   const parts = fullName.trim().split(/\s+/);
   if (parts.length === 1) {
-    return { firstName: "", lastName: parts[0] };
+    return { firstName: "", lastName: parts[0]! };
   }
   const lastName = parts.pop()!;
   const firstName = parts.join(" ");

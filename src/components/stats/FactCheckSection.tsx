@@ -162,9 +162,9 @@ export function FactCheckSection({
   const verdictBars = (["vrai", "trompeur", "faux", "inverifiable"] as const)
     .filter((key) => groups[key] > 0)
     .map((key) => ({
-      label: VERDICT_GROUP_LABELS[key],
+      label: VERDICT_GROUP_LABELS[key]!,
       value: groups[key],
-      color: VERDICT_GROUP_COLORS[key],
+      color: VERDICT_GROUP_COLORS[key]!,
     }));
 
   return (

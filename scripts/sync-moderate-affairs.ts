@@ -39,7 +39,7 @@ const isStats = args.includes("--stats");
 const isVerbose = args.includes("--verbose");
 const skipEnrich = args.includes("--skip-enrich");
 const limitArg = args.find((a) => a.startsWith("--limit="));
-const limit = limitArg ? parseInt(limitArg.split("=")[1], 10) : 0;
+const limit = limitArg ? parseInt(limitArg.split("=")[1]!, 10) : 0;
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -331,37 +331,37 @@ async function phaseAIModeration(): Promise<ModerationStats> {
 
   for (let i = 0; i < affairs.length; i++) {
     const affair = affairs[i];
-    const label = `[${i + 1}/${affairs.length}] "${affair.title}"`;
+    const label = `[${i + 1}/${affairs.length}] "${affair!.title}"`;
 
     try {
       if (isVerbose) {
         console.log(`\n${label}`);
-        console.log(`  Politicien: ${affair.politician.fullName}`);
-        console.log(`  Sources: ${affair.sources.length}`);
-        console.log(`  Categorie: ${affair.category}, Statut: ${affair.status}`);
+        console.log(`  Politicien: ${affair!.politician.fullName}`);
+        console.log(`  Sources: ${affair!.sources.length}`);
+        console.log(`  Categorie: ${affair!.category}, Statut: ${affair!.status}`);
       }
 
       const input: ModerationInput = {
-        affairId: affair.id,
-        title: affair.title,
-        description: affair.description,
-        status: affair.status,
-        category: affair.category,
-        involvement: affair.involvement,
-        politicianName: affair.politician.fullName,
-        politicianSlug: affair.politician.slug,
-        sources: affair.sources.map((s) => ({
+        affairId: affair!.id,
+        title: affair!.title,
+        description: affair!.description,
+        status: affair!.status,
+        category: affair!.category,
+        involvement: affair!.involvement,
+        politicianName: affair!.politician.fullName,
+        politicianSlug: affair!.politician.slug,
+        sources: affair!.sources.map((s) => ({
           url: s.url,
           title: s.title,
           publisher: s.publisher,
-          publishedAt: s.publishedAt.toISOString().split("T")[0],
+          publishedAt: s.publishedAt.toISOString().split("T")[0]!,
         })),
-        factsDate: affair.factsDate?.toISOString().split("T")[0] ?? null,
-        startDate: affair.startDate?.toISOString().split("T")[0] ?? null,
-        verdictDate: affair.verdictDate?.toISOString().split("T")[0] ?? null,
-        court: affair.court ?? null,
-        sentence: affair.sentence ?? null,
-        existingAffairTitles: existingTitlesByPolitician.get(affair.politicianId) ?? [],
+        factsDate: affair!.factsDate?.toISOString().split("T")[0] ?? null,
+        startDate: affair!.startDate?.toISOString().split("T")[0] ?? null,
+        verdictDate: affair!.verdictDate?.toISOString().split("T")[0] ?? null,
+        court: affair!.court ?? null,
+        sentence: affair!.sentence ?? null,
+        existingAffairTitles: existingTitlesByPolitician.get(affair!.politicianId) ?? [],
       };
 
       let result: ModerationResult;
@@ -409,7 +409,7 @@ async function phaseAIModeration(): Promise<ModerationStats> {
       // Store as ModerationReview
       await db.moderationReview.create({
         data: {
-          affairId: affair.id,
+          affairId: affair!.id,
           recommendation: result.recommendation as never,
           confidence: result.confidence,
           reasoning: result.reasoning,
@@ -490,12 +490,12 @@ async function phaseEnrichment(): Promise<EnrichmentStats> {
 
     try {
       if (isDryRun) {
-        console.log(`${label} [DRY-RUN] Enrichissement ignore pour ${review.affairId}`);
+        console.log(`${label} [DRY-RUN] Enrichissement ignore pour ${review!.affairId}`);
         stats.processed++;
         continue;
       }
 
-      const result = await enrichAffair(review.affairId);
+      const result = await enrichAffair(review!.affairId);
       stats.processed++;
 
       if (result.enriched) {
@@ -506,14 +506,14 @@ async function phaseEnrichment(): Promise<EnrichmentStats> {
             console.log(`  ${change}`);
           }
         } else {
-          console.log(`${label} ${review.affairId} -> ENRICHI (${result.sourcesAdded} sources)`);
+          console.log(`${label} ${review!.affairId} -> ENRICHI (${result.sourcesAdded} sources)`);
         }
       } else {
         stats.notFound++;
         if (isVerbose) {
           console.log(`${label} Pas de source: ${result.reasoning}`);
         } else {
-          console.log(`${label} ${review.affairId} -> Pas de source`);
+          console.log(`${label} ${review!.affairId} -> Pas de source`);
         }
       }
 
@@ -522,7 +522,7 @@ async function phaseEnrichment(): Promise<EnrichmentStats> {
         await sleep(BRAVE_SEARCH_RATE_LIMIT_MS);
       }
     } catch (error) {
-      console.error(`${label} Erreur enrichissement ${review.affairId}:`, error);
+      console.error(`${label} Erreur enrichissement ${review!.affairId}:`, error);
       stats.errors++;
     }
   }

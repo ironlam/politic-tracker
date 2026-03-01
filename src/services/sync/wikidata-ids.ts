@@ -40,7 +40,7 @@ function findBestMatch(
   politicianBirthDate: Date | null
 ): CandidateInfo | null {
   if (candidates.length === 1) {
-    return candidates[0];
+    return candidates[0] ?? null;
   }
 
   // Strategy 1: Match by birth date
@@ -56,7 +56,7 @@ function findBestMatch(
   const politicianCandidates = candidates.filter((c) => c.isPolitician);
 
   if (politicianCandidates.length === 1) {
-    return politicianCandidates[0];
+    return politicianCandidates[0] ?? null;
   }
 
   if (politicianCandidates.length > 1 && politicianBirthDate) {
@@ -69,7 +69,7 @@ function findBestMatch(
 
   // Strategy 3: If only one French person, take it
   if (candidates.length === 1) {
-    return candidates[0];
+    return candidates[0] ?? null;
   }
 
   return null;

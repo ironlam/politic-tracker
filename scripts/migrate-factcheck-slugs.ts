@@ -103,27 +103,27 @@ async function migrateFactChecks(): Promise<{ updated: number; skipped: number }
   for (let i = 0; i < factChecks.length; i++) {
     const fc = factChecks[i];
     updateLine(
-      `${renderProgressBar(i + 1, factChecks.length)} Processing ${fc.source} - ${fc.title.slice(0, 40)}...`
+      `${renderProgressBar(i + 1, factChecks.length)} Processing ${fc!.source} - ${fc!.title.slice(0, 40)}...`
     );
 
     try {
-      const baseSlug = generateDateSlug(fc.publishedAt, fc.title);
+      const baseSlug = generateDateSlug(fc!.publishedAt, fc!.title);
       const uniqueSlug = await getUniqueSlug(baseSlug, existingSlugs, async (slug) => {
         const exists = await db.factCheck.findUnique({ where: { slug } });
         return exists !== null;
       });
 
       if (dryRun) {
-        console.log(`\n  [DRY RUN] ${fc.title.slice(0, 60)} → ${uniqueSlug}`);
+        console.log(`\n  [DRY RUN] ${fc!.title.slice(0, 60)} → ${uniqueSlug}`);
       } else {
         await db.factCheck.update({
-          where: { id: fc.id },
+          where: { id: fc!.id },
           data: { slug: uniqueSlug },
         });
       }
       updated++;
     } catch (error) {
-      console.error(`\n  Error processing ${fc.id}:`, error);
+      console.error(`\n  Error processing ${fc!.id}:`, error);
       skipped++;
     }
   }

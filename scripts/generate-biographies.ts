@@ -175,37 +175,37 @@ async function generateBiographies(options: { force?: boolean; limit?: number; d
   // Process each politician
   for (let i = 0; i < politicians.length; i++) {
     const pol = politicians[i];
-    const progressMsg = `${renderProgressBar(i + 1, total)} Processing ${i + 1}/${total}: ${pol.fullName}`;
+    const progressMsg = `${renderProgressBar(i + 1, total)} Processing ${i + 1}/${total}: ${pol!.fullName}`;
     updateLine(progressMsg);
 
     try {
       const bioRequest: BiographyRequest = {
-        fullName: pol.fullName,
-        civility: pol.civility,
-        birthDate: pol.birthDate,
-        birthPlace: pol.birthPlace,
-        deathDate: pol.deathDate,
-        currentParty: pol.currentParty?.name || null,
-        mandates: pol.mandates.map((m) => ({
+        fullName: pol!.fullName,
+        civility: pol!.civility,
+        birthDate: pol!.birthDate,
+        birthPlace: pol!.birthPlace,
+        deathDate: pol!.deathDate,
+        currentParty: pol!.currentParty?.name || null,
+        mandates: pol!.mandates.map((m) => ({
           type: m.type,
           title: mandateTitle(m),
           isCurrent: m.isCurrent,
           startDate: m.startDate,
           endDate: m.endDate,
         })),
-        voteStats: voteStatsByPolitician.get(pol.id) || null,
-        affairsCount: pol._count.affairs,
-        declarationsCount: pol.declarations.length,
-        latestDeclarationYear: pol.declarations.length > 0 ? pol.declarations[0].year : null,
+        voteStats: voteStatsByPolitician.get(pol!.id) || null,
+        affairsCount: pol!._count.affairs,
+        declarationsCount: pol!.declarations.length,
+        latestDeclarationYear: pol!.declarations.length > 0 ? pol!.declarations[0]!.year : null,
       };
 
       if (dryRun) {
         if (i < 3) {
-          console.log(`\n\n--- ${pol.fullName} ---`);
-          console.log(`  Mandats: ${pol.mandates.length}`);
-          console.log(`  Votes: ${voteStatsByPolitician.get(pol.id)?.total || 0}`);
-          console.log(`  Déclarations HATVP: ${pol.declarations.length}`);
-          console.log(`  Affaires: ${pol._count.affairs}`);
+          console.log(`\n\n--- ${pol!.fullName} ---`);
+          console.log(`  Mandats: ${pol!.mandates.length}`);
+          console.log(`  Votes: ${voteStatsByPolitician.get(pol!.id)?.total || 0}`);
+          console.log(`  Déclarations HATVP: ${pol!.declarations.length}`);
+          console.log(`  Affaires: ${pol!._count.affairs}`);
         }
         stats.generated++;
         stats.processed++;
@@ -217,7 +217,7 @@ async function generateBiographies(options: { force?: boolean; limit?: number; d
 
       // Save to database
       await db.politician.update({
-        where: { id: pol.id },
+        where: { id: pol!.id },
         data: {
           biography,
           biographyGeneratedAt: new Date(),
@@ -233,7 +233,7 @@ async function generateBiographies(options: { force?: boolean; limit?: number; d
       }
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : String(err);
-      stats.errors.push(`${pol.fullName}: ${errorMsg}`);
+      stats.errors.push(`${pol!.fullName}: ${errorMsg}`);
       stats.processed++;
 
       // If rate limited, wait longer
@@ -364,7 +364,7 @@ Features:
   let limit: number | undefined;
   const limitArg = args.find((a) => a.startsWith("--limit="));
   if (limitArg) {
-    limit = parseInt(limitArg.split("=")[1], 10);
+    limit = parseInt(limitArg.split("=")[1]!, 10);
     if (isNaN(limit) || limit < 1) {
       console.error("Invalid limit number");
       process.exit(1);

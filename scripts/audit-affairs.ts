@@ -183,7 +183,7 @@ async function runAudit(checkUrls: boolean): Promise<AuditResult> {
     console.log(`Checking ${allUrls.length} URLs (this may take a while)...\n`);
 
     for (let i = 0; i < allUrls.length; i++) {
-      const { affair, url } = allUrls[i];
+      const { affair, url } = allUrls[i]!;
       const politicianName = `${affair.politician.firstName} ${affair.politician.lastName}`;
 
       process.stdout.write(`  [${i + 1}/${allUrls.length}] Checking ${url.substring(0, 50)}...`);

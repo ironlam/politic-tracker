@@ -117,7 +117,7 @@ function textRefersToPersonByName(text: string, fullName: string): boolean {
   if (titlePattern.test(text)) return true;
 
   // Both firstName and lastName with word boundaries AND proximity
-  const firstRe = new RegExp(wb(escapeRegex(firstName)), "gi");
+  const firstRe = new RegExp(wb(escapeRegex(firstName!)), "gi");
   const lastRe = new RegExp(wb(escapeRegex(lastName)), "gi");
 
   const firstPositions: number[] = [];

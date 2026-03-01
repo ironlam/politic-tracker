@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { cacheTag, cacheLife } from "next/cache";
 import { db } from "@/lib/db";
 import { isFeatureEnabled } from "@/lib/feature-flags";
+import { getPoliticianForComparison } from "@/lib/data/politicians";
 import {
   PoliticianSelector,
   PartySelector,
@@ -31,75 +32,6 @@ interface PageProps {
     right?: string;
     mode?: string;
   }>;
-}
-
-async function getPoliticianBySlug(slug: string) {
-  "use cache";
-  cacheTag(`politician:${slug}`, "votes");
-  cacheLife("minutes");
-
-  const politician = await db.politician.findUnique({
-    where: { slug },
-    include: {
-      currentParty: true,
-      _count: {
-        select: { factCheckMentions: true },
-      },
-      mandates: {
-        orderBy: { startDate: "desc" },
-      },
-      affairs: {
-        where: { publicationStatus: "PUBLISHED" },
-        orderBy: { createdAt: "desc" },
-      },
-      declarations: {
-        orderBy: { year: "desc" },
-      },
-      votes: {
-        include: {
-          scrutin: true,
-        },
-        orderBy: {
-          scrutin: { votingDate: "desc" },
-        },
-        take: 500, // Limit for performance
-      },
-      factCheckMentions: {
-        include: {
-          factCheck: {
-            select: {
-              id: true,
-              title: true,
-              claimant: true,
-              verdictRating: true,
-              source: true,
-              sourceUrl: true,
-              publishedAt: true,
-            },
-          },
-        },
-        orderBy: { factCheck: { publishedAt: "desc" } },
-        take: 20,
-      },
-    },
-  });
-
-  if (!politician) return null;
-
-  // Calculate vote stats
-  const voteStats = {
-    total: politician.votes.length,
-    pour: politician.votes.filter((v) => v.position === "POUR").length,
-    contre: politician.votes.filter((v) => v.position === "CONTRE").length,
-    abstention: politician.votes.filter((v) => v.position === "ABSTENTION").length,
-    nonVotant: politician.votes.filter((v) => v.position === "NON_VOTANT").length,
-    absent: politician.votes.filter((v) => v.position === "ABSENT").length,
-  };
-
-  return {
-    ...politician,
-    voteStats,
-  };
 }
 
 async function getPoliticianPreview(slug: string) {
@@ -443,8 +375,8 @@ export default async function ComparerPage({ searchParams }: PageProps) {
 
   // Politician mode (default)
   const [leftPolitician, rightPolitician] = await Promise.all([
-    leftSlug ? getPoliticianBySlug(leftSlug) : null,
-    rightSlug ? getPoliticianBySlug(rightSlug) : null,
+    leftSlug ? getPoliticianForComparison(leftSlug) : null,
+    rightSlug ? getPoliticianForComparison(rightSlug) : null,
   ]);
 
   const [leftPreview, rightPreview] = await Promise.all([

@@ -30,7 +30,7 @@ export function getRelativeLuminance(hex: string): number {
     return srgb <= 0.03928 ? srgb / 12.92 : Math.pow((srgb + 0.055) / 1.055, 2.4);
   });
 
-  return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
+  return 0.2126 * rs! + 0.7152 * gs! + 0.0722 * bs!;
 }
 
 /** Contrast ratio between two colors (1:1 to 21:1) */

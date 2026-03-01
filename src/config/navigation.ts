@@ -204,6 +204,33 @@ export const DATA_SOURCES = [
   { href: "https://toolbox.google.com/factcheck/explorer", label: "Google Fact Check" },
 ] as const;
 
+// Social media links for footer
+export interface SocialLink {
+  href: string;
+  label: string;
+  /** Lucide icon name, or "x" for custom SVG */
+  icon: "x" | "bluesky" | "instagram" | "github";
+}
+
+export const SOCIAL_LINKS: SocialLink[] = [
+  { href: "https://x.com/poligraph_fr", label: "X (Twitter)", icon: "x" },
+  {
+    href: "https://bsky.app/profile/poligraph-fr.bsky.social",
+    label: "Bluesky",
+    icon: "bluesky",
+  },
+  {
+    href: "https://www.instagram.com/poligraph_fr",
+    label: "Instagram",
+    icon: "instagram",
+  },
+  {
+    href: "https://github.com/ironlam/poligraph",
+    label: "GitHub",
+    icon: "github",
+  },
+];
+
 // Legacy exports for backwards compatibility
 export const NAV_LINKS = [
   { href: "/politiques", label: "Représentants" },

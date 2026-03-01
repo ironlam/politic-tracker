@@ -95,6 +95,13 @@ model ExternalId {
   externalId String // ID in the external system
   url        String? // Direct URL to the source page
 
+  // Identity resolution metadata
+  confidence  Float?        // 0.0 to 1.0 matching confidence
+  matchedBy   MatchMethod?  // How the link was established
+  verifiedAt  DateTime?     // Manual validation timestamp
+  verifiedBy  String?       // Who validated ("admin:ldiaby")
+  metadata    Json?         // Free-form context { birthDateMatch, deptMatch, etc. }
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

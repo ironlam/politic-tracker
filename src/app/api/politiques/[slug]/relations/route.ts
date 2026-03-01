@@ -5,6 +5,7 @@ import { Prisma, MandateType } from "@/generated/prisma";
 import { RelationType, GraphNode, GraphLink, Cluster, RelationsResponse } from "@/types/relations";
 import { ALL_RELATION_TYPES } from "@/config/relations";
 import { DeclarationDetails } from "@/types/hatvp";
+import { parsePagination } from "@/lib/api/pagination";
 
 interface RouteContext {
   params: Promise<{ slug: string }>;
@@ -90,7 +91,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
   const { searchParams } = new URL(request.url);
 
   const typesParam = searchParams.get("types");
-  const limit = Math.min(50, Math.max(1, parseInt(searchParams.get("limit") || "10", 10)));
+  const { limit } = parsePagination(searchParams, { defaultLimit: 10, maxLimit: 50 });
 
   const requestedTypes: RelationType[] = typesParam
     ? (typesParam

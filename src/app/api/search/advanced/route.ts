@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { searchPoliticians, SearchFilters } from "@/services/search";
 import { MandateType } from "@/generated/prisma";
 import { withCache } from "@/lib/cache";
+import { parsePagination } from "@/lib/api/pagination";
 
 /**
  * @openapi
@@ -123,8 +124,7 @@ export async function GET(request: NextRequest) {
   const department = searchParams.get("department") || undefined;
   const hasAffairsParam = searchParams.get("hasAffairs");
   const isActiveParam = searchParams.get("isActive");
-  const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
-  const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") || "20", 10)));
+  const { page, limit } = parsePagination(searchParams, { defaultLimit: 20 });
 
   const hasAffairs =
     hasAffairsParam === "true" ? true : hasAffairsParam === "false" ? false : undefined;

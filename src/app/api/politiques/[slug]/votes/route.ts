@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { withCache } from "@/lib/cache";
 import { getPoliticianVotingStats } from "@/services/voteStats";
+import { parsePagination } from "@/lib/api/pagination";
 
 interface RouteContext {
   params: Promise<{ slug: string }>;
@@ -64,9 +65,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
   const { slug } = await context.params;
   const { searchParams } = new URL(request.url);
 
-  const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
-  const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") || "20", 10)));
-  const skip = (page - 1) * limit;
+  const { page, limit, skip } = parsePagination(searchParams, { defaultLimit: 20 });
 
   try {
     const politician = await db.politician.findUnique({

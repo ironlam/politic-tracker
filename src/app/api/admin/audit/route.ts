@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { withAdminAuth } from "@/lib/api/with-admin-auth";
 import type { Prisma } from "@/generated/prisma";
+import { parsePagination } from "@/lib/api/pagination";
 
 export const GET = withAdminAuth(async (request) => {
   const { searchParams } = new URL(request.url);
@@ -10,9 +11,7 @@ export const GET = withAdminAuth(async (request) => {
   const startDate = searchParams.get("startDate");
   const endDate = searchParams.get("endDate");
   const search = searchParams.get("search");
-  const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
-  const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") || "50", 10)));
-  const skip = (page - 1) * limit;
+  const { page, limit, skip } = parsePagination(searchParams);
 
   const where: Prisma.AuditLogWhereInput = {};
 

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { ElectionType, ElectionStatus } from "@/generated/prisma";
 import { withCache } from "@/lib/cache";
+import { parsePagination } from "@/lib/api/pagination";
 
 /**
  * @openapi
@@ -70,9 +71,7 @@ export async function GET(request: NextRequest) {
   const type = searchParams.get("type");
   const status = searchParams.get("status");
   const yearStr = searchParams.get("year");
-  const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
-  const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") || "20", 10)));
-  const skip = (page - 1) * limit;
+  const { page, limit, skip } = parsePagination(searchParams, { defaultLimit: 20 });
 
   const year = yearStr ? parseInt(yearStr, 10) : null;
 

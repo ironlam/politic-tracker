@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { MandateType, PublicationStatus } from "@/generated/prisma";
 import { getPoliticians } from "@/services/politicians";
 import { withCache } from "@/lib/cache";
+import { parsePagination } from "@/lib/api/pagination";
 
 /**
  * @openapi
@@ -93,8 +94,7 @@ export async function GET(request: NextRequest) {
     hasAffairsParam === "true" ? true : hasAffairsParam === "false" ? false : undefined;
   const status = searchParams.get("status") || "PUBLISHED";
   const sort = searchParams.get("sort");
-  const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
-  const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") || "20", 10)));
+  const { page, limit } = parsePagination(searchParams, { defaultLimit: 20 });
 
   try {
     const result = await getPoliticians({

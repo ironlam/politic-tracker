@@ -6,6 +6,7 @@ import { invalidateEntity } from "@/lib/cache";
 import { createAffairSchema } from "@/lib/validations/affairs";
 import type { AffairCategory, PublicationStatus, AffairStatus } from "@/generated/prisma";
 import { computeSeverity, isInherentlyMandateCategory } from "@/config/labels";
+import { parsePagination } from "@/lib/api/pagination";
 
 export const GET = withAdminAuth(async (request: NextRequest) => {
   const { searchParams } = new URL(request.url);
@@ -14,9 +15,7 @@ export const GET = withAdminAuth(async (request: NextRequest) => {
   const status = searchParams.get("status") as AffairStatus | null;
   const search = searchParams.get("search");
   const hasEcli = searchParams.get("hasEcli");
-  const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
-  const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") || "50", 10)));
-  const skip = (page - 1) * limit;
+  const { page, limit, skip } = parsePagination(searchParams);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const where: any = {};

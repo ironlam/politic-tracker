@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { FactCheckRating } from "@/generated/prisma";
 import { withCache } from "@/lib/cache";
 import { FACTCHECK_ALLOWED_SOURCES } from "@/config/labels";
+import { parsePagination } from "@/lib/api/pagination";
 
 /**
  * @openapi
@@ -61,9 +62,7 @@ export async function GET(request: NextRequest) {
   const politician = searchParams.get("politician");
   const source = searchParams.get("source");
   const verdict = searchParams.get("verdict");
-  const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
-  const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") || "20", 10)));
-  const skip = (page - 1) * limit;
+  const { page, limit, skip } = parsePagination(searchParams, { defaultLimit: 20 });
 
   const where: Record<string, unknown> = {
     source: source || { in: FACTCHECK_ALLOWED_SOURCES },

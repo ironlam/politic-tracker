@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { factcheckStatsService } from "@/services/factcheckStats";
 import { withCache } from "@/lib/cache";
+import { parsePagination } from "@/lib/api/pagination";
 
 /**
  * @openapi
@@ -25,8 +26,10 @@ import { withCache } from "@/lib/cache";
  *         description: Erreur serveur
  */
 export async function GET(request: NextRequest) {
-  const searchParams = request.nextUrl.searchParams;
-  const limit = Math.min(50, Math.max(1, parseInt(searchParams.get("limit") || "15", 10)));
+  const { limit } = parsePagination(request.nextUrl.searchParams, {
+    defaultLimit: 15,
+    maxLimit: 50,
+  });
 
   try {
     const stats = await factcheckStatsService.getFactCheckStats({ limit });

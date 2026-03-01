@@ -1,14 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { withAdminAuth } from "@/lib/api/with-admin-auth";
+import { parsePagination } from "@/lib/api/pagination";
 
 export const GET = withAdminAuth(async (request: NextRequest) => {
   const { searchParams } = new URL(request.url);
   const search = searchParams.get("search");
   const days = searchParams.get("days"); // "7", "30", or null (all)
-  const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
-  const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") || "50", 10)));
-  const skip = (page - 1) * limit;
+  const { page, limit, skip } = parsePagination(searchParams);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const where: any = {};

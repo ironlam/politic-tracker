@@ -28,6 +28,7 @@ enum ModerationRecommendation {
 model Politician {
   id           String    @id @default(cuid())
   slug         String    @unique
+  publicId     String?   @unique // "PG-000542" — stable public identifier
   civility     String? // M. ou Mme
   firstName    String
   lastName     String
@@ -65,8 +66,9 @@ model Politician {
   factCheckMentions FactCheckMention[] // Mentions in fact-checks
   candidacies       Candidacy[] // Election candidacies
   candidates        Candidate[] // Local election candidates linked to this politician
-  localOffices      LocalOfficial[] // Local offices from RNE
-  participation     PoliticianParticipation? // Pre-computed participation stats
+  localOffices        LocalOfficial[] // Local offices from RNE
+  participation       PoliticianParticipation? // Pre-computed participation stats
+  identityDecisions   IdentityDecision[] // Identity resolution audit trail
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -94,6 +96,13 @@ model ExternalId {
   externalId String // ID in the external system
   url        String? // Direct URL to the source page
 
+  // Identity resolution metadata
+  confidence  Float?        // 0.0 to 1.0 matching confidence
+  matchedBy   MatchMethod?  // How the link was established
+  verifiedAt  DateTime?     // Manual validation timestamp
+  verifiedBy  String?       // Who validated ("admin:ldiaby")
+  metadata    Json?         // Free-form context { birthDateMatch, deptMatch, etc. }
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -101,6 +110,27 @@ model ExternalId {
   @@index([politicianId])
   @@index([partyId])
   @@index([source])
+}
+
+// Audit trail for identity matching decisions
+model IdentityDecision {
+  id            String      @id @default(cuid())
+  sourceType    DataSource
+  sourceId      String      // The external ID or source identifier
+  politicianId  String
+  judgement     Judgement
+  confidence    Float       // 0.0 to 1.0
+  method        MatchMethod
+  evidence      Json        // { birthDateMatch: false, deptMatch: true, nameScore: 0.95 }
+  decidedBy     String      // "system:sync-rne" or "admin:ldiaby"
+  decidedAt     DateTime    @default(now())
+  supersededBy  String?     // ID of the decision that replaces this one
+
+  politician    Politician  @relation(fields: [politicianId], references: [id], onDelete: Cascade)
+
+  @@index([sourceType, sourceId])
+  @@index([politicianId])
+  @@index([judgement])
 }
 
 enum DataSource {
@@ -114,6 +144,22 @@ enum DataSource {
   WIKIPEDIA
   MANUAL
   RNE
+}
+
+enum MatchMethod {
+  EXTERNAL_ID
+  BIRTHDATE
+  DEPARTMENT
+  NAME_ONLY
+  AI_ASSISTED
+  MANUAL
+  WIKIDATA_PIVOT
+}
+
+enum Judgement {
+  SAME
+  NOT_SAME
+  UNDECIDED
 }
 
 model Party {

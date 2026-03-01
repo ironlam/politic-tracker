@@ -5,6 +5,7 @@ import { PoliticianCard } from "./PoliticianCard";
 const mockPolitician = {
   id: "1",
   slug: "jean-dupont",
+  publicId: null,
   civility: "M." as const,
   firstName: "Jean",
   lastName: "Dupont",

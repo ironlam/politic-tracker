@@ -1,14 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { isAuthenticated } from "@/lib/auth";
+import { withAdminAuth } from "@/lib/api/with-admin-auth";
 import type { Prisma } from "@/generated/prisma";
 
-export async function GET(request: NextRequest) {
-  const authenticated = await isAuthenticated();
-  if (!authenticated) {
-    return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
-  }
-
+export const GET = withAdminAuth(async (request) => {
   const { searchParams } = new URL(request.url);
   const entityType = searchParams.get("entityType");
   const action = searchParams.get("action");
@@ -51,4 +46,4 @@ export async function GET(request: NextRequest) {
     data: entries,
     pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
   });
-}
+});

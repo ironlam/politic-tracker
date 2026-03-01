@@ -1,19 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { isAuthenticated } from "@/lib/auth";
+import { withAdminAuth } from "@/lib/api/with-admin-auth";
 import { revalidateTags } from "@/lib/cache";
 import { revalidatePath } from "next/cache";
 
-interface RouteContext {
-  params: Promise<{ id: string }>;
-}
-
-export async function PUT(request: NextRequest, context: RouteContext) {
-  const authenticated = await isAuthenticated();
-  if (!authenticated) {
-    return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
-  }
-
+export const PUT = withAdminAuth(async (request, context) => {
   const { id } = await context.params;
   const data = await request.json();
 
@@ -36,18 +27,13 @@ export async function PUT(request: NextRequest, context: RouteContext) {
   revalidateTags(["feature-flags"]);
   revalidatePath("/", "layout");
   return NextResponse.json(flag);
-}
+});
 
-export async function DELETE(_request: NextRequest, context: RouteContext) {
-  const authenticated = await isAuthenticated();
-  if (!authenticated) {
-    return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
-  }
-
+export const DELETE = withAdminAuth(async (_request, context) => {
   const { id } = await context.params;
   await db.featureFlag.delete({ where: { id } });
   revalidateTags(["feature-flags"]);
   revalidatePath("/", "layout");
 
   return NextResponse.json({ success: true });
-}
+});

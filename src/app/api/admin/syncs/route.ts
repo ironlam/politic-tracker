@@ -1,15 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { isAuthenticated } from "@/lib/auth";
+import { withAdminAuth } from "@/lib/api/with-admin-auth";
 
 const STALE_JOB_TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes
 
-export async function GET(request: NextRequest) {
-  const authenticated = await isAuthenticated();
-  if (!authenticated) {
-    return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
-  }
-
+export const GET = withAdminAuth(async (request) => {
   // Cleanup stale jobs (stuck PENDING/RUNNING > 30 minutes)
   await db.syncJob.updateMany({
     where: {
@@ -46,14 +41,9 @@ export async function GET(request: NextRequest) {
     running,
     pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
   });
-}
+});
 
-export async function POST(request: NextRequest) {
-  const authenticated = await isAuthenticated();
-  if (!authenticated) {
-    return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
-  }
-
+export const POST = withAdminAuth(async (request) => {
   const { script } = await request.json();
   if (!script || typeof script !== "string") {
     return NextResponse.json({ error: "Script requis" }, { status: 400 });
@@ -92,4 +82,4 @@ export async function POST(request: NextRequest) {
   }
 
   return NextResponse.json(job, { status: 201 });
-}
+});

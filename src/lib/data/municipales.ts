@@ -470,7 +470,7 @@ export interface MaireStats {
 export async function getMaireStats(): Promise<MaireStats> {
   "use cache";
   cacheTag("maires-stats", "elections");
-  cacheLife("hours");
+  cacheLife("minutes");
 
   const [counts] = await db.$queryRaw<
     [{ total: number; female: number; with_party: number; with_politician: number }]
@@ -593,7 +593,7 @@ export async function getMairesFiltered(
 ) {
   "use cache";
   cacheTag("maires-listing", "elections");
-  cacheLife("hours");
+  cacheLife("minutes");
   return queryMaires(undefined, departmentCode, partyId, gender, page);
 }
 
@@ -626,7 +626,7 @@ export async function getMaires(
 export async function getMaireParties() {
   "use cache";
   cacheTag("maires-listing", "elections");
-  cacheLife("hours");
+  cacheLife("minutes");
 
   return db.party.findMany({
     where: {

@@ -116,6 +116,22 @@ enum DataSource {
   RNE
 }
 
+enum MatchMethod {
+  EXTERNAL_ID
+  BIRTHDATE
+  DEPARTMENT
+  NAME_ONLY
+  AI_ASSISTED
+  MANUAL
+  WIKIDATA_PIVOT
+}
+
+enum Judgement {
+  SAME
+  NOT_SAME
+  UNDECIDED
+}
+
 model Party {
   id          String  @id @default(cuid())
   slug        String? @unique // URL-friendly identifier

@@ -36,10 +36,11 @@ export const postSocial = inngest.createFunction(
       return { status: "skipped", reason: "no content generated" };
     }
 
-    const { resolvedCategory, ...tweetDraft } = draft;
+    const { resolvedCategory: resolvedCategoryRaw, ...tweetDraft } = draft;
+    const resolvedCategory = resolvedCategoryRaw!;
     const { isSensitiveCategory } = await import("@/lib/social/config");
 
-    if (isSensitiveCategory(resolvedCategory!)) {
+    if (isSensitiveCategory(resolvedCategory)) {
       // Queue for editorial review
       const postId = await step.run("queue-review", async () => {
         const { db } = await import("@/lib/db");
@@ -63,7 +64,7 @@ export const postSocial = inngest.createFunction(
 
         await notifySlackReview({
           id: post.id,
-          category: resolvedCategory!,
+          category: resolvedCategory,
           content: fullText,
           link: tweetDraft.link,
         });

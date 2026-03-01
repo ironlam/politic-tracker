@@ -10,7 +10,7 @@ import type { AffairStatus, AffairCategory, AffairSeverity, Involvement } from "
 export async function getPartiesWithAffairs() {
   "use cache";
   cacheTag("affairs", "parties");
-  cacheLife("hours");
+  cacheLife("minutes");
 
   const parties = await db.party.findMany({
     where: {

@@ -10,7 +10,7 @@ import { db } from "@/lib/db";
 async function getSearchIndex() {
   "use cache";
   cacheTag("politicians", "parties");
-  cacheLife("hours");
+  cacheLife("minutes");
 
   const [politicians, parties] = await Promise.all([
     db.politician.findMany({

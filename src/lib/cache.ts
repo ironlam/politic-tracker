@@ -30,7 +30,8 @@ export type EntityType =
   | "vote"
   | "dossier"
   | "factcheck"
-  | "stats";
+  | "stats"
+  | "election";
 
 // Cache life profile used by "use cache" functions — must match cacheLife() calls
 const CACHE_PROFILE = "minutes";
@@ -94,6 +95,10 @@ export function invalidateEntity(type: EntityType, slug?: string): void {
       revalidatePath("/api/stats/departments", "layout");
       revalidateTag("stats", CACHE_PROFILE);
       break;
+
+    case "election":
+      revalidateTag("elections", CACHE_PROFILE);
+      break;
   }
 }
 
@@ -106,6 +111,7 @@ export const ALL_TAGS = [
   "stats",
   "dossiers",
   "factchecks",
+  "elections",
 ] as const;
 
 export type CacheTag = (typeof ALL_TAGS)[number];

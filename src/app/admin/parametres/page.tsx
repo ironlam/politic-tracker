@@ -17,6 +17,7 @@ const TAG_LABELS: Record<CacheTag, string> = {
   stats: "Statistiques",
   dossiers: "Dossiers",
   factchecks: "Fact-checks",
+  elections: "Élections",
 };
 
 const ALL_CACHE_TAGS = Object.keys(TAG_LABELS) as CacheTag[];

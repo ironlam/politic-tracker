@@ -469,7 +469,7 @@ export interface MaireStats {
 /** Aggregated stats for all current maires — cached with tag */
 export async function getMaireStats(): Promise<MaireStats> {
   "use cache";
-  cacheTag("maires-stats");
+  cacheTag("maires-stats", "elections");
   cacheLife("hours");
 
   const [counts] = await db.$queryRaw<
@@ -592,7 +592,7 @@ export async function getMairesFiltered(
   page = 1
 ) {
   "use cache";
-  cacheTag("maires-listing");
+  cacheTag("maires-listing", "elections");
   cacheLife("hours");
   return queryMaires(undefined, departmentCode, partyId, gender, page);
 }
@@ -625,7 +625,7 @@ export async function getMaires(
 /** Get parties that have at least one maire (for filter dropdown) */
 export async function getMaireParties() {
   "use cache";
-  cacheTag("maires-listing");
+  cacheTag("maires-listing", "elections");
   cacheLife("hours");
 
   return db.party.findMany({

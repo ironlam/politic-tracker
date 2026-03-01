@@ -347,9 +347,38 @@ export interface PoliticianVotingStats {
 export async function getPoliticianVotingStats(
   politicianId: string
 ): Promise<PoliticianVotingStats> {
+  // Find current parliamentary mandate first — we need it to scope vote counts
+  const mandate = await db.mandate.findFirst({
+    where: {
+      politicianId,
+      isCurrent: true,
+      type: { in: ["DEPUTE", "SENATEUR"] },
+    },
+    select: { startDate: true, endDate: true, type: true },
+  });
+
+  // Scope votes to the current mandate period to avoid mixing legislatures
+  const chamber = mandate
+    ? mandate.type === "DEPUTE"
+      ? ("AN" as const)
+      : ("SENAT" as const)
+    : undefined;
+  const voteWhere = {
+    politicianId,
+    ...(mandate && {
+      scrutin: {
+        chamber,
+        votingDate: {
+          gte: mandate.startDate!,
+          ...(mandate.endDate ? { lte: mandate.endDate } : {}),
+        },
+      },
+    }),
+  };
+
   const stats = await db.vote.groupBy({
     by: ["position"],
-    where: { politicianId },
+    where: voteWhere,
     _count: true,
   });
 
@@ -384,22 +413,12 @@ export async function getPoliticianVotingStats(
     }
   }
 
-  // Compute real participation based on eligible scrutins during mandate period
-  const mandate = await db.mandate.findFirst({
-    where: {
-      politicianId,
-      isCurrent: true,
-      type: { in: ["DEPUTE", "SENATEUR"] },
-    },
-    select: { startDate: true, endDate: true, type: true },
-  });
-
+  // Compute participation based on eligible scrutins during mandate period
   if (mandate) {
-    const chamber = mandate.type === "DEPUTE" ? "AN" : "SENAT";
     const eligibleRows = await db.$queryRaw<[{ count: number }]>`
       SELECT COUNT(*)::int as "count"
       FROM "Scrutin" s
-      WHERE s.chamber = ${chamber}::"Chamber"
+      WHERE s.chamber = ${chamber!}::"Chamber"
         AND s."votingDate" >= ${mandate.startDate}
         AND (${mandate.endDate}::timestamp IS NULL OR s."votingDate" <= ${mandate.endDate})
     `;

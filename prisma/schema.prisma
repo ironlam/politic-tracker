@@ -28,6 +28,7 @@ enum ModerationRecommendation {
 model Politician {
   id           String    @id @default(cuid())
   slug         String    @unique
+  publicId     String?   @unique // "PG-000542" — stable public identifier
   civility     String? // M. ou Mme
   firstName    String
   lastName     String

@@ -7,35 +7,24 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatDate, formatCompactCurrency } from "@/lib/utils";
 import {
-  AFFAIR_STATUS_LABELS,
-  AFFAIR_STATUS_COLORS,
-  AFFAIR_STATUS_NEEDS_PRESUMPTION,
-  AFFAIR_CATEGORY_LABELS,
-  INVOLVEMENT_LABELS,
-  INVOLVEMENT_COLORS,
   MANDATE_TYPE_LABELS,
-  VOTE_POSITION_DOT_COLORS,
   FACTCHECK_RATING_LABELS,
   FACTCHECK_RATING_COLORS,
   PARTY_ROLE_LABELS,
   feminizePartyRole,
-  SEVERITY_SORT_ORDER,
 } from "@/config/labels";
-import type { AffairSeverity, AffairStatus, AffairCategory } from "@/types";
 import { ensureContrast } from "@/lib/contrast";
-import type { Involvement } from "@/types";
 import { PoliticianAvatar } from "@/components/politicians/PoliticianAvatar";
 import { MandateTimeline } from "@/components/politicians/MandateTimeline";
 import { InteractiveTimeline } from "@/components/politicians/InteractiveTimeline";
 import { PersonJsonLd, BreadcrumbJsonLd } from "@/components/seo/JsonLd";
-import { SentenceDetails } from "@/components/affairs/SentenceDetails";
-import { AffairTimeline } from "@/components/affairs/AffairTimeline";
-import { VotePositionBadge, ParliamentaryCard } from "@/components/votes";
 import { DeclarationCard } from "@/components/declarations/DeclarationCard";
 import type { DeclarationDetails } from "@/types/hatvp";
 import { BetaDisclaimer } from "@/components/BetaDisclaimer";
 import { ProfileTabs } from "@/components/politicians/ProfileTabs";
 import { CareerTimeline } from "@/components/politicians/CareerTimeline";
+import { AffairsSection } from "@/components/politicians/AffairsSection";
+import { VotesSection } from "@/components/politicians/VotesSection";
 import { getPoliticianVotingStats, getPoliticianParliamentaryCard } from "@/services/voteStats";
 import { getPolitician } from "@/lib/data/politicians";
 
@@ -144,165 +133,6 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
-// Affair card for the profile page — variant controls border color
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function AffairCard({ affair, variant }: { affair: any; variant: "critique" | "other" }) {
-  const borderClass =
-    variant === "critique"
-      ? "border-red-200 bg-red-50/30 dark:border-red-900/50 dark:bg-red-950/20"
-      : "border-gray-200 dark:border-gray-700";
-
-  return (
-    <div
-      id={`affair-${affair.id}`}
-      className={`border rounded-lg p-4 overflow-hidden ${borderClass}`}
-    >
-      {/* Header */}
-      <div className="mb-3">
-        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-4">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1 flex-wrap">
-              {(affair.verdictDate || affair.startDate || affair.factsDate) && (
-                <Badge variant="secondary" className="font-mono text-base font-bold">
-                  {new Date(
-                    affair.verdictDate || affair.startDate || affair.factsDate!
-                  ).getFullYear()}
-                </Badge>
-              )}
-              <h3 className="font-semibold text-lg">{affair.title}</h3>
-            </div>
-          </div>
-          <Badge
-            className={`self-start whitespace-nowrap ${AFFAIR_STATUS_COLORS[affair.status as AffairStatus]}`}
-          >
-            {AFFAIR_STATUS_LABELS[affair.status as AffairStatus]}
-          </Badge>
-        </div>
-        <div className="flex flex-wrap items-center gap-2 mt-2">
-          <Badge variant="outline" className="text-xs">
-            {AFFAIR_CATEGORY_LABELS[affair.category as AffairCategory]}
-          </Badge>
-          {affair.partyAtTime && (
-            <Badge
-              variant="outline"
-              className="text-xs"
-              title={affair.partyAtTime.name}
-              style={{
-                borderColor: affair.partyAtTime.color || undefined,
-                color: affair.partyAtTime.color
-                  ? ensureContrast(affair.partyAtTime.color, "#ffffff")
-                  : undefined,
-              }}
-            >
-              {affair.partyAtTime.shortName} à l&apos;époque
-            </Badge>
-          )}
-        </div>
-      </div>
-
-      {/* Description */}
-      <p className="text-sm text-muted-foreground mb-3">{affair.description}</p>
-
-      {/* Dates & details */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs mb-3">
-        {affair.factsDate && (
-          <div>
-            <span className="text-muted-foreground">Faits :</span>{" "}
-            <span className="font-medium">{formatDate(affair.factsDate)}</span>
-          </div>
-        )}
-        {affair.startDate && (
-          <div>
-            <span className="text-muted-foreground">Révélation :</span>{" "}
-            <span className="font-medium">{formatDate(affair.startDate)}</span>
-          </div>
-        )}
-        {affair.verdictDate && (
-          <div>
-            <span className="text-muted-foreground">Verdict :</span>{" "}
-            <span className="font-medium">{formatDate(affair.verdictDate)}</span>
-          </div>
-        )}
-        {affair.appeal && (
-          <div>
-            <Badge variant="outline" className="text-xs bg-orange-50">
-              En appel
-            </Badge>
-          </div>
-        )}
-      </div>
-
-      {/* Jurisdiction info */}
-      {(affair.court || affair.caseNumber) && (
-        <div className="text-xs text-muted-foreground mb-3">
-          {affair.court && <span>{affair.court}</span>}
-          {affair.chamber && <span> - {affair.chamber}</span>}
-          {affair.caseNumber && <span className="ml-2 font-mono">({affair.caseNumber})</span>}
-        </div>
-      )}
-
-      {/* Sentence details */}
-      <div className="mb-3">
-        <SentenceDetails affair={affair} />
-      </div>
-
-      {/* Timeline */}
-      {affair.events && affair.events.length > 0 && (
-        <div className="mb-3 border-t pt-3">
-          <AffairTimeline events={affair.events} />
-        </div>
-      )}
-
-      {/* Presumption of innocence */}
-      {AFFAIR_STATUS_NEEDS_PRESUMPTION[affair.status as AffairStatus] &&
-        (affair.involvement === "DIRECT" || affair.involvement === "INDIRECT") && (
-          <p className="text-xs text-amber-700 bg-amber-50 p-2 rounded mb-3">
-            Présomption d&apos;innocence : cette affaire est en cours, la personne est présumée
-            innocente jusqu&apos;à condamnation définitive.
-          </p>
-        )}
-
-      {/* Sources */}
-      {affair.sources.length > 0 && (
-        <details className="text-xs">
-          <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
-            Sources ({affair.sources.length})
-          </summary>
-          <ul className="mt-2 space-y-1 pl-4">
-            {affair.sources.map(
-              (source: {
-                id: string;
-                url: string;
-                title: string;
-                publisher: string;
-                publishedAt: Date;
-              }) => (
-                <li key={source.id}>
-                  <a
-                    href={source.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 hover:underline"
-                  >
-                    {source.title}
-                  </a>
-                  <span className="text-muted-foreground">
-                    {" "}
-                    — {source.publisher}
-                    {source.publisher.toLowerCase() === "wikidata"
-                      ? `, mis à jour le ${formatDate(source.publishedAt)}`
-                      : `, ${formatDate(source.publishedAt)}`}
-                  </span>
-                </li>
-              )
-            )}
-          </ul>
-        </details>
-      )}
-    </div>
-  );
-}
-
 export default async function PoliticianPage({ params }: PageProps) {
   const { slug } = await params;
   const politician = await getPolitician(slug);
@@ -335,37 +165,8 @@ export default async function PoliticianPage({ params }: PageProps) {
       : null,
   ]);
 
-  // Split affairs by involvement: direct (mis en cause) vs mentions vs victim
-  const STATUS_SEVERITY: Record<string, number> = {
-    CONDAMNATION_DEFINITIVE: 0,
-    CONDAMNATION_PREMIERE_INSTANCE: 1,
-    APPEL_EN_COURS: 2,
-    PROCES_EN_COURS: 3,
-    RENVOI_TRIBUNAL: 4,
-    MISE_EN_EXAMEN: 5,
-    INSTRUCTION: 6,
-    ENQUETE_PRELIMINAIRE: 7,
-    RELAXE: 8,
-    ACQUITTEMENT: 9,
-    NON_LIEU: 10,
-    PRESCRIPTION: 11,
-    CLASSEMENT_SANS_SUITE: 12,
-  };
-  const directAffairs = politician.affairs
-    .filter((a) => a.involvement === "DIRECT")
-    .sort((a, b) => {
-      // Primary: severity (CRITIQUE first)
-      const sevDiff =
-        (SEVERITY_SORT_ORDER[a.severity as AffairSeverity] ?? 2) -
-        (SEVERITY_SORT_ORDER[b.severity as AffairSeverity] ?? 2);
-      if (sevDiff !== 0) return sevDiff;
-      // Secondary: status severity
-      return (STATUS_SEVERITY[a.status] ?? 99) - (STATUS_SEVERITY[b.status] ?? 99);
-    });
-
-  // Group direct affairs into editorial sections
-  const critiqueAffairs = directAffairs.filter((a) => a.severity === "CRITIQUE");
-  const otherDirectAffairs = directAffairs.filter((a) => a.severity !== "CRITIQUE");
+  // Split affairs by involvement for sidebar stats and timeline
+  const directAffairs = politician.affairs.filter((a) => a.involvement === "DIRECT");
   const mentionAffairs = politician.affairs.filter(
     (a) =>
       a.involvement === "INDIRECT" ||
@@ -830,331 +631,29 @@ export default async function PoliticianPage({ params }: PageProps) {
                 />
               }
               votesContent={
-                (voteData && voteData.stats.total > 0) || parliamentaryCard
-                  ? (
-                    <div className="space-y-8">
-                      {/* Parliamentary mandate card */}
-                      {parliamentaryCard && currentMandate && (
-                        <ParliamentaryCard
-                          data={parliamentaryCard}
-                          groupCode={currentGroup?.code ?? null}
-                          groupName={currentGroup?.name ?? null}
-                          groupColor={currentGroup?.color ?? null}
-                          constituency={currentMandate.constituency ?? null}
-                          mandateTitle={currentMandate.title}
-                        />
-                      )}
-
-                      {/* Votes */}
-                      {voteData && voteData.stats.total > 0 && (
-                        <Card id="votes">
-                          <CardHeader>
-                            <div className="flex items-center justify-between">
-                              <h2 className="leading-none font-semibold">Votes parlementaires</h2>
-                              <Link
-                                href={`/politiques/${politician.slug}/votes`}
-                                className="text-sm text-primary hover:underline"
-                              >
-                                Voir tout →
-                              </Link>
-                            </div>
-                          </CardHeader>
-                          <CardContent className="space-y-4">
-                            {/* Stats summary */}
-                            <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 text-center">
-                              <div className="p-2 bg-green-50 rounded-lg">
-                                <p className="text-lg font-bold text-green-600">{voteData.stats.pour}</p>
-                                <p className="text-xs text-muted-foreground">Pour</p>
-                              </div>
-                              <div className="p-2 bg-red-50 rounded-lg">
-                                <p className="text-lg font-bold text-red-600">{voteData.stats.contre}</p>
-                                <p className="text-xs text-muted-foreground">Contre</p>
-                              </div>
-                              <div className="p-2 bg-yellow-50 rounded-lg">
-                                <p className="text-lg font-bold text-yellow-600">
-                                  {voteData.stats.abstention}
-                                </p>
-                                <p className="text-xs text-muted-foreground">Abstention</p>
-                              </div>
-                              <div className="p-2 bg-slate-50 rounded-lg">
-                                <p className="text-lg font-bold text-slate-600">{voteData.stats.nonVotant}</p>
-                                <p className="text-xs text-muted-foreground">Non-votant</p>
-                              </div>
-                              <div className="p-2 bg-gray-50 rounded-lg">
-                                <p className="text-lg font-bold text-gray-600">{voteData.stats.absent}</p>
-                                <p className="text-xs text-muted-foreground">Absent</p>
-                              </div>
-                            </div>
-
-                            {/* Participation bar */}
-                            <div>
-                              <div className="flex justify-between text-sm mb-1">
-                                <span className="text-muted-foreground">Participation</span>
-                                <span className="font-medium">{voteData.stats.participationRate}%</span>
-                              </div>
-                              <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                                <div
-                                  className="h-full bg-blue-500"
-                                  style={{ width: `${voteData.stats.participationRate}%` }}
-                                />
-                              </div>
-                            </div>
-
-                            {/* Recent votes */}
-                            {voteData.recentVotes.length > 0 && (
-                              <div>
-                                <p className="text-sm font-medium mb-2">Derniers votes</p>
-                                <div className="space-y-2">
-                                  {voteData.recentVotes.map((vote) => (
-                                    <div key={vote.id} className="flex items-start gap-2 text-sm">
-                                      <span
-                                        className={`w-2 h-2 mt-1.5 shrink-0 rounded-full ${VOTE_POSITION_DOT_COLORS[vote.position]}`}
-                                      />
-                                      <Link
-                                        href={`/votes/${vote.scrutin.id}`}
-                                        className="flex-1 hover:underline"
-                                      >
-                                        {vote.scrutin.title}
-                                      </Link>
-                                      <VotePositionBadge position={vote.position} size="sm" />
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                          </CardContent>
-                        </Card>
-                      )}
-                    </div>
-                  )
-                  : null
+                (voteData && voteData.stats.total > 0) || parliamentaryCard ? (
+                  <VotesSection
+                    slug={politician.slug}
+                    voteData={voteData!}
+                    parliamentaryCard={parliamentaryCard}
+                    currentMandate={
+                      currentMandate
+                        ? {
+                            type: currentMandate.type,
+                            title: currentMandate.title,
+                            constituency: currentMandate.constituency,
+                          }
+                        : null
+                    }
+                    currentGroup={currentGroup ?? null}
+                  />
+                ) : null
               }
               affairsContent={
-                <div className="space-y-8">
-                  {/* Affairs — Accused / Involved */}
-                  <Card id="affaires">
-                    <CardHeader>
-                      <h2 className="leading-none font-semibold">Affaires judiciaires</h2>
-                    </CardHeader>
-                    <CardContent>
-                      {directAffairs.length > 0 ? (
-                        <div className="space-y-8">
-                          {/* Atteintes à la probité (CRITIQUE) */}
-                          {critiqueAffairs.length > 0 && (
-                            <div>
-                              <h3 className="text-lg font-semibold text-red-700 dark:text-red-400 mb-1">
-                                Atteintes à la probité ({critiqueAffairs.length})
-                              </h3>
-                              <p className="text-sm text-muted-foreground mb-4">
-                                Infractions liées à l&apos;exercice du mandat public
-                              </p>
-                              <div className="space-y-6">
-                                {critiqueAffairs.map((affair) => (
-                                  <AffairCard key={affair.id} affair={affair} variant="critique" />
-                                ))}
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Autres affaires judiciaires (GRAVE + SIGNIFICATIF) */}
-                          {otherDirectAffairs.length > 0 && (
-                            <div>
-                              {critiqueAffairs.length > 0 && (
-                                <h3 className="text-lg font-semibold text-muted-foreground mb-4">
-                                  Autres affaires judiciaires ({otherDirectAffairs.length})
-                                </h3>
-                              )}
-                              <div className="space-y-6">
-                                {otherDirectAffairs.map((affair) => (
-                                  <AffairCard key={affair.id} affair={affair} variant="other" />
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      ) : (
-                        <div>
-                          <p className="text-muted-foreground">
-                            Aucune affaire judiciaire documentée à ce jour.
-                          </p>
-                          <p className="text-xs text-muted-foreground/70 mt-1">
-                            Cela ne signifie pas l&apos;absence d&apos;affaire — nos données sont
-                            enrichies progressivement.
-                          </p>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-
-                  {/* Affairs — Mentions (INDIRECT / MENTIONED_ONLY / PLAINTIFF) */}
-                  {mentionAffairs.length > 0 && (
-                    <Card className="border-dashed border-gray-300 dark:border-gray-700">
-                      <CardHeader>
-                        <details>
-                          <summary className="cursor-pointer list-none flex items-center gap-2">
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              viewBox="0 0 20 20"
-                              fill="currentColor"
-                              className="w-4 h-4 text-muted-foreground transition-transform [[open]>&]:rotate-90"
-                            >
-                              <path
-                                fillRule="evenodd"
-                                d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z"
-                                clipRule="evenodd"
-                              />
-                            </svg>
-                            <h2 className="leading-none font-semibold text-muted-foreground">
-                              Mentions dans des affaires ({mentionAffairs.length})
-                            </h2>
-                          </summary>
-                          <p className="text-xs text-muted-foreground mt-2 sm:ml-6">
-                            Affaires où {politician.civility === "MME" ? "elle" : "il"} est mentionné
-                            {politician.civility === "MME" ? "e" : ""} sans être directement mis
-                            {politician.civility === "MME" ? "e" : ""} en cause.
-                          </p>
-                          <div className="mt-4 space-y-4 sm:ml-6">
-                            {mentionAffairs.map((affair) => (
-                              <div
-                                key={affair.id}
-                                className="border border-gray-200 dark:border-gray-700 rounded-lg p-3 bg-gray-50/50 dark:bg-gray-900/30"
-                              >
-                                <div className="flex items-start justify-between gap-2">
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2 flex-wrap mb-1">
-                                      <Badge
-                                        className={INVOLVEMENT_COLORS[affair.involvement as Involvement]}
-                                      >
-                                        {INVOLVEMENT_LABELS[affair.involvement as Involvement]}
-                                      </Badge>
-                                      <Link
-                                        href={`/affaires/${affair.slug || affair.id}`}
-                                        className="font-medium hover:underline"
-                                      >
-                                        {affair.title}
-                                      </Link>
-                                    </div>
-                                    {affair.description && (
-                                      <p className="text-sm text-muted-foreground line-clamp-2">
-                                        {affair.description}
-                                      </p>
-                                    )}
-                                  </div>
-                                  <Badge
-                                    variant="outline"
-                                    className="text-xs self-start whitespace-nowrap"
-                                  >
-                                    {AFFAIR_STATUS_LABELS[affair.status]}
-                                  </Badge>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </details>
-                      </CardHeader>
-                    </Card>
-                  )}
-
-                  {/* Affairs — Victim */}
-                  {victimAffairs.length > 0 && (
-                    <Card>
-                      <CardHeader>
-                        <h2 className="leading-none font-semibold">Victime d&apos;infractions</h2>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-6">
-                          {victimAffairs.map((affair) => (
-                            <div
-                              key={affair.id}
-                              id={`affair-${affair.id}`}
-                              className="border rounded-lg p-4 border-blue-200 bg-blue-50/30"
-                            >
-                              <div className="mb-3">
-                                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-4">
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2 mb-1 flex-wrap">
-                                      {(affair.verdictDate || affair.startDate || affair.factsDate) && (
-                                        <Badge
-                                          variant="secondary"
-                                          className="font-mono text-base font-bold"
-                                        >
-                                          {new Date(
-                                            affair.verdictDate || affair.startDate || affair.factsDate!
-                                          ).getFullYear()}
-                                        </Badge>
-                                      )}
-                                      <h3 className="font-semibold text-lg">{affair.title}</h3>
-                                    </div>
-                                  </div>
-                                  <div className="flex items-center gap-2 self-start">
-                                    <Badge className="bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-900/40 dark:text-blue-300 dark:border-blue-700 whitespace-nowrap">
-                                      {INVOLVEMENT_LABELS[affair.involvement]}
-                                    </Badge>
-                                    <Badge
-                                      className={`whitespace-nowrap ${AFFAIR_STATUS_COLORS[affair.status]}`}
-                                    >
-                                      {AFFAIR_STATUS_LABELS[affair.status]}
-                                    </Badge>
-                                  </div>
-                                </div>
-                                <div className="flex flex-wrap items-center gap-2 mt-2">
-                                  <Badge variant="outline" className="text-xs">
-                                    {AFFAIR_CATEGORY_LABELS[affair.category]}
-                                  </Badge>
-                                </div>
-                              </div>
-
-                              <p className="text-sm text-muted-foreground mb-3">{affair.description}</p>
-
-                              {/* Dates */}
-                              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs mb-3">
-                                {affair.factsDate && (
-                                  <div>
-                                    <span className="text-muted-foreground">Faits :</span>{" "}
-                                    <span className="font-medium">{formatDate(affair.factsDate)}</span>
-                                  </div>
-                                )}
-                                {affair.startDate && (
-                                  <div>
-                                    <span className="text-muted-foreground">Révélation :</span>{" "}
-                                    <span className="font-medium">{formatDate(affair.startDate)}</span>
-                                  </div>
-                                )}
-                              </div>
-
-                              {/* Sources */}
-                              {affair.sources.length > 0 && (
-                                <details className="text-xs">
-                                  <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
-                                    Sources ({affair.sources.length})
-                                  </summary>
-                                  <ul className="mt-2 space-y-1 pl-4">
-                                    {affair.sources.map((source) => (
-                                      <li key={source.id}>
-                                        <a
-                                          href={source.url}
-                                          target="_blank"
-                                          rel="noopener noreferrer"
-                                          className="text-blue-600 hover:underline"
-                                        >
-                                          {source.title}
-                                        </a>
-                                        <span className="text-muted-foreground">
-                                          {" "}
-                                          — {source.publisher}, {formatDate(source.publishedAt)}
-                                        </span>
-                                      </li>
-                                    ))}
-                                  </ul>
-                                </details>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
-                </div>
+                <AffairsSection
+                  affairs={politician.affairs}
+                  civility={politician.civility}
+                />
               }
             />
           </div>

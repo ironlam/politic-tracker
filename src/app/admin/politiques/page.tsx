@@ -163,13 +163,13 @@ export default async function AdminPoliticiansPage({ searchParams }: PageProps) 
                     <td className="py-3 space-x-3">
                       <Link
                         href={`/admin/politiques/${politician.id}`}
-                        className="text-sm text-blue-600 hover:underline"
+                        className="text-sm text-primary hover:underline"
                       >
                         Voir
                       </Link>
                       <Link
                         href={`/admin/politiques/${politician.id}/edit`}
-                        className="text-sm text-blue-600 hover:underline"
+                        className="text-sm text-primary hover:underline"
                       >
                         Modifier
                       </Link>

@@ -102,7 +102,7 @@ export default async function AdminAffairDetailPage({ params }: PageProps) {
               <p className="text-sm text-muted-foreground">Politique</p>
               <Link
                 href={`/politiques/${affair.politician.slug}`}
-                className="font-medium text-blue-600 hover:underline"
+                className="font-medium text-primary hover:underline"
               >
                 {affair.politician.fullName}
               </Link>
@@ -223,7 +223,7 @@ export default async function AdminAffairDetailPage({ params }: PageProps) {
                   href={source.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="font-medium text-blue-600 hover:underline"
+                  className="font-medium text-primary hover:underline"
                 >
                   {source.title}
                 </a>

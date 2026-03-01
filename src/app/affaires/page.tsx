@@ -327,7 +327,7 @@ export default async function AffairesPage({ searchParams }: PageProps) {
 
                         <Link
                           href={`/politiques/${affair.politician.slug}`}
-                          className="text-blue-600 hover:underline text-sm"
+                          className="text-primary hover:underline text-sm"
                         >
                           {affair.politician.fullName}
                         </Link>
@@ -376,7 +376,7 @@ export default async function AffairesPage({ searchParams }: PageProps) {
                         </p>
                         <Link
                           href={`/affaires/${affair.slug}`}
-                          className="text-blue-600 hover:underline text-xs"
+                          className="text-primary hover:underline text-xs"
                         >
                           Voir détails →
                         </Link>

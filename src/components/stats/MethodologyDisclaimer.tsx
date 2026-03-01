@@ -19,7 +19,7 @@ export function MethodologyDisclaimer({ children, details }: MethodologyDisclaim
         <>
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="mt-2 flex items-center gap-1 text-xs font-medium text-blue-600 dark:text-blue-400 hover:underline"
+            className="mt-2 flex items-center gap-1 text-xs font-medium text-primary hover:underline"
             aria-expanded={isOpen}
           >
             En savoir plus

@@ -167,7 +167,7 @@ export default async function AdminPoliticianPage({ params }: PageProps) {
                               href={extId.url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-blue-600 hover:underline text-xs"
+                              className="text-primary hover:underline text-xs"
                             >
                               {extId.url}
                             </a>

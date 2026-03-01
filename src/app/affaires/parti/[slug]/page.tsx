@@ -325,7 +325,7 @@ export default async function PartyAffairsPage({ params }: PageProps) {
                 </Badge>
                 <Link
                   href={`/partis/${party.slug}`}
-                  className="text-sm text-blue-600 hover:underline"
+                  className="text-sm text-primary hover:underline"
                 >
                   Voir la fiche du parti →
                 </Link>
@@ -544,7 +544,7 @@ export default async function PartyAffairsPage({ params }: PageProps) {
                     <div className="mt-1">
                       <Link
                         href={`/politiques/${affair.politician.slug}`}
-                        className="text-sm text-blue-600 hover:underline"
+                        className="text-sm text-primary hover:underline"
                       >
                         {affair.politician.fullName}
                       </Link>
@@ -581,10 +581,10 @@ export default async function PartyAffairsPage({ params }: PageProps) {
 
         {/* Back links */}
         <div className="mt-8 flex flex-wrap gap-4">
-          <Link href={`/partis/${party.slug}`} className="text-sm text-blue-600 hover:underline">
+          <Link href={`/partis/${party.slug}`} className="text-sm text-primary hover:underline">
             ← Fiche du parti {party.shortName}
           </Link>
-          <Link href="/affaires" className="text-sm text-blue-600 hover:underline">
+          <Link href="/affaires" className="text-sm text-primary hover:underline">
             ← Toutes les affaires
           </Link>
         </div>

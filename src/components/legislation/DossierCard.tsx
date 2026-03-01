@@ -133,7 +133,7 @@ export function DossierCard({
             </div>
 
             <div className="flex items-center gap-2">
-              <Link href={href} className="text-sm text-blue-600 hover:underline">
+              <Link href={href} className="text-sm text-primary hover:underline">
                 Détails
               </Link>
               {sourceUrl && (

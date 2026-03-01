@@ -134,7 +134,7 @@ export default async function AdminPartyPage({ params }: PageProps) {
                       href={party.website}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-blue-600 hover:underline"
+                      className="text-primary hover:underline"
                     >
                       {party.website}
                     </a>
@@ -191,7 +191,7 @@ export default async function AdminPartyPage({ params }: PageProps) {
                 <p className="text-sm text-muted-foreground mb-1">Succède à</p>
                 <Link
                   href={`/admin/partis/${party.predecessor.id}`}
-                  className="flex items-center gap-2 text-blue-600 hover:underline"
+                  className="flex items-center gap-2 text-primary hover:underline"
                 >
                   <div
                     className="w-3 h-3 rounded"
@@ -212,7 +212,7 @@ export default async function AdminPartyPage({ params }: PageProps) {
                     <Link
                       key={successor.id}
                       href={`/admin/partis/${successor.id}`}
-                      className="flex items-center gap-2 text-blue-600 hover:underline"
+                      className="flex items-center gap-2 text-primary hover:underline"
                     >
                       <div
                         className="w-3 h-3 rounded"
@@ -246,7 +246,7 @@ export default async function AdminPartyPage({ params }: PageProps) {
                         href={ext.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-blue-600 hover:underline"
+                        className="text-primary hover:underline"
                       >
                         Lien
                       </a>

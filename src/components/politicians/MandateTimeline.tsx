@@ -175,7 +175,7 @@ export function MandateTimeline({ mandates, civility }: MandateTimelineProps) {
                         href={mandate.officialUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-xs text-blue-600 hover:underline mt-2 inline-block"
+                        className="text-xs text-primary hover:underline mt-2 inline-block"
                       >
                         Voir sur le site officiel →
                       </a>

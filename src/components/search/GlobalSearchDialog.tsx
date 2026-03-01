@@ -379,7 +379,7 @@ export function GlobalSearchDialog() {
               <div className="px-4 py-8 text-center text-sm text-muted-foreground">
                 <p>Aucun résultat pour &laquo;&nbsp;{query}&nbsp;&raquo;</p>
                 <button
-                  className="mt-2 text-blue-600 hover:underline text-xs"
+                  className="mt-2 text-primary hover:underline text-xs"
                   onClick={() => navigate("/sources#couverture")}
                 >
                   En savoir plus sur notre couverture

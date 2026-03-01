@@ -227,7 +227,7 @@ export default function SourcesPage() {
                     href={source.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-sm text-blue-600 hover:underline shrink-0"
+                    className="text-sm text-primary hover:underline shrink-0"
                   >
                     Source
                   </a>
@@ -375,7 +375,7 @@ export default function SourcesPage() {
               <p className="text-sm text-muted-foreground">
                 Ce projet est <strong>open source</strong> et contributif. Si vous constatez une
                 absence ou une erreur, n&apos;hésitez pas à{" "}
-                <Link href="/mentions-legales" className="text-blue-600 hover:underline">
+                <Link href="/mentions-legales" className="text-primary hover:underline">
                   nous contacter
                 </Link>
                 .
@@ -450,7 +450,7 @@ export default function SourcesPage() {
             <CardContent>
               <p className="text-sm text-muted-foreground">
                 Accédez à nos données via une API REST documentée avec OpenAPI/Swagger.
-                <Link href="/docs/api" className="text-blue-600 hover:underline ml-1">
+                <Link href="/docs/api" className="text-primary hover:underline ml-1">
                   Voir la documentation
                 </Link>
               </p>
@@ -475,7 +475,7 @@ export default function SourcesPage() {
               <p className="text-sm text-muted-foreground">
                 Vérification des déclarations des politiciens par des organismes reconnus (AFP
                 Factuel, Les Décodeurs, etc.) via la Google Fact Check Tools API.
-                <Link href="/factchecks" className="text-blue-600 hover:underline ml-1">
+                <Link href="/factchecks" className="text-primary hover:underline ml-1">
                   Voir les fact-checks
                 </Link>
               </p>
@@ -489,7 +489,7 @@ export default function SourcesPage() {
               <p className="text-sm text-muted-foreground">
                 Articles politiques agrégés depuis Le Monde, Politico et Mediapart, avec détection
                 automatique des politiciens et partis mentionnés.
-                <Link href="/presse" className="text-blue-600 hover:underline ml-1">
+                <Link href="/presse" className="text-primary hover:underline ml-1">
                   Voir la revue de presse
                 </Link>
               </p>
@@ -503,7 +503,7 @@ export default function SourcesPage() {
               <p className="text-sm text-muted-foreground">
                 Assistant conversationnel basé sur nos données (RAG), avec citations obligatoires et
                 rappel de la présomption d&apos;innocence.
-                <Link href="/chat" className="text-blue-600 hover:underline ml-1">
+                <Link href="/chat" className="text-primary hover:underline ml-1">
                   Poser une question
                 </Link>
               </p>
@@ -554,7 +554,7 @@ export default function SourcesPage() {
             <p className="text-sm text-muted-foreground mb-4">
               Nous nous engageons à corriger rapidement toute erreur signalée.
             </p>
-            <Link href="/mentions-legales" className="text-sm text-blue-600 hover:underline">
+            <Link href="/mentions-legales" className="text-sm text-primary hover:underline">
               Nous contacter via les mentions légales
             </Link>
           </CardContent>

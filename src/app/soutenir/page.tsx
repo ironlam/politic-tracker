@@ -189,7 +189,7 @@ export default function SoutenirPage() {
                   href="https://github.com/ironlam/poligraph"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-blue-600 hover:underline"
+                  className="text-primary hover:underline"
                 >
                   GitHub
                   <span className="sr-only"> (ouvre un nouvel onglet)</span>
@@ -205,7 +205,7 @@ export default function SoutenirPage() {
             <CardContent>
               <p className="text-sm text-muted-foreground">
                 Vous avez repéré une erreur, une donnée obsolète ? Contactez-nous via les{" "}
-                <Link href="/mentions-legales" className="text-blue-600 hover:underline">
+                <Link href="/mentions-legales" className="text-primary hover:underline">
                   mentions légales
                 </Link>
                 . Chaque correction améliore le projet.
@@ -219,7 +219,7 @@ export default function SoutenirPage() {
             <CardContent>
               <p className="text-sm text-muted-foreground">
                 Journalistes, chercheurs, développeurs : notre{" "}
-                <Link href="/docs/api" className="text-blue-600 hover:underline">
+                <Link href="/docs/api" className="text-primary hover:underline">
                   API ouverte
                 </Link>{" "}
                 vous donne accès à toutes nos données. Créez vos propres analyses !

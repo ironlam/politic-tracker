@@ -59,7 +59,7 @@ export function ParliamentaryWorkCallout() {
 
           <button
             onClick={() => setExpanded(!expanded)}
-            className="mt-2 text-sm text-blue-600 dark:text-blue-400 hover:underline font-medium"
+            className="mt-2 text-sm text-primary hover:underline font-medium"
             aria-expanded={expanded}
           >
             {expanded ? "Réduire" : "En savoir plus"}

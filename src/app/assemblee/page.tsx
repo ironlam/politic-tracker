@@ -242,7 +242,7 @@ export default async function AssembleePage({ searchParams }: PageProps) {
           <span className="text-muted-foreground">Filtres actifs :</span>
           {statusFilter && <StatusBadge status={statusFilter as DossierStatus} />}
           {themeFilter && <CategoryBadge theme={themeFilter as ThemeCategory} />}
-          <Link href="/assemblee" className="text-blue-600 hover:underline ml-2">
+          <Link href="/assemblee" className="text-primary hover:underline ml-2">
             Effacer les filtres
           </Link>
         </div>

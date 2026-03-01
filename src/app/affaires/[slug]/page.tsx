@@ -324,7 +324,7 @@ export default async function AffairDetailPage({ params }: PageProps) {
                       href={source.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-blue-600 hover:underline font-medium"
+                      className="text-primary hover:underline font-medium"
                     >
                       {source.title || source.url}
                     </a>
@@ -381,17 +381,17 @@ export default async function AffairDetailPage({ params }: PageProps) {
         <div className="mt-8 flex flex-wrap gap-4">
           <Link
             href={`/politiques/${affair.politician.slug}`}
-            className="text-sm text-blue-600 hover:underline"
+            className="text-sm text-primary hover:underline"
           >
             ← Voir la fiche de {affair.politician.fullName}
           </Link>
-          <Link href="/affaires" className="text-sm text-blue-600 hover:underline">
+          <Link href="/affaires" className="text-sm text-primary hover:underline">
             ← Retour à la liste des affaires
           </Link>
           {affair.partyAtTime?.slug && (
             <Link
               href={`/affaires/parti/${affair.partyAtTime.slug}`}
-              className="text-sm text-blue-600 hover:underline"
+              className="text-sm text-primary hover:underline"
             >
               ← Affaires {affair.partyAtTime.shortName}
             </Link>

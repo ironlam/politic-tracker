@@ -596,7 +596,7 @@ export default async function PartyPage({ params }: PageProps) {
                         href={party.politicalPositionSourceUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-xs text-blue-600 hover:underline"
+                        className="text-xs text-primary hover:underline"
                       >
                         Voir la source
                       </a>
@@ -615,7 +615,7 @@ export default async function PartyPage({ params }: PageProps) {
                       href={party.website}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-sm text-blue-600 hover:underline"
+                      className="text-sm text-primary hover:underline"
                     >
                       Site officiel
                     </a>
@@ -638,7 +638,7 @@ export default async function PartyPage({ params }: PageProps) {
                         href={
                           party.predecessor.slug ? `/partis/${party.predecessor.slug}` : "/partis"
                         }
-                        className="inline-flex items-center gap-2 text-blue-600 hover:underline"
+                        className="inline-flex items-center gap-2 text-primary hover:underline"
                       >
                         <span
                           className="w-3 h-3 rounded-full"
@@ -656,7 +656,7 @@ export default async function PartyPage({ params }: PageProps) {
                           <Link
                             key={successor.id}
                             href={successor.slug ? `/partis/${successor.slug}` : "/partis"}
-                            className="flex items-center gap-2 text-blue-600 hover:underline"
+                            className="flex items-center gap-2 text-primary hover:underline"
                           >
                             <span
                               className="w-3 h-3 rounded-full"
@@ -707,7 +707,7 @@ export default async function PartyPage({ params }: PageProps) {
                             href={ext.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-xs text-blue-600 hover:underline"
+                            className="text-xs text-primary hover:underline"
                           >
                             {ext.source.replace("_", " ")}
                           </a>

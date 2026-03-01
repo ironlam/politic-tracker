@@ -1,11 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { isAuthenticated } from "@/lib/auth";
+import { withAdminAuth } from "@/lib/api/with-admin-auth";
 import { summarizeDossier } from "@/services/summarize";
-
-interface RouteParams {
-  params: Promise<{ id: string }>;
-}
 
 /**
  * POST /api/admin/dossiers/[id]/generate
@@ -19,86 +15,81 @@ interface RouteParams {
  *
  * The admin must review and approve before saving.
  */
-export async function POST(request: NextRequest, { params }: RouteParams) {
-  const authenticated = await isAuthenticated();
-  if (!authenticated) {
-    return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+export const POST = withAdminAuth(async (_request: NextRequest, context) => {
+  const { id } = await context.params;
+
+  // Fetch dossier from database
+  const dossier = await db.legislativeDossier.findUnique({
+    where: { id },
+    include: {
+      amendments: {
+        where: { status: "ADOPTE" },
+        take: 10,
+      },
+    },
+  });
+
+  if (!dossier) {
+    return NextResponse.json({ error: "Dossier non trouvé" }, { status: 404 });
   }
 
-  const { id } = await params;
+  // Check API key is configured
+  if (!process.env.ANTHROPIC_API_KEY) {
+    return NextResponse.json(
+      { error: "Clé API Anthropic non configurée. Contactez l'administrateur." },
+      { status: 500 }
+    );
+  }
 
-  try {
-    // Fetch dossier from database
-    const dossier = await db.legislativeDossier.findUnique({
-      where: { id },
-      include: {
-        amendments: {
-          where: { status: "ADOPTE" },
-          take: 10,
-        },
-      },
+  // Build content for summarization
+  // We use the official title and any metadata we have
+  let content = `Titre officiel: ${dossier.title}\n`;
+
+  if (dossier.number) {
+    content += `Numéro: ${dossier.number}\n`;
+  }
+
+  if (dossier.category) {
+    content += `Catégorie: ${dossier.category}\n`;
+  }
+
+  if (dossier.status) {
+    const statusLabels: Record<string, string> = {
+      DEPOSE: "Déposé",
+      EN_COMMISSION: "En commission",
+      EN_COURS: "En discussion",
+      CONSEIL_CONSTITUTIONNEL: "Conseil constitutionnel",
+      ADOPTE: "Adopté",
+      REJETE: "Rejeté",
+      RETIRE: "Retiré",
+      CADUQUE: "Caduc",
+    };
+    content += `Statut: ${statusLabels[dossier.status] || dossier.status}\n`;
+  }
+
+  if (dossier.filingDate) {
+    content += `Date de dépôt: ${dossier.filingDate.toISOString().split("T")[0]}\n`;
+  }
+
+  // Add adopted amendments info
+  if (dossier.amendments.length > 0) {
+    content += `\nAmendements adoptés (${dossier.amendments.length}):\n`;
+    dossier.amendments.forEach((a) => {
+      if (a.summary) {
+        content += `- ${a.summary}\n`;
+      } else if (a.article) {
+        content += `- Modification de l'article ${a.article}\n`;
+      }
     });
+  }
 
-    if (!dossier) {
-      return NextResponse.json({ error: "Dossier non trouvé" }, { status: 404 });
-    }
+  // Add source URL for reference
+  if (dossier.sourceUrl) {
+    content += `\nSource officielle: ${dossier.sourceUrl}`;
+  }
 
-    // Check API key is configured
-    if (!process.env.ANTHROPIC_API_KEY) {
-      return NextResponse.json(
-        { error: "Clé API Anthropic non configurée. Contactez l'administrateur." },
-        { status: 500 }
-      );
-    }
-
-    // Build content for summarization
-    // We use the official title and any metadata we have
-    let content = `Titre officiel: ${dossier.title}\n`;
-
-    if (dossier.number) {
-      content += `Numéro: ${dossier.number}\n`;
-    }
-
-    if (dossier.category) {
-      content += `Catégorie: ${dossier.category}\n`;
-    }
-
-    if (dossier.status) {
-      const statusLabels: Record<string, string> = {
-        DEPOSE: "Déposé",
-        EN_COMMISSION: "En commission",
-        EN_COURS: "En discussion",
-        CONSEIL_CONSTITUTIONNEL: "Conseil constitutionnel",
-        ADOPTE: "Adopté",
-        REJETE: "Rejeté",
-        RETIRE: "Retiré",
-        CADUQUE: "Caduc",
-      };
-      content += `Statut: ${statusLabels[dossier.status] || dossier.status}\n`;
-    }
-
-    if (dossier.filingDate) {
-      content += `Date de dépôt: ${dossier.filingDate.toISOString().split("T")[0]}\n`;
-    }
-
-    // Add adopted amendments info
-    if (dossier.amendments.length > 0) {
-      content += `\nAmendements adoptés (${dossier.amendments.length}):\n`;
-      dossier.amendments.forEach((a) => {
-        if (a.summary) {
-          content += `- ${a.summary}\n`;
-        } else if (a.article) {
-          content += `- Modification de l'article ${a.article}\n`;
-        }
-      });
-    }
-
-    // Add source URL for reference
-    if (dossier.sourceUrl) {
-      content += `\nSource officielle: ${dossier.sourceUrl}`;
-    }
-
-    // Generate summary using the AI service
+  // Generate summary using the AI service
+  try {
     const result = await summarizeDossier({
       title: dossier.title,
       content,
@@ -126,8 +117,6 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       generatedAt: new Date().toISOString(),
     });
   } catch (error) {
-    console.error("Error generating summary:", error);
-
     // Provide helpful error messages
     if (error instanceof Error) {
       if (error.message.includes("ANTHROPIC_API_KEY")) {
@@ -150,4 +139,4 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       { status: 500 }
     );
   }
-}
+});

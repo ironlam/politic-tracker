@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { isAuthenticated } from "@/lib/auth";
+import { withAdminAuth } from "@/lib/api/with-admin-auth";
 import { db } from "@/lib/db";
 import { ALL_TAGS, revalidateAll, revalidateTags } from "@/lib/cache";
 import type { CacheTag } from "@/lib/cache";
@@ -10,12 +10,7 @@ import type { CacheTag } from "@/lib/cache";
  * Invalidate Next.js cache from the admin UI.
  * Body: { all: true } or { tags: CacheTag[] }
  */
-export async function POST(request: NextRequest) {
-  const authenticated = await isAuthenticated();
-  if (!authenticated) {
-    return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
-  }
-
+export const POST = withAdminAuth(async (request: NextRequest) => {
   let body: { all?: boolean; tags?: string[] };
   try {
     body = await request.json();
@@ -65,4 +60,4 @@ export async function POST(request: NextRequest) {
     { error: "Body must contain { all: true } or { tags: string[] }" },
     { status: 400 }
   );
-}
+});

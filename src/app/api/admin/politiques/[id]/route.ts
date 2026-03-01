@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { isAuthenticated } from "@/lib/auth";
+import { withAdminAuth } from "@/lib/api/with-admin-auth";
 import { generateSlug } from "@/lib/utils";
 import { invalidateEntity } from "@/lib/cache";
 import type { DataSource, PublicationStatus } from "@/generated/prisma";
@@ -30,16 +30,7 @@ interface PoliticianInput {
   externalIds: ExternalIdInput[];
 }
 
-interface RouteContext {
-  params: Promise<{ id: string }>;
-}
-
-export async function GET(request: NextRequest, context: RouteContext) {
-  const authenticated = await isAuthenticated();
-  if (!authenticated) {
-    return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
-  }
-
+export const GET = withAdminAuth(async (_request: NextRequest, context) => {
   const { id } = await context.params;
 
   const politician = await db.politician.findUnique({
@@ -56,154 +47,144 @@ export async function GET(request: NextRequest, context: RouteContext) {
   }
 
   return NextResponse.json(politician);
-}
+});
 
-export async function PUT(request: NextRequest, context: RouteContext) {
-  const authenticated = await isAuthenticated();
-  if (!authenticated) {
-    return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
-  }
-
+export const PUT = withAdminAuth(async (request: NextRequest, context) => {
   const { id } = await context.params;
 
-  try {
-    const data: PoliticianInput = await request.json();
+  const data: PoliticianInput = await request.json();
 
-    // Check politician exists
-    const existing = await db.politician.findUnique({
-      where: { id },
-      include: { externalIds: true },
+  // Check politician exists
+  const existing = await db.politician.findUnique({
+    where: { id },
+    include: { externalIds: true },
+  });
+
+  if (!existing) {
+    return NextResponse.json({ error: "Politique non trouvé" }, { status: 404 });
+  }
+
+  // Validation
+  if (!data.firstName?.trim() || !data.lastName?.trim()) {
+    return NextResponse.json({ error: "Prénom et nom sont requis" }, { status: 400 });
+  }
+
+  // Generate fullName and slug if needed
+  const fullName = `${data.firstName.trim()} ${data.lastName.trim()}`;
+  const slug = data.slug?.trim() || generateSlug(fullName);
+
+  // Check slug uniqueness (if changed)
+  if (slug !== existing.slug) {
+    const slugExists = await db.politician.findUnique({
+      where: { slug },
+      select: { id: true },
     });
-
-    if (!existing) {
-      return NextResponse.json({ error: "Politique non trouvé" }, { status: 404 });
+    if (slugExists) {
+      return NextResponse.json(
+        { error: "Ce slug est déjà utilisé par un autre politique" },
+        { status: 400 }
+      );
     }
+  }
 
-    // Validation
-    if (!data.firstName?.trim() || !data.lastName?.trim()) {
-      return NextResponse.json({ error: "Prénom et nom sont requis" }, { status: 400 });
-    }
+  // Update politician
+  const politician = await db.politician.update({
+    where: { id },
+    data: {
+      slug,
+      civility: data.civility || null,
+      firstName: data.firstName.trim(),
+      lastName: data.lastName.trim(),
+      fullName,
+      birthDate: data.birthDate ? new Date(data.birthDate) : null,
+      birthPlace: data.birthPlace || null,
+      photoUrl: data.photoUrl || null,
+      photoSource: data.photoSource || null,
+      currentPartyId: data.currentPartyId || null,
+      deathDate: data.deathDate ? new Date(data.deathDate) : null,
+      biography: data.biography || null,
+      publicationStatus:
+        (data.publicationStatus as PublicationStatus) || existing.publicationStatus,
+    },
+  });
 
-    // Generate fullName and slug if needed
-    const fullName = `${data.firstName.trim()} ${data.lastName.trim()}`;
-    const slug = data.slug?.trim() || generateSlug(fullName);
+  // Handle external IDs
+  // Strategy: delete removed ones, update existing, create new ones
+  const existingIds = existing.externalIds.map((e) => e.id);
+  const newIds = data.externalIds.filter((e) => e.id).map((e) => e.id!);
 
-    // Check slug uniqueness (if changed)
-    if (slug !== existing.slug) {
-      const slugExists = await db.politician.findUnique({
-        where: { slug },
-        select: { id: true },
-      });
-      if (slugExists) {
-        return NextResponse.json(
-          { error: "Ce slug est déjà utilisé par un autre politique" },
-          { status: 400 }
-        );
-      }
-    }
-
-    // Update politician
-    const politician = await db.politician.update({
-      where: { id },
-      data: {
-        slug,
-        civility: data.civility || null,
-        firstName: data.firstName.trim(),
-        lastName: data.lastName.trim(),
-        fullName,
-        birthDate: data.birthDate ? new Date(data.birthDate) : null,
-        birthPlace: data.birthPlace || null,
-        photoUrl: data.photoUrl || null,
-        photoSource: data.photoSource || null,
-        currentPartyId: data.currentPartyId || null,
-        deathDate: data.deathDate ? new Date(data.deathDate) : null,
-        biography: data.biography || null,
-        publicationStatus:
-          (data.publicationStatus as PublicationStatus) || existing.publicationStatus,
-      },
+  // Delete removed IDs
+  const toDelete = existingIds.filter((eid) => !newIds.includes(eid));
+  if (toDelete.length > 0) {
+    await db.externalId.deleteMany({
+      where: { id: { in: toDelete } },
     });
+  }
 
-    // Handle external IDs
-    // Strategy: delete removed ones, update existing, create new ones
-    const existingIds = existing.externalIds.map((e) => e.id);
-    const newIds = data.externalIds.filter((e) => e.id).map((e) => e.id!);
+  // Upsert each external ID
+  for (const extId of data.externalIds) {
+    if (!extId.externalId?.trim()) continue;
 
-    // Delete removed IDs
-    const toDelete = existingIds.filter((eid) => !newIds.includes(eid));
-    if (toDelete.length > 0) {
-      await db.externalId.deleteMany({
-        where: { id: { in: toDelete } },
+    if (extId.id) {
+      // Update existing
+      await db.externalId.update({
+        where: { id: extId.id },
+        data: {
+          source: extId.source,
+          externalId: extId.externalId.trim(),
+          url: extId.url || null,
+        },
       });
-    }
+    } else {
+      // Create new - check for duplicates first
+      const exists = await db.externalId.findUnique({
+        where: {
+          source_externalId: {
+            source: extId.source,
+            externalId: extId.externalId.trim(),
+          },
+        },
+      });
 
-    // Upsert each external ID
-    for (const extId of data.externalIds) {
-      if (!extId.externalId?.trim()) continue;
-
-      if (extId.id) {
-        // Update existing
+      if (exists) {
+        // Update the existing record to point to this politician
         await db.externalId.update({
-          where: { id: extId.id },
+          where: { id: exists.id },
           data: {
+            politicianId: id,
+            url: extId.url || null,
+          },
+        });
+      } else {
+        // Create new
+        await db.externalId.create({
+          data: {
+            politicianId: id,
             source: extId.source,
             externalId: extId.externalId.trim(),
             url: extId.url || null,
           },
         });
-      } else {
-        // Create new - check for duplicates first
-        const exists = await db.externalId.findUnique({
-          where: {
-            source_externalId: {
-              source: extId.source,
-              externalId: extId.externalId.trim(),
-            },
-          },
-        });
-
-        if (exists) {
-          // Update the existing record to point to this politician
-          await db.externalId.update({
-            where: { id: exists.id },
-            data: {
-              politicianId: id,
-              url: extId.url || null,
-            },
-          });
-        } else {
-          // Create new
-          await db.externalId.create({
-            data: {
-              politicianId: id,
-              source: extId.source,
-              externalId: extId.externalId.trim(),
-              url: extId.url || null,
-            },
-          });
-        }
       }
     }
-
-    // Log action
-    await db.auditLog.create({
-      data: {
-        action: "UPDATE",
-        entityType: "Politician",
-        entityId: politician.id,
-        changes: {
-          fullName: politician.fullName,
-          photoUrl: politician.photoUrl,
-          publicationStatus: politician.publicationStatus,
-          externalIdsCount: data.externalIds.length,
-        },
-      },
-    });
-
-    invalidateEntity("politician", politician.slug);
-
-    return NextResponse.json(politician);
-  } catch (error) {
-    console.error("Error updating politician:", error);
-    return NextResponse.json({ error: "Erreur lors de la mise à jour" }, { status: 500 });
   }
-}
+
+  // Log action
+  await db.auditLog.create({
+    data: {
+      action: "UPDATE",
+      entityType: "Politician",
+      entityId: politician.id,
+      changes: {
+        fullName: politician.fullName,
+        photoUrl: politician.photoUrl,
+        publicationStatus: politician.publicationStatus,
+        externalIdsCount: data.externalIds.length,
+      },
+    },
+  });
+
+  invalidateEntity("politician", politician.slug);
+
+  return NextResponse.json(politician);
+});

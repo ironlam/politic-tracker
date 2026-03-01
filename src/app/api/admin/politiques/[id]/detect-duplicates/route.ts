@@ -1,10 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { isAuthenticated } from "@/lib/auth";
-
-interface RouteContext {
-  params: Promise<{ id: string }>;
-}
+import { withAdminAuth } from "@/lib/api/with-admin-auth";
 
 // Common French stopwords to ignore in title comparison
 const STOPWORDS = new Set([
@@ -163,12 +159,7 @@ function calculatePairScore(
   return { score: Math.min(score, 100), reasons };
 }
 
-export async function GET(_request: NextRequest, context: RouteContext) {
-  const authenticated = await isAuthenticated();
-  if (!authenticated) {
-    return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
-  }
-
+export const GET = withAdminAuth(async (_request: NextRequest, context) => {
   const { id } = await context.params;
 
   const affairs = await db.affair.findMany({
@@ -240,4 +231,4 @@ export async function GET(_request: NextRequest, context: RouteContext) {
   groups.sort((a, b) => b.score - a.score);
 
   return NextResponse.json({ groups, total: affairs.length });
-}
+});

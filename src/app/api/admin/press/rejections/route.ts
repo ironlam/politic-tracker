@@ -1,13 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { isAuthenticated } from "@/lib/auth";
+import { withAdminAuth } from "@/lib/api/with-admin-auth";
 
-export async function GET(request: NextRequest) {
-  const authenticated = await isAuthenticated();
-  if (!authenticated) {
-    return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
-  }
-
+export const GET = withAdminAuth(async (request: NextRequest) => {
   const { searchParams } = new URL(request.url);
   const search = searchParams.get("search");
   const days = searchParams.get("days"); // "7", "30", or null (all)
@@ -54,28 +49,19 @@ export async function GET(request: NextRequest) {
     data: rejections,
     pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
   });
-}
+});
 
-export async function DELETE(request: NextRequest) {
-  const authenticated = await isAuthenticated();
-  if (!authenticated) {
-    return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+export const DELETE = withAdminAuth(async (request: NextRequest) => {
+  const body = await request.json();
+  const ids = body.ids;
+
+  if (!Array.isArray(ids) || ids.length === 0) {
+    return NextResponse.json({ error: "ids requis" }, { status: 400 });
   }
 
-  try {
-    const body = await request.json();
-    const ids = body.ids;
+  const result = await db.pressAnalysisRejection.deleteMany({
+    where: { id: { in: ids } },
+  });
 
-    if (!Array.isArray(ids) || ids.length === 0) {
-      return NextResponse.json({ error: "ids requis" }, { status: 400 });
-    }
-
-    const result = await db.pressAnalysisRejection.deleteMany({
-      where: { id: { in: ids } },
-    });
-
-    return NextResponse.json({ deleted: result.count });
-  } catch {
-    return NextResponse.json({ error: "Erreur lors de la suppression" }, { status: 500 });
-  }
-}
+  return NextResponse.json({ deleted: result.count });
+});

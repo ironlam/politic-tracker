@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { isAuthenticated } from "@/lib/auth";
+import { withAdminAuth } from "@/lib/api/with-admin-auth";
 import { db } from "@/lib/db";
 
 export const maxDuration = 120;
@@ -7,13 +7,8 @@ export const maxDuration = 120;
 const SYNC_TYPES = ["factchecks", "press", "judilibre"] as const;
 type SyncType = (typeof SYNC_TYPES)[number];
 
-export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const authenticated = await isAuthenticated();
-  if (!authenticated) {
-    return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
-  }
-
-  const { id } = await params;
+export const POST = withAdminAuth(async (request: NextRequest, context) => {
+  const { id } = await context.params;
 
   const body = await request.json().catch(() => null);
   const type = body?.type as SyncType | undefined;
@@ -85,4 +80,4 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     return NextResponse.json({ error: message, type, durationMs }, { status: 500 });
   }
-}
+});

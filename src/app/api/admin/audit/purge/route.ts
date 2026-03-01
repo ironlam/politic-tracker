@@ -1,13 +1,8 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { isAuthenticated } from "@/lib/auth";
+import { withAdminAuth } from "@/lib/api/with-admin-auth";
 
-export async function POST() {
-  const authenticated = await isAuthenticated();
-  if (!authenticated) {
-    return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
-  }
-
+export const POST = withAdminAuth(async () => {
   const cutoff = new Date();
   cutoff.setDate(cutoff.getDate() - 90);
 
@@ -16,4 +11,4 @@ export async function POST() {
   });
 
   return NextResponse.json({ deleted: result.count });
-}
+});

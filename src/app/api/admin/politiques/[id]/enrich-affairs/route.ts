@@ -1,18 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { isAuthenticated } from "@/lib/auth";
+import { withAdminAuth } from "@/lib/api/with-admin-auth";
 import { db } from "@/lib/db";
 import { enrichAffair } from "@/services/affair-enrichment";
 import { BRAVE_SEARCH_RATE_LIMIT_MS } from "@/config/rate-limits";
 
 // ─── POST: enrich all affairs of a politician ────────────────
 
-export async function POST(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const authenticated = await isAuthenticated();
-  if (!authenticated) {
-    return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
-  }
-
-  const { id } = await params;
+export const POST = withAdminAuth(async (_request: NextRequest, context) => {
+  const { id } = await context.params;
 
   const politician = await db.politician.findUnique({
     where: { id },
@@ -80,4 +75,4 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
     enriched: enrichedCount,
     results,
   });
-}
+});

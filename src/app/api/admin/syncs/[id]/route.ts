@@ -1,17 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { isAuthenticated } from "@/lib/auth";
+import { withAdminAuth } from "@/lib/api/with-admin-auth";
 
-interface RouteContext {
-  params: Promise<{ id: string }>;
-}
-
-export async function GET(_request: NextRequest, context: RouteContext) {
-  const authenticated = await isAuthenticated();
-  if (!authenticated) {
-    return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
-  }
-
+export const GET = withAdminAuth(async (_request: NextRequest, context) => {
   const { id } = await context.params;
 
   const job = await db.syncJob.findUnique({ where: { id } });
@@ -20,17 +11,12 @@ export async function GET(_request: NextRequest, context: RouteContext) {
   }
 
   return NextResponse.json(job);
-}
+});
 
 /**
  * Cancel a running/pending sync job
  */
-export async function PATCH(_request: NextRequest, context: RouteContext) {
-  const authenticated = await isAuthenticated();
-  if (!authenticated) {
-    return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
-  }
-
+export const PATCH = withAdminAuth(async (_request: NextRequest, context) => {
   const { id } = await context.params;
 
   const job = await db.syncJob.findUnique({ where: { id } });
@@ -52,4 +38,4 @@ export async function PATCH(_request: NextRequest, context: RouteContext) {
   });
 
   return NextResponse.json(updated);
-}
+});

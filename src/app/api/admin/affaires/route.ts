@@ -1,18 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { generateSlug } from "@/lib/utils";
-import { isAuthenticated } from "@/lib/auth";
+import { withAdminAuth } from "@/lib/api/with-admin-auth";
 import { invalidateEntity } from "@/lib/cache";
 import { createAffairSchema } from "@/lib/validations/affairs";
 import type { AffairCategory, PublicationStatus, AffairStatus } from "@/generated/prisma";
 import { computeSeverity, isInherentlyMandateCategory } from "@/config/labels";
 
-export async function GET(request: NextRequest) {
-  const authenticated = await isAuthenticated();
-  if (!authenticated) {
-    return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
-  }
-
+export const GET = withAdminAuth(async (request: NextRequest) => {
   const { searchParams } = new URL(request.url);
   const pubStatus = searchParams.get("publicationStatus") as PublicationStatus | null;
   const category = searchParams.get("category") as AffairCategory | null;
@@ -83,111 +78,101 @@ export async function GET(request: NextRequest) {
       REJECTED: countRejected,
     },
   });
-}
+});
 
-export async function POST(request: NextRequest) {
-  const authenticated = await isAuthenticated();
-  if (!authenticated) {
-    return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+export const POST = withAdminAuth(async (request: NextRequest) => {
+  const body = await request.json();
+
+  const parsed = createAffairSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+  }
+  const data = parsed.data;
+
+  // Check politician exists
+  const politician = await db.politician.findUnique({
+    where: { id: data.politicianId },
+  });
+
+  if (!politician) {
+    return NextResponse.json({ error: "Politique non trouvé" }, { status: 404 });
   }
 
-  try {
-    const body = await request.json();
+  // Generate unique slug
+  const baseSlug = generateSlug(data.title);
+  let slug = baseSlug;
+  let counter = 1;
 
-    const parsed = createAffairSchema.safeParse(body);
-    if (!parsed.success) {
-      return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-    }
-    const data = parsed.data;
-
-    // Check politician exists
-    const politician = await db.politician.findUnique({
-      where: { id: data.politicianId },
-    });
-
-    if (!politician) {
-      return NextResponse.json({ error: "Politique non trouvé" }, { status: 404 });
-    }
-
-    // Generate unique slug
-    const baseSlug = generateSlug(data.title);
-    let slug = baseSlug;
-    let counter = 1;
-
-    while (await db.affair.findUnique({ where: { slug } })) {
-      slug = `${baseSlug}-${counter}`;
-      counter++;
-    }
-
-    // Compute severity
-    const mandateRelated = data.isRelatedToMandate ?? isInherentlyMandateCategory(data.category);
-    const severity = computeSeverity(data.category, mandateRelated);
-
-    // Create affair with sources
-    const affair = await db.affair.create({
-      data: {
-        politicianId: data.politicianId,
-        title: data.title,
-        slug,
-        description: data.description,
-        status: data.status,
-        category: data.category,
-        severity,
-        isRelatedToMandate: mandateRelated,
-        involvement: data.involvement || "DIRECT",
-        factsDate: data.factsDate ? new Date(data.factsDate) : null,
-        startDate: data.startDate ? new Date(data.startDate) : null,
-        verdictDate: data.verdictDate ? new Date(data.verdictDate) : null,
-        sentence: data.sentence || null,
-        appeal: data.appeal || false,
-        // Detailed sentence
-        prisonMonths: data.prisonMonths || null,
-        prisonSuspended: data.prisonSuspended ?? null,
-        fineAmount: data.fineAmount || null,
-        ineligibilityMonths: data.ineligibilityMonths || null,
-        communityService: data.communityService || null,
-        otherSentence: data.otherSentence || null,
-        // Jurisdiction
-        court: data.court || null,
-        chamber: data.chamber || null,
-        caseNumber: data.caseNumber || null,
-        // Judicial identifiers
-        ecli: data.ecli || null,
-        pourvoiNumber: data.pourvoiNumber || null,
-        caseNumbers: data.caseNumbers || [],
-        sources: {
-          create: data.sources.map((s) => ({
-            url: s.url,
-            title: s.title,
-            publisher: s.publisher,
-            publishedAt: new Date(s.publishedAt),
-            excerpt: s.excerpt || null,
-            sourceType: s.sourceType || "MANUAL",
-          })),
-        },
-      },
-      include: {
-        sources: true,
-        politician: { select: { fullName: true } },
-      },
-    });
-
-    // Log action
-    await db.auditLog.create({
-      data: {
-        action: "CREATE",
-        entityType: "Affair",
-        entityId: affair.id,
-        changes: { title: affair.title, politician: affair.politician.fullName },
-      },
-    });
-
-    invalidateEntity("affair");
-    invalidateEntity("politician", politician.slug);
-
-    return NextResponse.json(affair, { status: 201 });
-  } catch (error) {
-    console.error("Error creating affair:", error);
-    return NextResponse.json({ error: "Erreur lors de la création" }, { status: 500 });
+  while (await db.affair.findUnique({ where: { slug } })) {
+    slug = `${baseSlug}-${counter}`;
+    counter++;
   }
-}
+
+  // Compute severity
+  const mandateRelated = data.isRelatedToMandate ?? isInherentlyMandateCategory(data.category);
+  const severity = computeSeverity(data.category, mandateRelated);
+
+  // Create affair with sources
+  const affair = await db.affair.create({
+    data: {
+      politicianId: data.politicianId,
+      title: data.title,
+      slug,
+      description: data.description,
+      status: data.status,
+      category: data.category,
+      severity,
+      isRelatedToMandate: mandateRelated,
+      involvement: data.involvement || "DIRECT",
+      factsDate: data.factsDate ? new Date(data.factsDate) : null,
+      startDate: data.startDate ? new Date(data.startDate) : null,
+      verdictDate: data.verdictDate ? new Date(data.verdictDate) : null,
+      sentence: data.sentence || null,
+      appeal: data.appeal || false,
+      // Detailed sentence
+      prisonMonths: data.prisonMonths || null,
+      prisonSuspended: data.prisonSuspended ?? null,
+      fineAmount: data.fineAmount || null,
+      ineligibilityMonths: data.ineligibilityMonths || null,
+      communityService: data.communityService || null,
+      otherSentence: data.otherSentence || null,
+      // Jurisdiction
+      court: data.court || null,
+      chamber: data.chamber || null,
+      caseNumber: data.caseNumber || null,
+      // Judicial identifiers
+      ecli: data.ecli || null,
+      pourvoiNumber: data.pourvoiNumber || null,
+      caseNumbers: data.caseNumbers || [],
+      sources: {
+        create: data.sources.map((s) => ({
+          url: s.url,
+          title: s.title,
+          publisher: s.publisher,
+          publishedAt: new Date(s.publishedAt),
+          excerpt: s.excerpt || null,
+          sourceType: s.sourceType || "MANUAL",
+        })),
+      },
+    },
+    include: {
+      sources: true,
+      politician: { select: { fullName: true } },
+    },
+  });
+
+  // Log action
+  await db.auditLog.create({
+    data: {
+      action: "CREATE",
+      entityType: "Affair",
+      entityId: affair.id,
+      changes: { title: affair.title, politician: affair.politician.fullName },
+    },
+  });
+
+  invalidateEntity("affair");
+  invalidateEntity("politician", politician.slug);
+
+  return NextResponse.json(affair, { status: 201 });
+});

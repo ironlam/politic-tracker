@@ -1,321 +1,350 @@
 # Architecture technique
 
-> **Dernière mise à jour**: 2026-01-24
+> **Dernière mise à jour**: 2026-03-01
 
 ---
 
-## 1. Stack technique
+## 1. Vue d'ensemble
 
-| Composant       | Technologie           | Version |
-| --------------- | --------------------- | ------- |
-| Framework       | Next.js (App Router)  | 16.x    |
-| Langage         | TypeScript            | 5.x     |
-| Base de données | PostgreSQL            | 15+     |
-| ORM             | Prisma                | 7.x     |
-| UI Components   | shadcn/ui             | -       |
-| Styling         | Tailwind CSS          | 4.x     |
-| Hébergement     | Vercel                | -       |
-| Base de données | Supabase (PostgreSQL) | -       |
+Poligraph est un observatoire civique qui agrège des données publiques sur les politiques français. L'architecture suit un pattern **SSR-first** avec Next.js App Router, un **data layer cacheable** via Prisma, et des **pipelines de sync asynchrones** via Inngest.
 
----
+```mermaid
+graph TB
+    subgraph Sources["Sources de données"]
+        AN[Assemblée Nationale API]
+        SE[Sénat API]
+        GV[Gouvernement]
+        WD[Wikidata / Wikipedia]
+        HT[HATVP]
+        JD[Judilibre]
+        RSS[Flux RSS presse]
+        FC[Google Fact-Check API]
+        RNE[RNE — maires]
+    end
 
-## 2. Structure du projet
+    subgraph Sync["Pipelines de synchronisation"]
+        IG[Inngest]
+        GHA[GitHub Actions cron]
+        SC[Scripts CLI]
+    end
 
-```
-poligraph/
-├── docs/                          # Documentation
-│   ├── ARCHITECTURE.md            # Ce document
-│   ├── DATASOURCES.md             # Sources de données
-│   └── LEGAL.md                   # Considérations juridiques
-│
-├── prisma/
-│   ├── schema.prisma              # Schéma de base de données
-│   └── prisma.config.ts           # Configuration Prisma 7
-│
-├── scripts/                       # Scripts de synchronisation
-│   ├── sync-assemblee.ts          # Import députés
-│   ├── sync-senat.ts              # Import sénateurs
-│   ├── sync-gouvernement.ts       # Import gouvernement
-│   ├── sync-hatvp.ts              # Import déclarations HATVP
-│   ├── sync-photos.ts             # Sync photos multi-sources
-│   ├── sync-deceased.ts           # Sync dates de décès
-│   └── import-wikidata.ts         # Import condamnations Wikidata
-│
-├── src/
-│   ├── app/                       # Next.js App Router
-│   │   ├── (public)/              # Routes publiques
-│   │   │   ├── page.tsx           # Accueil
-│   │   │   ├── politiques/        # Liste et fiches représentants
-│   │   │   ├── partis/            # Pages partis politiques
-│   │   │   ├── affaires/          # Liste des affaires
-│   │   │   ├── statistiques/      # Dashboard statistiques
-│   │   │   └── sources/           # Page sources et manifeste
-│   │   │
-│   │   ├── admin/                 # Interface administration
-│   │   │   ├── login/             # Authentification
-│   │   │   ├── politiques/        # CRUD représentants
-│   │   │   ├── affaires/          # CRUD affaires
-│   │   │   └── partis/            # CRUD partis
-│   │   │
-│   │   └── api/                   # Routes API
-│   │       ├── admin/             # API admin (protégée)
-│   │       ├── search/            # API recherche (autocomplétion)
-│   │       └── affaires/          # API affaires publique
-│   │
-│   ├── components/                # Composants React
-│   │   ├── layout/                # Header, Footer
-│   │   ├── politicians/           # Composants représentants
-│   │   ├── theme/                 # ThemeProvider, ThemeToggle
-│   │   └── ui/                    # Composants shadcn/ui
-│   │
-│   ├── config/                    # Configuration
-│   │   └── labels.ts              # Labels, couleurs, mappings
-│   │
-│   ├── generated/                 # Code généré
-│   │   └── prisma/                # Client Prisma généré
-│   │
-│   ├── lib/                       # Utilitaires
-│   │   ├── db.ts                  # Client Prisma singleton
-│   │   └── utils.ts               # Fonctions utilitaires
-│   │
-│   ├── services/                  # Logique métier
-│   │   └── sync/                  # Services de synchronisation
-│   │       ├── assemblee.ts       # Sync Assemblée Nationale
-│   │       ├── senators.ts        # Sync Sénat
-│   │       ├── government.ts      # Sync Gouvernement
-│   │       ├── hatvp.ts           # Sync HATVP
-│   │       ├── photos.ts          # Sync photos
-│   │       ├── deceased.ts        # Sync décès
-│   │       └── types.ts           # Types partagés
-│   │
-│   └── types/                     # Types TypeScript
-│       └── index.ts               # Types partagés de l'application
-│
-└── public/                        # Fichiers statiques
+    subgraph App["Application Next.js"]
+        RSC[React Server Components]
+        DL[Data Layer — src/lib/data/]
+        API[API Routes — src/app/api/]
+        ADM[Admin Dashboard]
+    end
+
+    subgraph Infra["Infrastructure"]
+        PG[(PostgreSQL / Supabase)]
+        VC[Vercel — hébergement]
+        BS[Blob Store — images]
+    end
+
+    Sources --> Sync
+    Sync --> PG
+    RSC --> DL --> PG
+    API --> PG
+    ADM --> API
+    VC --> RSC
 ```
 
 ---
 
-## 3. Modèle de données
+## 2. Stack technique
 
-### 3.1 Entités principales
+| Composant | Technologie | Version |
+|-----------|------------|---------|
+| Framework | Next.js (App Router) | 16.x |
+| Langage | TypeScript (strict) | 5.x |
+| Base de données | PostgreSQL | 16+ |
+| ORM | Prisma | 7.x |
+| UI Components | shadcn/ui + Radix | - |
+| Styling | Tailwind CSS | 4.x |
+| Charts | D3.js (SVG) | 7.x |
+| Tests | Vitest + React Testing Library | - |
+| Hébergement | Vercel | - |
+| BDD managée | Supabase (PostgreSQL) | - |
+| Jobs async | Inngest | - |
+| CI | GitHub Actions | - |
+
+---
+
+## 3. Structure du projet
 
 ```
-┌─────────────────┐     ┌─────────────────┐
-│   Politician    │────<│    Mandate      │
-├─────────────────┤     ├─────────────────┤
-│ id              │     │ id              │
-│ firstName       │     │ type            │
-│ lastName        │     │ title           │
-│ fullName        │     │ institution     │
-│ slug            │     │ startDate       │
-│ civility        │     │ endDate         │
-│ birthDate       │     │ isCurrent       │
-│ deathDate       │     └─────────────────┘
-│ photoUrl        │
-│ photoSource     │     ┌─────────────────┐
-│ currentPartyId  │────>│     Party       │
-└─────────────────┘     ├─────────────────┤
-        │               │ id              │
-        │               │ name            │
-        │               │ shortName       │
-        │               │ color           │
-        │               └─────────────────┘
-        │
-        │               ┌─────────────────┐
-        ├──────────────<│    Affair       │
-        │               ├─────────────────┤
-        │               │ id              │
-        │               │ title           │
-        │               │ status          │
-        │               │ category        │
-        │               │ verdictDate     │
-        │               │ partyAtTimeId   │
-        │               └─────────────────┘
-        │                       │
-        │               ┌───────┴─────────┐
-        │               │     Source      │
-        │               ├─────────────────┤
-        │               │ url             │
-        │               │ title           │
-        │               │ publisher       │
-        │               └─────────────────┘
-        │
-        │               ┌─────────────────┐
-        ├──────────────<│  Declaration    │
-        │               ├─────────────────┤
-        │               │ type            │
-        │               │ year            │
-        │               │ hatvpUrl        │
-        │               │ pdfUrl          │
-        │               └─────────────────┘
-        │
-        │               ┌─────────────────┐
-        └──────────────<│   ExternalId    │
-                        ├─────────────────┤
-                        │ source          │
-                        │ externalId      │
-                        │ url             │
-                        └─────────────────┘
-```
-
-### 3.2 Enums
-
-```typescript
-enum MandateType {
-  DEPUTE,
-  SENATEUR,
-  DEPUTE_EUROPEEN,
-  PRESIDENT_REPUBLIQUE,
-  PREMIER_MINISTRE,
-  MINISTRE,
-  MINISTRE_DELEGUE,
-  SECRETAIRE_ETAT,
-  PRESIDENT_REGION,
-  PRESIDENT_DEPARTEMENT,
-  MAIRE,
-  ADJOINT_MAIRE,
-  CONSEILLER_REGIONAL,
-  CONSEILLER_DEPARTEMENTAL,
-  CONSEILLER_MUNICIPAL,
-}
-
-enum AffairStatus {
-  ENQUETE_PRELIMINAIRE,
-  MISE_EN_EXAMEN,
-  PROCES_EN_COURS,
-  CONDAMNATION_PREMIERE_INSTANCE,
-  CONDAMNATION_DEFINITIVE,
-  APPEL_EN_COURS,
-  RELAXE,
-  NON_LIEU,
-  PRESCRIPTION,
-}
-
-enum DataSource {
-  ASSEMBLEE_NATIONALE,
-  SENAT,
-  GOUVERNEMENT,
-  HATVP,
-  WIKIDATA,
-  NOSDEPUTES,
-  NOSSENATEURS,
-  WIKIPEDIA,
-  MANUAL,
-}
+src/
+├── app/                    # Next.js App Router
+│   ├── politiques/         #   Fiches et listes politiciens
+│   ├── affaires/           #   Affaires judiciaires
+│   ├── partis/             #   Partis politiques
+│   ├── votes/              #   Scrutins parlementaires
+│   ├── statistiques/       #   Dashboard statistiques
+│   ├── comparer/           #   Comparateur
+│   ├── elections/          #   Élections (municipales 2026...)
+│   ├── admin/              #   Dashboard admin (auth HMAC)
+│   └── api/                #   Routes API (admin + public)
+│
+├── components/             # Composants React
+│   ├── ui/                 #   Primitives shadcn/ui (Button, Card...)
+│   ├── layout/             #   Header, Footer, Navigation
+│   ├── politicians/        #   Cartes, filtres, profils politiciens
+│   ├── affairs/            #   Timeline, détails affaires
+│   ├── stats/              #   Charts (DonutChart, HorizontalBars...)
+│   ├── votes/              #   Badges, cartes scrutins
+│   ├── elections/          #   Municipales, countdown, cartes
+│   ├── compare/            #   Comparaison côte-à-côte
+│   ├── search/             #   Recherche globale (Cmd+K)
+│   ├── admin/              #   Formulaires admin, éditeurs
+│   └── seo/                #   JsonLd, SeoIntro
+│
+├── config/                 # Configuration et constantes
+│   ├── labels.ts           #   150+ enum → label français
+│   ├── wikidata.ts         #   Q-IDs connus (partis, positions)
+│   └── colors.ts           #   Couleurs partis et thèmes
+│
+├── lib/                    # Utilitaires et couche données
+│   ├── data/               #   ⭐ Data layer (requêtes cachées)
+│   │   ├── politicians.ts  #     getPolitician, getPoliticianForComparison
+│   │   ├── affairs.ts      #     getAffairs, getAffairsFiltered
+│   │   ├── parties.ts      #     getParty, getPartyLeadership
+│   │   ├── declarations.ts #     getDeclarations, getDeclarationStats
+│   │   └── municipales.ts  #     getMaires, getMaireStats
+│   ├── api/                #   Clients API externes (Wikidata, RSS...)
+│   ├── social/             #   Auto-post Twitter/Bluesky
+│   ├── cache.ts            #   invalidateEntity(), cacheTag helpers
+│   ├── db.ts               #   Prisma singleton (pg pool)
+│   └── utils.ts            #   Helpers (formatDate, slugify...)
+│
+├── services/               # Logique métier
+│   ├── sync/               #   Services de synchronisation (30+ fichiers)
+│   ├── affairs/            #   Enrichissement, modération, matching
+│   └── chat/               #   Chatbot RAG (patterns, embeddings)
+│
+├── inngest/                # Jobs asynchrones Inngest
+│   └── functions/          #   Pipelines : sync, social, IA
+│
+├── types/                  # Types TypeScript partagés
+└── generated/prisma/       # Client Prisma auto-généré (NE PAS ÉDITER)
 ```
 
 ---
 
 ## 4. Flux de données
 
-### 4.1 Synchronisation
+### 4.1 Cycle de vie d'une requête utilisateur
 
-```
-┌──────────────┐     ┌──────────────┐     ┌──────────────┐
-│ Source       │────>│ Script sync  │────>│ PostgreSQL   │
-│ (API/CSV)    │     │ (TypeScript) │     │ (Supabase)   │
-└──────────────┘     └──────────────┘     └──────────────┘
-                            │
-                            v
-                     ┌──────────────┐
-                     │ ExternalId   │
-                     │ (traçabilité)│
-                     └──────────────┘
+```mermaid
+sequenceDiagram
+    participant B as Navigateur
+    participant V as Vercel Edge
+    participant RSC as React Server Component
+    participant DL as Data Layer (lib/data/)
+    participant P as Prisma
+    participant DB as PostgreSQL
+
+    B->>V: GET /politiques/marine-le-pen
+    V->>RSC: Render page.tsx (SSR)
+    RSC->>DL: getPolitician("marine-le-pen")
+    Note over DL: "use cache" + cacheTag("politician:marine-le-pen")
+    DL->>P: db.politician.findUnique(...)
+    P->>DB: SELECT ... FROM Politician WHERE slug = ?
+    DB-->>P: Row
+    P-->>DL: Politician object
+    DL-->>RSC: Data (cached 5min)
+    RSC-->>V: HTML
+    V-->>B: Page rendue
 ```
 
-### 4.2 Requêtes utilisateur
+### 4.2 Pipeline de synchronisation
 
+```mermaid
+graph LR
+    subgraph Trigger
+        CR[Cron GitHub Actions]
+        MN[Manuel — npm run sync:*]
+    end
+
+    subgraph Pipeline
+        FE[Fetch API source]
+        TR[Transformer les données]
+        UP[Upsert en base]
+        IV[Invalider le cache — cacheTag]
+    end
+
+    subgraph Résultat
+        DB[(PostgreSQL)]
+        LOG[Logs + Slack notif]
+    end
+
+    CR --> FE
+    MN --> FE
+    FE --> TR --> UP --> DB
+    UP --> IV
+    UP --> LOG
 ```
-┌──────────────┐     ┌──────────────┐     ┌──────────────┐
-│ Navigateur   │────>│ Next.js      │────>│ Prisma       │
-│              │<────│ (RSC/API)    │<────│ (PostgreSQL) │
-└──────────────┘     └──────────────┘     └──────────────┘
+
+### 4.3 Stratégie de cache
+
+```mermaid
+graph TD
+    subgraph Pages listing
+        ISR["ISR — revalidate = 300s"]
+        SEARCH[Recherche libre — PAS de cache]
+    end
+
+    subgraph Pages détail
+        UC["'use cache' + cacheLife('minutes')"]
+        CT[cacheTag — invalidation ciblée]
+    end
+
+    subgraph Déduplication
+        RC["React.cache() — même requête dans generateMetadata + page"]
+    end
+
+    ISR --> |"/politiques?search=..."| SEARCH
+    UC --> |"/politiques/marine-le-pen"| CT
+    RC --> |"Évite 2x la même query DB"| UC
 ```
 
 ---
 
-## 5. Sécurité
+## 5. Modèle de données (simplifié)
 
-### 5.1 Authentification admin
+```mermaid
+erDiagram
+    Politician ||--o{ Mandate : "a des mandats"
+    Politician ||--o{ Affair : "impliqué dans"
+    Politician ||--o{ Vote : "a voté"
+    Politician ||--o{ Declaration : "a déclaré"
+    Politician }o--|| Party : "parti actuel"
+    Politician ||--o{ PartyMembership : "historique partis"
+    Politician ||--o{ ExternalId : "IDs externes"
+    Affair ||--o{ Source : "sourcé par"
+    Affair ||--o{ AffairEvent : "chronologie"
+    Scrutin ||--o{ Vote : "contient"
+    Party ||--o{ PartyMembership : "membres"
+    Election ||--o{ ElectionRound : "tours"
+    Election ||--o{ Candidacy : "candidatures"
 
-- Cookie de session (HTTP-only)
-- Mot de passe hashé comparé côté serveur
-- Variable d'environnement `ADMIN_PASSWORD`
+    Politician {
+        string slug PK
+        string fullName
+        float prominenceScore
+        string publicationStatus
+    }
 
-### 5.2 Protection des données
+    Mandate {
+        enum type "DEPUTE, SENATEUR, MAIRE..."
+        boolean isCurrent
+        date startDate
+    }
 
-- Pas de données personnelles des visiteurs collectées
-- Pas de cookies de tracking
-- Uniquement données publiques des représentants
+    Affair {
+        string title
+        enum status "ENQUETE, INSTRUCTION..."
+        enum category "CORRUPTION, FRAUDE..."
+        enum involvement "DIRECT, INDIRECT..."
+    }
 
-### 5.3 Headers de sécurité (à implémenter)
-
-- Content-Security-Policy
-- X-Frame-Options
-- X-Content-Type-Options
-- Strict-Transport-Security
+    Scrutin {
+        string title
+        date votingDate
+        enum result "ADOPTED, REJECTED"
+        enum chamber "AN, SENAT"
+    }
+```
 
 ---
 
-## 6. Performance
+## 6. Patterns clés
 
-### 6.1 Stratégies de rendu Next.js
+### 6.1 Data Layer (`src/lib/data/`)
 
-- **Pages statiques** : Accueil, Sources, Mentions légales
-- **Pages dynamiques** : Listes avec filtres, fiches individuelles
-- **API Routes** : Recherche, Admin
+Toutes les requêtes DB passent par le data layer. Les pages importent depuis `@/lib/data/*`, **jamais** depuis `@/lib/db` directement.
 
-### 6.2 Optimisations
+```typescript
+// src/lib/data/politicians.ts
+export const getPolitician = cache(async function getPolitician(slug: string) {
+  "use cache";
+  cacheTag(`politician:${slug}`, "politicians");
+  cacheLife("minutes");
+  return db.politician.findUnique({ where: { slug }, include: { ... } });
+});
+```
 
-- Images : URL externes (AN, Sénat, HATVP)
-- Pagination : 24 items par page
-- Débounce recherche : 200ms
+### 6.2 Cache — 3 niveaux
+
+| Niveau | Quand l'utiliser | Exemple |
+|--------|-----------------|---------|
+| `"use cache"` + `cacheLife("minutes")` | Pages détail, params bornés | `getPolitician(slug)` |
+| `revalidate = 300` (ISR) | Pages listing avec search | `/politiques?page=2` |
+| `React.cache()` | Déduplication dans un même render | `generateMetadata()` + `page()` |
+
+**Règle d'or** : ne JAMAIS mettre `"use cache"` sur une fonction avec un paramètre `search` libre (cache explosion).
+
+### 6.3 Admin Auth
+
+Toutes les routes API admin utilisent le wrapper `withAdminAuth()` :
+
+```typescript
+// src/app/api/admin/affairs/route.ts
+import { withAdminAuth } from "@/lib/api/with-admin-auth";
+export const POST = withAdminAuth(async (req) => { ... });
+```
+
+### 6.4 Labels et i18n
+
+Les enums Prisma sont traduits via `src/config/labels.ts`. Ne jamais hardcoder un label français :
+
+```typescript
+import { AFFAIR_STATUS_LABELS } from "@/config/labels";
+const label = AFFAIR_STATUS_LABELS[affair.status]; // "Enquête préliminaire"
+```
 
 ---
 
-## 7. Commandes
+## 7. Zones de contribution
 
-### 7.1 Développement
+| Zone | Difficulté | Description |
+|------|-----------|-------------|
+| `src/components/ui/` | Facile | Composants shadcn/ui, amélioration visuelle |
+| `src/config/labels.ts` | Facile | Labels, traductions manquantes |
+| `tests/` | Facile | Tests unitaires (beaucoup de composants non testés) |
+| `src/components/stats/` | Moyen | Charts et visualisations |
+| `src/components/politicians/` | Moyen | Composants profil politicien |
+| `src/app/*/page.tsx` | Moyen | Pages publiques |
+| `src/lib/data/` | Avancé | Couche données + caching |
+| `scripts/` | Avancé | Scripts de synchronisation (APIs externes) |
+| `src/services/sync/` | Avancé | Pipelines de sync |
+
+---
+
+## 8. Commandes de développement
 
 ```bash
-npm run dev          # Serveur développement
-npm run build        # Build production
-npm run start        # Serveur production
-```
+# Développement
+npm run dev              # Serveur dev (localhost:3000)
+npm run setup            # Bootstrap complet (Docker + deps + seed)
 
-### 7.2 Base de données
+# Qualité
+npm run lint             # ESLint
+npm run typecheck        # TypeScript strict
+npm run format           # Prettier
+npm run test:run         # Vitest (316 tests)
 
-```bash
-npm run db:push      # Appliquer schéma
-npm run db:generate  # Régénérer client Prisma
-npm run db:studio    # Interface visuelle
-```
-
-### 7.3 Synchronisation
-
-```bash
-npm run sync:assemblee       # Députés
-npm run sync:senat           # Sénateurs
-npm run sync:gouvernement    # Gouvernement
-npm run sync:hatvp           # Déclarations HATVP
-npm run sync:photos          # Photos manquantes
-npm run sync:deceased        # Dates de décès
-npm run import:wikidata      # Condamnations Wikidata
-npm run sync:stats           # Statistiques DB
+# Base de données
+npm run db:studio        # Explorer visuellement la BDD
+npm run db:push          # Appliquer les changements de schéma
+npm run seed:fixtures    # Charger des données de test
 ```
 
 ---
 
-## 8. Variables d'environnement
+## 9. Sécurité
 
-```env
-# Base de données (Supabase Pooler)
-DATABASE_URL=postgresql://...
-
-# Admin
-ADMIN_PASSWORD=...
-
-# Optionnel
-NODE_ENV=production
-```
+- **Auth admin** : HMAC token en cookie HTTP-only
+- **CSP** : Content-Security-Policy strict (pas de `unsafe-eval` en prod)
+- **Données** : uniquement des données publiques, pas de tracking visiteurs
+- **Présomption d'innocence** : champs judiciaires default au plus conservateur (`involvement: "MENTIONED_ONLY"`)
+- **Factchecks** : whitelist de sources francophones (`FACTCHECK_ALLOWED_SOURCES`)

@@ -66,8 +66,9 @@ model Politician {
   factCheckMentions FactCheckMention[] // Mentions in fact-checks
   candidacies       Candidacy[] // Election candidacies
   candidates        Candidate[] // Local election candidates linked to this politician
-  localOffices      LocalOfficial[] // Local offices from RNE
-  participation     PoliticianParticipation? // Pre-computed participation stats
+  localOffices        LocalOfficial[] // Local offices from RNE
+  participation       PoliticianParticipation? // Pre-computed participation stats
+  identityDecisions   IdentityDecision[] // Identity resolution audit trail
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -109,6 +110,27 @@ model ExternalId {
   @@index([politicianId])
   @@index([partyId])
   @@index([source])
+}
+
+// Audit trail for identity matching decisions
+model IdentityDecision {
+  id            String      @id @default(cuid())
+  sourceType    DataSource
+  sourceId      String      // The external ID or source identifier
+  politicianId  String
+  judgement     Judgement
+  confidence    Float       // 0.0 to 1.0
+  method        MatchMethod
+  evidence      Json        // { birthDateMatch: false, deptMatch: true, nameScore: 0.95 }
+  decidedBy     String      // "system:sync-rne" or "admin:ldiaby"
+  decidedAt     DateTime    @default(now())
+  supersededBy  String?     // ID of the decision that replaces this one
+
+  politician    Politician  @relation(fields: [politicianId], references: [id], onDelete: Cascade)
+
+  @@index([sourceType, sourceId])
+  @@index([politicianId])
+  @@index([judgement])
 }
 
 enum DataSource {

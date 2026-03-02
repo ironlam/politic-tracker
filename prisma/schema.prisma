@@ -145,6 +145,7 @@ enum DataSource {
   WIKIPEDIA
   MANUAL
   RNE
+  MUNICIPALES
 }
 
 enum MatchMethod {

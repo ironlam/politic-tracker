@@ -482,6 +482,7 @@ export const DATA_SOURCE_LABELS: Record<DataSource, string> = {
   WIKIPEDIA: "Wikipédia",
   MANUAL: "Saisie manuelle",
   RNE: "Répertoire National des Élus",
+  MUNICIPALES: "Candidatures municipales",
 };
 
 export const DATA_SOURCE_URLS: Record<DataSource, string> = {
@@ -495,6 +496,8 @@ export const DATA_SOURCE_URLS: Record<DataSource, string> = {
   WIKIPEDIA: "https://fr.wikipedia.org/wiki/",
   MANUAL: "",
   RNE: "https://www.data.gouv.fr/fr/datasets/repertoire-national-des-elus-1/",
+  MUNICIPALES:
+    "https://www.data.gouv.fr/datasets/elections-municipales-2026-listes-candidates-au-premier-tour",
 };
 
 // Political position labels (for parties)

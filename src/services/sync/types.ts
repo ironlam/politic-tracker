@@ -342,22 +342,25 @@ export const EU_POLITICAL_GROUP_MAPPINGS: Record<string, PartyMapping> = {
 // CANDIDATURES MUNICIPALES (data.gouv.fr) TYPES
 // ============================================
 
-// CSV columns (tab-delimited, ISO-8859-1, starts with comment line)
+// CSV columns — 2026 format (semicolon-delimited, UTF-8, no comment header)
 export interface CandidatureMunicipaleCSV {
-  "Code du département": string;
-  "Libellé du département": string;
-  "Code commune": string;
-  "Libellé commune": string;
-  "N° Panneau Liste": string;
-  "Libellé abrégé liste": string;
-  "Libellé Etendu Liste": string;
-  "Nuance Liste": string;
-  "N° candidat": string;
-  "Sexe candidat": string;
-  "Nom candidat": string;
-  "Prénom candidat": string;
+  "Code département": string;
+  Département: string;
+  "Code circonscription": string;
+  Circonscription: string;
+  "Numéro de panneau": string;
+  "Libellé abrégé de liste": string;
+  "Libellé de la liste": string;
+  "Code nuance de liste": string;
+  "Nuance de liste": string;
+  "Tête de liste": string;
+  Ordre: string;
+  Sexe: string;
+  "Nom sur le bulletin de vote": string;
+  "Prénom sur le bulletin de vote": string;
   Nationalité: string;
-  "Candidat au conseil communautaire": string;
+  "Code personnalité": string;
+  CC: string;
 }
 
 export interface CandidaturesSyncResult {

@@ -326,26 +326,29 @@ async function getPoliticianForComparison(slug: string, mandateType: string) {
   if (!currentMandate) return null;
 
   // Use pre-computed participation stats (accurate denominator = all eligible scrutins)
-  const participation = await db.politicianParticipation.findFirst({
-    where: { politicianId: politician.id, mandateType },
-    select: {
-      votesCount: true,
-      eligibleScrutins: true,
-      participationRate: true,
-    },
-  });
+  // + aggregate real vote position counts (not capped by take: 500)
+  const [participation, positionCounts] = await Promise.all([
+    db.politicianParticipation.findFirst({
+      where: { politicianId: politician.id, mandateType },
+      select: {
+        votesCount: true,
+        eligibleScrutins: true,
+        participationRate: true,
+      },
+    }),
+    db.vote.groupBy({
+      by: ["position"],
+      where: { politicianId: politician.id },
+      _count: true,
+    }),
+  ]);
 
-  // Count vote positions from loaded votes (for the breakdown bar)
-  let pour = 0,
-    contre = 0,
-    abstention = 0,
-    nonVotant = 0;
-  for (const v of politician.votes) {
-    if (v.position === "POUR") pour++;
-    else if (v.position === "CONTRE") contre++;
-    else if (v.position === "ABSTENTION") abstention++;
-    else if (v.position === "NON_VOTANT") nonVotant++;
-  }
+  // Real vote counts from aggregate (covers all votes, not just the 500 loaded)
+  const positionMap = new Map(positionCounts.map((p) => [p.position, p._count]));
+  const pour = positionMap.get("POUR") ?? 0;
+  const contre = positionMap.get("CONTRE") ?? 0;
+  const abstention = positionMap.get("ABSTENTION") ?? 0;
+  const nonVotant = positionMap.get("NON_VOTANT") ?? 0;
 
   const eligibleScrutins = participation?.eligibleScrutins ?? 0;
   const votesCount = participation?.votesCount ?? pour + contre + abstention + nonVotant;

@@ -51,7 +51,9 @@ function FactchecksSide({ data, label }: { data: FactchecksSideData; label: stri
     return (
       <div className="bg-muted rounded-lg p-4">
         <p className="text-xs font-medium text-muted-foreground mb-2">{label}</p>
-        <p className="text-muted-foreground text-sm text-center py-2">Aucune mention</p>
+        <p className="text-muted-foreground text-sm text-center py-2">
+          Aucune citation fact-checkée
+        </p>
       </div>
     );
   }
@@ -67,7 +69,7 @@ function FactchecksSide({ data, label }: { data: FactchecksSideData; label: stri
     <div className="bg-muted rounded-lg p-4">
       <p className="text-xs font-medium text-muted-foreground mb-2">{label}</p>
       <p className="text-2xl font-bold mb-3">
-        {data.count} mention{data.count > 1 ? "s" : ""}
+        {data.count} citation{data.count > 1 ? "s" : ""}
       </p>
 
       {/* Stacked verdict bar */}

@@ -256,7 +256,7 @@ const POLITICIAN_COMPARISON_SELECT = {
       slug: true,
     },
   },
-  _count: { select: { factCheckMentions: true } },
+  _count: { select: { factCheckMentions: { where: { isClaimant: true } } } },
   mandates: {
     orderBy: { startDate: "desc" as const },
     select: {
@@ -298,6 +298,7 @@ const POLITICIAN_COMPARISON_SELECT = {
     },
   },
   factCheckMentions: {
+    where: { isClaimant: true },
     take: 20,
     orderBy: { factCheck: { publishedAt: "desc" as const } },
     include: {
@@ -385,7 +386,7 @@ async function getMinistreForComparison(slug: string) {
           slug: true,
         },
       },
-      _count: { select: { factCheckMentions: true } },
+      _count: { select: { factCheckMentions: { where: { isClaimant: true } } } },
       mandates: {
         orderBy: { startDate: "desc" },
         select: {
@@ -411,6 +412,7 @@ async function getMinistreForComparison(slug: string) {
         select: { year: true, type: true, details: true },
       },
       factCheckMentions: {
+        where: { isClaimant: true },
         take: 20,
         orderBy: { factCheck: { publishedAt: "desc" } },
         include: {
@@ -491,9 +493,9 @@ async function getPartyForComparison(slugOrId: string) {
     select: { id: true, status: true, severity: true },
   });
 
-  // Fact-check mentions of members
+  // Fact-check citations (isClaimant) of party members
   const factCheckMentions = await db.factCheckMention.findMany({
-    where: { politician: { currentPartyId: party.id } },
+    where: { isClaimant: true, politician: { currentPartyId: party.id } },
     include: {
       factCheck: { select: { verdictRating: true } },
     },
@@ -726,9 +728,10 @@ async function getGroupForComparison(idOrCode: string) {
     select: { id: true, status: true, severity: true },
   });
 
-  // Get fact-check mentions of group members
+  // Get fact-check citations (isClaimant) of group members
   const factCheckMentions = await db.factCheckMention.findMany({
     where: {
+      isClaimant: true,
       politician: {
         mandates: {
           some: {

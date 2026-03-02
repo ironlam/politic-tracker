@@ -231,20 +231,10 @@ export async function resolveBatch(batchInput: BatchResolveInput): Promise<Batch
   const CHUNK_SIZE = 100;
   for (let i = 0; i < decisionsToCreate.length; i += CHUNK_SIZE) {
     const chunk = decisionsToCreate.slice(i, i + CHUNK_SIZE);
-    let persisted = false;
-
-    // Try batch transaction if available
-    if (typeof db.$transaction === "function") {
-      try {
-        await db.$transaction(chunk.map((d) => db.identityDecision.create({ data: d })));
-        persisted = true;
-      } catch {
-        // Fall through to individual creates
-      }
-    }
-
-    // Fallback: individual creates
-    if (!persisted) {
+    try {
+      await db.identityDecision.createMany({ data: chunk });
+    } catch {
+      // Fallback: individual creates (e.g. partial duplicates)
       for (const d of chunk) {
         try {
           await db.identityDecision.create({ data: d });

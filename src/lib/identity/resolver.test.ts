@@ -13,6 +13,7 @@ vi.mock("@/lib/db", () => ({
     identityDecision: {
       findMany: vi.fn(),
       create: vi.fn(),
+      createMany: vi.fn(),
     },
   },
 }));
@@ -27,6 +28,7 @@ const mockPoliticianFindMany = db.politician.findMany as Mock;
 const mockExternalIdFindFirst = db.externalId.findFirst as Mock;
 const mockDecisionFindMany = db.identityDecision.findMany as Mock;
 const mockDecisionCreate = db.identityDecision.create as Mock;
+const mockDecisionCreateMany = db.identityDecision.createMany as Mock;
 
 describe("IdentityResolver", () => {
   beforeEach(() => {
@@ -39,6 +41,7 @@ describe("IdentityResolver", () => {
     mockPoliticianFindMany.mockResolvedValue([]);
     // Default: log decision succeeds
     mockDecisionCreate.mockResolvedValue({} as never);
+    mockDecisionCreateMany.mockResolvedValue({ count: 0 } as never);
   });
 
   describe("Step 1: Check prior decisions", () => {
@@ -614,13 +617,55 @@ describe("IdentityResolver", () => {
         ],
       });
 
+      // Only UNDECIDED (Marie) persisted, not NEW (Inconnu)
+      expect(mockDecisionCreateMany).toHaveBeenCalledTimes(1);
+      expect(mockDecisionCreateMany).toHaveBeenCalledWith({
+        data: [
+          expect.objectContaining({
+            sourceType: DataSource.RNE,
+            sourceId: "12345",
+            politicianId: "pol-1",
+            judgement: Judgement.UNDECIDED,
+          }),
+        ],
+      });
+      // Individual create NOT called (createMany succeeded)
+      expect(mockDecisionCreate).not.toHaveBeenCalled();
+    });
+
+    it("falls back to individual creates when createMany fails", async () => {
+      mockPoliticianFindMany.mockResolvedValue([
+        {
+          id: "pol-1",
+          firstName: "Marie",
+          lastName: "Durand",
+          birthDate: new Date("1970-01-01"),
+          mandates: [],
+        },
+      ]);
+      mockDecisionFindMany.mockResolvedValue([]);
+      mockDecisionCreateMany.mockRejectedValue(new Error("batch insert failed"));
+
+      await resolveBatch({
+        sourceType: DataSource.RNE,
+        inputs: [
+          {
+            firstName: "Marie",
+            lastName: "Durand",
+            birthDate: new Date("1970-01-01"),
+            source: DataSource.RNE,
+            sourceId: "12345",
+          },
+        ],
+      });
+
+      // createMany failed, so individual create should be called
       expect(mockDecisionCreate).toHaveBeenCalledTimes(1);
       expect(mockDecisionCreate).toHaveBeenCalledWith({
         data: expect.objectContaining({
           sourceType: DataSource.RNE,
           sourceId: "12345",
           politicianId: "pol-1",
-          judgement: Judgement.UNDECIDED,
         }),
       });
     });

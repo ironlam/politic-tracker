@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { FOOTER_SECTIONS, DATA_SOURCES, SOCIAL_LINKS } from "@/config/navigation";
-import { ExternalLink, Instagram, Github } from "lucide-react";
+import { FOOTER_SECTIONS, DATA_SOURCES, RSS_FEEDS, SOCIAL_LINKS } from "@/config/navigation";
+import { ExternalLink, Instagram, Github, Rss } from "lucide-react";
 import { HexPattern } from "@/components/ui/HexPattern";
 import { getEnabledFlags } from "@/lib/feature-flags";
 
@@ -18,9 +18,9 @@ export async function Footer() {
       <HexPattern className="absolute inset-0 text-primary opacity-[0.02] dark:opacity-[0.04] pointer-events-none" />
       <div className="relative z-10 container mx-auto px-4 py-8 md:py-10">
         {/* Main footer content */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-8">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-8 mb-8">
           {/* About */}
-          <div className="col-span-2 md:col-span-1">
+          <div className="col-span-2 sm:col-span-3 lg:col-span-1">
             <h3 className="font-display font-semibold text-sm mb-3">À propos</h3>
             <p className="text-sm text-muted-foreground leading-relaxed">
               Observatoire citoyen de la vie politique. Données publiques, fact-checking et regard
@@ -28,7 +28,7 @@ export async function Footer() {
             </p>
           </div>
 
-          {/* Navigation sections (3 columns) */}
+          {/* Navigation sections (4 columns) */}
           {filteredSections.map((section) => (
             <nav key={section.title} aria-labelledby={`footer-nav-${section.title}`}>
               <h3
@@ -52,7 +52,7 @@ export async function Footer() {
             </nav>
           ))}
 
-          {/* Data Sources */}
+          {/* Data Sources + RSS */}
           <div>
             <h3 className="font-display font-semibold text-sm mb-3">Sources</h3>
             <ul className="space-y-2 text-sm">
@@ -67,6 +67,24 @@ export async function Footer() {
                     {source.label}
                     <ExternalLink className="h-3 w-3" />
                     <span className="sr-only">(ouvre un nouvel onglet)</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+
+            {/* RSS Feeds */}
+            <h4 className="font-display font-semibold text-sm mt-4 mb-2 flex items-center gap-1.5">
+              <Rss className="h-3.5 w-3.5 text-orange-500" />
+              Flux RSS
+            </h4>
+            <ul className="space-y-2 text-sm">
+              {RSS_FEEDS.map((feed) => (
+                <li key={feed.href}>
+                  <a
+                    href={feed.href}
+                    className="text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {feed.label}
                   </a>
                 </li>
               ))}

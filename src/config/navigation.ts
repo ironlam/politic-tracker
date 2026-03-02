@@ -162,7 +162,7 @@ export const CTA_MON_DEPUTE: NavItem = {
 export const CHAT_LINK = CTA_ASSISTANT;
 export const CTA_LINK = CTA_MON_DEPUTE;
 
-// Footer navigation (3 columns)
+// Footer navigation (4 columns)
 export interface FooterSection {
   title: string;
   links: Array<{ href: string; label: string; featureFlag?: string }>;
@@ -170,34 +170,48 @@ export interface FooterSection {
 
 export const FOOTER_SECTIONS: FooterSection[] = [
   {
-    title: "Explorer",
+    title: "Politique",
     links: [
       { href: "/politiques", label: "Représentants" },
-      { href: "/carte", label: "Carte", featureFlag: "CARTE_SECTION" },
-      { href: "/votes", label: "Votes" },
-      { href: "/declarations-et-patrimoine", label: "Patrimoine & déclarations" },
-      { href: "/affaires", label: "Affaires" },
-      { href: "/factchecks", label: "Fact-checks" },
+      { href: "/partis", label: "Partis politiques" },
+      { href: "/votes", label: "Votes parlementaires" },
       { href: "/elections", label: "Élections" },
+      {
+        href: "/elections/municipales-2026",
+        label: "Municipales 2026",
+        featureFlag: "MUNICIPALES_2026",
+      },
     ],
   },
   {
-    title: "Comprendre",
+    title: "Transparence",
     links: [
+      { href: "/affaires", label: "Affaires judiciaires" },
+      { href: "/factchecks", label: "Fact-checks" },
+      { href: "/declarations-et-patrimoine", label: "Patrimoine & déclarations" },
       { href: "/statistiques", label: "Statistiques", featureFlag: "STATISTIQUES_SECTION" },
-      { href: "/institutions", label: "Institutions", featureFlag: "INSTITUTIONS_SECTION" },
-      { href: "/sources", label: "Sources" },
-      { href: "/docs/api", label: "API" },
-      { href: "/mentions-legales", label: "Mentions légales" },
+      { href: "/presse", label: "Revue de presse", featureFlag: "PRESS_SECTION" },
     ],
   },
   {
-    title: "Outils",
+    title: "Explorer",
+    links: [
+      { href: "/carte", label: "Carte de France", featureFlag: "CARTE_SECTION" },
+      { href: "/departements", label: "Départements" },
+      { href: "/assemblee", label: "Dossiers législatifs", featureFlag: "ASSEMBLEE_SECTION" },
+      { href: "/institutions", label: "Institutions", featureFlag: "INSTITUTIONS_SECTION" },
+      { href: "/recherche", label: "Recherche" },
+    ],
+  },
+  {
+    title: "Le projet",
     links: [
       { href: "/comparer", label: "Comparer", featureFlag: "COMPARISON_TOOL" },
-      { href: "/mon-depute", label: "Mon député", featureFlag: "MON_DEPUTE_SECTION" },
       { href: "/chat", label: "Assistant IA", featureFlag: "CHATBOT_ENABLED" },
+      { href: "/sources", label: "Sources et méthodologie" },
+      { href: "/docs/api", label: "API" },
       { href: "/soutenir", label: "Nous soutenir" },
+      { href: "/mentions-legales", label: "Mentions légales" },
     ],
   },
 ];
@@ -210,6 +224,13 @@ export const DATA_SOURCES = [
   { href: "https://www.wikidata.org", label: "Wikidata" },
   { href: "https://www.europarl.europa.eu", label: "Parlement européen" },
   { href: "https://toolbox.google.com/factcheck/explorer", label: "Google Fact Check" },
+] as const;
+
+// RSS feeds for footer
+export const RSS_FEEDS = [
+  { href: "/api/rss/affaires.xml", label: "Affaires" },
+  { href: "/api/rss/votes.xml", label: "Votes" },
+  { href: "/api/rss/factchecks.xml", label: "Fact-checks" },
 ] as const;
 
 // Social media links for footer

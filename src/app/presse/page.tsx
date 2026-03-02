@@ -232,7 +232,7 @@ export default async function PressePage({ searchParams }: PageProps) {
       {/* Filters */}
       <div className="flex flex-wrap gap-4 mb-6">
         {/* Search */}
-        <PresseSearchInput value={search} />
+        <PresseSearchInput value={search || ""} />
 
         {/* Source filter */}
         <div className="flex gap-2">

@@ -60,7 +60,7 @@ export function PartiesFilterBar({ currentFilters, total }: PartiesFilterBarProp
 
     startTransition(() => {
       const qs = params.toString();
-      router.push(qs ? `/partis?${qs}` : "/partis");
+      router.push(qs ? `/partis?${qs}` : "/partis", { scroll: false });
     });
   };
 

@@ -96,7 +96,7 @@ export function AffairesFilterBar({
 
     startTransition(() => {
       const qs = params.toString();
-      router.push(qs ? `/affaires?${qs}` : "/affaires");
+      router.push(qs ? `/affaires?${qs}` : "/affaires", { scroll: false });
     });
   };
 

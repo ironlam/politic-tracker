@@ -59,7 +59,7 @@ export function FilterBar({
     params.delete("page");
 
     startTransition(() => {
-      router.push(`/politiques?${params.toString()}`);
+      router.push(`/politiques?${params.toString()}`, { scroll: false });
       onLoadingChange?.(true);
     });
   };

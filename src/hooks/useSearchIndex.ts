@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { CATEGORY_MANDATE_TYPES } from "@/types/compare";
 
 export interface PoliticianEntry {
   slug: string;
@@ -9,6 +10,7 @@ export interface PoliticianEntry {
   partyShortName: string | null;
   partyColor: string | null;
   mandateType: string | null;
+  parliamentaryGroupId: string | null;
 }
 
 export interface PartyEntry {
@@ -20,9 +22,20 @@ export interface PartyEntry {
   memberCount: number;
 }
 
+export interface GroupEntry {
+  id: string;
+  code: string;
+  name: string;
+  shortName: string | null;
+  color: string | null;
+  chamber: string;
+  memberCount: number;
+}
+
 interface SearchIndex {
   politicians: PoliticianEntry[];
   parties: PartyEntry[];
+  groups: GroupEntry[];
 }
 
 // Module-level cache — shared across all hook instances
@@ -68,6 +81,13 @@ function matchesParty(p: PartyEntry, normalized: string): boolean {
   return name.includes(normalized) || short.includes(normalized);
 }
 
+function matchesGroup(g: GroupEntry, normalized: string): boolean {
+  const name = normalizeQuery(g.name);
+  const short = g.shortName ? normalizeQuery(g.shortName) : "";
+  const code = normalizeQuery(g.code);
+  return name.includes(normalized) || short.includes(normalized) || code.includes(normalized);
+}
+
 export function useSearchIndex() {
   const [isReady, setIsReady] = useState(cachedIndex !== null);
   const mountedRef = useRef(true);
@@ -103,5 +123,41 @@ export function useSearchIndex() {
       .slice(0, 8);
   }, []);
 
-  return { isReady, searchPoliticians, searchParties };
+  const searchGroups = useCallback((query: string, excludeId?: string): GroupEntry[] => {
+    if (!cachedIndex || query.length < 2) return [];
+    const normalized = normalizeQuery(query);
+    return cachedIndex.groups
+      .filter((g) => g.id !== excludeId && matchesGroup(g, normalized))
+      .slice(0, 8);
+  }, []);
+
+  const searchPoliticiansByCategory = useCallback(
+    (
+      query: string,
+      category: "deputes" | "senateurs" | "ministres",
+      excludeSlug?: string
+    ): PoliticianEntry[] => {
+      if (!cachedIndex || query.length < 2) return [];
+      const normalized = normalizeQuery(query);
+      const mandateTypes = CATEGORY_MANDATE_TYPES[category]!;
+      return cachedIndex.politicians
+        .filter(
+          (p) =>
+            p.slug !== excludeSlug &&
+            matchesPolitician(p, normalized) &&
+            p.mandateType !== null &&
+            mandateTypes.includes(p.mandateType)
+        )
+        .slice(0, 8);
+    },
+    []
+  );
+
+  return {
+    isReady,
+    searchPoliticians,
+    searchParties,
+    searchGroups,
+    searchPoliticiansByCategory,
+  };
 }

@@ -9,10 +9,10 @@ import { db } from "@/lib/db";
 
 async function getSearchIndex() {
   "use cache";
-  cacheTag("politicians", "parties");
+  cacheTag("politicians", "parties", "groups");
   cacheLife("minutes");
 
-  const [politicians, parties] = await Promise.all([
+  const [politicians, parties, groups] = await Promise.all([
     db.politician.findMany({
       where: {
         publicationStatus: "PUBLISHED",
@@ -29,7 +29,7 @@ async function getSearchIndex() {
         },
         mandates: {
           where: { isCurrent: true },
-          select: { type: true },
+          select: { type: true, parliamentaryGroupId: true },
           orderBy: { startDate: "desc" },
           take: 1,
         },
@@ -55,6 +55,21 @@ async function getSearchIndex() {
       },
       orderBy: [{ name: "asc" }],
     }),
+    db.parliamentaryGroup.findMany({
+      where: {
+        mandates: { some: { isCurrent: true } },
+      },
+      select: {
+        id: true,
+        code: true,
+        name: true,
+        shortName: true,
+        color: true,
+        chamber: true,
+        _count: { select: { mandates: { where: { isCurrent: true } } } },
+      },
+      orderBy: { name: "asc" },
+    }),
   ]);
 
   // Map politicians to a flat shape
@@ -65,6 +80,7 @@ async function getSearchIndex() {
     partyShortName: p.currentParty?.shortName ?? null,
     partyColor: p.currentParty?.color ?? null,
     mandateType: p.mandates[0]?.type ?? null,
+    parliamentaryGroupId: p.mandates[0]?.parliamentaryGroupId ?? null,
   }));
 
   // Map parties to a flat shape, sorted by member count desc then name asc
@@ -79,7 +95,18 @@ async function getSearchIndex() {
     }))
     .sort((a, b) => b.memberCount - a.memberCount || a.name.localeCompare(b.name));
 
-  return { politicians: politicianIndex, parties: partyIndex };
+  // Map groups to a flat shape
+  const groupIndex = groups.map((g) => ({
+    id: g.id,
+    code: g.code,
+    name: g.name,
+    shortName: g.shortName,
+    color: g.color,
+    chamber: g.chamber,
+    memberCount: g._count.mandates,
+  }));
+
+  return { politicians: politicianIndex, parties: partyIndex, groups: groupIndex };
 }
 
 export async function GET() {

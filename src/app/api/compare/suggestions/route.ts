@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { withCache } from "@/lib/cache";
+import { CATEGORY_MANDATE_TYPES } from "@/types/compare";
+import type { CompareCategory } from "@/types/compare";
 import type { PoliticalPosition } from "@/types";
 
 const POSITION_ORDER: PoliticalPosition[] = [
@@ -76,30 +78,43 @@ const PARTY_FALLBACKS = [
  *     summary: Suggestions de comparaisons populaires
  *     tags: [Comparaison]
  *     parameters:
- *       - name: mode
+ *       - name: cat
  *         in: query
  *         schema:
  *           type: string
- *           enum: [partis]
+ *           enum: [deputes, senateurs, partis, groupes, ministres]
  *     responses:
  *       200:
- *         description: Paires de politiciens ou partis à comparer
+ *         description: Paires de politiciens, partis ou groupes à comparer
  */
 export async function GET(request: NextRequest) {
-  const mode = request.nextUrl.searchParams.get("mode");
+  const cat = (request.nextUrl.searchParams.get("cat") || "deputes") as CompareCategory;
 
-  if (mode === "partis") {
-    return getPartySuggestions();
+  switch (cat) {
+    case "partis":
+      return getPartySuggestions();
+    case "groupes":
+      return getGroupSuggestions();
+    case "deputes":
+    case "senateurs":
+    case "ministres":
+      return getPoliticianSuggestions(cat);
+    default:
+      return getPoliticianSuggestions("deputes");
   }
-  return getPoliticianSuggestions();
 }
 
-async function getPoliticianSuggestions() {
+async function getPoliticianSuggestions(cat: CompareCategory) {
+  const mandateTypes = CATEGORY_MANDATE_TYPES[cat];
+
   try {
     const top = await db.politician.findMany({
       where: {
         publicationStatus: "PUBLISHED",
         prominenceScore: { gte: 150 },
+        ...(mandateTypes
+          ? { mandates: { some: { isCurrent: true, type: { in: mandateTypes as never[] } } } }
+          : {}),
       },
       select: {
         slug: true,
@@ -216,6 +231,79 @@ async function getPartySuggestions() {
           leftName: a!.shortName || a!.name,
           rightSlug: b!.slug as string,
           rightName: b!.shortName || b!.name,
+          score,
+        });
+      }
+    }
+
+    candidates.sort((a, b) => b.score - a.score);
+    const pairs: Pair[] = [];
+    const used = new Set<string>();
+
+    for (const c of candidates) {
+      if (pairs.length >= 4) break;
+      if (used.has(c.leftSlug) || used.has(c.rightSlug)) continue;
+      pairs.push(c);
+      used.add(c.leftSlug);
+      used.add(c.rightSlug);
+    }
+
+    if (pairs.length === 0) return withCache(NextResponse.json(PARTY_FALLBACKS), "static");
+
+    return withCache(
+      NextResponse.json(
+        pairs.map(({ leftSlug, leftName, rightSlug, rightName }) => ({
+          leftSlug,
+          leftName,
+          rightSlug,
+          rightName,
+        }))
+      ),
+      "static"
+    );
+  } catch {
+    return withCache(NextResponse.json(PARTY_FALLBACKS), "static");
+  }
+}
+
+async function getGroupSuggestions() {
+  try {
+    const groups = await db.parliamentaryGroup.findMany({
+      where: { mandates: { some: { isCurrent: true } } },
+      select: {
+        id: true,
+        code: true,
+        name: true,
+        shortName: true,
+        politicalPosition: true,
+        _count: { select: { mandates: { where: { isCurrent: true } } } },
+      },
+      orderBy: { name: "asc" },
+    });
+
+    type Pair = {
+      leftSlug: string;
+      leftName: string;
+      rightSlug: string;
+      rightName: string;
+      score: number;
+    };
+    const candidates: Pair[] = [];
+
+    for (let i = 0; i < groups.length; i++) {
+      for (let j = i + 1; j < groups.length; j++) {
+        const a = groups[i]!;
+        const b = groups[j]!;
+        const distance = oppositionDistance(
+          a.politicalPosition as PoliticalPosition | null,
+          b.politicalPosition as PoliticalPosition | null
+        );
+        const score = distance * 100 + a._count.mandates + b._count.mandates;
+        candidates.push({
+          leftSlug: a.id,
+          leftName: a.shortName || a.code,
+          rightSlug: b.id,
+          rightName: b.shortName || b.code,
           score,
         });
       }

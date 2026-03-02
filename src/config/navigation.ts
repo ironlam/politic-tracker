@@ -141,7 +141,7 @@ export const NAV_GROUPS: NavGroup[] = [
 export const CTA_COMPARER: NavItem = {
   href: "/comparer",
   label: "Comparer",
-  description: "Comparez deux représentants",
+  description: "Comparez des représentants, partis ou groupes parlementaires",
   featureFlag: "COMPARISON_TOOL",
 };
 

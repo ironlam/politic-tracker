@@ -1,0 +1,165 @@
+import Image from "next/image";
+import { formatDate } from "@/lib/utils";
+import { AffairsSection } from "../sections/AffairsSection";
+import { FactchecksSection } from "../sections/FactchecksSection";
+import { VoteConcordanceSection } from "../sections/VoteConcordanceSection";
+import { ParticipationSection } from "../sections/ParticipationSection";
+import { PatrimoineSection } from "../sections/PatrimoineSection";
+import { computeVoteConcordance, type PoliticianComparisonData } from "@/lib/data/compare";
+
+interface Props {
+  left: PoliticianComparisonData;
+  right: PoliticianComparisonData;
+}
+
+function countBy<T>(items: T[], key: keyof T): Record<string, number> {
+  const counts: Record<string, number> = {};
+  for (const item of items) {
+    const val = String(item[key]);
+    counts[val] = (counts[val] || 0) + 1;
+  }
+  return counts;
+}
+
+function presenceRate(data: PoliticianComparisonData["voteStats"]): number {
+  return data.total > 0
+    ? Math.round(((data.total - data.absent - data.nonVotant) / data.total) * 100)
+    : 0;
+}
+
+export function DeputesComparison({ left, right }: Props) {
+  const concordance = computeVoteConcordance(left.votes, right.votes);
+
+  return (
+    <div className="space-y-8">
+      {/* Info block */}
+      <section>
+        <h3 className="text-lg font-display font-semibold mb-4">Informations</h3>
+        <div className="grid md:grid-cols-2 gap-6">
+          <DeputeInfoCard data={left} />
+          <DeputeInfoCard data={right} />
+        </div>
+      </section>
+
+      <ParticipationSection
+        left={{ ...left.voteStats, presenceRate: presenceRate(left.voteStats) }}
+        right={{
+          ...right.voteStats,
+          presenceRate: presenceRate(right.voteStats),
+        }}
+        leftLabel={left.fullName}
+        rightLabel={right.fullName}
+      />
+
+      {concordance.stats.total > 0 && (
+        <VoteConcordanceSection
+          stats={concordance.stats}
+          recentDivergent={concordance.recentDivergent}
+          compareVotesUrl={`/comparer/votes?cat=deputes&a=${left.slug}&b=${right.slug}`}
+          leftLabel={left.fullName}
+          rightLabel={right.fullName}
+        />
+      )}
+
+      <PatrimoineSection
+        left={{ declarations: left.declarations }}
+        right={{ declarations: right.declarations }}
+        leftLabel={left.fullName}
+        rightLabel={right.fullName}
+      />
+
+      <AffairsSection
+        left={{
+          count: left.affairs.length,
+          byStatus: countBy(left.affairs, "status"),
+          bySeverity: countBy(left.affairs, "severity"),
+        }}
+        right={{
+          count: right.affairs.length,
+          byStatus: countBy(right.affairs, "status"),
+          bySeverity: countBy(right.affairs, "severity"),
+        }}
+        leftLabel={left.fullName}
+        rightLabel={right.fullName}
+      />
+
+      <FactchecksSection
+        left={{
+          count: left._count.factCheckMentions,
+          byVerdict: countBy(
+            left.factCheckMentions.map((m) => m.factCheck),
+            "verdictRating"
+          ),
+        }}
+        right={{
+          count: right._count.factCheckMentions,
+          byVerdict: countBy(
+            right.factCheckMentions.map((m) => m.factCheck),
+            "verdictRating"
+          ),
+        }}
+        leftLabel={left.fullName}
+        rightLabel={right.fullName}
+      />
+    </div>
+  );
+}
+
+function DeputeInfoCard({ data }: { data: PoliticianComparisonData }) {
+  const group = data.currentMandate.parliamentaryGroup;
+
+  return (
+    <div className="bg-muted rounded-lg p-4">
+      <div className="flex items-center gap-3 mb-3">
+        {data.photoUrl && (
+          <Image
+            src={data.photoUrl}
+            alt={data.fullName}
+            width={48}
+            height={48}
+            className="rounded-full object-cover"
+          />
+        )}
+        <div className="min-w-0">
+          <p className="font-semibold truncate">{data.fullName}</p>
+          {data.currentParty && (
+            <p className="text-sm text-muted-foreground flex items-center gap-1.5">
+              <span
+                className="w-2.5 h-2.5 rounded-full shrink-0"
+                style={{ backgroundColor: data.currentParty.color || "#888" }}
+              />
+              {data.currentParty.shortName}
+            </p>
+          )}
+        </div>
+      </div>
+
+      <ul className="space-y-1.5 text-sm">
+        {group && (
+          <li className="flex items-center justify-between gap-2">
+            <span className="text-muted-foreground">Groupe</span>
+            <span className="font-medium text-right flex items-center gap-1.5">
+              {group.color && (
+                <span
+                  className="w-2 h-2 rounded-full shrink-0"
+                  style={{ backgroundColor: group.color }}
+                />
+              )}
+              {group.shortName ?? group.name}
+            </span>
+          </li>
+        )}
+        {data.currentMandate.constituency && (
+          <li className="flex items-center justify-between gap-2">
+            <span className="text-muted-foreground">Circonscription</span>
+            <span className="font-medium text-right">{data.currentMandate.constituency}</span>
+          </li>
+        )}
+        <li className="flex items-center justify-between gap-2">
+          <span className="text-muted-foreground">Depuis le</span>
+          <span className="font-medium">{formatDate(data.currentMandate.startDate)}</span>
+        </li>
+      </ul>
+    </div>
+  );
+}

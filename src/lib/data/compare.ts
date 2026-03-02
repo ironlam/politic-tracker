@@ -1,6 +1,7 @@
 import { cacheTag, cacheLife } from "next/cache";
 import { db } from "@/lib/db";
 import { MANDATE_TYPE_LABELS } from "@/config/labels";
+import { getPoliticianVotingStats } from "@/services/voteStats";
 import { CATEGORY_MANDATE_TYPES } from "@/types/compare";
 import type { CompareCategory } from "@/types/compare";
 import type { MandateType } from "@/types";
@@ -325,52 +326,16 @@ async function getPoliticianForComparison(slug: string, mandateType: string) {
   const currentMandate = politician.mandates.find((m) => m.isCurrent && m.type === mandateType);
   if (!currentMandate) return null;
 
-  // Use pre-computed participation stats (accurate denominator = all eligible scrutins)
-  // + aggregate real vote position counts scoped to current mandate's chamber & period
-  const chamber = mandateType === "DEPUTE" ? "AN" : mandateType === "SENATEUR" ? "SENAT" : null;
-  const scrutinFilter = {
-    ...(chamber && { chamber: chamber as "AN" | "SENAT" }),
-    ...(currentMandate.startDate && { votingDate: { gte: currentMandate.startDate } }),
-  };
-
-  const [participation, positionCounts] = await Promise.all([
-    db.politicianParticipation.findFirst({
-      where: { politicianId: politician.id, mandateType },
-      select: {
-        votesCount: true,
-        eligibleScrutins: true,
-        participationRate: true,
-      },
-    }),
-    db.vote.groupBy({
-      by: ["position"],
-      where: {
-        politicianId: politician.id,
-        ...(Object.keys(scrutinFilter).length > 0 && { scrutin: scrutinFilter }),
-      },
-      _count: true,
-    }),
-  ]);
-
-  // Real vote counts from aggregate (covers all votes, not just the 500 loaded)
-  const positionMap = new Map(positionCounts.map((p) => [p.position, p._count]));
-  const pour = positionMap.get("POUR") ?? 0;
-  const contre = positionMap.get("CONTRE") ?? 0;
-  const abstention = positionMap.get("ABSTENTION") ?? 0;
-  const nonVotant = positionMap.get("NON_VOTANT") ?? 0;
-
-  const eligibleScrutins = participation?.eligibleScrutins ?? 0;
-  const votesCount = participation?.votesCount ?? pour + contre + abstention + nonVotant;
-  const absent = eligibleScrutins - votesCount;
-
+  // Reuse the single source of truth for vote stats (same as politician profile page)
+  const stats = await getPoliticianVotingStats(politician.id, mandateType as MandateType);
   const voteStats = {
-    total: eligibleScrutins,
-    pour,
-    contre,
-    abstention,
-    nonVotant,
-    absent: absent > 0 ? absent : 0,
-    presenceRate: participation?.participationRate ?? 0,
+    total: stats.total + stats.absent, // eligible scrutins = votes cast + absent
+    pour: stats.pour,
+    contre: stats.contre,
+    abstention: stats.abstention,
+    nonVotant: stats.nonVotant,
+    absent: stats.absent,
+    presenceRate: stats.participationRate,
   };
 
   return {

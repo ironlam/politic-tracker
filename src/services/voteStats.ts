@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { Chamber, Prisma } from "@/generated/prisma";
+import { Chamber, MandateType, Prisma } from "@/generated/prisma";
 
 // ============================================
 // Types
@@ -345,14 +345,15 @@ export interface PoliticianVotingStats {
  * Shared by politician profile, votes subpage, and API route.
  */
 export async function getPoliticianVotingStats(
-  politicianId: string
+  politicianId: string,
+  mandateType?: MandateType
 ): Promise<PoliticianVotingStats> {
   // Find current parliamentary mandate first — we need it to scope vote counts
   const mandate = await db.mandate.findFirst({
     where: {
       politicianId,
       isCurrent: true,
-      type: { in: ["DEPUTE", "SENATEUR"] },
+      type: mandateType ?? { in: ["DEPUTE", "SENATEUR"] },
     },
     select: { startDate: true, endDate: true, type: true },
   });

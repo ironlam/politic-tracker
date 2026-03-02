@@ -22,9 +22,7 @@ function countBy<T>(items: T[], key: keyof T): Record<string, number> {
 }
 
 function presenceRate(data: PoliticianComparisonData["voteStats"]): number {
-  return data.total > 0
-    ? Math.round(((data.total - data.absent - data.nonVotant) / data.total) * 100)
-    : 0;
+  return Math.round(data.presenceRate);
 }
 
 export function DeputesComparison({ left, right }: Props) {

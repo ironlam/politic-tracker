@@ -325,23 +325,41 @@ async function getPoliticianForComparison(slug: string, mandateType: string) {
   const currentMandate = politician.mandates.find((m) => m.isCurrent && m.type === mandateType);
   if (!currentMandate) return null;
 
-  // Compute vote stats
-  const voteStats = {
-    total: 0,
-    pour: 0,
-    contre: 0,
-    abstention: 0,
-    nonVotant: 0,
-    absent: 0,
-  };
+  // Use pre-computed participation stats (accurate denominator = all eligible scrutins)
+  const participation = await db.politicianParticipation.findFirst({
+    where: { politicianId: politician.id, mandateType },
+    select: {
+      votesCount: true,
+      eligibleScrutins: true,
+      participationRate: true,
+    },
+  });
+
+  // Count vote positions from loaded votes (for the breakdown bar)
+  let pour = 0,
+    contre = 0,
+    abstention = 0,
+    nonVotant = 0;
   for (const v of politician.votes) {
-    voteStats.total++;
-    if (v.position === "POUR") voteStats.pour++;
-    else if (v.position === "CONTRE") voteStats.contre++;
-    else if (v.position === "ABSTENTION") voteStats.abstention++;
-    else if (v.position === "NON_VOTANT") voteStats.nonVotant++;
-    else if (v.position === "ABSENT") voteStats.absent++;
+    if (v.position === "POUR") pour++;
+    else if (v.position === "CONTRE") contre++;
+    else if (v.position === "ABSTENTION") abstention++;
+    else if (v.position === "NON_VOTANT") nonVotant++;
   }
+
+  const eligibleScrutins = participation?.eligibleScrutins ?? 0;
+  const votesCount = participation?.votesCount ?? pour + contre + abstention + nonVotant;
+  const absent = eligibleScrutins - votesCount;
+
+  const voteStats = {
+    total: eligibleScrutins,
+    pour,
+    contre,
+    abstention,
+    nonVotant,
+    absent: absent > 0 ? absent : 0,
+    presenceRate: participation?.participationRate ?? 0,
+  };
 
   return {
     ...politician,

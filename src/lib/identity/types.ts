@@ -55,3 +55,20 @@ export interface CachedPolitician {
   birthDate: Date | null;
   departments: string[];
 }
+
+export interface BatchResolveInput {
+  inputs: ResolveInput[];
+  sourceType: DataSource;
+  onProgress?: (processed: number, total: number) => void;
+}
+
+export interface BatchResolveResult {
+  results: ResolveResult[];
+  stats: {
+    total: number;
+    matched: number;
+    review: number;
+    notFound: number;
+    blocked: number;
+  };
+}

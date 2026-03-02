@@ -17,7 +17,7 @@ vi.mock("@/lib/db", () => ({
   },
 }));
 
-import { resolve } from "./resolver";
+import { resolve, resolveBatch } from "./resolver";
 import { db } from "@/lib/db";
 import type { Mock } from "vitest";
 
@@ -476,6 +476,198 @@ describe("IdentityResolver", () => {
       });
 
       expect(result.politicianId).toBe("pol-1");
+    });
+  });
+
+  describe("resolveBatch", () => {
+    it("returns empty results for inputs with no matching politicians", async () => {
+      mockPoliticianFindMany.mockResolvedValue([]);
+      mockDecisionFindMany.mockResolvedValue([]);
+
+      const result = await resolveBatch({
+        sourceType: DataSource.RNE,
+        inputs: [
+          {
+            firstName: "Inconnu",
+            lastName: "Personne",
+            source: DataSource.RNE,
+            sourceId: "00001",
+          },
+          {
+            firstName: "Autre",
+            lastName: "Inconnu",
+            source: DataSource.RNE,
+            sourceId: "00002",
+          },
+        ],
+      });
+
+      expect(result.stats.total).toBe(2);
+      expect(result.stats.notFound).toBe(2);
+      expect(result.stats.matched).toBe(0);
+      expect(result.results).toHaveLength(0);
+    });
+
+    it("matches by birthdate using in-memory scoring", async () => {
+      mockPoliticianFindMany.mockResolvedValue([
+        {
+          id: "pol-1",
+          firstName: "Thierry",
+          lastName: "Cousin",
+          birthDate: new Date("1960-05-16"),
+          mandates: [{ departmentCode: "45" }],
+        },
+      ]);
+      mockDecisionFindMany.mockResolvedValue([]);
+
+      const result = await resolveBatch({
+        sourceType: DataSource.RNE,
+        inputs: [
+          {
+            firstName: "Thierry",
+            lastName: "Cousin",
+            birthDate: new Date("1960-05-16"),
+            source: DataSource.RNE,
+            sourceId: "45321",
+          },
+        ],
+      });
+
+      expect(result.stats.matched).toBe(0); // 0.9 is UNDECIDED, not auto-match
+      expect(result.stats.review).toBe(1);
+      expect(result.results).toHaveLength(1);
+      expect(result.results[0]!.politicianId).toBe("pol-1");
+      expect(result.results[0]!.confidence).toBe(0.9);
+    });
+
+    it("respects NOT_SAME prior decisions from preloaded cache", async () => {
+      mockPoliticianFindMany.mockResolvedValue([
+        {
+          id: "pol-1",
+          firstName: "Thierry",
+          lastName: "Cousin",
+          birthDate: new Date("1960-05-16"),
+          mandates: [],
+        },
+      ]);
+      mockDecisionFindMany.mockResolvedValue([
+        {
+          id: "dec-1",
+          sourceType: DataSource.RNE,
+          sourceId: "70069",
+          politicianId: "pol-1",
+          judgement: Judgement.NOT_SAME,
+          confidence: 1.0,
+          method: MatchMethod.MANUAL,
+          evidence: {},
+          decidedBy: "admin:ldiaby",
+          decidedAt: new Date(),
+          supersededBy: null,
+        },
+      ]);
+
+      const result = await resolveBatch({
+        sourceType: DataSource.RNE,
+        inputs: [
+          {
+            firstName: "Thierry",
+            lastName: "Cousin",
+            birthDate: new Date("1960-05-16"),
+            source: DataSource.RNE,
+            sourceId: "70069",
+          },
+        ],
+      });
+
+      expect(result.stats.blocked).toBe(1);
+      expect(result.results).toHaveLength(0);
+    });
+
+    it("batch-creates decisions only for SAME and UNDECIDED", async () => {
+      mockPoliticianFindMany.mockResolvedValue([
+        {
+          id: "pol-1",
+          firstName: "Marie",
+          lastName: "Durand",
+          birthDate: new Date("1970-01-01"),
+          mandates: [],
+        },
+      ]);
+      mockDecisionFindMany.mockResolvedValue([]);
+
+      await resolveBatch({
+        sourceType: DataSource.RNE,
+        inputs: [
+          {
+            firstName: "Marie",
+            lastName: "Durand",
+            birthDate: new Date("1970-01-01"),
+            source: DataSource.RNE,
+            sourceId: "12345",
+          },
+          {
+            firstName: "Inconnu",
+            lastName: "Personne",
+            source: DataSource.RNE,
+            sourceId: "99999",
+          },
+        ],
+      });
+
+      expect(mockDecisionCreate).toHaveBeenCalledTimes(1);
+      expect(mockDecisionCreate).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          sourceType: DataSource.RNE,
+          sourceId: "12345",
+          politicianId: "pol-1",
+          judgement: Judgement.UNDECIDED,
+        }),
+      });
+    });
+
+    it("handles 0 inputs gracefully", async () => {
+      const result = await resolveBatch({
+        sourceType: DataSource.RNE,
+        inputs: [],
+      });
+      expect(result.stats.total).toBe(0);
+      expect(result.results).toHaveLength(0);
+    });
+
+    it("disambiguates homonyms by birthdate in batch mode", async () => {
+      mockPoliticianFindMany.mockResolvedValue([
+        {
+          id: "pol-1",
+          firstName: "Thierry",
+          lastName: "Cousin",
+          birthDate: new Date("1960-05-16"),
+          mandates: [{ departmentCode: "45" }],
+        },
+        {
+          id: "pol-2",
+          firstName: "Thierry",
+          lastName: "Cousin",
+          birthDate: new Date("1975-03-22"),
+          mandates: [{ departmentCode: "70" }],
+        },
+      ]);
+      mockDecisionFindMany.mockResolvedValue([]);
+
+      const result = await resolveBatch({
+        sourceType: DataSource.RNE,
+        inputs: [
+          {
+            firstName: "Thierry",
+            lastName: "Cousin",
+            birthDate: new Date("1975-03-22"),
+            source: DataSource.RNE,
+            sourceId: "70069",
+          },
+        ],
+      });
+
+      expect(result.results).toHaveLength(1);
+      expect(result.results[0]!.politicianId).toBe("pol-2");
     });
   });
 });

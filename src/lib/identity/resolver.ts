@@ -6,6 +6,8 @@ import {
   CandidateMatch,
   ScoringInput,
   CachedPolitician,
+  BatchResolveInput,
+  BatchResolveResult,
   IDENTITY_THRESHOLDS,
   BIRTHDATE_TOLERANCE_MS,
 } from "./types";
@@ -47,6 +49,14 @@ export function scoreCandidate(
     method,
     blocked: isBlocked,
   };
+}
+
+/**
+ * Bulk identity resolver — pre-loads data into memory for O(1) screening.
+ * Use for syncs with 1000+ records. Same scoring logic as resolve().
+ */
+export async function resolveBatch(_batchInput: BatchResolveInput): Promise<BatchResolveResult> {
+  throw new Error("Not implemented");
 }
 
 /**

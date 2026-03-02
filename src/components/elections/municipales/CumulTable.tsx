@@ -21,6 +21,14 @@ function mandateLabel(type: string): string {
   return MANDATE_INCLUSIVE_LABELS[type] ?? type;
 }
 
+/** Normalize ALL-CAPS list names to title case. Preserve mixed-case names. */
+function normalizeListLabel(raw: string): string {
+  // Only normalize if the string is entirely uppercase (ignoring digits/punctuation)
+  const letters = raw.replace(/[^A-Za-zÀ-ÿ]/g, "");
+  if (letters.length === 0 || letters !== letters.toUpperCase()) return raw;
+  return raw.replace(/[A-Za-zÀ-ÿ]+/g, (w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
+}
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -265,9 +273,9 @@ export function CumulTable({ candidates }: CumulTableProps) {
                 <td className="py-3 px-2 max-w-[200px]">
                   <span
                     className="text-muted-foreground truncate block"
-                    title={c.listName ?? undefined}
+                    title={c.listName ? normalizeListLabel(c.listName) : undefined}
                   >
-                    {c.listName ?? "—"}
+                    {c.listName ? normalizeListLabel(c.listName) : "—"}
                   </span>
                 </td>
               </tr>
@@ -339,8 +347,11 @@ export function CumulTable({ candidates }: CumulTableProps) {
 
             {/* List name */}
             {c.listName && (
-              <p className="text-xs text-muted-foreground mt-1 truncate" title={c.listName}>
-                {c.listName}
+              <p
+                className="text-xs text-muted-foreground mt-1 truncate"
+                title={normalizeListLabel(c.listName)}
+              >
+                {normalizeListLabel(c.listName)}
               </p>
             )}
           </div>

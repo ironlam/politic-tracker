@@ -350,7 +350,24 @@ export const getCumulCandidates = cache(async function getCumulCandidates() {
     orderBy: { candidateName: "asc" },
   });
 
-  return candidacies;
+  // Deduplicate by politician: keep only the best candidacy per politician
+  // (tête de liste / lowest position, then first alphabetically)
+  const byPolitician = new Map<string, (typeof candidacies)[number]>();
+  for (const c of candidacies) {
+    const pid = c.politician?.id;
+    if (!pid) continue;
+    const existing = byPolitician.get(pid);
+    if (!existing || (c.listPosition ?? Infinity) < (existing.listPosition ?? Infinity)) {
+      byPolitician.set(pid, c);
+    }
+  }
+
+  return [...byPolitician.values()].sort((a, b) =>
+    (a.politician?.fullName ?? a.candidateName).localeCompare(
+      b.politician?.fullName ?? b.candidateName,
+      "fr"
+    )
+  );
 });
 
 export const getMissingMayors = cache(async function getMissingMayors() {

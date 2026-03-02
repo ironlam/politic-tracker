@@ -2,6 +2,7 @@
 
 import { memo, useCallback, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
+import { NO_DATA_COLOR, getPartyColor } from "./party-colors";
 
 // Dynamic imports to avoid SSR issues with react-simple-maps
 const ComposableMap = dynamic(() => import("react-simple-maps").then((m) => m.ComposableMap), {
@@ -28,60 +29,6 @@ const DOMTOM_NAMES: Record<string, string> = {
   "974": "La Réunion",
   "976": "Mayotte",
 };
-
-// Predefined party colors for common French party labels
-const PARTY_COLORS: Record<string, string> = {
-  // Gauche
-  LFI: "#BB1840",
-  NFP: "#CC2443",
-  PCF: "#C53030",
-  PS: "#E8555E",
-  EELV: "#48BB78",
-  DVG: "#FC8181",
-  LO: "#8B0000",
-  // Centre
-  RE: "#FFD966",
-  MoDem: "#F6AD55",
-  UDI: "#63B3ED",
-  UC: "#FFA500",
-  DVC: "#FFD9A0",
-  // Droite
-  LR: "#2B6CB0",
-  DVD: "#BEE3F8",
-  RN: "#1A365D",
-  REC: "#0D1B2A",
-  // Codes nuance non mappés
-  LUXD: "#4A0E0E",
-  LEXD: "#2D0A0A",
-  LREG: "#6B8E6B",
-  LUDR: "#1E3A5F",
-  LHOR: "#90CDF4",
-  LREN: "#FFD966",
-  LDSV: "#D4C5A9",
-  LMDM: "#F6AD55",
-  // Divers
-  DIV: "#CBD5E0",
-  SE: "#A0AEC0",
-  PRG: "#E89090",
-  HOR: "#90CDF4",
-};
-
-const NO_DATA_COLOR = "#e5e7eb";
-
-/** Generate a consistent color for unknown party labels via simple hash */
-function hashColor(str: string): string {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = str.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  const h = Math.abs(hash) % 360;
-  return `hsl(${h}, 55%, 50%)`;
-}
-
-function getPartyColor(label: string | null): string {
-  if (!label) return NO_DATA_COLOR;
-  return PARTY_COLORS[label] ?? hashColor(label);
-}
 
 export interface PartyMapDepartment {
   code: string;
@@ -363,6 +310,3 @@ function PartyMapComponent({ departments, mini = false }: PartyMapProps) {
 }
 
 export const PartyMap = memo(PartyMapComponent);
-
-/** Exported for use in legend on carte page */
-export { PARTY_COLORS, getPartyColor };

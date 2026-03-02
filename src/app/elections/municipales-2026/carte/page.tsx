@@ -1,7 +1,8 @@
 import { Metadata } from "next";
 import Link from "next/link";
 import { getDepartmentPartyData } from "@/lib/data/municipales";
-import { PartyMap, PARTY_COLORS, getPartyColor } from "@/components/elections/municipales/PartyMap";
+import { PartyMap } from "@/components/elections/municipales/PartyMap";
+import { PARTY_COLORS, getPartyColor } from "@/components/elections/municipales/party-colors";
 
 export const revalidate = 300;
 

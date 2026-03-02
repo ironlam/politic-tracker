@@ -326,7 +326,13 @@ async function getPoliticianForComparison(slug: string, mandateType: string) {
   if (!currentMandate) return null;
 
   // Use pre-computed participation stats (accurate denominator = all eligible scrutins)
-  // + aggregate real vote position counts (not capped by take: 500)
+  // + aggregate real vote position counts scoped to current mandate's chamber & period
+  const chamber = mandateType === "DEPUTE" ? "AN" : mandateType === "SENATEUR" ? "SENAT" : null;
+  const scrutinFilter = {
+    ...(chamber && { chamber: chamber as "AN" | "SENAT" }),
+    ...(currentMandate.startDate && { votingDate: { gte: currentMandate.startDate } }),
+  };
+
   const [participation, positionCounts] = await Promise.all([
     db.politicianParticipation.findFirst({
       where: { politicianId: politician.id, mandateType },
@@ -338,7 +344,10 @@ async function getPoliticianForComparison(slug: string, mandateType: string) {
     }),
     db.vote.groupBy({
       by: ["position"],
-      where: { politicianId: politician.id },
+      where: {
+        politicianId: politician.id,
+        ...(Object.keys(scrutinFilter).length > 0 && { scrutin: scrutinFilter }),
+      },
       _count: true,
     }),
   ]);

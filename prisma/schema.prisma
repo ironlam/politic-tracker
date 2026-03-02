@@ -1458,6 +1458,7 @@ model Commune {
   latitude       Float?
   longitude      Float?
   totalSeats     Int? // Conseil municipal seats (computed from population)
+  website        String?
 
   candidacies    Candidacy[]
   localOfficials LocalOfficial[]

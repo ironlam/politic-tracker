@@ -2,7 +2,7 @@
 
 import { memo, useCallback, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
-import { NO_DATA_COLOR, getPartyColor } from "./party-colors";
+import { NO_DATA_COLOR, getPartyColor } from "@/config/party-colors";
 
 // Dynamic imports to avoid SSR issues with react-simple-maps
 const ComposableMap = dynamic(() => import("react-simple-maps").then((m) => m.ComposableMap), {

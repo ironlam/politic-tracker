@@ -310,7 +310,11 @@ export default async function PressePage({ searchParams }: PageProps) {
               </Link>
             </Badge>
           )}
-          <Link href="/presse" className="text-sm text-muted-foreground hover:text-foreground">
+          <Link
+            href="/presse"
+            scroll={false}
+            className="text-sm text-muted-foreground hover:text-foreground"
+          >
             Effacer tout
           </Link>
         </div>
@@ -343,7 +347,11 @@ export default async function PressePage({ searchParams }: PageProps) {
         <div className="text-center py-12 text-muted-foreground">
           <p>Aucun article trouvé</p>
           {(source || partyId || search) && (
-            <Link href="/presse" className="text-primary hover:underline mt-2 inline-block">
+            <Link
+              href="/presse"
+              scroll={false}
+              className="text-primary hover:underline mt-2 inline-block"
+            >
               Effacer les filtres
             </Link>
           )}

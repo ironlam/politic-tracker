@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { DebouncedSearchInput, ComboboxFilter, SelectFilter } from "@/components/filters";
 import type { ComboboxOption, SelectOption } from "@/components/filters";
 import { useFilterParams } from "@/hooks/useFilterParams";
@@ -87,12 +86,13 @@ export function MairesFilterBar({
           {total.toLocaleString("fr-FR")} maire{total > 1 ? "s" : ""}
         </span>
         {activeFilterCount > 0 && (
-          <Link
-            href="/elections/municipales-2026/maires"
+          <button
+            type="button"
+            onClick={() => updateParams({ search: "", dept: "", party: "", gender: "" })}
             className="text-primary hover:underline text-xs"
           >
             Effacer les filtres ({activeFilterCount})
-          </Link>
+          </button>
         )}
       </div>
     </div>

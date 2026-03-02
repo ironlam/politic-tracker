@@ -129,7 +129,11 @@ export default async function ElectionsPage({ searchParams }: PageProps) {
               ×
             </Link>
           </Badge>
-          <Link href="/elections" className="text-sm text-muted-foreground hover:text-foreground">
+          <Link
+            href="/elections"
+            scroll={false}
+            className="text-sm text-muted-foreground hover:text-foreground"
+          >
             Effacer tout
           </Link>
         </div>
@@ -142,7 +146,11 @@ export default async function ElectionsPage({ searchParams }: PageProps) {
         <div className="text-center py-12 text-muted-foreground">
           <p>Aucune élection trouvée</p>
           {typeFilter && (
-            <Link href="/elections" className="text-primary hover:underline mt-2 inline-block">
+            <Link
+              href="/elections"
+              scroll={false}
+              className="text-primary hover:underline mt-2 inline-block"
+            >
               Effacer les filtres
             </Link>
           )}

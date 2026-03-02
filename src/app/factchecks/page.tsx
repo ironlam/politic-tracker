@@ -382,7 +382,11 @@ export default async function FactChecksPage({ searchParams }: PageProps) {
               </Link>
             </Badge>
           )}
-          <Link href="/factchecks" className="text-sm text-muted-foreground hover:text-foreground">
+          <Link
+            href="/factchecks"
+            scroll={false}
+            className="text-sm text-muted-foreground hover:text-foreground"
+          >
             Effacer tout
           </Link>
         </div>
@@ -432,7 +436,11 @@ export default async function FactChecksPage({ searchParams }: PageProps) {
         <div className="text-center py-12 text-muted-foreground">
           <p>Aucun fact-check trouvé</p>
           {(source || verdict || politicianSlug || search || directOnly) && (
-            <Link href="/factchecks" className="text-primary hover:underline mt-2 inline-block">
+            <Link
+              href="/factchecks"
+              scroll={false}
+              className="text-primary hover:underline mt-2 inline-block"
+            >
               Effacer les filtres
             </Link>
           )}

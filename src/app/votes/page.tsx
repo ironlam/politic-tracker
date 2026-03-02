@@ -424,7 +424,11 @@ export default async function VotesPage({ searchParams }: PageProps) {
               </Link>
             </Badge>
           )}
-          <Link href="/votes" className="text-sm text-muted-foreground hover:text-foreground">
+          <Link
+            href="/votes"
+            scroll={false}
+            className="text-sm text-muted-foreground hover:text-foreground"
+          >
             Effacer tout
           </Link>
         </div>
@@ -456,7 +460,11 @@ export default async function VotesPage({ searchParams }: PageProps) {
         <div className="text-center py-12 text-muted-foreground">
           <p>Aucun scrutin trouvé</p>
           {(result || legislature || search || theme) && (
-            <Link href="/votes" className="text-primary hover:underline mt-2 inline-block">
+            <Link
+              href="/votes"
+              scroll={false}
+              className="text-primary hover:underline mt-2 inline-block"
+            >
               Effacer les filtres
             </Link>
           )}

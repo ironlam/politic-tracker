@@ -254,7 +254,7 @@ export default async function AffairesPage({ searchParams }: PageProps) {
               Rôle : {activeGroups.map((g) => INVOLVEMENT_GROUP_LABELS[g]).join(", ")}
             </Badge>
           )}
-          <Link href="/affaires" className="text-primary hover:underline ml-2">
+          <Link href="/affaires" scroll={false} className="text-primary hover:underline ml-2">
             Effacer les filtres
           </Link>
         </div>

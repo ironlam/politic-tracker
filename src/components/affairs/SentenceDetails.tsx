@@ -45,7 +45,7 @@ export function SentenceDetails({ affair }: SentenceDetailsProps) {
 
   // If no detailed sentence, show the legacy sentence field
   if (!hasDetailedSentence) {
-    if (affair.sentence) {
+    if (affair.sentence && affair.sentence !== "null") {
       return (
         <div>
           <span className="text-sm font-medium">Peine : </span>

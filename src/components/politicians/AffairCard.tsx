@@ -17,6 +17,11 @@ interface AffairCardProps {
   variant: "critique" | "other";
 }
 
+/** Treat the string "null" / "undefined" as falsy (data quality artifact) */
+function present(value: unknown): value is string {
+  return typeof value === "string" && value !== "" && value !== "null" && value !== "undefined";
+}
+
 export function AffairCard({ affair, variant }: AffairCardProps) {
   const borderClass =
     variant === "critique"
@@ -104,11 +109,13 @@ export function AffairCard({ affair, variant }: AffairCardProps) {
       </div>
 
       {/* Jurisdiction info */}
-      {(affair.court || affair.caseNumber) && (
+      {(present(affair.court) || present(affair.caseNumber)) && (
         <div className="text-xs text-muted-foreground mb-3">
-          {affair.court && <span>{affair.court}</span>}
-          {affair.chamber && <span> - {affair.chamber}</span>}
-          {affair.caseNumber && <span className="ml-2 font-mono">({affair.caseNumber})</span>}
+          {present(affair.court) && <span>{affair.court}</span>}
+          {present(affair.chamber) && <span> - {affair.chamber}</span>}
+          {present(affair.caseNumber) && (
+            <span className="ml-2 font-mono">({affair.caseNumber})</span>
+          )}
         </div>
       )}
 

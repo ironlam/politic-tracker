@@ -33,12 +33,13 @@ const ICON_MAP: Record<string, LucideIcon> = {
 
 interface NavDropdownProps {
   group: NavGroup;
+  boost?: boolean;
 }
 
 // Global state to track which dropdown is open (only one at a time)
 let closeAllDropdowns: (() => void)[] = [];
 
-export function NavDropdown({ group }: NavDropdownProps) {
+export function NavDropdown({ group, boost }: NavDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -136,6 +137,12 @@ export function NavDropdown({ group }: NavDropdownProps) {
         aria-haspopup="true"
       >
         {group.label}
+        {boost && (
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary/40" />
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
+          </span>
+        )}
         <ChevronDown
           className={cn("h-4 w-4 transition-transform duration-200", isOpen && "rotate-180")}
         />

@@ -19,6 +19,7 @@ export async function Header() {
 
   const showComparer = !CTA_COMPARER.featureFlag || enabledFlags.has(CTA_COMPARER.featureFlag);
   const showAssistant = !CTA_ASSISTANT.featureFlag || enabledFlags.has(CTA_ASSISTANT.featureFlag);
+  const electionsBoost = enabledFlags.has("ELECTIONS_BOOST");
 
   return (
     <header
@@ -60,7 +61,11 @@ export async function Header() {
 
             {/* Dropdown menus */}
             {filteredGroups.map((group) => (
-              <NavDropdown key={group.label} group={group} />
+              <NavDropdown
+                key={group.label}
+                group={group}
+                boost={group.label === "Élections" && electionsBoost}
+              />
             ))}
 
             {/* Global search */}

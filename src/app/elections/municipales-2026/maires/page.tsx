@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { SeoIntro } from "@/components/seo/SeoIntro";
 import { MaireCard } from "@/components/elections/municipales/MaireCard";
+import { MairesFilterBar } from "@/components/elections/municipales/MairesFilterBar";
 import { getMaireStats, getMaires, getMaireParties } from "@/lib/data/municipales";
 import { DEPARTMENTS } from "@/config/departments";
 
@@ -191,87 +192,15 @@ export default async function MairesPage({ searchParams }: PageProps) {
         </section>
       )}
 
-      {/* Search + Filters */}
+      {/* Interactive Filters */}
       <section className="py-6">
-        <form method="GET" action="/elections/municipales-2026/maires" className="space-y-3">
-          {/* Search bar */}
-          <div className="flex gap-2">
-            <input
-              type="search"
-              name="search"
-              defaultValue={search}
-              placeholder="Rechercher un maire..."
-              className="flex-1 px-4 py-2 border rounded-md bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-              aria-label="Rechercher un maire"
-            />
-            <button
-              type="submit"
-              className="px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90 transition-colors"
-            >
-              Rechercher
-            </button>
-          </div>
-
-          {/* Filter selects */}
-          <div className="flex flex-wrap gap-2">
-            <select
-              name="dept"
-              defaultValue={deptFilter}
-              className="px-3 py-1.5 border rounded-md bg-background text-sm"
-              aria-label="Département"
-            >
-              <option value="">Tous les départements</option>
-              {deptOptions.map((d) => (
-                <option key={d.code} value={d.code}>
-                  {d.name} ({d.code})
-                </option>
-              ))}
-            </select>
-
-            <select
-              name="party"
-              defaultValue={partyFilter}
-              className="px-3 py-1.5 border rounded-md bg-background text-sm"
-              aria-label="Parti"
-            >
-              <option value="">Tous les partis</option>
-              {parties.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.shortName}
-                </option>
-              ))}
-            </select>
-
-            <select
-              name="gender"
-              defaultValue={genderFilter}
-              className="px-3 py-1.5 border rounded-md bg-background text-sm"
-              aria-label="Genre"
-            >
-              <option value="">Tous genres</option>
-              <option value="F">Femmes</option>
-              <option value="M">Hommes</option>
-            </select>
-
-            {activeFilterCount > 0 && (
-              <Link
-                href="/elections/municipales-2026/maires"
-                className="px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                Effacer les filtres
-              </Link>
-            )}
-          </div>
-        </form>
+        <MairesFilterBar
+          departments={deptOptions.map((d) => ({ value: d.code, label: `${d.name} (${d.code})` }))}
+          parties={parties.map((p) => ({ value: p.id, label: p.shortName }))}
+          total={total}
+          activeFilterCount={activeFilterCount}
+        />
       </section>
-
-      {/* Results count */}
-      <div className="mb-4 text-sm text-muted-foreground">
-        {total.toLocaleString("fr-FR")} maire{total > 1 ? "s" : ""}
-        {search && ` pour "${search}"`}
-        {activeFilterCount > 0 &&
-          ` (${activeFilterCount} filtre${activeFilterCount > 1 ? "s" : ""} actif${activeFilterCount > 1 ? "s" : ""})`}
-      </div>
 
       {/* Grid */}
       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">

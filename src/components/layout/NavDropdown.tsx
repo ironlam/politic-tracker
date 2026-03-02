@@ -11,6 +11,9 @@ import {
   Newspaper,
   ShieldCheck,
   BookOpen,
+  Calendar,
+  Vote,
+  Landmark,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -23,6 +26,9 @@ const ICON_MAP: Record<string, LucideIcon> = {
   newspaper: Newspaper,
   shieldCheck: ShieldCheck,
   BookOpen: BookOpen,
+  calendar: Calendar,
+  vote: Vote,
+  landmark: Landmark,
 };
 
 interface NavDropdownProps {

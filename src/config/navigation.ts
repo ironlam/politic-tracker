@@ -38,7 +38,7 @@ export const NAV_TOP_LEVEL: NavItem[] = [
   },
 ];
 
-// Main navigation groups (2 thematic dropdowns)
+// Main navigation groups (3 thematic dropdowns)
 export const NAV_GROUPS: NavGroup[] = [
   {
     label: "Politique",
@@ -75,6 +75,31 @@ export const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
+    label: "Élections",
+    items: [
+      {
+        href: "/elections",
+        label: "Calendrier électoral",
+        icon: "calendar",
+        description: "Toutes les élections à venir et passées",
+      },
+      {
+        href: "/elections/municipales-2026",
+        label: "Municipales 2026",
+        icon: "vote",
+        description: "Candidats et listes dans votre commune",
+        featureFlag: "MUNICIPALES_2026",
+      },
+      {
+        href: "/elections/municipales-2026/maires",
+        label: "Maires de France",
+        icon: "landmark",
+        description: "Annuaire des maires sortants",
+        featureFlag: "MUNICIPALES_2026",
+      },
+    ],
+  },
+  {
     label: "Données",
     items: [
       {
@@ -87,18 +112,6 @@ export const NAV_GROUPS: NavGroup[] = [
         label: "Statistiques",
         description: "Tableaux de bord et analyses",
         featureFlag: "STATISTIQUES_SECTION",
-      },
-      {
-        href: "/elections",
-        label: "Calendrier électoral",
-        description: "Dates et compte à rebours des prochaines élections",
-      },
-      {
-        href: "/elections/municipales-2026",
-        label: "Municipales 2026",
-        icon: "vote",
-        description: "Candidats et listes dans votre commune",
-        featureFlag: "MUNICIPALES_2026",
       },
       {
         href: "/sources",

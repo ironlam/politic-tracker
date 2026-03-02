@@ -57,6 +57,11 @@ export function scoreCandidate(
   }
   // Partial match: no change (inconclusive)
 
+  // Gender mismatch penalty (after first name modifier)
+  if (input.gender && candidate.gender && input.gender !== candidate.gender) {
+    score = score * 0.3;
+  }
+
   return {
     politicianId: candidate.id,
     firstName: candidate.firstName,
@@ -90,6 +95,7 @@ export async function resolveBatch(batchInput: BatchResolveInput): Promise<Batch
         firstName: true,
         lastName: true,
         birthDate: true,
+        civility: true,
         mandates: {
           where: { departmentCode: { not: null } },
           select: { departmentCode: true },
@@ -112,6 +118,7 @@ export async function resolveBatch(batchInput: BatchResolveInput): Promise<Batch
       lastName: p.lastName,
       birthDate: p.birthDate,
       departments: p.mandates.map((m) => m.departmentCode).filter((d): d is string => d !== null),
+      gender: p.civility === "Mme" ? "F" : p.civility === "M." ? "M" : null,
     };
     const existing = politicianMap.get(key);
     if (existing) existing.push(cached);
@@ -233,6 +240,7 @@ export async function resolveBatch(batchInput: BatchResolveInput): Promise<Batch
           lastName: input.lastName,
           birthDate: input.birthDate?.toISOString() ?? null,
           department: input.department ?? null,
+          gender: input.gender ?? null,
           candidateCount: scored.length,
           context: input.context ?? null,
         })
@@ -345,6 +353,7 @@ export async function resolve(input: ResolveInput): Promise<ResolveResult> {
       firstName: true,
       lastName: true,
       birthDate: true,
+      civility: true,
       mandates: {
         where: { departmentCode: { not: null } },
         select: { departmentCode: true },
@@ -359,6 +368,7 @@ export async function resolve(input: ResolveInput): Promise<ResolveResult> {
       lastName: p.lastName,
       birthDate: p.birthDate,
       departments: p.mandates.map((m) => m.departmentCode).filter((d): d is string => d !== null),
+      gender: p.civility === "Mme" ? "F" : p.civility === "M." ? "M" : null,
     };
     return scoreCandidate(input, cached, blockedIds);
   });
@@ -431,6 +441,7 @@ async function logDecision(input: ResolveInput, result: ResolveResult): Promise<
           lastName: input.lastName,
           birthDate: input.birthDate?.toISOString() ?? null,
           department: input.department ?? null,
+          gender: input.gender ?? null,
           candidateCount: result.candidates.length,
           context: input.context
             ? (JSON.parse(JSON.stringify(input.context)) as Prisma.InputJsonValue)

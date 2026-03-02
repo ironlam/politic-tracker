@@ -149,6 +149,99 @@ describe("scoreCandidate", () => {
     });
   });
 
+  describe("gender signal", () => {
+    it("gender mismatch + dept match → drops below REVIEW (0.85 × 0.3 = 0.255)", () => {
+      const result = scoreCandidate(
+        makeInput({ firstName: "Dominique", gender: "F" }),
+        makePolitician({ firstName: "Dominique", gender: "M" }),
+        noBlocked
+      );
+      // 0.7 (dept) + 0.15 (firstName) = 0.85, × 0.3 (gender) = 0.255
+      expect(result.score).toBeCloseTo(0.255, 2);
+      expect(result.score).toBeLessThan(IDENTITY_THRESHOLDS.REVIEW);
+    });
+
+    it("gender match → same score as no gender (neutral)", () => {
+      const withGender = scoreCandidate(
+        makeInput({ firstName: "Alma", gender: "F" }),
+        makePolitician({ firstName: "Alma", gender: "F" }),
+        noBlocked
+      );
+      const withoutGender = scoreCandidate(
+        makeInput({ firstName: "Alma" }),
+        makePolitician({ firstName: "Alma" }),
+        noBlocked
+      );
+      expect(withGender.score).toBe(withoutGender.score);
+    });
+
+    it("null gender on either side → no change", () => {
+      const inputNullGender = scoreCandidate(
+        makeInput({ firstName: "Alma", gender: null }),
+        makePolitician({ firstName: "Alma", gender: "F" }),
+        noBlocked
+      );
+      const candidateNullGender = scoreCandidate(
+        makeInput({ firstName: "Alma", gender: "F" }),
+        makePolitician({ firstName: "Alma", gender: null }),
+        noBlocked
+      );
+      const bothNull = scoreCandidate(
+        makeInput({ firstName: "Alma" }),
+        makePolitician({ firstName: "Alma" }),
+        noBlocked
+      );
+      expect(inputNullGender.score).toBe(bothNull.score);
+      expect(candidateNullGender.score).toBe(bothNull.score);
+    });
+
+    it("gender mismatch stacks with first name mismatch (×0.4 × 0.3 = ×0.12)", () => {
+      const result = scoreCandidate(
+        makeInput({ firstName: "Marie-Laure", gender: "F" }),
+        makePolitician({ firstName: "Dominique", gender: "M" }),
+        noBlocked
+      );
+      // 0.7 (dept) × 0.4 (firstName mismatch) × 0.3 (gender mismatch) = 0.084
+      expect(result.score).toBeCloseTo(0.084, 2);
+    });
+
+    it("gender mismatch kills birthdate+firstName match (0.98 × 0.3 = 0.294)", () => {
+      const birthDate = new Date("1990-06-15");
+      const result = scoreCandidate(
+        makeInput({ firstName: "Claude", birthDate, gender: "F" }),
+        makePolitician({ firstName: "Claude", birthDate, gender: "M" }),
+        noBlocked
+      );
+      // 0.9 (birthdate) + 0.08 (firstName exact, capped 0.98) = 0.98, × 0.3 = 0.294
+      expect(result.score).toBeCloseTo(0.294, 2);
+      expect(result.score).toBeLessThan(IDENTITY_THRESHOLDS.REVIEW);
+    });
+  });
+
+  describe("full enriched flow (RNE birthdate + gender)", () => {
+    it("name + dept + birthdate (enriched) + firstName exact + gender match → 0.98 (SAME)", () => {
+      const birthDate = new Date("1975-03-12");
+      const result = scoreCandidate(
+        makeInput({ firstName: "Alma", birthDate, gender: "F" }),
+        makePolitician({ firstName: "Alma", birthDate, gender: "F" }),
+        noBlocked
+      );
+      expect(result.score).toBeGreaterThanOrEqual(IDENTITY_THRESHOLDS.AUTO_MATCH);
+      expect(result.score).toBe(0.98);
+    });
+
+    it("same scenario with gender mismatch → 0.98 × 0.3 = 0.294 (rejected)", () => {
+      const birthDate = new Date("1975-03-12");
+      const result = scoreCandidate(
+        makeInput({ firstName: "Claude", birthDate, gender: "F" }),
+        makePolitician({ firstName: "Claude", birthDate, gender: "M" }),
+        noBlocked
+      );
+      expect(result.score).toBeCloseTo(0.294, 2);
+      expect(result.score).toBeLessThan(IDENTITY_THRESHOLDS.REVIEW);
+    });
+  });
+
   describe("existing behavior preserved", () => {
     it("blocked candidate stays blocked", () => {
       const result = scoreCandidate(makeInput(), makePolitician(), new Set(["pol-1"]));

@@ -7,6 +7,7 @@ export interface ResolveInput {
   source: DataSource;
   sourceId: string;
   department?: string;
+  gender?: string | null;
   mandateType?: MandateType;
   context?: Record<string, unknown>;
 }
@@ -46,6 +47,7 @@ export interface ScoringInput {
   lastName: string;
   birthDate?: Date | null;
   department?: string;
+  gender?: string | null;
 }
 
 /** Politician data needed for in-memory scoring */
@@ -55,6 +57,7 @@ export interface CachedPolitician {
   lastName: string;
   birthDate: Date | null;
   departments: string[];
+  gender?: string | null;
 }
 
 export interface BatchResolveInput {

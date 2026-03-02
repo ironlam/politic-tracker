@@ -7,6 +7,7 @@ import { HTTPClient } from "@/lib/api/http-client";
 import { DATA_GOUV_RATE_LIMIT_MS } from "@/config/rate-limits";
 import { resolveBatch } from "@/lib/identity";
 import type { ResolveInput } from "@/lib/identity";
+import { normalizeText } from "@/lib/name-matching";
 
 // 2026 CSV (semicolon-delimited, UTF-8, no comment header)
 const DEFAULT_CSV_URL =
@@ -146,6 +147,27 @@ async function preWarmPartyCache(): Promise<Map<string, string | null>> {
 }
 
 /**
+ * Pre-load LocalOfficial birthdates for RNE enrichment.
+ * Key: "normalizedFirstName|normalizedLastName|communeId" → { birthDate, gender }
+ */
+async function loadRNEBirthdateLookup(): Promise<
+  Map<string, { birthDate: Date; gender: string | null }>
+> {
+  const officials = await db.localOfficial.findMany({
+    where: { birthDate: { not: null }, communeId: { not: null } },
+    select: { firstName: true, lastName: true, communeId: true, birthDate: true, gender: true },
+  });
+  const map = new Map<string, { birthDate: Date; gender: string | null }>();
+  for (const o of officials) {
+    const key = `${normalizeText(o.firstName)}|${normalizeText(o.lastName)}|${o.communeId}`;
+    if (!map.has(key)) {
+      map.set(key, { birthDate: o.birthDate!, gender: o.gender });
+    }
+  }
+  return map;
+}
+
+/**
  * Sync candidatures municipales from a data.gouv.fr CSV
  */
 export async function syncCandidaturesMunicipales(
@@ -179,10 +201,12 @@ export async function syncCandidaturesMunicipales(
   // ─── Phase A: Pre-load reference data ───────────────────────────────
   console.log("\nPhase A: Pre-loading reference data...");
 
-  // Sequential to avoid pool starvation (pool max: 2, these are 3 queries)
+  // Sequential to avoid pool starvation (pool max: 2, these are 4 queries)
   const communeSet = await loadCommuneMap();
   const existingCandidacyMap = await loadExistingCandidacies(electionRecord.id);
   const partyCache = await preWarmPartyCache();
+  const rneLookup = await loadRNEBirthdateLookup();
+  console.log(`  Pre-loaded ${rneLookup.size} LocalOfficial birthdates for enrichment`);
 
   // ─── Fetch and parse CSV ────────────────────────────────────────────
   const records = await fetchCandidaturesCSV(url);
@@ -268,18 +292,29 @@ export async function syncCandidaturesMunicipales(
 
   // Deduplicate resolve inputs by name+dept (avoid resolving "Jean Martin, dept 75" 10 times)
   const resolveInputMap = new Map<string, ResolveInput>();
+  let enrichedCount = 0;
   for (const row of parsedRows) {
     const key = `${row.normalizedFirstName}|${row.normalizedLastName}|${row.deptCode}`;
     if (!resolveInputMap.has(key)) {
-      resolveInputMap.set(key, {
+      const resolveInput: ResolveInput = {
         firstName: row.normalizedFirstName,
         lastName: row.normalizedLastName,
         source: DataSource.MUNICIPALES,
         sourceId: key,
         department: row.deptCode,
-      });
+        gender: row.gender,
+      };
+      // Pre-enrich with RNE birthdate (mayors re-running in their commune)
+      const rneKey = `${normalizeText(row.normalizedFirstName)}|${normalizeText(row.normalizedLastName)}|${row.inseeCode}`;
+      const rneMatch = rneLookup.get(rneKey);
+      if (rneMatch) {
+        resolveInput.birthDate = rneMatch.birthDate;
+        enrichedCount++;
+      }
+      resolveInputMap.set(key, resolveInput);
     }
   }
+  console.log(`  Inputs enriched with RNE birthdates: ${enrichedCount}`);
 
   const resolveInputs = Array.from(resolveInputMap.values());
   console.log(

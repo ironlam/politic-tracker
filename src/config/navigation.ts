@@ -41,6 +41,31 @@ export const NAV_TOP_LEVEL: NavItem[] = [
 // Main navigation groups (3 thematic dropdowns)
 export const NAV_GROUPS: NavGroup[] = [
   {
+    label: "Élections",
+    items: [
+      {
+        href: "/elections",
+        label: "Calendrier électoral",
+        icon: "calendar",
+        description: "Toutes les élections à venir et passées",
+      },
+      {
+        href: "/elections/municipales-2026",
+        label: "Municipales 2026",
+        icon: "vote",
+        description: "Candidats et listes dans votre commune",
+        featureFlag: "MUNICIPALES_2026",
+      },
+      {
+        href: "/elections/municipales-2026/maires",
+        label: "Maires de France",
+        icon: "landmark",
+        description: "Annuaire des maires sortants",
+        featureFlag: "MUNICIPALES_2026",
+      },
+    ],
+  },
+  {
     label: "Politique",
     items: [
       {
@@ -71,31 +96,6 @@ export const NAV_GROUPS: NavGroup[] = [
         icon: "mapPin",
         description: "Trouvez votre député par code postal",
         featureFlag: "MON_DEPUTE_SECTION",
-      },
-    ],
-  },
-  {
-    label: "Élections",
-    items: [
-      {
-        href: "/elections",
-        label: "Calendrier électoral",
-        icon: "calendar",
-        description: "Toutes les élections à venir et passées",
-      },
-      {
-        href: "/elections/municipales-2026",
-        label: "Municipales 2026",
-        icon: "vote",
-        description: "Candidats et listes dans votre commune",
-        featureFlag: "MUNICIPALES_2026",
-      },
-      {
-        href: "/elections/municipales-2026/maires",
-        label: "Maires de France",
-        icon: "landmark",
-        description: "Annuaire des maires sortants",
-        featureFlag: "MUNICIPALES_2026",
       },
     ],
   },

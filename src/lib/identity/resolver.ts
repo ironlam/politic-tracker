@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { Judgement, MatchMethod, Prisma } from "@/generated/prisma";
+import { normalizeText } from "@/lib/name-matching";
 import {
   ResolveInput,
   ResolveResult,
@@ -55,8 +56,209 @@ export function scoreCandidate(
  * Bulk identity resolver — pre-loads data into memory for O(1) screening.
  * Use for syncs with 1000+ records. Same scoring logic as resolve().
  */
-export async function resolveBatch(_batchInput: BatchResolveInput): Promise<BatchResolveResult> {
-  throw new Error("Not implemented");
+export async function resolveBatch(batchInput: BatchResolveInput): Promise<BatchResolveResult> {
+  const { inputs, sourceType, onProgress } = batchInput;
+
+  if (inputs.length === 0) {
+    return {
+      results: [],
+      stats: { total: 0, matched: 0, review: 0, notFound: 0, blocked: 0 },
+    };
+  }
+
+  // ── Phase A: Preload all politicians + decisions in 2 parallel queries ──
+  const [allPoliticians, allDecisions] = await Promise.all([
+    db.politician.findMany({
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        birthDate: true,
+        mandates: {
+          where: { departmentCode: { not: null } },
+          select: { departmentCode: true },
+        },
+      },
+    }),
+    db.identityDecision.findMany({
+      where: { sourceType, supersededBy: null },
+      orderBy: { decidedAt: "desc" },
+    }),
+  ]);
+
+  // Build politician lookup: normalizedLastName → CachedPolitician[]
+  const politicianMap = new Map<string, CachedPolitician[]>();
+  for (const p of allPoliticians) {
+    const key = normalizeText(p.lastName);
+    const cached: CachedPolitician = {
+      id: p.id,
+      firstName: p.firstName,
+      lastName: p.lastName,
+      birthDate: p.birthDate,
+      departments: p.mandates.map((m) => m.departmentCode).filter((d): d is string => d !== null),
+    };
+    const existing = politicianMap.get(key);
+    if (existing) existing.push(cached);
+    else politicianMap.set(key, [cached]);
+  }
+
+  // Build decision lookup: sourceId → Decision[]
+  const decisionMap = new Map<string, typeof allDecisions>();
+  for (const d of allDecisions) {
+    const existing = decisionMap.get(d.sourceId);
+    if (existing) existing.push(d);
+    else decisionMap.set(d.sourceId, [d]);
+  }
+
+  // ── Phase B: Screen + Score (pure memory, 0 DB queries) ──
+  const results: ResolveResult[] = [];
+  const stats = { total: inputs.length, matched: 0, review: 0, notFound: 0, blocked: 0 };
+  const decisionsToCreate: {
+    sourceType: typeof sourceType;
+    sourceId: string;
+    politicianId: string;
+    judgement: Judgement;
+    confidence: number;
+    method: MatchMethod;
+    evidence: Prisma.InputJsonValue;
+    decidedBy: string;
+  }[] = [];
+
+  for (let i = 0; i < inputs.length; i++) {
+    const input = inputs[i]!;
+
+    // Lookup candidates by normalized lastName
+    const key = normalizeText(input.lastName);
+    const candidates = politicianMap.get(key);
+
+    if (!candidates || candidates.length === 0) {
+      stats.notFound++;
+      if (onProgress && (i + 1) % 10000 === 0) onProgress(i + 1, inputs.length);
+      continue;
+    }
+
+    // Check prior decisions for this sourceId
+    const priorDecisions = decisionMap.get(input.sourceId) ?? [];
+    const blockedIds = new Set(
+      priorDecisions.filter((d) => d.judgement === Judgement.NOT_SAME).map((d) => d.politicianId)
+    );
+
+    // Check for high-confidence SAME decision → shortcircuit
+    const confirmedSame = priorDecisions.find(
+      (d) => d.judgement === Judgement.SAME && d.confidence >= IDENTITY_THRESHOLDS.AUTO_MATCH
+    );
+    if (confirmedSame) {
+      stats.matched++;
+      results.push({
+        politicianId: confirmedSame.politicianId,
+        confidence: confirmedSame.confidence,
+        method: confirmedSame.method,
+        decision: Judgement.SAME,
+        candidates: [],
+        blocked: false,
+      });
+      if (onProgress && (i + 1) % 10000 === 0) onProgress(i + 1, inputs.length);
+      continue;
+    }
+
+    // Score all candidates
+    const scored: CandidateMatch[] = candidates.map((c) => scoreCandidate(input, c, blockedIds));
+
+    // Sort by score descending, filter blocked
+    const activeCandidates = scored.filter((c) => !c.blocked).sort((a, b) => b.score - a.score);
+
+    const allBlocked = scored.length > 0 && activeCandidates.length === 0;
+    const bestMatch = activeCandidates[0];
+
+    if (allBlocked) {
+      stats.blocked++;
+      if (onProgress && (i + 1) % 10000 === 0) onProgress(i + 1, inputs.length);
+      continue;
+    }
+
+    if (!bestMatch || bestMatch.score < IDENTITY_THRESHOLDS.REVIEW) {
+      stats.notFound++;
+      if (onProgress && (i + 1) % 10000 === 0) onProgress(i + 1, inputs.length);
+      continue;
+    }
+
+    // Determine judgement
+    let judgement: Judgement;
+    if (bestMatch.score >= IDENTITY_THRESHOLDS.AUTO_MATCH) {
+      judgement = Judgement.SAME;
+      stats.matched++;
+    } else {
+      judgement = Judgement.UNDECIDED;
+      stats.review++;
+    }
+
+    results.push({
+      politicianId: bestMatch.politicianId,
+      confidence: bestMatch.score,
+      method: bestMatch.method,
+      decision: judgement,
+      candidates: scored,
+      blocked: false,
+    });
+
+    // Accumulate decision to persist
+    decisionsToCreate.push({
+      sourceType,
+      sourceId: input.sourceId,
+      politicianId: bestMatch.politicianId,
+      judgement,
+      confidence: bestMatch.score,
+      method: bestMatch.method,
+      evidence: JSON.parse(
+        JSON.stringify({
+          firstName: input.firstName,
+          lastName: input.lastName,
+          birthDate: input.birthDate?.toISOString() ?? null,
+          department: input.department ?? null,
+          candidateCount: scored.length,
+          context: input.context ?? null,
+        })
+      ) as Prisma.InputJsonValue,
+      decidedBy: `system:sync-${input.source.toLowerCase()}`,
+    });
+
+    if (onProgress && (i + 1) % 10000 === 0) onProgress(i + 1, inputs.length);
+  }
+
+  // ── Phase C: Persist (batch writes in chunks of 100) ──
+  const CHUNK_SIZE = 100;
+  for (let i = 0; i < decisionsToCreate.length; i += CHUNK_SIZE) {
+    const chunk = decisionsToCreate.slice(i, i + CHUNK_SIZE);
+    let persisted = false;
+
+    // Try batch transaction if available
+    if (typeof db.$transaction === "function") {
+      try {
+        await db.$transaction(chunk.map((d) => db.identityDecision.create({ data: d })));
+        persisted = true;
+      } catch {
+        // Fall through to individual creates
+      }
+    }
+
+    // Fallback: individual creates
+    if (!persisted) {
+      for (const d of chunk) {
+        try {
+          await db.identityDecision.create({ data: d });
+        } catch {
+          console.error(
+            `[resolveBatch] Failed to persist decision for ${d.sourceType}:${d.sourceId}`
+          );
+        }
+      }
+    }
+  }
+
+  // Final progress callback
+  if (onProgress) onProgress(inputs.length, inputs.length);
+
+  return { results, stats };
 }
 
 /**

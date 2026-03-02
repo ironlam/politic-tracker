@@ -213,19 +213,31 @@ export async function syncRNEMaires(
     });
   }
 
+  // Deduplicate by inseeCode (keep last occurrence — latest data wins)
+  const deduped = new Map<string, ParsedRow>();
+  for (const row of parsedRows) {
+    deduped.set(row.inseeCode, row);
+  }
+  const uniqueRows = [...deduped.values()];
+  if (uniqueRows.length < parsedRows.length) {
+    console.log(
+      `  Deduplicated: ${parsedRows.length} → ${uniqueRows.length} (${parsedRows.length - uniqueRows.length} duplicates)`
+    );
+  }
+
   if (dryRun) {
-    console.log(`  [DRY-RUN] Would upsert ${parsedRows.length} officials`);
+    console.log(`  [DRY-RUN] Would upsert ${uniqueRows.length} officials`);
     if (verbose) {
-      for (const r of parsedRows.slice(0, 10)) {
+      for (const r of uniqueRows.slice(0, 10)) {
         console.log(`  [DRY-RUN] ${r.fullName} (${r.inseeCode})`);
       }
     }
-    officialsCreated = parsedRows.length;
+    officialsCreated = uniqueRows.length;
   } else {
     // Batch upsert using ON CONFLICT on (role, externalId)
     const BATCH_SIZE = 500;
-    for (let start = 0; start < parsedRows.length; start += BATCH_SIZE) {
-      const chunk = parsedRows.slice(start, start + BATCH_SIZE);
+    for (let start = 0; start < uniqueRows.length; start += BATCH_SIZE) {
+      const chunk = uniqueRows.slice(start, start + BATCH_SIZE);
 
       // Build parameterized VALUES clause
       const values: Prisma.Sql[] = chunk.map(
@@ -275,7 +287,7 @@ export async function syncRNEMaires(
 
       if ((start + BATCH_SIZE) % 5000 < BATCH_SIZE) {
         console.log(
-          `  Progress: ${Math.min(start + BATCH_SIZE, parsedRows.length)}/${parsedRows.length}`
+          `  Progress: ${Math.min(start + BATCH_SIZE, uniqueRows.length)}/${uniqueRows.length}`
         );
       }
     }
@@ -326,6 +338,11 @@ export async function syncRNEMaires(
   console.log(`  Found ${unmatchedOfficials.length} unmatched officials to reconcile`);
 
   for (let i = 0; i < unmatchedOfficials.length; i++) {
+    if (i > 0 && i % 1000 === 0) {
+      console.log(
+        `  Phase 2 progress: ${i}/${unmatchedOfficials.length} (${politiciansMatched} matched, ${politiciansNotFound} not found)`
+      );
+    }
     const official = unmatchedOfficials[i]!;
 
     // Use IdentityResolver for matching — provides audit trail, NOT_SAME blocking,

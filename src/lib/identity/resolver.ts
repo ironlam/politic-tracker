@@ -4,9 +4,50 @@ import {
   ResolveInput,
   ResolveResult,
   CandidateMatch,
+  ScoringInput,
+  CachedPolitician,
   IDENTITY_THRESHOLDS,
   BIRTHDATE_TOLERANCE_MS,
 } from "./types";
+
+/**
+ * Pure scoring function — no DB, no side effects.
+ * Shared between resolve() (single) and resolveBatch() (bulk).
+ */
+export function scoreCandidate(
+  input: ScoringInput,
+  candidate: CachedPolitician,
+  blockedIds: Set<string>
+): CandidateMatch {
+  const isBlocked = blockedIds.has(candidate.id);
+  let score = 0.5;
+  let method: MatchMethod = MatchMethod.NAME_ONLY;
+
+  if (input.birthDate && candidate.birthDate) {
+    const diff = Math.abs(candidate.birthDate.getTime() - input.birthDate.getTime());
+    if (diff <= BIRTHDATE_TOLERANCE_MS) {
+      score = 0.9;
+      method = MatchMethod.BIRTHDATE;
+    } else {
+      score = 0.1;
+    }
+  }
+
+  if (input.department && candidate.departments.includes(input.department) && score < 0.7) {
+    score = 0.7;
+    method = MatchMethod.DEPARTMENT;
+  }
+
+  return {
+    politicianId: candidate.id,
+    firstName: candidate.firstName,
+    lastName: candidate.lastName,
+    birthDate: candidate.birthDate,
+    score,
+    method,
+    blocked: isBlocked,
+  };
+}
 
 /**
  * Unified identity resolver — replaces per-sync matching logic.
@@ -21,7 +62,7 @@ import {
  * 7. Log decision to IdentityDecision table
  */
 export async function resolve(input: ResolveInput): Promise<ResolveResult> {
-  const { firstName, lastName, birthDate, source, sourceId, department } = input;
+  const { firstName, lastName, source, sourceId } = input;
 
   // ── Step 1: Check prior decisions ──────────────────────────────
   const priorDecisions = await db.identityDecision.findMany({
@@ -89,43 +130,15 @@ export async function resolve(input: ResolveInput): Promise<ResolveResult> {
     },
   });
 
-  // Score each candidate based on available signals
   const candidates: CandidateMatch[] = nameCandidates.map((p) => {
-    const isBlocked = blockedIds.has(p.id);
-    const depts = new Set(
-      p.mandates.map((m) => m.departmentCode).filter((d): d is string => d !== null)
-    );
-
-    let score = 0.5; // Base: name match only
-    let method: MatchMethod = MatchMethod.NAME_ONLY;
-
-    // Birthdate match: strong signal
-    if (birthDate && p.birthDate) {
-      const diff = Math.abs(p.birthDate.getTime() - birthDate.getTime());
-      if (diff <= BIRTHDATE_TOLERANCE_MS) {
-        score = 0.9;
-        method = MatchMethod.BIRTHDATE;
-      } else {
-        // Birthdate mismatch: very likely different person
-        score = 0.1;
-      }
-    }
-
-    // Department match: medium signal (only upgrade if not already higher)
-    if (department && depts.has(department) && score < 0.7) {
-      score = 0.7;
-      method = MatchMethod.DEPARTMENT;
-    }
-
-    return {
-      politicianId: p.id,
+    const cached: CachedPolitician = {
+      id: p.id,
       firstName: p.firstName,
       lastName: p.lastName,
       birthDate: p.birthDate,
-      score,
-      method,
-      blocked: isBlocked,
+      departments: p.mandates.map((m) => m.departmentCode).filter((d): d is string => d !== null),
     };
+    return scoreCandidate(input, cached, blockedIds);
   });
 
   // Sort by score descending, filter blocked

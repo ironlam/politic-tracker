@@ -38,3 +38,20 @@ export const IDENTITY_THRESHOLDS = {
 
 /** Birthdate tolerance: 1 day in ms */
 export const BIRTHDATE_TOLERANCE_MS = 86_400_000;
+
+/** Input for the pure scoring function (no DB, no side effects) */
+export interface ScoringInput {
+  firstName: string;
+  lastName: string;
+  birthDate?: Date | null;
+  department?: string;
+}
+
+/** Politician data needed for in-memory scoring */
+export interface CachedPolitician {
+  id: string;
+  firstName: string;
+  lastName: string;
+  birthDate: Date | null;
+  departments: string[];
+}

@@ -1,8 +1,4 @@
+export { CompareCategoryPicker } from "./CompareCategoryPicker";
+export { CompareSelector } from "./CompareSelector";
 export { CompareHeader } from "./CompareHeader";
-export { PoliticianSelector } from "./PoliticianSelector";
-export { PartySelector } from "./PartySelector";
-export { CompareMode } from "./CompareMode";
-export { ComparisonTable } from "./ComparisonTable";
-export { VoteAgreement } from "./VoteAgreement";
-export { PartyComparisonTable } from "./PartyComparisonTable";
 export { SuggestedComparisons } from "./SuggestedComparisons";

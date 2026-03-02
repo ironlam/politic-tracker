@@ -117,7 +117,7 @@ export default async function RootLayout({
         <UmamiAnalytics />
       </head>
       <body
-        className={`${outfit.variable} ${atkinson.variable} antialiased min-h-screen flex flex-col`}
+        className={`${outfit.variable} ${atkinson.variable} antialiased min-h-screen flex flex-col overflow-x-hidden`}
       >
         <ThemeProvider>
           <TooltipProvider>

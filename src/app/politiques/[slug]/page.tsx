@@ -229,7 +229,7 @@ export default async function PoliticianPage({ params }: PageProps) {
             lastName={politician.lastName}
             size="lg"
           />
-          <div>
+          <div className="min-w-0">
             <h1 className="text-3xl font-bold mb-2">{politician.fullName}</h1>
             <div className="flex flex-wrap items-center gap-2">
               {politician.currentParty && (
@@ -241,7 +241,7 @@ export default async function PoliticianPage({ params }: PageProps) {
                   }
                 >
                   <Badge
-                    className="text-sm hover:opacity-80 transition-opacity cursor-pointer"
+                    className="text-sm hover:opacity-80 transition-opacity cursor-pointer whitespace-normal text-center"
                     style={{
                       backgroundColor: politician.currentParty.color
                         ? `${politician.currentParty.color}20`

@@ -26,6 +26,13 @@ export function scoreCandidate(
   let score = 0.5;
   let method: MatchMethod = MatchMethod.NAME_ONLY;
 
+  // First name comparison (normalized: lowercase, no accents, hyphens → spaces)
+  const inputFirst = normalizeText(input.firstName);
+  const candidateFirst = normalizeText(candidate.firstName);
+  const firstNameExact = inputFirst === candidateFirst;
+  const firstNamePartial =
+    !firstNameExact && (inputFirst.includes(candidateFirst) || candidateFirst.includes(inputFirst));
+
   if (input.birthDate && candidate.birthDate) {
     const diff = Math.abs(candidate.birthDate.getTime() - input.birthDate.getTime());
     if (diff <= BIRTHDATE_TOLERANCE_MS) {
@@ -40,6 +47,15 @@ export function scoreCandidate(
     score = 0.7;
     method = MatchMethod.DEPARTMENT;
   }
+
+  // Apply first name modifier after base scoring
+  if (firstNameExact) {
+    score = Math.min(score + 0.15, 0.98);
+  } else if (!firstNamePartial) {
+    // Complete mismatch — heavy penalty
+    score = score * 0.4;
+  }
+  // Partial match: no change (inconclusive)
 
   return {
     politicianId: candidate.id,

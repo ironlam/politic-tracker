@@ -215,7 +215,7 @@ describe("IdentityResolver", () => {
       });
 
       expect(result.politicianId).toBe("pol-1");
-      expect(result.confidence).toBe(0.9);
+      expect(result.confidence).toBe(0.98); // 0.9 birthdate + 0.15 first name bonus (capped)
       expect(result.method).toBe(MatchMethod.BIRTHDATE);
     });
 
@@ -295,7 +295,7 @@ describe("IdentityResolver", () => {
 
       expect(result.politicianId).toBe("pol-1");
       expect(result.method).toBe(MatchMethod.DEPARTMENT);
-      expect(result.confidence).toBe(0.7);
+      expect(result.confidence).toBe(0.85); // 0.7 department + 0.15 first name bonus
     });
 
     it("does not override birthdate match with department match", async () => {
@@ -319,7 +319,7 @@ describe("IdentityResolver", () => {
       });
 
       // Birthdate match (0.9) should take priority over department (0.7)
-      expect(result.confidence).toBe(0.9);
+      expect(result.confidence).toBe(0.98); // 0.9 birthdate + 0.15 first name bonus (capped)
       expect(result.method).toBe(MatchMethod.BIRTHDATE);
     });
   });
@@ -406,10 +406,10 @@ describe("IdentityResolver", () => {
         sourceId: "12345",
       });
 
-      // 0.9 is in review zone (0.70-0.94)
+      // 0.98 (0.9 birthdate + 0.15 first name) reaches AUTO_MATCH
       expect(result.politicianId).toBe("pol-1");
-      expect(result.decision).toBe(Judgement.UNDECIDED);
-      expect(result.confidence).toBe(0.9);
+      expect(result.decision).toBe(Judgement.SAME);
+      expect(result.confidence).toBe(0.98);
     });
   });
 
@@ -438,7 +438,7 @@ describe("IdentityResolver", () => {
           sourceType: DataSource.RNE,
           sourceId: "12345",
           politicianId: "pol-1",
-          judgement: Judgement.UNDECIDED,
+          judgement: Judgement.SAME, // 0.98 with first name bonus
           method: MatchMethod.BIRTHDATE,
         }),
       });
@@ -536,11 +536,11 @@ describe("IdentityResolver", () => {
         ],
       });
 
-      expect(result.stats.matched).toBe(0); // 0.9 is UNDECIDED, not auto-match
-      expect(result.stats.review).toBe(1);
+      expect(result.stats.matched).toBe(1); // 0.98 with first name bonus = SAME
+      expect(result.stats.review).toBe(0);
       expect(result.results).toHaveLength(1);
       expect(result.results[0]!.politicianId).toBe("pol-1");
-      expect(result.results[0]!.confidence).toBe(0.9);
+      expect(result.results[0]!.confidence).toBe(0.98);
     });
 
     it("respects NOT_SAME prior decisions from preloaded cache", async () => {
@@ -617,7 +617,7 @@ describe("IdentityResolver", () => {
         ],
       });
 
-      // Only UNDECIDED (Marie) persisted, not NEW (Inconnu)
+      // Only SAME (Marie, 0.98 with first name bonus) persisted, not NEW (Inconnu)
       expect(mockDecisionCreateMany).toHaveBeenCalledTimes(1);
       expect(mockDecisionCreateMany).toHaveBeenCalledWith({
         data: [
@@ -625,7 +625,7 @@ describe("IdentityResolver", () => {
             sourceType: DataSource.RNE,
             sourceId: "12345",
             politicianId: "pol-1",
-            judgement: Judgement.UNDECIDED,
+            judgement: Judgement.SAME,
           }),
         ],
       });

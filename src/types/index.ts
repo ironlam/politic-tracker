@@ -36,6 +36,9 @@ import type {
   PublicationStatus,
 } from "@/generated/prisma";
 
+// Compare types
+export * from "./compare";
+
 // Re-export Prisma types
 export type {
   Politician,

@@ -225,7 +225,7 @@ export async function syncCandidaturesMunicipales(
       nuanceCode,
       listName: rawListName || null,
       listPosition: isNaN(rawListPosition) ? null : rawListPosition,
-      partyLabel: row!["Libellé abrégé de liste"] || nuanceCode || null,
+      partyLabel: NUANCE_POLITIQUE_MAPPING[nuanceCode] || nuanceCode || null,
       candidateName: `${prenom} ${nom}`,
       constituencyCode: codeCirconscription,
       inseeCode: codeCirconscription, // 2026 CSV: Code circonscription IS the INSEE code

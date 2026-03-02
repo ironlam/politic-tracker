@@ -31,20 +31,39 @@ const DOMTOM_NAMES: Record<string, string> = {
 
 // Predefined party colors for common French party labels
 const PARTY_COLORS: Record<string, string> = {
-  RN: "#1A365D",
-  LR: "#2B6CB0",
-  Renaissance: "#FFD966",
+  // Gauche
+  LFI: "#BB1840",
+  NFP: "#CC2443",
+  PCF: "#C53030",
   PS: "#E8555E",
   EELV: "#48BB78",
-  LFI: "#BB1840",
-  PCF: "#C53030",
+  DVG: "#FC8181",
+  LO: "#8B0000",
+  // Centre
+  RE: "#FFD966",
   MoDem: "#F6AD55",
   UDI: "#63B3ED",
-  Horizons: "#90CDF4",
-  DVG: "#FC8181",
+  UC: "#FFA500",
+  DVC: "#FFD9A0",
+  // Droite
+  LR: "#2B6CB0",
   DVD: "#BEE3F8",
+  RN: "#1A365D",
+  REC: "#0D1B2A",
+  // Codes nuance non mappés
+  LUXD: "#4A0E0E",
+  LEXD: "#2D0A0A",
+  LREG: "#6B8E6B",
+  LUDR: "#1E3A5F",
+  LHOR: "#90CDF4",
+  LREN: "#FFD966",
+  LDSV: "#D4C5A9",
+  LMDM: "#F6AD55",
+  // Divers
   DIV: "#CBD5E0",
   SE: "#A0AEC0",
+  PRG: "#E89090",
+  HOR: "#90CDF4",
 };
 
 const NO_DATA_COLOR = "#e5e7eb";

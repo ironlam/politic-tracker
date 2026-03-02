@@ -123,6 +123,8 @@
     "sync:rne:maires:stats": "tsx scripts/sync-rne.ts --stats",
     "sync:elections:municipales": "tsx scripts/sync-candidatures.ts",
     "sync:elections:municipales:stats": "tsx scripts/sync-candidatures.ts --stats",
+    "sync:municipales-2020": "tsx scripts/sync-municipales-2020.ts",
+    "sync:municipales-2020:stats": "tsx scripts/sync-municipales-2020.ts --stats",
     "seed:fixtures": "tsx scripts/seed-fixtures.ts",
     "seed:fixtures:clean": "tsx scripts/seed-fixtures.ts --clean",
     "seed:communes": "npx dotenv -e .env -- npx tsx scripts/seed-communes.ts",

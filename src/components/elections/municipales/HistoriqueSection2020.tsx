@@ -10,9 +10,7 @@ interface HistoriqueSection2020Props {
 function normalizeLabel(raw: string): string {
   const letters = raw.replace(/[^A-Za-zÀ-ÿ]/g, "");
   if (letters.length === 0 || letters !== letters.toUpperCase()) return raw;
-  return raw.replace(/[A-Za-zÀ-ÿ]+/g, (w) =>
-    w.charAt(0).toUpperCase() + w.slice(1).toLowerCase(),
-  );
+  return raw.replace(/[A-Za-zÀ-ÿ]+/g, (w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
 }
 
 export function HistoriqueSection2020({ data }: HistoriqueSection2020Props) {
@@ -24,9 +22,7 @@ export function HistoriqueSection2020({ data }: HistoriqueSection2020Props) {
           {/* Participation T1 */}
           <div>
             <dt className="text-sm text-muted-foreground">Participation</dt>
-            <dd className="text-2xl font-bold tabular-nums">
-              {data.participationT1.toFixed(1)} %
-            </dd>
+            <dd className="text-2xl font-bold tabular-nums">{data.participationT1.toFixed(1)} %</dd>
           </div>
 
           {/* Winning list */}

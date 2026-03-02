@@ -2,11 +2,12 @@ import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
-import { getCommune } from "@/lib/data/municipales";
+import { getCommune, getCommuneHistorique2020 } from "@/lib/data/municipales";
 import { CommuneRadiographie } from "@/components/elections/municipales/CommuneRadiographie";
 import { ListCard } from "@/components/elections/municipales/ListCard";
 import { AlerteCumul } from "@/components/elections/municipales/PoliticianBridge";
 import { IncumbentMayorCard } from "@/components/elections/municipales/IncumbentMayorCard";
+import { HistoriqueSection2020 } from "@/components/elections/municipales/HistoriqueSection2020";
 import { EventJsonLd, BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 
 export const revalidate = 3600; // ISR: revalidate every hour
@@ -40,6 +41,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function CommuneDetailPage({ params }: PageProps) {
   const { inseeCode } = await params;
   const commune = await getCommune(inseeCode);
+  const historique2020 = await getCommuneHistorique2020(inseeCode);
 
   if (!commune) {
     notFound();
@@ -161,6 +163,13 @@ export default async function CommuneDetailPage({ params }: PageProps) {
             nationalPoliticiansCount={commune.stats.nationalPoliticiansCount}
           />
         </section>
+
+        {/* Historique 2020 */}
+        {historique2020 && (
+          <section className="mb-8">
+            <HistoriqueSection2020 data={historique2020} />
+          </section>
+        )}
 
         {/* Lists & candidates */}
         <section>

@@ -272,6 +272,11 @@ export default async function HomePage() {
           <HexPattern className="absolute inset-0 text-primary opacity-[0.03] dark:opacity-[0.05] pointer-events-none" />
         </section>
 
+        {/* Upcoming Elections */}
+        <FadeIn>
+          <UpcomingElections elections={upcomingElections} />
+        </FadeIn>
+
         {/* Activity Tabs */}
         <FadeIn>
           <ActivityTabs
@@ -286,11 +291,6 @@ export default async function HomePage() {
         {/* Quick Tools */}
         <FadeIn>
           <QuickTools />
-        </FadeIn>
-
-        {/* Upcoming Elections */}
-        <FadeIn>
-          <UpcomingElections elections={upcomingElections} />
         </FadeIn>
 
         {/* CTA Section */}

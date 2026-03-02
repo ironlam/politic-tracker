@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { DataSource, ElectionStatus, Prisma } from "@/generated/prisma";
+import { DataSource, ElectionStatus, Judgement, Prisma } from "@/generated/prisma";
 import { parse } from "csv-parse/sync";
 import { NUANCE_POLITIQUE_MAPPING } from "@/config/labels";
 import type { CandidatureMunicipaleCSV, CandidaturesSyncResult } from "./types";
@@ -302,7 +302,7 @@ export async function syncCandidaturesMunicipales(
   // Build politician lookup from batch results: "firstName|lastName|deptCode" → politicianId
   const politicianCache = new Map<string, string | null>();
   for (const r of batchResult.results) {
-    if (r.politicianId) {
+    if (r.politicianId && r.decision === Judgement.SAME) {
       politicianCache.set(r.sourceId, r.politicianId);
     }
   }

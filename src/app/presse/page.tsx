@@ -4,6 +4,7 @@ import Link from "next/link";
 import { cacheTag, cacheLife } from "next/cache";
 import { db } from "@/lib/db";
 import { PressCard, PartyFilterSelect } from "@/components/presse";
+import { PresseSearchInput } from "@/components/presse/PresseSearchInput";
 import { Badge } from "@/components/ui/badge";
 import { ensureContrast } from "@/lib/contrast";
 import { isFeatureEnabled } from "@/lib/feature-flags";
@@ -231,17 +232,7 @@ export default async function PressePage({ searchParams }: PageProps) {
       {/* Filters */}
       <div className="flex flex-wrap gap-4 mb-6">
         {/* Search */}
-        <form className="flex-1 min-w-[200px]">
-          <input
-            type="text"
-            name="search"
-            placeholder="Rechercher un article..."
-            defaultValue={search}
-            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-          />
-          <input type="hidden" name="source" value={source || ""} />
-          <input type="hidden" name="party" value={partyId || ""} />
-        </form>
+        <PresseSearchInput value={search} />
 
         {/* Source filter */}
         <div className="flex gap-2">

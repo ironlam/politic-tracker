@@ -1,8 +1,7 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useState, useTransition } from "react";
-import { Input } from "@/components/ui/input";
+import { useFilterParams } from "@/hooks/useFilterParams";
+import { DebouncedSearchInput } from "@/components/filters";
 
 export type DeclarationSortOption = "portfolio" | "income" | "companies" | "alpha" | "recent";
 
@@ -34,36 +33,7 @@ export function DeclarationsFilterBar({
   partyFilter,
   sortOption,
 }: DeclarationsFilterBarProps) {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const [isPending, startTransition] = useTransition();
-  const [search, setSearch] = useState(defaultSearch);
-
-  const updateParams = useCallback(
-    (updates: Record<string, string>) => {
-      const params = new URLSearchParams(searchParams.toString());
-      for (const [key, value] of Object.entries(updates)) {
-        if (value) {
-          params.set(key, value);
-        } else {
-          params.delete(key);
-        }
-      }
-      // Reset page when changing filters
-      if (!("page" in updates)) {
-        params.delete("page");
-      }
-      startTransition(() => {
-        router.push(`/declarations-et-patrimoine?${params.toString()}`, { scroll: false });
-      });
-    },
-    [router, searchParams, startTransition]
-  );
-
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    updateParams({ search: search.trim() });
-  };
+  const { isPending, updateParams } = useFilterParams();
 
   return (
     <div
@@ -71,19 +41,13 @@ export function DeclarationsFilterBar({
       role="search"
       aria-label="Filtrer les déclarations"
     >
-      <form onSubmit={handleSearchSubmit} className="flex-1">
-        <label htmlFor="declarations-search" className="sr-only">
-          Rechercher un élu
-        </label>
-        <Input
-          id="declarations-search"
-          type="search"
-          placeholder="Rechercher un élu..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full"
-        />
-      </form>
+      <DebouncedSearchInput
+        id="declarations-search"
+        value={defaultSearch}
+        onSearch={(v) => updateParams({ search: v })}
+        placeholder="Rechercher un élu..."
+        className="flex-1"
+      />
 
       <label htmlFor="declarations-party" className="sr-only">
         Filtrer par parti

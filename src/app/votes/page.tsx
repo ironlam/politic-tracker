@@ -3,6 +3,7 @@ import Link from "next/link";
 import { cacheTag, cacheLife } from "next/cache";
 import { db } from "@/lib/db";
 import { VoteCard } from "@/components/votes";
+import { VotesSearchInput } from "@/components/votes/VotesSearchInput";
 import { Badge } from "@/components/ui/badge";
 import { ExportButton } from "@/components/ui/ExportButton";
 import {
@@ -260,17 +261,7 @@ export default async function VotesPage({ searchParams }: PageProps) {
       {/* Filters */}
       <div className="flex flex-wrap gap-4 mb-6">
         {/* Search */}
-        <form className="flex-1 min-w-[200px]">
-          <input
-            type="text"
-            name="search"
-            placeholder="Rechercher un scrutin..."
-            defaultValue={search}
-            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-          />
-          <input type="hidden" name="result" value={result || ""} />
-          <input type="hidden" name="legislature" value={legislature || ""} />
-        </form>
+        <VotesSearchInput value={search} />
 
         {/* Result filter */}
         <div className="flex gap-2">

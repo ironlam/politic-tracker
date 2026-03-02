@@ -25,9 +25,7 @@ export function CompareHeader({ left, right }: CompareHeaderProps) {
       {/* VS separator */}
       <div className="flex items-center justify-center mb-8">
         <div className="flex-1 h-px bg-border" />
-        <span className="px-4 text-2xl font-display font-extrabold text-muted-foreground">
-          VS
-        </span>
+        <span className="px-4 text-2xl font-display font-extrabold text-muted-foreground">VS</span>
         <div className="flex-1 h-px bg-border" />
       </div>
 

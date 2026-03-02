@@ -66,10 +66,11 @@ function mapParty(p: PartyEntry): SearchResult {
     key: p.slug,
     paramValue: p.slug,
     label: p.name,
-    sublabel: `${p.shortName || ""} · ${p.memberCount} membre${p.memberCount > 1 ? "s" : ""}`.replace(
-      /^ · /,
-      ""
-    ),
+    sublabel:
+      `${p.shortName || ""} · ${p.memberCount} membre${p.memberCount > 1 ? "s" : ""}`.replace(
+        /^ · /,
+        ""
+      ),
     color: p.color,
     icon: "building",
   };
@@ -81,10 +82,11 @@ function mapGroup(g: GroupEntry): SearchResult {
     key: g.id,
     paramValue: g.id,
     label: g.name,
-    sublabel: `${g.shortName || ""} · ${chamber} · ${g.memberCount} membre${g.memberCount > 1 ? "s" : ""}`.replace(
-      /^ · /,
-      ""
-    ),
+    sublabel:
+      `${g.shortName || ""} · ${chamber} · ${g.memberCount} membre${g.memberCount > 1 ? "s" : ""}`.replace(
+        /^ · /,
+        ""
+      ),
     color: g.color,
     icon: "users",
   };
@@ -119,20 +121,14 @@ function ResultIcon({
   // Politician with photo
   if (result.icon === "user" && result.photoUrl) {
     return (
-      <img
-        src={result.photoUrl}
-        alt=""
-        className={`${dim} rounded-full object-cover shrink-0`}
-      />
+      <img src={result.photoUrl} alt="" className={`${dim} rounded-full object-cover shrink-0`} />
     );
   }
 
   // Politician without photo — initials circle
   if (result.icon === "user") {
     return (
-      <div
-        className={`${dim} rounded-full bg-gray-200 flex items-center justify-center shrink-0`}
-      >
+      <div className={`${dim} rounded-full bg-gray-200 flex items-center justify-center shrink-0`}>
         <User className={`${iconSize} text-gray-500`} />
       </div>
     );
@@ -167,12 +163,7 @@ export function CompareSelector({ category, side, preview }: CompareSelectorProp
   const [isPending, startTransition] = useTransition();
   const [isNavigating, setIsNavigating] = useState(false);
 
-  const {
-    isReady,
-    searchPoliticiansByCategory,
-    searchParties,
-    searchGroups,
-  } = useSearchIndex();
+  const { isReady, searchPoliticiansByCategory, searchParties, searchGroups } = useSearchIndex();
 
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -260,10 +251,7 @@ export function CompareSelector({ category, side, preview }: CompareSelectorProp
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(event.target as Node)
-      ) {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
         setIsOpen(false);
       }
     };
@@ -312,15 +300,11 @@ export function CompareSelector({ category, side, preview }: CompareSelectorProp
       switch (e.key) {
         case "ArrowDown":
           e.preventDefault();
-          setActiveIndex((prev) =>
-            prev < results.length - 1 ? prev + 1 : 0
-          );
+          setActiveIndex((prev) => (prev < results.length - 1 ? prev + 1 : 0));
           break;
         case "ArrowUp":
           e.preventDefault();
-          setActiveIndex((prev) =>
-            prev > 0 ? prev - 1 : results.length - 1
-          );
+          setActiveIndex((prev) => (prev > 0 ? prev - 1 : results.length - 1));
           break;
         case "Enter":
           e.preventDefault();
@@ -383,11 +367,7 @@ export function CompareSelector({ category, side, preview }: CompareSelectorProp
 
   if (preview) {
     const previewResult: Pick<SearchResult, "icon" | "color" | "photoUrl" | "label"> = {
-      icon: isCategoryPolitician(category)
-        ? "user"
-        : category === "partis"
-          ? "building"
-          : "users",
+      icon: isCategoryPolitician(category) ? "user" : category === "partis" ? "building" : "users",
       color: preview.color,
       photoUrl: preview.photoUrl,
       label: preview.label,
@@ -400,9 +380,7 @@ export function CompareSelector({ category, side, preview }: CompareSelectorProp
           <div className="flex-1 min-w-0">
             <h3 className="font-semibold text-lg truncate">{preview.label}</h3>
             {preview.sublabel && (
-              <p className="text-sm text-muted-foreground truncate">
-                {preview.sublabel}
-              </p>
+              <p className="text-sm text-muted-foreground truncate">{preview.sublabel}</p>
             )}
           </div>
           <button
@@ -441,9 +419,7 @@ export function CompareSelector({ category, side, preview }: CompareSelectorProp
           role="combobox"
           aria-expanded={isOpen && results.length > 0}
           aria-controls={listId}
-          aria-activedescendant={
-            activeIndex >= 0 ? `${listId}-${activeIndex}` : undefined
-          }
+          aria-activedescendant={activeIndex >= 0 ? `${listId}-${activeIndex}` : undefined}
           aria-autocomplete="list"
         />
         {!isReady && query.length >= 2 && (
@@ -456,7 +432,7 @@ export function CompareSelector({ category, side, preview }: CompareSelectorProp
       {/* Not ready message */}
       {isOpen && !isReady && query.length >= 2 && (
         <div className="absolute z-10 w-full mt-1 bg-background border border-input rounded-lg shadow-lg p-4 text-center text-muted-foreground text-sm">
-          Chargement de l'index de recherche...
+          {"Chargement de l'index de recherche..."}
         </div>
       )}
 

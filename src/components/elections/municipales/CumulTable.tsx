@@ -9,12 +9,12 @@ import { PoliticianAvatar } from "@/components/politicians/PoliticianAvatar";
 // Inclusive French labels for mandate types
 // ---------------------------------------------------------------------------
 const MANDATE_INCLUSIVE_LABELS: Record<string, string> = {
-  DEPUTE: "Député\u00B7e",
-  SENATEUR: "Sénateur\u00B7ice",
-  DEPUTE_EUROPEEN: "Député\u00B7e européen\u00B7ne",
+  DEPUTE: "Député·e",
+  SENATEUR: "Sénateur·ice",
+  DEPUTE_EUROPEEN: "Député·e européen·ne",
   MINISTRE: "Ministre",
   SECRETAIRE_ETAT: "Secrétaire d'État",
-  PREMIER_MINISTRE: "Premier\u00B7ère ministre",
+  PREMIER_MINISTRE: "Premier·ère ministre",
 };
 
 function mandateLabel(type: string): string {

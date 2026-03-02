@@ -8,21 +8,21 @@ import { MissingMayorsTable } from "@/components/elections/municipales/MissingMa
 export const revalidate = 300;
 
 export const metadata: Metadata = {
-  title: "Cumul des mandats \u2014 Municipales 2026 | Poligraph",
+  title: "Cumul des mandats — Municipales 2026 | Poligraph",
   description:
-    "Quels d\u00e9put\u00e9s, s\u00e9nateurs et ministres se pr\u00e9sentent aux \u00e9lections municipales 2026 ? D\u00e9couvrez les cumuls de mandats et les maires sortants absents.",
+    "Quels députés, sénateurs et ministres se présentent aux élections municipales 2026 ? Découvrez les cumuls de mandats et les maires sortants absents.",
 };
 
 // ---------------------------------------------------------------------------
 // Inclusive French labels for the stats bar
 // ---------------------------------------------------------------------------
 const MANDATE_STATS_LABELS: Record<string, string> = {
-  DEPUTE: "d\u00e9put\u00e9\u00B7es",
-  SENATEUR: "s\u00e9nateur\u00B7ices",
-  DEPUTE_EUROPEEN: "d\u00e9put\u00e9\u00B7es europ\u00e9en\u00B7nes",
+  DEPUTE: "député·es",
+  SENATEUR: "sénateur·ices",
+  DEPUTE_EUROPEEN: "député·es européen·nes",
   MINISTRE: "ministres",
-  SECRETAIRE_ETAT: "secr\u00e9taires d'\u00c9tat",
-  PREMIER_MINISTRE: "premier\u00B7\u00e8res ministres",
+  SECRETAIRE_ETAT: "secrétaires d'État",
+  PREMIER_MINISTRE: "premier·ères ministres",
 };
 
 export default async function CumulPage() {
@@ -69,7 +69,7 @@ export default async function CumulPage() {
           <li aria-hidden="true">/</li>
           <li>
             <Link href="/elections" className="hover:text-foreground transition-colors">
-              \u00c9lections
+              Élections
             </Link>
           </li>
           <li aria-hidden="true">/</li>
@@ -91,7 +91,7 @@ export default async function CumulPage() {
         <div className="bg-gradient-to-br from-amber-50 via-background to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 border rounded-2xl p-6 md:p-8">
           <h1 className="font-display text-3xl md:text-4xl font-bold mb-2">Cumul des mandats</h1>
           <p className="text-muted-foreground text-lg mb-6">
-            D\u00e9put\u00e9s, s\u00e9nateurs et ministres candidats aux municipales 2026
+            Députés, sénateurs et ministres candidats aux municipales 2026
           </p>
 
           {/* Stats bar */}
@@ -117,9 +117,7 @@ export default async function CumulPage() {
           )}
 
           {candidates.length === 0 && (
-            <p className="text-muted-foreground">
-              Aucun cumul de mandat d\u00e9tect\u00e9 pour le moment.
-            </p>
+            <p className="text-muted-foreground">Aucun cumul de mandat détecté pour le moment.</p>
           )}
         </div>
       </section>
@@ -133,10 +131,10 @@ export default async function CumulPage() {
 
       {/* Missing mayors */}
       <section className="py-8 border-t">
-        <h2 className="text-2xl font-bold mb-2">Qui manque \u00e0 l&apos;appel ?</h2>
+        <h2 className="text-2xl font-bold mb-2">Qui manque à l&apos;appel ?</h2>
         <p className="text-muted-foreground mb-6">
-          Ces maires en exercice ne se repr\u00e9sentent pas (ou n&apos;ont pas encore
-          d\u00e9clar\u00e9 leur candidature).
+          Ces maires en exercice ne se représentent pas (ou n&apos;ont pas encore déclaré leur
+          candidature).
         </p>
         {missingMayors.length > 0 ? (
           <>
@@ -148,7 +146,7 @@ export default async function CumulPage() {
           </>
         ) : (
           <p className="text-muted-foreground text-center py-8">
-            Tous les maires en exercice se repr\u00e9sentent.
+            Tous les maires en exercice se représentent.
           </p>
         )}
       </section>

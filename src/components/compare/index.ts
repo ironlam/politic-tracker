@@ -1,3 +1,4 @@
+export { CompareHeader } from "./CompareHeader";
 export { PoliticianSelector } from "./PoliticianSelector";
 export { PartySelector } from "./PartySelector";
 export { CompareMode } from "./CompareMode";

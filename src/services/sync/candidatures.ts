@@ -148,19 +148,33 @@ async function preWarmPartyCache(): Promise<Map<string, string | null>> {
 
 /**
  * Pre-load LocalOfficial birthdates for RNE enrichment.
- * Key: "normalizedFirstName|normalizedLastName|communeId" → { birthDate, gender }
+ * Key: "normalizedFirstName|normalizedLastName|departmentCode" → { birthDate, gender }
+ * Only keeps unique matches (1 official per name+dept) to avoid false enrichment.
  */
 async function loadRNEBirthdateLookup(): Promise<
   Map<string, { birthDate: Date; gender: string | null }>
 > {
   const officials = await db.localOfficial.findMany({
-    where: { birthDate: { not: null }, communeId: { not: null } },
-    select: { firstName: true, lastName: true, communeId: true, birthDate: true, gender: true },
+    where: { birthDate: { not: null } },
+    select: {
+      firstName: true,
+      lastName: true,
+      departmentCode: true,
+      birthDate: true,
+      gender: true,
+    },
   });
+  // First pass: count occurrences per key to detect ambiguous matches
+  const counts = new Map<string, number>();
+  for (const o of officials) {
+    const key = `${normalizeText(o.firstName)}|${normalizeText(o.lastName)}|${o.departmentCode}`;
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  // Second pass: only keep unique matches (1 official per name+dept)
   const map = new Map<string, { birthDate: Date; gender: string | null }>();
   for (const o of officials) {
-    const key = `${normalizeText(o.firstName)}|${normalizeText(o.lastName)}|${o.communeId}`;
-    if (!map.has(key)) {
+    const key = `${normalizeText(o.firstName)}|${normalizeText(o.lastName)}|${o.departmentCode}`;
+    if (counts.get(key) === 1) {
       map.set(key, { birthDate: o.birthDate!, gender: o.gender });
     }
   }
@@ -304,8 +318,8 @@ export async function syncCandidaturesMunicipales(
         department: row.deptCode,
         gender: row.gender,
       };
-      // Pre-enrich with RNE birthdate (mayors re-running in their commune)
-      const rneKey = `${normalizeText(row.normalizedFirstName)}|${normalizeText(row.normalizedLastName)}|${row.inseeCode}`;
+      // Pre-enrich with RNE birthdate (officials re-running in their dept)
+      const rneKey = `${normalizeText(row.normalizedFirstName)}|${normalizeText(row.normalizedLastName)}|${row.deptCode}`;
       const rneMatch = rneLookup.get(rneKey);
       if (rneMatch) {
         resolveInput.birthDate = rneMatch.birthDate;

@@ -22,6 +22,7 @@ export interface CandidateMatch {
 }
 
 export interface ResolveResult {
+  sourceId: string;
   politicianId: string | null;
   confidence: number;
   method: MatchMethod;

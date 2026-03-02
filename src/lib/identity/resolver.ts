@@ -150,6 +150,7 @@ export async function resolveBatch(batchInput: BatchResolveInput): Promise<Batch
     if (confirmedSame) {
       stats.matched++;
       results.push({
+        sourceId: input.sourceId,
         politicianId: confirmedSame.politicianId,
         confidence: confirmedSame.confidence,
         method: confirmedSame.method,
@@ -193,6 +194,7 @@ export async function resolveBatch(batchInput: BatchResolveInput): Promise<Batch
     }
 
     results.push({
+      sourceId: input.sourceId,
       politicianId: bestMatch.politicianId,
       confidence: bestMatch.score,
       method: bestMatch.method,
@@ -296,6 +298,7 @@ export async function resolve(input: ResolveInput): Promise<ResolveResult> {
   );
   if (confirmedSame) {
     return {
+      sourceId,
       politicianId: confirmedSame.politicianId,
       confidence: confirmedSame.confidence,
       method: confirmedSame.method,
@@ -313,6 +316,7 @@ export async function resolve(input: ResolveInput): Promise<ResolveResult> {
 
   if (existingLink?.politicianId && !blockedIds.has(existingLink.politicianId)) {
     const result: ResolveResult = {
+      sourceId,
       politicianId: existingLink.politicianId,
       confidence: 1.0,
       method: MatchMethod.EXTERNAL_ID,
@@ -364,6 +368,7 @@ export async function resolve(input: ResolveInput): Promise<ResolveResult> {
 
   if (!bestMatch || bestMatch.score < IDENTITY_THRESHOLDS.REVIEW) {
     result = {
+      sourceId,
       politicianId: null,
       confidence: bestMatch?.score ?? 0,
       method: bestMatch?.method ?? MatchMethod.NAME_ONLY,
@@ -373,6 +378,7 @@ export async function resolve(input: ResolveInput): Promise<ResolveResult> {
     };
   } else if (bestMatch.score >= IDENTITY_THRESHOLDS.AUTO_MATCH) {
     result = {
+      sourceId,
       politicianId: bestMatch.politicianId,
       confidence: bestMatch.score,
       method: bestMatch.method,
@@ -383,6 +389,7 @@ export async function resolve(input: ResolveInput): Promise<ResolveResult> {
   } else {
     // Review zone: 0.70–0.94
     result = {
+      sourceId,
       politicianId: bestMatch.politicianId,
       confidence: bestMatch.score,
       method: bestMatch.method,

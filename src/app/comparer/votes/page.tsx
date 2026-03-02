@@ -1,4 +1,3 @@
-import { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { cacheTag, cacheLife } from "next/cache";
@@ -7,22 +6,36 @@ import { formatDate } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { VOTE_POSITION_LABELS, VOTE_POSITION_DOT_COLORS } from "@/config/labels";
 import { VoteComparisonFilters } from "@/components/compare/VoteComparisonFilters";
+import { COMPARE_CATEGORIES, COMPARE_CATEGORY_LABELS, type CompareCategory } from "@/types/compare";
 import type { VotePosition } from "@/types";
-
-export const metadata: Metadata = {
-  title: "Concordance des votes",
-  description: "Détail de la concordance des votes entre deux politiques ou deux partis.",
-};
 
 interface PageProps {
   searchParams: Promise<{
-    left?: string;
-    right?: string;
-    mode?: string;
+    cat?: string;
+    a?: string;
+    b?: string;
     page?: string;
     search?: string;
     filter?: string;
   }>;
+}
+
+function parseCategory(raw?: string): CompareCategory {
+  if (raw && (COMPARE_CATEGORIES as readonly string[]).includes(raw)) {
+    return raw as CompareCategory;
+  }
+  return "deputes";
+}
+
+export async function generateMetadata({ searchParams }: PageProps) {
+  const params = await searchParams;
+  const cat = parseCategory(params.cat);
+  const label = COMPARE_CATEGORY_LABELS[cat];
+
+  return {
+    title: `Concordance des votes — ${label}`,
+    description: `Détail de la concordance des votes entre deux ${label.toLowerCase()}.`,
+  };
 }
 
 // ============================================
@@ -261,19 +274,22 @@ const COMPARISON_ACCENT: Record<string, { border: string; bg: string }> = {
 
 export default async function VotesComparisonPage({ searchParams }: PageProps) {
   const params = await searchParams;
-  const { left, right, mode, search, filter } = params;
+  const cat = parseCategory(params.cat);
+  const slugA = params.a;
+  const slugB = params.b;
+  const { search, filter } = params;
   const page = Math.max(1, parseInt(params.page || "1", 10));
 
-  if (!left || !right) {
+  if (!slugA || !slugB) {
     notFound();
   }
 
-  const isPartyMode = mode === "partis";
+  const isPartyMode = cat === "partis";
 
   // Fetch all compared votes
   const data = isPartyMode
-    ? await getPartyVoteComparisonData(left, right)
-    : await getPoliticianVoteComparison(left, right);
+    ? await getPartyVoteComparisonData(slugA, slugB)
+    : await getPoliticianVoteComparison(slugA, slugB);
 
   if (!data) {
     notFound();
@@ -310,9 +326,9 @@ export default async function VotesComparisonPage({ searchParams }: PageProps) {
   // Build URL helper
   const buildUrl = (newParams: Record<string, string | undefined>) => {
     const current = new URLSearchParams();
-    current.set("left", left);
-    current.set("right", right);
-    if (mode) current.set("mode", mode);
+    current.set("cat", cat);
+    current.set("a", slugA);
+    current.set("b", slugB);
     if (search) current.set("search", search);
     if (filter && filter !== "all") current.set("filter", filter);
 
@@ -332,11 +348,7 @@ export default async function VotesComparisonPage({ searchParams }: PageProps) {
   };
 
   // Back link
-  const backParams = new URLSearchParams();
-  backParams.set("left", left);
-  backParams.set("right", right);
-  if (mode) backParams.set("mode", mode);
-  const backUrl = `/comparer?${backParams.toString()}`;
+  const backUrl = `/comparer?cat=${cat}&a=${slugA}&b=${slugB}`;
 
   return (
     <div className="container mx-auto px-4 py-8">

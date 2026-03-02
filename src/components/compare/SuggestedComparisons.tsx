@@ -3,6 +3,7 @@
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
+import type { CompareCategory } from "@/types/compare";
 
 interface Suggestion {
   leftSlug: string;
@@ -60,25 +61,24 @@ const PARTY_SUGGESTIONS: Suggestion[] = [
   },
 ];
 
-interface SuggestedComparisonsProps {
-  mode: "politiciens" | "partis";
+function getFallback(category: CompareCategory): Suggestion[] {
+  return category === "partis" || category === "groupes" ? PARTY_SUGGESTIONS : FALLBACK_SUGGESTIONS;
 }
 
-export function SuggestedComparisons({ mode }: SuggestedComparisonsProps) {
+interface SuggestedComparisonsProps {
+  category: CompareCategory;
+}
+
+export function SuggestedComparisons({ category }: SuggestedComparisonsProps) {
   const router = useRouter();
-  const [suggestions, setSuggestions] = useState<Suggestion[]>(
-    mode === "partis" ? PARTY_SUGGESTIONS : FALLBACK_SUGGESTIONS
-  );
+  const [suggestions, setSuggestions] = useState<Suggestion[]>(getFallback(category));
   const [isLoading, setIsLoading] = useState(true);
   const [isPending, startTransition] = useTransition();
 
   /* eslint-disable react-hooks/set-state-in-effect -- data fetching effect */
   useEffect(() => {
     setIsLoading(true);
-    const url =
-      mode === "partis" ? "/api/compare/suggestions?mode=partis" : "/api/compare/suggestions";
-
-    fetch(url)
+    fetch(`/api/compare/suggestions?cat=${category}`)
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (data && data.length > 0) {
@@ -89,14 +89,11 @@ export function SuggestedComparisons({ mode }: SuggestedComparisonsProps) {
         // Keep fallback
       })
       .finally(() => setIsLoading(false));
-  }, [mode]);
+  }, [category]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
   const handleClick = (s: Suggestion) => {
-    const href =
-      mode === "partis"
-        ? `/comparer?left=${s.leftSlug}&right=${s.rightSlug}&mode=partis`
-        : `/comparer?left=${s.leftSlug}&right=${s.rightSlug}`;
+    const href = `/comparer?cat=${category}&a=${s.leftSlug}&b=${s.rightSlug}`;
     // Notify selectors so they show skeleton immediately
     window.dispatchEvent(new CustomEvent("compare-navigating"));
     startTransition(() => {

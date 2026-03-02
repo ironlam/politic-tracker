@@ -15,16 +15,16 @@ export function VoteComparisonFilters() {
   const currentSearch = searchParams.get("search") || "";
 
   // Preserve all existing params when submitting
-  const left = searchParams.get("left") || "";
-  const right = searchParams.get("right") || "";
-  const mode = searchParams.get("mode") || "";
+  const cat = searchParams.get("cat") || "deputes";
+  const a = searchParams.get("a") || "";
+  const b = searchParams.get("b") || "";
 
   return (
     <form action="/comparer/votes" className="flex flex-col sm:flex-row gap-3">
       {/* Hidden params to preserve */}
-      <input type="hidden" name="left" value={left} />
-      <input type="hidden" name="right" value={right} />
-      {mode && <input type="hidden" name="mode" value={mode} />}
+      <input type="hidden" name="cat" value={cat} />
+      <input type="hidden" name="a" value={a} />
+      <input type="hidden" name="b" value={b} />
 
       {/* Search */}
       <div className="flex-1">

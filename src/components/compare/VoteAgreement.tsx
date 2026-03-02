@@ -2,6 +2,7 @@ import Link from "next/link";
 import { formatDate } from "@/lib/utils";
 import { VOTE_POSITION_LABELS, VOTE_POSITION_DOT_COLORS } from "@/config/labels";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
+import type { CompareCategory } from "@/types/compare";
 import type { Vote, Scrutin, VotePosition } from "@/types";
 
 interface VoteWithScrutin extends Vote {
@@ -15,6 +16,7 @@ interface VoteAgreementProps {
   rightName: string;
   leftSlug: string;
   rightSlug: string;
+  category?: CompareCategory;
 }
 
 type AgreementType = "agree" | "disagree" | "partial";
@@ -41,6 +43,7 @@ export function VoteAgreement({
   rightName,
   leftSlug,
   rightSlug,
+  category = "deputes",
 }: VoteAgreementProps) {
   // Create a map of scrutin ID to votes
   const leftVoteMap = new Map(leftVotes.map((v) => [v.scrutinId, v]));
@@ -202,7 +205,7 @@ export function VoteAgreement({
         {comparedVotes.length > 10 && (
           <p className="text-center text-sm mt-4">
             <Link
-              href={`/comparer/votes?left=${encodeURIComponent(leftSlug)}&right=${encodeURIComponent(rightSlug)}`}
+              href={`/comparer/votes?cat=${category}&a=${encodeURIComponent(leftSlug)}&b=${encodeURIComponent(rightSlug)}`}
               className="text-primary hover:underline"
             >
               + {comparedVotes.length - 10} autres votes en commun

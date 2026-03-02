@@ -485,7 +485,7 @@ export function PartyComparisonTable({ left, right, voteComparison }: PartyCompa
             {sortedVotes.length > 10 && (
               <p className="text-center text-sm mt-4">
                 <Link
-                  href={`/comparer/votes?left=${encodeURIComponent(lp.slug || lp.id)}&right=${encodeURIComponent(rp.slug || rp.id)}&mode=partis`}
+                  href={`/comparer/votes?cat=partis&a=${encodeURIComponent(lp.slug || lp.id)}&b=${encodeURIComponent(rp.slug || rp.id)}`}
                   className="text-primary hover:underline"
                 >
                   + {sortedVotes.length - 10} autres scrutins comparés

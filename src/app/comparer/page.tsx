@@ -101,7 +101,7 @@ export default async function ComparerPage({ searchParams }: PageProps) {
       {comparison ? (
         <ComparisonContent category={cat} data={comparison} />
       ) : !previewA && !previewB ? (
-        <SuggestedComparisons mode="politiciens" key={cat} />
+        <SuggestedComparisons category={cat} key={cat} />
       ) : (
         <div className="text-center py-12 text-muted-foreground">
           <p className="text-lg">

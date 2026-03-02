@@ -179,11 +179,6 @@ export const FOOTER_SECTIONS: FooterSection[] = [
       { href: "/affaires", label: "Affaires" },
       { href: "/factchecks", label: "Fact-checks" },
       { href: "/elections", label: "Élections" },
-      {
-        href: "/elections/municipales-2026",
-        label: "Municipales 2026",
-        featureFlag: "MUNICIPALES_2026",
-      },
     ],
   },
   {

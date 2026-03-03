@@ -1,0 +1,151 @@
+name: Code Quality Guards
+
+on:
+  push:
+    branches: [main, staging]
+  pull_request:
+    branches: [main, staging]
+
+jobs:
+  security:
+    name: Security
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: No $executeRawUnsafe without justification
+        run: |
+          # Find $executeRawUnsafe calls that don't have an eslint-disable or Safe: comment on the preceding line
+          VIOLATIONS=$(grep -rn '\$executeRawUnsafe' src/ --include='*.ts' --include='*.tsx' || true)
+          if [ -n "$VIOLATIONS" ]; then
+            echo "::error::Found \$executeRawUnsafe usage. Use \$executeRaw with Prisma.sql template literals instead."
+            echo "$VIOLATIONS"
+            exit 1
+          fi
+
+      - name: No dangerouslySetInnerHTML without sanitization
+        run: |
+          VIOLATIONS=$(grep -rn 'dangerouslySetInnerHTML' src/ --include='*.tsx' | grep -v 'DOMPurify\|sanitize\|JSON.stringify\|JsonLd\|markdown' || true)
+          if [ -n "$VIOLATIONS" ]; then
+            echo "::error::Found dangerouslySetInnerHTML without sanitization."
+            echo "$VIOLATIONS"
+            exit 1
+          fi
+
+      - name: No secrets in NEXT_PUBLIC_ vars
+        run: |
+          VIOLATIONS=$(grep -rn 'NEXT_PUBLIC_.*SECRET\|NEXT_PUBLIC_.*TOKEN\|NEXT_PUBLIC_.*PASSWORD\|NEXT_PUBLIC_.*API_KEY' src/ .env.example --include='*.ts' --include='*.tsx' --include='*.env*' || true)
+          if [ -n "$VIOLATIONS" ]; then
+            echo "::error::Potential secret exposed in NEXT_PUBLIC_ variable."
+            echo "$VIOLATIONS"
+            exit 1
+          fi
+
+  react-patterns:
+    name: React Patterns
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: No forwardRef (deprecated in React 19)
+        run: |
+          VIOLATIONS=$(grep -rn 'React\.forwardRef\|forwardRef<' src/ --include='*.ts' --include='*.tsx' | grep -v 'node_modules\|generated/' || true)
+          if [ -n "$VIOLATIONS" ]; then
+            echo "::error::forwardRef is deprecated in React 19. Accept ref as a regular prop instead."
+            echo "$VIOLATIONS"
+            exit 1
+          fi
+
+      - name: No hardcoded text-blue-600 (use text-primary)
+        run: |
+          VIOLATIONS=$(grep -rn 'text-blue-600' src/ --include='*.tsx' | grep -v 'config/\|\.test\.' || true)
+          if [ -n "$VIOLATIONS" ]; then
+            echo "::error::Use text-primary instead of hardcoded text-blue-600."
+            echo "$VIOLATIONS"
+            exit 1
+          fi
+
+      - name: No inline parseInt for pagination
+        run: |
+          VIOLATIONS=$(grep -rn 'parseInt(searchParams\.get\|parseInt(url\.searchParams' src/app/api/ --include='*.ts' || true)
+          if [ -n "$VIOLATIONS" ]; then
+            echo "::error::Use parsePagination() from @/lib/api/pagination instead of inline parseInt."
+            echo "$VIOLATIONS"
+            exit 1
+          fi
+
+  architecture:
+    name: Architecture
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Admin routes use withAdminAuth
+        run: |
+          # Check all admin route files (except auth endpoint) export using withAdminAuth
+          VIOLATIONS=""
+          for f in $(find src/app/api/admin -name 'route.ts' | grep -v '/auth/'); do
+            if ! grep -q 'withAdminAuth' "$f"; then
+              VIOLATIONS="$VIOLATIONS\n$f: missing withAdminAuth wrapper"
+            fi
+          done
+          if [ -n "$VIOLATIONS" ]; then
+            echo "::error::Admin routes must use withAdminAuth() wrapper."
+            echo -e "$VIOLATIONS"
+            exit 1
+          fi
+
+      - name: No unjustified any without eslint-disable
+        run: |
+          # Find : any or as any without eslint-disable on the line or preceding line
+          VIOLATIONS=$(grep -rn ': any\b\|as any\b' src/ --include='*.ts' --include='*.tsx' \
+            | grep -v 'generated/\|node_modules\|eslint-disable\|\.test\.\|\.d\.ts' \
+            | while IFS= read -r line; do
+                FILE=$(echo "$line" | cut -d: -f1)
+                LINENUM=$(echo "$line" | cut -d: -f2)
+                PREV=$((LINENUM - 1))
+                if ! sed -n "${PREV}p" "$FILE" | grep -q 'eslint-disable'; then
+                  echo "$line"
+                fi
+              done || true)
+          if [ -n "$VIOLATIONS" ]; then
+            echo "::error::Found 'any' without eslint-disable comment. Add // eslint-disable-next-line @typescript-eslint/no-explicit-any or use proper types."
+            echo "$VIOLATIONS"
+            exit 1
+          fi
+
+      - name: Factcheck queries use FACTCHECK_ALLOWED_SOURCES
+        run: |
+          # Check that factcheck findMany queries include the source filter
+          VIOLATIONS=$(grep -rn 'factCheck\.findMany\|factCheck\.count' src/ --include='*.ts' --include='*.tsx' \
+            | grep -v 'FACTCHECK_ALLOWED_SOURCES\|generated/\|admin/\|sync/' || true)
+          if [ -n "$VIOLATIONS" ]; then
+            echo "::warning::factCheck query may be missing FACTCHECK_ALLOWED_SOURCES filter."
+            echo "$VIOLATIONS"
+          fi
+
+  summary:
+    name: Summary
+    runs-on: ubuntu-latest
+    needs: [security, react-patterns, architecture]
+    if: always()
+
+    steps:
+      - name: Generate summary
+        run: |
+          echo "## Code Quality Guards" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Security | ${{ needs.security.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| React Patterns | ${{ needs.react-patterns.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Architecture | ${{ needs.architecture.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY

@@ -11,6 +11,7 @@
  */
 
 import { db } from "@/lib/db";
+import { Prisma } from "@/generated/prisma";
 import {
   MANDATE_WEIGHTS,
   PARTY_ROLE_WEIGHTS,
@@ -216,15 +217,13 @@ export async function recalculateProminence(
     updates.push({ id: p.id, score: total });
   }
 
-  // 4. Batch update using raw SQL (avoids Prisma transaction timeout on serverless)
+  // 4. Batch update using parameterized raw SQL (avoids Prisma transaction timeout on serverless)
   if (!dryRun) {
     const CHUNK_SIZE = 500;
     for (let i = 0; i < updates.length; i += CHUNK_SIZE) {
       const chunk = updates.slice(i, i + CHUNK_SIZE);
-      const values = chunk.map((u) => `('${u.id}', ${u.score})`).join(", ");
-      await db.$executeRawUnsafe(
-        `UPDATE "Politician" p SET "prominenceScore" = c.score::int FROM (VALUES ${values}) AS c(id, score) WHERE p.id = c.id`
-      );
+      const values = Prisma.join(chunk.map((u) => Prisma.sql`(${u.id}::uuid, ${u.score}::int)`));
+      await db.$executeRaw`UPDATE "Politician" p SET "prominenceScore" = c.score::int FROM (VALUES ${values}) AS c(id, score) WHERE p.id = c.id`;
     }
   }
 

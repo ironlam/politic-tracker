@@ -1,3 +1,4 @@
+import { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { cacheTag, cacheLife } from "next/cache";
@@ -12,6 +13,13 @@ import { FadeIn } from "@/components/motion";
 import { isFeatureEnabled } from "@/lib/feature-flags";
 import { FACTCHECK_ALLOWED_SOURCES } from "@/config/labels";
 import { SITE_URL } from "@/config/site";
+
+export const metadata: Metadata = {
+  title: "Poligraph — Observatoire citoyen de la politique française",
+  description:
+    "Suivez les votes, affaires judiciaires, fact-checks et déclarations de patrimoine des politiques français. Données ouvertes, transparence citoyenne.",
+  alternates: { canonical: "/" },
+};
 
 async function getRecentFactChecks() {
   "use cache";

@@ -88,11 +88,20 @@ export const GET = withPublicRoute(async (request) => {
         .filter((v) => VALID_INVOLVEMENTS.includes(v as Involvement)) as Involvement[])
     : ["DIRECT"];
 
+  const validStatus =
+    status && Object.values(AffairStatus).includes(status as AffairStatus)
+      ? (status as AffairStatus)
+      : undefined;
+  const validCategory =
+    category && Object.values(AffairCategory).includes(category as AffairCategory)
+      ? (category as AffairCategory)
+      : undefined;
+
   const where = {
     publicationStatus: "PUBLISHED" as const,
     involvement: { in: requestedInvolvements },
-    ...(status && { status: status as AffairStatus }),
-    ...(category && { category: category as AffairCategory }),
+    ...(validStatus && { status: validStatus }),
+    ...(validCategory && { category: validCategory }),
   };
 
   const [affairs, total] = await Promise.all([

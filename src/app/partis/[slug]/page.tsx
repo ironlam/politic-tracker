@@ -62,6 +62,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       description,
       images: party.logoUrl ? [party.logoUrl] : undefined,
     },
+    alternates: { canonical: `/partis/${slug}` },
   };
 }
 

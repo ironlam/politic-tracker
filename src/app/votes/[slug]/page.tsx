@@ -110,6 +110,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return {
     title: scrutin.title,
     description,
+    alternates: { canonical: `/votes/${scrutin.slug}` },
     ...(isThinContent && { robots: { index: false, follow: true } }),
   };
 }

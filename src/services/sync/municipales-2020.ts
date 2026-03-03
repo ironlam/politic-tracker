@@ -13,6 +13,7 @@
  */
 
 import { db } from "@/lib/db";
+import { Prisma } from "@/generated/prisma";
 import { NUANCE_POLITIQUE_MAPPING } from "@/config/labels";
 import {
   parseWideResultRow,
@@ -64,11 +65,6 @@ function decodeAndSplit(buf: Buffer, delimiter: string): string[][] {
   // Skip header line
   const dataLines = lines.slice(1);
   return dataLines.filter((line) => line.trim().length > 0).map((line) => line.split(delimiter));
-}
-
-/** Escape single quotes for raw SQL injection safety. */
-function escSql(value: string): string {
-  return value.replace(/'/g, "''");
 }
 
 /** Download a URL and return the body as a Buffer. */
@@ -313,30 +309,19 @@ export async function syncMunicipales2020(statsOnly = false) {
 
   for (let i = 0; i < entries.length; i += CHUNK_SIZE) {
     const chunk = entries.slice(i, i + CHUNK_SIZE);
-    const values = chunk
-      .map((e) => {
-        const partyLabel = e.partyLabel != null ? `'${escSql(e.partyLabel)}'` : "NULL";
-        const listName = e.listName != null ? `'${escSql(e.listName)}'` : "NULL";
-        const communeId = e.communeId != null ? `'${escSql(e.communeId)}'` : "NULL";
-        const constituencyCode =
-          e.constituencyCode != null ? `'${escSql(e.constituencyCode)}'` : "NULL";
-        const round1Qualified =
-          e.round1Qualified != null ? (e.round1Qualified ? "TRUE" : "FALSE") : "NULL";
-        const round2Votes = e.round2Votes != null ? e.round2Votes : "NULL";
-        const round2Pct = e.round2Pct != null ? e.round2Pct : "NULL";
+    const values = Prisma.join(
+      chunk.map(
+        (e) =>
+          Prisma.sql`(gen_random_uuid(), ${election.id},
+          ${e.candidateName}, ${e.partyLabel}, ${e.listName},
+          ${e.communeId}, ${e.constituencyCode},
+          ${e.round1Votes}, ${e.round1Pct}, ${e.round1Qualified ?? null},
+          ${e.round2Votes ?? null}, ${e.round2Pct ?? null}, ${e.isElected},
+          NOW(), NOW())`
+      )
+    );
 
-        return (
-          `(gen_random_uuid(), '${escSql(election.id)}', ` +
-          `'${escSql(e.candidateName)}', ${partyLabel}, ${listName}, ` +
-          `${communeId}, ${constituencyCode}, ` +
-          `${e.round1Votes}, ${e.round1Pct}, ${round1Qualified}, ` +
-          `${round2Votes}, ${round2Pct}, ${e.isElected}, ` +
-          `NOW(), NOW())`
-        );
-      })
-      .join(",\n");
-
-    await db.$executeRawUnsafe(`
+    await db.$executeRaw`
       INSERT INTO "Candidacy" (
         "id", "electionId",
         "candidateName", "partyLabel", "listName",
@@ -345,7 +330,7 @@ export async function syncMunicipales2020(statsOnly = false) {
         "round2Votes", "round2Pct", "isElected",
         "createdAt", "updatedAt"
       ) VALUES ${values}
-    `);
+    `;
 
     inserted += chunk.length;
     if ((i / CHUNK_SIZE) % 20 === 0 || i + CHUNK_SIZE >= entries.length) {

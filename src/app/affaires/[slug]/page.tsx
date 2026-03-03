@@ -72,6 +72,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return {
     title: `${affair.title} - ${affair.politician.fullName}`,
     description: affair.description.slice(0, 160),
+    alternates: { canonical: `/affaires/${slug}` },
     openGraph: {
       title: `${affair.title} - ${affair.politician.fullName}`,
       description: affair.description.slice(0, 160),

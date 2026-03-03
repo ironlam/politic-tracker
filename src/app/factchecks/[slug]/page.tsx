@@ -68,6 +68,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return {
     title: factCheck.title,
     description,
+    alternates: { canonical: `/factchecks/${slug}` },
     openGraph: {
       title: `${ratingLabel} — ${factCheck.title}`,
       description,

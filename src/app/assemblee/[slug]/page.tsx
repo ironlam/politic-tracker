@@ -95,6 +95,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return {
     title: dossier.shortTitle || dossier.title,
     description: dossier.summary || `Dossier législatif ${dossier.number || dossier.externalId}`,
+    alternates: { canonical: `/assemblee/${dossier.slug}` },
   };
 }
 

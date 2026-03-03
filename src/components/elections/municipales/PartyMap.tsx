@@ -5,8 +5,15 @@ import dynamic from "next/dynamic";
 import { NO_DATA_COLOR, getPartyColor } from "@/config/party-colors";
 
 // Dynamic imports to avoid SSR issues with react-simple-maps
+const MapSpinner = () => (
+  <div className="flex items-center justify-center h-64 text-muted-foreground">
+    <div className="size-8 animate-spin rounded-full border-4 border-current border-t-transparent" />
+  </div>
+);
+
 const ComposableMap = dynamic(() => import("react-simple-maps").then((m) => m.ComposableMap), {
   ssr: false,
+  loading: MapSpinner,
 });
 const Geographies = dynamic(() => import("react-simple-maps").then((m) => m.Geographies), {
   ssr: false,

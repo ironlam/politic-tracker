@@ -62,9 +62,10 @@ jobs:
             exit 1
           fi
 
-      - name: No hardcoded text-blue-600 (use text-primary)
+      - name: No hardcoded text-blue-600 in className (use text-primary)
         run: |
-          VIOLATIONS=$(grep -rn 'text-blue-600' src/ --include='*.tsx' | grep -v 'config/\|\.test\.' || true)
+          # Exclude: config/ (color constants), .test. files, home/ (themed cards with intentional multi-color)
+          VIOLATIONS=$(grep -rn 'text-blue-600' src/ --include='*.tsx' | grep -v 'config/\|\.test\.\|home/' || true)
           if [ -n "$VIOLATIONS" ]; then
             echo "::error::Use text-primary instead of hardcoded text-blue-600."
             echo "$VIOLATIONS"
@@ -106,15 +107,25 @@ jobs:
 
       - name: No unjustified any without eslint-disable
         run: |
-          # Find : any or as any without eslint-disable on the line or preceding line
+          # Match TypeScript any annotations (: any, as any) but not English "any" in comments
           VIOLATIONS=$(grep -rn ': any\b\|as any\b' src/ --include='*.ts' --include='*.tsx' \
             | grep -v 'generated/\|node_modules\|eslint-disable\|\.test\.\|\.d\.ts' \
+            | grep -v '^\s*//' \
+            | grep -v '// .*\bany\b' \
             | while IFS= read -r line; do
                 FILE=$(echo "$line" | cut -d: -f1)
                 LINENUM=$(echo "$line" | cut -d: -f2)
                 PREV=$((LINENUM - 1))
-                if ! sed -n "${PREV}p" "$FILE" | grep -q 'eslint-disable'; then
-                  echo "$line"
+                # Check if the any is in code (not in a comment on that line)
+                CODE=$(echo "$line" | cut -d: -f3-)
+                if echo "$CODE" | grep -qE ':\s*any\b|as\s+any\b'; then
+                  # Verify it's not just "any" in a comment part of the line
+                  CODE_BEFORE_COMMENT=$(echo "$CODE" | sed 's|//.*||')
+                  if echo "$CODE_BEFORE_COMMENT" | grep -qE ':\s*any\b|as\s+any\b'; then
+                    if ! sed -n "${PREV}p" "$FILE" | grep -q 'eslint-disable'; then
+                      echo "$line"
+                    fi
+                  fi
                 fi
               done || true)
           if [ -n "$VIOLATIONS" ]; then

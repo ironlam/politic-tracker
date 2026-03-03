@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { DataSource, LocalOfficialRole, MandateType } from "@/generated/prisma";
+import { DataSource, Judgement, LocalOfficialRole, MandateType } from "@/generated/prisma";
 import { Prisma } from "@/generated/prisma";
 import { parse } from "csv-parse/sync";
 import type { MaireRNECSV, RNESyncResult } from "./types";
@@ -374,9 +374,11 @@ export async function syncRNEMaires(
     politiciansNotFound = batchResult.stats.notFound + batchResult.stats.blocked;
 
     // Apply matches: link officials to politicians + create/update mandates
+    // Only auto-link SAME (≥0.95) — UNDECIDED needs manual review (prevents false positives on common names)
     for (const resolveResult of batchResult.results) {
       const politicianId = resolveResult.politicianId;
       if (!politicianId) continue;
+      if (resolveResult.decision !== Judgement.SAME) continue;
 
       const official = officialBySourceId.get(resolveResult.sourceId);
       if (!official) continue;

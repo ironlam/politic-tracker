@@ -165,17 +165,8 @@ async function divisiveVotes(): Promise<TweetDraft[]> {
     const pourPartyPct = Math.round((dividedStats.pour / dividedStats.total) * 100);
     const contrePartyPct = Math.round((dividedStats.contre / dividedStats.total) * 100);
 
-    let content = `\u{1F5F3}\uFE0F ${pourPartyPct}% pour, ${contrePartyPct}% contre \u2014 au sein du m\u00EAme groupe.\n\n`;
-    content += `Le groupe ${dividedGroup.name} s'est fractur\u00E9 sur \u00AB ${s.title} \u00BB.`;
-    if (dividedStats.abstention > 0) {
-      content += ` ${Math.round((dividedStats.abstention / dividedStats.total) * 100)}% se sont abstenus.`;
-    }
-    content += `\n\n`;
-    content += `R\u00E9sultat final : ${result} (${pourPct}\u2013${contrePct}). Scrutin du ${formatDate(s.votingDate)}.`;
-
-    if (s.summary) {
-      content += `\n\n${s.summary}`;
-    }
+    let content = `\u{1F5F3}\uFE0F ${pourPartyPct}% pour, ${contrePartyPct}% contre au sein de ${dividedGroup.name}.\n\n`;
+    content += `\u00AB ${s.title} \u00BB \u2014 ${result} (${pourPct}\u2013${contrePct}), ${formatDate(s.votingDate)}.`;
 
     const chamberHandle = CHAMBER_TWITTER[s.chamber || "AN"];
     drafts.push({
@@ -227,14 +218,8 @@ async function unanimousVotes(): Promise<TweetDraft[]> {
 
     const chamberLabel = s.chamber === "AN" ? "l'Assembl\u00E9e" : "le S\u00E9nat";
 
-    let content = `\u{1F91D} ${Math.round(pourPct)}% pour, ${s.votesAgainst} contre.\n\n`;
-    content += `\u00AB ${s.title} \u00BB \u2014 adopt\u00E9 quasi \u00E0 l'unanimit\u00E9 par ${chamberLabel} le ${formatDate(s.votingDate)}.`;
-    content += `\n\n${s.votesFor} pour, ${s.votesAgainst} contre, ${s.votesAbstain} abstentions.`;
-
-    if (s.summary) {
-      const sum = s.summary.length > 300 ? s.summary.substring(0, 297) + "..." : s.summary;
-      content += `\n\n${sum}`;
-    }
+    let content = `\u{1F91D} ${Math.round(pourPct)}% pour \u2014 \u00AB ${s.title} \u00BB adopt\u00E9 quasi \u00E0 l'unanimit\u00E9 par ${chamberLabel}.\n\n`;
+    content += `${s.votesFor} pour, ${s.votesAgainst} contre, ${s.votesAbstain} abstentions. ${formatDate(s.votingDate)}.`;
 
     const chamberTag = s.chamber === "SENAT" ? "DirectSenat" : "DirectAN";
     drafts.push({
@@ -305,11 +290,11 @@ async function partyStats(): Promise<TweetDraft[]> {
   const totalPoliticians = parties.reduce((sum, p) => sum + p._count.politicians, 0);
   const topParties = parties.slice(0, 6);
 
-  let content = `\u{1F4CA} ${totalPoliticians} responsables politiques pass\u00E9s au crible.\n\n`;
+  let content = `\u{1F4CA} ${totalPoliticians} \u00E9lus suivis sur Poligraph.\n\n`;
   for (const p of topParties) {
-    content += `\u2022 ${p.shortName} \u2014 ${p._count.politicians} \u00E9lus\n`;
+    content += `\u2022 ${p.shortName} \u2014 ${p._count.politicians}\n`;
   }
-  content += `\nVotes, mandats, affaires, patrimoine : donn\u00E9es publiques, m\u00EAmes crit\u00E8res pour chacun.`;
+  content += `\nVotes, mandats, affaires, patrimoine \u2014 m\u00EAmes crit\u00E8res pour tous.`;
 
   const drafts: TweetDraft[] = [
     {
@@ -329,12 +314,11 @@ async function partyStats(): Promise<TweetDraft[]> {
   if (sortedCondamnations.length > 0) {
     const totalCondamnations = sortedCondamnations.reduce((sum, [, v]) => sum + v.count, 0);
 
-    let condContent = `\u2696\uFE0F ${totalCondamnations} condamnations d'\u00E9lus, r\u00E9parties comment ?\n\n`;
+    let condContent = `\u2696\uFE0F ${totalCondamnations} condamnations d'\u00E9lus par parti :\n\n`;
     for (const [party, { count, members }] of sortedCondamnations) {
-      const ratio = (count / members).toFixed(1);
-      condContent += `\u2022 ${party} : ${count} ${plural(count, "condamnation")} (ratio ${ratio} pour ${members} ${plural(members, "\u00E9lu")})\n`;
+      condContent += `\u2022 ${party} : ${count}/${members} ${plural(members, "\u00E9lu")}\n`;
     }
-    condContent += `\n1\u00E8re instance, appel ou d\u00E9finitive. Implication directe uniquement.`;
+    condContent += `\nImplication directe, 1\u00E8re instance ou d\u00E9finitive.`;
 
     drafts.push({
       category: "\u{1F4CA} Chiffres",
@@ -385,17 +369,10 @@ async function recentAffairs(): Promise<TweetDraft[]> {
     let content = `\u2696\uFE0F ${a.politician.fullName}`;
     if (party) content += ` (${party})`;
     if (mandateLabel) content += `, ${mandateLabel}`;
-    content += `\n\n${a.title}\n\n`;
-    content += `Statut : ${statusLabel}.`;
-
-    if (a.description) {
-      const desc =
-        a.description.length > 500 ? a.description.substring(0, 497) + "..." : a.description;
-      content += `\n\n${desc}`;
-    }
+    content += `\n\n${a.title}\nStatut : ${statusLabel}.`;
 
     if (needsPresumption) {
-      content += `\n\n\u26A0\uFE0F Pr\u00E9somption d'innocence : pas de condamnation d\u00E9finitive \u00E0 ce stade.`;
+      content += `\n\n\u26A0\uFE0F Pr\u00E9somption d'innocence.`;
     }
 
     return {
@@ -460,29 +437,22 @@ async function factchecks(): Promise<TweetDraft[]> {
 
   let content = `\u{1F50D} `;
   if (politician) {
-    content += `V\u00E9rifi\u00E9 \u2014 ${politician.fullName}`;
+    content += `${politician.fullName}`;
     if (party) content += ` (${party})`;
-    content += ` a d\u00E9clar\u00E9 :\n\n`;
+    content += ` :\n\n`;
   } else if (notable!.claimant) {
-    // Skip generic claimants like "utilisateurs de reseaux sociaux"
     const isGenericClaimant = /utilisateur|r\u00E9seaux|social|internet|viral/i.test(
       notable!.claimant
     );
-    if (isGenericClaimant) {
-      content += `Cette affirmation circule en ligne :\n\n`;
-    } else {
-      content += `V\u00E9rifi\u00E9 \u2014 ${notable!.claimant} a d\u00E9clar\u00E9 :\n\n`;
-    }
+    content += isGenericClaimant ? `Affirmation virale :\n\n` : `${notable!.claimant} :\n\n`;
   } else {
-    content += `Cette affirmation circule en ligne :\n\n`;
+    content += `Affirmation virale :\n\n`;
   }
 
-  // Use claimText (the actual claim) if available, otherwise title
   const claim = notable!.claimText || notable!.title;
-  const claimTruncated = claim.length > 300 ? claim.substring(0, 297) + "..." : claim;
-  content += `\u00AB ${claimTruncated} \u00BB\n\n`;
+  content += `\u00AB ${claim} \u00BB\n\n`;
   content += `Verdict : ${verdictLabel}`;
-  if (notable!.source) content += ` (v\u00E9rifi\u00E9 par ${notable!.source})`;
+  if (notable!.source) content += ` (${notable!.source})`;
   content += `.`;
 
   // Link to the specific factcheck page, or the politician's page
@@ -508,11 +478,8 @@ async function factchecks(): Promise<TweetDraft[]> {
     ).length;
     const falsy = recent.filter((f) => ["MOSTLY_FALSE", "FALSE"].includes(f.verdictRating)).length;
 
-    let summary = `\u{1F50D} ${recent.length} d\u00E9clarations politiques v\u00E9rifi\u00E9es cette semaine.\n\n`;
-    summary += `\u2705 ${truthy} ${plural(truthy, "vraie")}\n`;
-    summary += `\u26A0\uFE0F ${misleading} ${plural(misleading, "trompeuse")}\n`;
-    summary += `\u274C ${falsy} ${plural(falsy, "fausse")}\n\n`;
-    summary += `Qui dit vrai ? Qui d\u00E9forme la r\u00E9alit\u00E9 ? Les fact-checks compil\u00E9s sur une seule page.`;
+    let summary = `\u{1F50D} ${recent.length} d\u00E9clarations v\u00E9rifi\u00E9es cette semaine.\n\n`;
+    summary += `\u2705 ${truthy} ${plural(truthy, "vraie")} \u00B7 \u26A0\uFE0F ${misleading} ${plural(misleading, "trompeuse")} \u00B7 \u274C ${falsy} ${plural(falsy, "fausse")}`;
 
     drafts.push({
       category: "\u{1F50D} Fact-checks",
@@ -568,30 +535,22 @@ async function deputySpotlight(): Promise<TweetDraft[]> {
   const constituency = mandate?.constituency ? `, ${mandate.constituency}` : "";
   const partyName = politician.currentParty?.shortName || "";
 
-  // Build the hook -- lead with the most striking stat
   let hook = "";
   if (politician._count.votes > 0 && politician._count.affairs > 0) {
-    hook = `${politician._count.votes.toLocaleString("fr-FR")} votes enregistr\u00E9s, ${politician._count.affairs} ${plural(politician._count.affairs, "affaire")} judiciaire${politician._count.affairs > 1 ? "s" : ""}`;
+    hook = `${politician._count.votes.toLocaleString("fr-FR")} votes, ${politician._count.affairs} ${plural(politician._count.affairs, "affaire")} judiciaire${politician._count.affairs > 1 ? "s" : ""}`;
   } else if (politician._count.votes > 0) {
-    hook = `${politician._count.votes.toLocaleString("fr-FR")} votes enregistr\u00E9s, aucune affaire judiciaire`;
+    hook = `${politician._count.votes.toLocaleString("fr-FR")} votes`;
   } else {
     hook = mandateLabel || "\u00E9lu en exercice";
   }
 
-  let content = `\u{1F464} ${politician.fullName} \u2014 ${hook}.\n\n`;
-
   const details = [partyName, mandateLabel ? `${mandateLabel}${constituency}` : ""]
     .filter(Boolean)
     .join(" \u00B7 ");
-  if (details) content += `\u{1F3DB}\uFE0F ${details}\n`;
 
-  if (politician.biography) {
-    const bio =
-      politician.biography.length > 400
-        ? politician.biography.substring(0, 397) + "..."
-        : politician.biography;
-    content += `\n${bio}`;
-  }
+  let content = `\u{1F464} ${politician.fullName}`;
+  if (details) content += ` \u2014 ${details}`;
+  content += `\n\n${hook}.`;
 
   return [
     {
@@ -625,15 +584,7 @@ async function elections(): Promise<TweetDraft[]> {
     content += `${upcoming.title} \u2014 1er tour le ${date}.`;
 
     if (upcoming._count.candidacies > 0) {
-      content += `\n${upcoming._count.candidacies} ${plural(upcoming._count.candidacies, "candidature")} enregistr\u00E9e${upcoming._count.candidacies > 1 ? "s" : ""}.`;
-    }
-
-    if (upcoming.description) {
-      const desc =
-        upcoming.description.length > 300
-          ? upcoming.description.substring(0, 297) + "..."
-          : upcoming.description;
-      content += `\n\n${desc}`;
+      content += `\n${upcoming._count.candidacies} ${plural(upcoming._count.candidacies, "candidature")}${upcoming._count.candidacies > 1 ? "s" : ""}.`;
     }
 
     return [
@@ -725,15 +676,14 @@ async function recentPress(): Promise<TweetDraft[]> {
   const firstSource =
     FEED_NAMES[firstArticle!.article.feedSource] || firstArticle!.article.feedSource;
 
-  let content = `\u{1F4F0} \u00AB ${firstArticle!.article.title} \u00BB\n${firstSource}\n\n`;
-  content += `${pol.fullName}${party} \u2014 ${pMentions.length} ${plural(pMentions.length, "mention")} presse en 48h.`;
+  let content = `\u{1F4F0} ${pol.fullName}${party} \u2014 ${pMentions.length} ${plural(pMentions.length, "mention")} presse en 48h.\n\n`;
+  content += `\u00AB ${firstArticle!.article.title} \u00BB (${firstSource})`;
 
   if (uniqueArticles.length > 1) {
-    content += `\n\nDans la presse aussi :\n`;
-    for (const m of uniqueArticles.slice(1)) {
-      const source = FEED_NAMES[m.article.feedSource] || m.article.feedSource;
-      content += `\u2022 ${m.article.title} (${source})\n`;
-    }
+    const otherSources = uniqueArticles
+      .slice(1)
+      .map((m) => FEED_NAMES[m.article.feedSource] || m.article.feedSource);
+    content += `\n\n\u00C9galement dans : ${otherSources.join(", ")}.`;
   }
 
   // Collect media Twitter handles from cited sources
@@ -786,10 +736,9 @@ async function participationRanking(): Promise<TweetDraft[]> {
 
   if (bottomAN.length >= 3) {
     const worst = bottomAN[0];
-    let content = `\u{1F4C9} ${worst!.firstName} ${worst!.lastName} a particip\u00E9 \u00E0 ${Math.round(worst!.participationRate)}% des scrutins.\n\n`;
-    content += `${worst!.votesCount} votes sur ${worst!.eligibleScrutins} possibles`;
+    let content = `\u{1F4C9} ${worst!.firstName} ${worst!.lastName}`;
     if (worst!.groupName) content += ` (${worst!.groupName})`;
-    content += `.\n\nLes 5 taux de participation les plus bas (Assembl\u00E9e nationale) :\n`;
+    content += ` : ${Math.round(worst!.participationRate)}% de participation.\n\n`;
     for (const p of bottomAN) {
       content += `\u2022 ${p.firstName} ${p.lastName} \u2014 ${Math.round(p.participationRate)}%\n`;
     }
@@ -804,10 +753,9 @@ async function participationRanking(): Promise<TweetDraft[]> {
 
   if (topAN.length >= 3) {
     const best = topAN[0];
-    let content = `\u{1F4C8} ${best!.firstName} ${best!.lastName} : ${Math.round(best!.participationRate)}% de participation aux scrutins.\n\n`;
-    content += `${best!.votesCount} votes sur ${best!.eligibleScrutins}`;
+    let content = `\u{1F4C8} ${best!.firstName} ${best!.lastName}`;
     if (best!.groupName) content += ` (${best!.groupName})`;
-    content += `.\n\nLes 5 parlementaires les plus assidus (Assembl\u00E9e nationale) :\n`;
+    content += ` : ${Math.round(best!.participationRate)}% de participation.\n\n`;
     for (const p of topAN) {
       content += `\u2022 ${p.firstName} ${p.lastName} \u2014 ${Math.round(p.participationRate)}%\n`;
     }

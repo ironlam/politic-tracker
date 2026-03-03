@@ -11,17 +11,26 @@ function emitChange() {
   for (const listener of listeners) listener();
 }
 
+// Cache parsed result to return stable references (useSyncExternalStore compares via Object.is)
+let cachedRaw: string | null = null;
+let cachedValue: string[] = [];
+const EMPTY: string[] = [];
+
 function getSnapshot(): string[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
+    if (raw !== cachedRaw) {
+      cachedRaw = raw;
+      cachedValue = raw ? JSON.parse(raw) : EMPTY;
+    }
+    return cachedValue;
   } catch {
-    return [];
+    return EMPTY;
   }
 }
 
 function getServerSnapshot(): string[] {
-  return [];
+  return EMPTY;
 }
 
 function subscribe(onStoreChange: () => void): () => void {

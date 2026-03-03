@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { SITE_URL, SITE_HOSTNAME } from "./src/config/site";
 
 const nextConfig: NextConfig = {
   serverExternalPackages: ["jsdom"],
@@ -90,8 +91,8 @@ const nextConfig: NextConfig = {
       // Redirect www to non-www (canonical domain)
       {
         source: "/:path*",
-        has: [{ type: "host", value: "www.poligraph.fr" }],
-        destination: "https://poligraph.fr/:path*",
+        has: [{ type: "host", value: `www.${SITE_HOSTNAME}` }],
+        destination: `${SITE_URL}/:path*`,
         permanent: true,
       },
       {

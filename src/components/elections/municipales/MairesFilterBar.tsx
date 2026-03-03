@@ -3,7 +3,7 @@
 import { DebouncedSearchInput, ComboboxFilter, SelectFilter } from "@/components/filters";
 import type { ComboboxOption, SelectOption } from "@/components/filters";
 import { useFilterParams } from "@/hooks/useFilterParams";
-import { Spinner } from "@/components/ui/spinner";
+import { FilterBarShell } from "@/components/filters/FilterBarShell";
 
 interface MairesFilterBarProps {
   departments: ComboboxOption[];
@@ -30,16 +30,7 @@ export function MairesFilterBar({
   const gender = searchParams.get("gender") || "";
 
   return (
-    <div className="mb-6 rounded-lg border bg-muted/40 p-4 space-y-3 relative">
-      {isPending && (
-        <div className="absolute inset-0 rounded-lg bg-background/60 flex items-center justify-center z-10">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Spinner />
-            <span>Chargement...</span>
-          </div>
-        </div>
-      )}
-
+    <FilterBarShell isPending={isPending} className="space-y-3">
       {/* Search */}
       <DebouncedSearchInput
         id="search-maires"
@@ -95,6 +86,6 @@ export function MairesFilterBar({
           </button>
         )}
       </div>
-    </div>
+    </FilterBarShell>
   );
 }

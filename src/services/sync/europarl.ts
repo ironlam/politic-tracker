@@ -6,6 +6,7 @@ import { EUROPEAN_GROUPS } from "@/config/parties";
 import { HTTPClient } from "@/lib/api/http-client";
 import { EUROPARL_RATE_LIMIT_MS } from "@/config/rate-limits";
 import { upsertPoliticianExternalId } from "@/lib/prisma-helpers";
+import { shouldUpdatePhoto } from "@/config/photos";
 
 const client = new HTTPClient({ rateLimitMs: EUROPARL_RATE_LIMIT_MS });
 
@@ -182,11 +183,8 @@ async function syncMEP(
 
     if (existing) {
       // Update existing politician
-      // Only update photo if we don't have one from a better source
-      const shouldUpdatePhoto =
-        !existing.photoUrl ||
-        existing.photoSource === "parlement-europeen" ||
-        !existing.photoSource;
+      // Only update photo if the new source has equal or higher priority than the current one
+      const updatePhoto = shouldUpdatePhoto(existing.photoSource, "parlement-europeen");
 
       politician = await db.politician.update({
         where: { id: existing.id },
@@ -194,8 +192,8 @@ async function syncMEP(
           // Don't override existing data from other sources
           civility: existing.civility || politicianData.civility,
           birthDate: existing.birthDate || politicianData.birthDate,
-          photoUrl: shouldUpdatePhoto ? politicianData.photoUrl : existing.photoUrl,
-          photoSource: shouldUpdatePhoto ? politicianData.photoSource : existing.photoSource,
+          photoUrl: updatePhoto ? politicianData.photoUrl : existing.photoUrl,
+          photoSource: updatePhoto ? politicianData.photoSource : existing.photoSource,
         },
       });
       result = "updated";

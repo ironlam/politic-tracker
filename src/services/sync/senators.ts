@@ -8,6 +8,7 @@ import { findDepartmentCode } from "@/config/departments";
 import { HTTPClient } from "@/lib/api/http-client";
 import { SENAT_RATE_LIMIT_MS } from "@/config/rate-limits";
 import { upsertPoliticianExternalId } from "@/lib/prisma-helpers";
+import { shouldUpdatePhoto } from "@/config/photos";
 
 const client = new HTTPClient({ rateLimitMs: SENAT_RATE_LIMIT_MS });
 
@@ -315,27 +316,6 @@ async function syncSenator(
     console.error(`Error syncing senator ${sen.prenom} ${sen.nom}:`, error);
     return "error";
   }
-}
-
-/**
- * Determine if we should update the photo based on source priority
- * Priority: assemblee-nationale = senat = gouvernement > nosdeputes = nossenateurs > wikidata > manual
- */
-function shouldUpdatePhoto(currentSource: string | null, newSource: string): boolean {
-  const priority: Record<string, number> = {
-    "assemblee-nationale": 10,
-    senat: 10,
-    gouvernement: 10,
-    nosdeputes: 5,
-    nossenateurs: 5,
-    wikidata: 3,
-    manual: 1,
-  };
-
-  const currentPriority = currentSource ? priority[currentSource] || 0 : 0;
-  const newPriority = priority[newSource] || 0;
-
-  return newPriority >= currentPriority;
 }
 
 /**

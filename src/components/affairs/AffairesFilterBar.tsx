@@ -2,7 +2,7 @@
 
 import { useFilterParams } from "@/hooks/useFilterParams";
 import { DebouncedSearchInput, SelectFilter } from "@/components/filters";
-import { Spinner } from "@/components/ui/spinner";
+import { FilterBarShell } from "@/components/filters/FilterBarShell";
 import { Badge } from "@/components/ui/badge";
 import {
   AFFAIR_STATUS_LABELS,
@@ -121,17 +121,7 @@ export function AffairesFilterBar({
   const sortOptions = Object.entries(SORT_OPTIONS).map(([value, label]) => ({ value, label }));
 
   return (
-    <div className="mb-6 rounded-lg border bg-muted/40 p-4 space-y-3 relative">
-      {/* Loading overlay */}
-      {isPending && (
-        <div className="absolute inset-0 rounded-lg bg-background/60 flex items-center justify-center z-10">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Spinner />
-            <span>Chargement...</span>
-          </div>
-        </div>
-      )}
-
+    <FilterBarShell isPending={isPending} className="space-y-3">
       {/* Search input */}
       <DebouncedSearchInput
         id="search-affairs"
@@ -207,6 +197,6 @@ export function AffairesFilterBar({
           );
         })}
       </div>
-    </div>
+    </FilterBarShell>
   );
 }

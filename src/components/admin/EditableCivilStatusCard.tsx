@@ -14,6 +14,7 @@ import {
   PUBLICATION_STATUS_STYLES,
   PUBLICATION_STATUS_LABELS,
 } from "@/config/labels";
+import { formatDate } from "@/lib/utils";
 import type { PublicationStatus } from "@/generated/prisma";
 
 interface ExternalIdData {
@@ -316,18 +317,10 @@ export function EditableCivilStatusCard({ politician }: EditableCivilStatusCardP
             <span>{politician.lastName}</span>
 
             <span className="text-muted-foreground">Date de naissance</span>
-            <span>
-              {politician.birthDate
-                ? new Date(politician.birthDate).toLocaleDateString("fr-FR")
-                : "—"}
-            </span>
+            <span>{formatDate(politician.birthDate)}</span>
 
             <span className="text-muted-foreground">Date de décès</span>
-            <span>
-              {politician.deathDate
-                ? new Date(politician.deathDate).toLocaleDateString("fr-FR")
-                : "—"}
-            </span>
+            <span>{formatDate(politician.deathDate)}</span>
 
             <span className="text-muted-foreground">Lieu de naissance</span>
             <span>{politician.birthPlace || "—"}</span>

@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import Link from "next/link";
 import { db } from "@/lib/db";
+import { SimplePagination } from "@/components/ui/SimplePagination";
 import { Card, CardContent } from "@/components/ui/card";
 import { StatCard } from "@/components/ui/StatCard";
 import { Badge } from "@/components/ui/badge";
@@ -389,47 +390,22 @@ export default async function AffairesPage({ searchParams }: PageProps) {
           </div>
 
           {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="mt-8 flex justify-center gap-2">
-              {page > 1 && (
-                <Link
-                  href={buildUrl({
-                    search: searchFilter,
-                    page: String(page - 1),
-                    sort: sortFilter,
-                    status: statusFilter,
-                    supercat: superCatFilter,
-                    severity: severityFilter,
-                    involvement: involvementFilter,
-                    parti: partiFilter,
-                  })}
-                  className="px-4 py-2 border rounded-md hover:bg-muted"
-                >
-                  Précédent
-                </Link>
-              )}
-              <span className="px-4 py-2 text-muted-foreground">
-                Page {page} sur {totalPages}
-              </span>
-              {page < totalPages && (
-                <Link
-                  href={buildUrl({
-                    search: searchFilter,
-                    page: String(page + 1),
-                    sort: sortFilter,
-                    status: statusFilter,
-                    supercat: superCatFilter,
-                    severity: severityFilter,
-                    involvement: involvementFilter,
-                    parti: partiFilter,
-                  })}
-                  className="px-4 py-2 border rounded-md hover:bg-muted"
-                >
-                  Suivant
-                </Link>
-              )}
-            </div>
-          )}
+          <SimplePagination
+            page={page}
+            totalPages={totalPages}
+            buildUrl={(p) =>
+              buildUrl({
+                search: searchFilter,
+                page: String(p),
+                sort: sortFilter,
+                status: statusFilter,
+                supercat: superCatFilter,
+                severity: severityFilter,
+                involvement: involvementFilter,
+                parti: partiFilter,
+              })
+            }
+          />
         </>
       ) : (
         <Card>

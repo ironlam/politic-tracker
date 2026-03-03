@@ -7,6 +7,7 @@ import { HATVP_RATE_LIMIT_MS } from "@/config/rate-limits";
 import { parseHATVPXml } from "./hatvp-xml";
 import { DeclarationDetails } from "@/types/hatvp";
 import { upsertPoliticianExternalId } from "@/lib/prisma-helpers";
+import { shouldUpdatePhoto } from "@/config/photos";
 
 const client = new HTTPClient({ rateLimitMs: HATVP_RATE_LIMIT_MS });
 
@@ -217,14 +218,8 @@ async function updatePhotoFromHATVP(politicianId: string, photoUrl: string | nul
     select: { photoUrl: true, photoSource: true },
   });
 
-  // Only update if no photo or from lower priority source
-  const shouldUpdate =
-    !politician?.photoUrl ||
-    !politician?.photoSource ||
-    politician.photoSource === "manual" ||
-    politician.photoSource === "wikidata";
-
-  if (shouldUpdate) {
+  // Only update if the new source has equal or higher priority than the current one
+  if (shouldUpdatePhoto(politician?.photoSource, "hatvp")) {
     await db.politician.update({
       where: { id: politicianId },
       data: {

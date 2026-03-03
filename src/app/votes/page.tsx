@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import Link from "next/link";
 import { cacheTag, cacheLife } from "next/cache";
+import { SimplePagination } from "@/components/ui/SimplePagination";
 import { db } from "@/lib/db";
 import { VoteCard } from "@/components/votes";
 import { VotesSearchInput } from "@/components/votes/VotesSearchInput";
@@ -472,29 +473,11 @@ export default async function VotesPage({ searchParams }: PageProps) {
       )}
 
       {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex justify-center gap-2 mt-8">
-          {page > 1 && (
-            <Link
-              href={buildUrl({ page: String(page - 1) })}
-              className="px-4 py-2 rounded-lg bg-muted hover:bg-muted/80"
-            >
-              Précédent
-            </Link>
-          )}
-          <span className="px-4 py-2 text-muted-foreground">
-            Page {page} sur {totalPages}
-          </span>
-          {page < totalPages && (
-            <Link
-              href={buildUrl({ page: String(page + 1) })}
-              className="px-4 py-2 rounded-lg bg-muted hover:bg-muted/80"
-            >
-              Suivant
-            </Link>
-          )}
-        </div>
-      )}
+      <SimplePagination
+        page={page}
+        totalPages={totalPages}
+        buildUrl={(p) => buildUrl({ page: String(p) })}
+      />
 
       {/* Source */}
       <div className="mt-8 text-center text-sm text-muted-foreground">

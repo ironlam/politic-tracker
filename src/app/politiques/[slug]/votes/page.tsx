@@ -2,6 +2,7 @@ import { cache } from "react";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { SimplePagination } from "@/components/ui/SimplePagination";
 import { db } from "@/lib/db";
 import { Card, CardContent } from "@/components/ui/card";
 import { PoliticianAvatar } from "@/components/politicians/PoliticianAvatar";
@@ -188,29 +189,11 @@ export default async function PoliticianVotesPage({ params, searchParams }: Page
           )}
 
           {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex justify-center gap-2 mt-8">
-              {page > 1 && (
-                <Link
-                  href={`/politiques/${slug}/votes?page=${page - 1}`}
-                  className="px-4 py-2 rounded-lg bg-muted hover:bg-muted/80"
-                >
-                  Précédent
-                </Link>
-              )}
-              <span className="px-4 py-2 text-muted-foreground">
-                Page {page} sur {totalPages}
-              </span>
-              {page < totalPages && (
-                <Link
-                  href={`/politiques/${slug}/votes?page=${page + 1}`}
-                  className="px-4 py-2 rounded-lg bg-muted hover:bg-muted/80"
-                >
-                  Suivant
-                </Link>
-              )}
-            </div>
-          )}
+          <SimplePagination
+            page={page}
+            totalPages={totalPages}
+            buildUrl={(p) => `/politiques/${slug}/votes?page=${p}`}
+          />
         </div>
 
         {/* Sidebar */}

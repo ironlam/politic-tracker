@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { HorizontalBars } from "./HorizontalBars";
 import { MethodologyDisclaimer } from "./MethodologyDisclaimer";
+import { formatDate } from "@/lib/utils";
 import type { LegislativeStatsResult, ThemeDistribution, KeyVote } from "@/services/voteStats";
 
 interface LegislativeSectionProps {
@@ -43,7 +44,7 @@ function KeyVotesList({ votes }: { votes: KeyVote[] }) {
             {v.title}
           </Link>
           <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
-            <span>{new Date(v.votingDate).toLocaleDateString("fr-FR")}</span>
+            <span>{formatDate(v.votingDate)}</span>
             {v.themeLabel && (
               <Badge variant="outline" className="text-xs py-0">
                 {v.themeIcon} {v.themeLabel}

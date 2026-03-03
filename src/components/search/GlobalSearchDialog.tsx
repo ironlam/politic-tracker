@@ -6,6 +6,7 @@ import { Search, Loader2, Users, Building2, Vote } from "lucide-react";
 import { useGlobalSearch } from "./GlobalSearchProvider";
 import { PoliticianAvatar } from "@/components/politicians/PoliticianAvatar";
 import { MANDATE_TYPE_LABELS, CHAMBER_SHORT_LABELS } from "@/config/labels";
+import { formatDateShort } from "@/lib/utils";
 import type { MandateType, Chamber } from "@/generated/prisma";
 
 interface PoliticianResult {
@@ -359,11 +360,7 @@ export function GlobalSearchDialog() {
                               </span>
                               <span className="font-medium text-sm truncate">{s.title}</span>
                               <span className="ml-auto text-xs text-muted-foreground shrink-0">
-                                {new Date(s.votingDate).toLocaleDateString("fr-FR", {
-                                  day: "numeric",
-                                  month: "short",
-                                  year: "numeric",
-                                })}
+                                {formatDateShort(s.votingDate)}
                               </span>
                             </button>
                           </li>

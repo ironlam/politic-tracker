@@ -2,7 +2,7 @@
 
 import { useFilterParams } from "@/hooks/useFilterParams";
 import { DebouncedSearchInput } from "@/components/filters";
-import { Spinner } from "@/components/ui/spinner";
+import { FilterBarShell } from "@/components/filters/FilterBarShell";
 import { FACTCHECK_RATING_LABELS } from "@/config/labels";
 import type { FactCheckRating } from "@/types";
 
@@ -39,17 +39,7 @@ export function FactChecksFilterBar({
   const { isPending, updateParams } = useFilterParams();
 
   return (
-    <div className="mb-6 rounded-lg border bg-muted/40 p-4 relative">
-      {/* Loading overlay */}
-      {isPending && (
-        <div className="absolute inset-0 rounded-lg bg-background/60 flex items-center justify-center z-10">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Spinner />
-            <span>Chargement...</span>
-          </div>
-        </div>
-      )}
-
+    <FilterBarShell isPending={isPending}>
       {/* Dropdowns grid: 2 cols mobile, 4 cols desktop */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <DebouncedSearchInput
@@ -126,6 +116,6 @@ export function FactChecksFilterBar({
           </select>
         </div>
       </div>
-    </div>
+    </FilterBarShell>
   );
 }

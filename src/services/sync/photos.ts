@@ -3,20 +3,9 @@ import { db } from "@/lib/db";
 import { DataSource, MandateType } from "@/generated/prisma";
 import { HTTPClient } from "@/lib/api/http-client";
 import { WIKIDATA_RATE_LIMIT_MS } from "@/config/rate-limits";
+import { PHOTO_SOURCE_PRIORITY, shouldUpdatePhoto } from "@/config/photos";
 
 const wikidataClient = new HTTPClient({ rateLimitMs: WIKIDATA_RATE_LIMIT_MS });
-
-// Photo source priority (higher = better)
-const PHOTO_PRIORITY: Record<string, number> = {
-  "assemblee-nationale": 10,
-  senat: 10,
-  gouvernement: 10,
-  hatvp: 8,
-  wikidata: 6,
-  nosdeputes: 5,
-  nossenateurs: 5,
-  manual: 1,
-};
 
 interface PhotoSyncResult {
   success: boolean;
@@ -235,8 +224,8 @@ export async function syncPhotos(
 
       // Sort by priority
       potentialUrls.sort((a, b) => {
-        const priorityA = PHOTO_PRIORITY[a.source] || 0;
-        const priorityB = PHOTO_PRIORITY[b.source] || 0;
+        const priorityA = PHOTO_SOURCE_PRIORITY[a.source] ?? 0;
+        const priorityB = PHOTO_SOURCE_PRIORITY[b.source] ?? 0;
         return priorityB - priorityA;
       });
 
@@ -245,12 +234,7 @@ export async function syncPhotos(
         const isValid = await isPhotoUrlValid(url);
         if (isValid) {
           // Check if this is a better source than current
-          const currentPriority = politician.photoSource
-            ? PHOTO_PRIORITY[politician.photoSource] || 0
-            : 0;
-          const newPriority = PHOTO_PRIORITY[source] || 0;
-
-          if (newPriority >= currentPriority) {
+          if (shouldUpdatePhoto(politician.photoSource, source)) {
             await db.politician.update({
               where: { id: politician.id },
               data: {

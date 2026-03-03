@@ -18,6 +18,7 @@ import type {
   ElectionScope,
   SuffrageType,
   SourceType,
+  PublicationStatus,
 } from "@/types";
 
 export const AFFAIR_STATUS_LABELS: Record<AffairStatus, string> = {
@@ -1136,3 +1137,31 @@ export const PHOTO_SOURCES = [
   { value: "wikidata", label: "Wikidata" },
   { value: "manual", label: "Manuel" },
 ] as const;
+
+// ---------------------------------------------------------------------------
+// Publication Status
+// ---------------------------------------------------------------------------
+
+export const PUBLICATION_STATUS_LABELS: Record<PublicationStatus, string> = {
+  PUBLISHED: "Publié",
+  DRAFT: "Brouillon",
+  ARCHIVED: "Archivé",
+  EXCLUDED: "Exclu",
+  REJECTED: "Rejeté",
+};
+
+export const PUBLICATION_STATUS_STYLES: Record<PublicationStatus, string> = {
+  PUBLISHED: "bg-emerald-50 text-emerald-700 border-emerald-300",
+  DRAFT: "bg-amber-50 text-amber-700 border-amber-300",
+  ARCHIVED: "bg-slate-50 text-slate-500 border-slate-300",
+  EXCLUDED: "bg-red-50 text-red-600 border-red-300",
+  REJECTED: "bg-red-50 text-red-600 border-red-300",
+};
+
+export const PUBLICATION_STATUS_OPTIONS: { value: PublicationStatus; label: string }[] = [
+  { value: "PUBLISHED", label: "Publié" },
+  { value: "DRAFT", label: "Brouillon" },
+  { value: "ARCHIVED", label: "Archivé" },
+  { value: "EXCLUDED", label: "Exclu" },
+  { value: "REJECTED", label: "Rejeté" },
+];

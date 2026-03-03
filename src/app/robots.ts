@@ -1,9 +1,8 @@
 import { MetadataRoute } from "next";
-
-const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://poligraph.fr";
+import { SITE_URL } from "@/config/site";
 const isProduction =
   process.env.VERCEL_ENV === "production" ||
-  (!process.env.VERCEL_ENV && baseUrl.includes("poligraph.fr") && !baseUrl.includes("staging"));
+  (!process.env.VERCEL_ENV && SITE_URL.includes("poligraph.fr") && !SITE_URL.includes("staging"));
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -16,12 +15,12 @@ export default function robots(): MetadataRoute.Robots {
     ],
     sitemap: isProduction
       ? [
-          `${baseUrl}/sitemap/0.xml`,
-          `${baseUrl}/sitemap/1.xml`,
-          `${baseUrl}/sitemap/2.xml`,
-          `${baseUrl}/sitemap/3.xml`,
-          `${baseUrl}/sitemap/4.xml`,
-          `${baseUrl}/sitemap/5.xml`,
+          `${SITE_URL}/sitemap/0.xml`,
+          `${SITE_URL}/sitemap/1.xml`,
+          `${SITE_URL}/sitemap/2.xml`,
+          `${SITE_URL}/sitemap/3.xml`,
+          `${SITE_URL}/sitemap/4.xml`,
+          `${SITE_URL}/sitemap/5.xml`,
         ]
       : undefined,
   };

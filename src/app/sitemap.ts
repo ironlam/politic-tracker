@@ -2,8 +2,7 @@ import { MetadataRoute } from "next";
 import { db } from "@/lib/db";
 import { DEPARTMENTS, getDepartmentSlug } from "@/config/departments";
 import { getAllThemeSlugs } from "@/lib/theme-utils";
-
-const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://poligraph.fr";
+import { SITE_URL } from "@/config/site";
 
 export async function generateSitemaps() {
   return [{ id: 0 }, { id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }, { id: 5 }];
@@ -41,151 +40,151 @@ async function buildStaticAndPoliticiansSitemap(): Promise<MetadataRoute.Sitemap
 
   const staticPages: MetadataRoute.Sitemap = [
     {
-      url: baseUrl,
+      url: SITE_URL,
       lastModified: new Date(),
       changeFrequency: "daily",
       priority: 1,
     },
     {
-      url: `${baseUrl}/politiques`,
+      url: `${SITE_URL}/politiques`,
       lastModified: new Date(),
       changeFrequency: "daily",
       priority: 0.9,
     },
     {
-      url: `${baseUrl}/partis`,
+      url: `${SITE_URL}/partis`,
       lastModified: new Date(),
       changeFrequency: "weekly",
       priority: 0.8,
     },
     {
-      url: `${baseUrl}/affaires`,
+      url: `${SITE_URL}/affaires`,
       lastModified: new Date(),
       changeFrequency: "daily",
       priority: 0.8,
     },
     {
-      url: `${baseUrl}/votes`,
+      url: `${SITE_URL}/votes`,
       lastModified: new Date(),
       changeFrequency: "daily",
       priority: 0.8,
     },
     {
-      url: `${baseUrl}/assemblee`,
+      url: `${SITE_URL}/assemblee`,
       lastModified: new Date(),
       changeFrequency: "daily",
       priority: 0.8,
     },
     {
-      url: `${baseUrl}/mon-depute`,
+      url: `${SITE_URL}/mon-depute`,
       lastModified: new Date(),
       changeFrequency: "monthly",
       priority: 0.8,
     },
     {
-      url: `${baseUrl}/departements`,
+      url: `${SITE_URL}/departements`,
       lastModified: new Date(),
       changeFrequency: "weekly",
       priority: 0.8,
     },
     {
-      url: `${baseUrl}/statistiques`,
+      url: `${SITE_URL}/statistiques`,
       lastModified: new Date(),
       changeFrequency: "weekly",
       priority: 0.8,
     },
     {
-      url: `${baseUrl}/elections`,
+      url: `${SITE_URL}/elections`,
       lastModified: new Date(),
       changeFrequency: "weekly",
       priority: 0.8,
     },
     {
-      url: `${baseUrl}/factchecks`,
+      url: `${SITE_URL}/factchecks`,
       lastModified: new Date(),
       changeFrequency: "daily",
       priority: 0.8,
     },
     {
-      url: `${baseUrl}/presse`,
+      url: `${SITE_URL}/presse`,
       lastModified: new Date(),
       changeFrequency: "daily",
       priority: 0.8,
     },
     {
-      url: `${baseUrl}/carte`,
+      url: `${SITE_URL}/carte`,
       lastModified: new Date(),
       changeFrequency: "weekly",
       priority: 0.8,
     },
     {
-      url: `${baseUrl}/declarations-et-patrimoine`,
+      url: `${SITE_URL}/declarations-et-patrimoine`,
       lastModified: new Date(),
       changeFrequency: "daily",
       priority: 0.8,
     },
     {
-      url: `${baseUrl}/comparer`,
+      url: `${SITE_URL}/comparer`,
       lastModified: new Date(),
       changeFrequency: "monthly",
       priority: 0.8,
     },
     {
-      url: `${baseUrl}/institutions`,
+      url: `${SITE_URL}/institutions`,
       lastModified: new Date(),
       changeFrequency: "monthly",
       priority: 0.8,
     },
     {
-      url: `${baseUrl}/institutions/assemblee-nationale`,
+      url: `${SITE_URL}/institutions/assemblee-nationale`,
       lastModified: new Date(),
       changeFrequency: "monthly",
       priority: 0.8,
     },
     {
-      url: `${baseUrl}/sources`,
+      url: `${SITE_URL}/sources`,
       lastModified: new Date(),
       changeFrequency: "monthly",
       priority: 0.8,
     },
     {
-      url: `${baseUrl}/soutenir`,
+      url: `${SITE_URL}/soutenir`,
       lastModified: new Date(),
       changeFrequency: "monthly",
       priority: 0.8,
     },
     {
-      url: `${baseUrl}/mentions-legales`,
+      url: `${SITE_URL}/mentions-legales`,
       lastModified: new Date(),
       changeFrequency: "yearly",
       priority: 0.8,
     },
     {
-      url: `${baseUrl}/elections/municipales-2026`,
+      url: `${SITE_URL}/elections/municipales-2026`,
       lastModified: new Date(),
       changeFrequency: "daily",
       priority: 0.9,
     },
     {
-      url: `${baseUrl}/elections/municipales-2026/carte`,
+      url: `${SITE_URL}/elections/municipales-2026/carte`,
       lastModified: new Date(),
       changeFrequency: "weekly",
       priority: 0.7,
     },
     {
-      url: `${baseUrl}/elections/municipales-2026/parite`,
+      url: `${SITE_URL}/elections/municipales-2026/parite`,
       lastModified: new Date(),
       changeFrequency: "weekly",
       priority: 0.7,
     },
     {
-      url: `${baseUrl}/elections/municipales-2026/cumul`,
+      url: `${SITE_URL}/elections/municipales-2026/cumul`,
       lastModified: new Date(),
       changeFrequency: "weekly",
       priority: 0.7,
     },
     {
-      url: `${baseUrl}/elections/municipales-2026/maires`,
+      url: `${SITE_URL}/elections/municipales-2026/maires`,
       lastModified: new Date(),
       changeFrequency: "weekly",
       priority: 0.7,
@@ -193,7 +192,7 @@ async function buildStaticAndPoliticiansSitemap(): Promise<MetadataRoute.Sitemap
   ];
 
   const politicianPages: MetadataRoute.Sitemap = politicians.map((p) => ({
-    url: `${baseUrl}/politiques/${p.slug}`,
+    url: `${SITE_URL}/politiques/${p.slug}`,
     lastModified: p.updatedAt,
     changeFrequency: "weekly" as const,
     priority: 0.8,
@@ -228,7 +227,7 @@ async function buildAffairsPartiesElectionsDepartmentsSitemap(): Promise<Metadat
   ]);
 
   const affairPages: MetadataRoute.Sitemap = affairs.map((a) => ({
-    url: `${baseUrl}/affaires/${a.slug}`,
+    url: `${SITE_URL}/affaires/${a.slug}`,
     lastModified: a.updatedAt,
     changeFrequency: "monthly" as const,
     priority: 0.7,
@@ -237,7 +236,7 @@ async function buildAffairsPartiesElectionsDepartmentsSitemap(): Promise<Metadat
   const partyPages: MetadataRoute.Sitemap = parties
     .filter((p) => p.slug)
     .map((p) => ({
-      url: `${baseUrl}/partis/${p.slug}`,
+      url: `${SITE_URL}/partis/${p.slug}`,
       lastModified: p.updatedAt,
       changeFrequency: "weekly" as const,
       priority: 0.6,
@@ -246,21 +245,21 @@ async function buildAffairsPartiesElectionsDepartmentsSitemap(): Promise<Metadat
   const partyAffairPages: MetadataRoute.Sitemap = partiesWithAffairs
     .filter((p) => p.slug)
     .map((p) => ({
-      url: `${baseUrl}/affaires/parti/${p.slug}`,
+      url: `${SITE_URL}/affaires/parti/${p.slug}`,
       lastModified: p.updatedAt,
       changeFrequency: "weekly" as const,
       priority: 0.7,
     }));
 
   const electionPages: MetadataRoute.Sitemap = elections.map((e) => ({
-    url: `${baseUrl}/elections/${e.slug}`,
+    url: `${SITE_URL}/elections/${e.slug}`,
     lastModified: e.updatedAt,
     changeFrequency: "weekly" as const,
     priority: 0.7,
   }));
 
   const departmentPages: MetadataRoute.Sitemap = Object.values(DEPARTMENTS).map((dept) => ({
-    url: `${baseUrl}/departements/${getDepartmentSlug(dept.name)}`,
+    url: `${SITE_URL}/departements/${getDepartmentSlug(dept.name)}`,
     lastModified: new Date(),
     changeFrequency: "weekly" as const,
     priority: 0.6,
@@ -268,13 +267,13 @@ async function buildAffairsPartiesElectionsDepartmentsSitemap(): Promise<Metadat
 
   const themePages: MetadataRoute.Sitemap = [
     {
-      url: `${baseUrl}/votes/themes`,
+      url: `${SITE_URL}/votes/themes`,
       lastModified: new Date(),
       changeFrequency: "weekly",
       priority: 0.7,
     },
     ...getAllThemeSlugs().map((slug) => ({
-      url: `${baseUrl}/votes/themes/${slug}`,
+      url: `${SITE_URL}/votes/themes/${slug}`,
       lastModified: new Date(),
       changeFrequency: "weekly" as const,
       priority: 0.6,
@@ -302,7 +301,7 @@ async function buildDossiersSitemap(): Promise<MetadataRoute.Sitemap> {
   return dossiers
     .filter((d) => d.slug)
     .map((d) => ({
-      url: `${baseUrl}/assemblee/${d.slug}`,
+      url: `${SITE_URL}/assemblee/${d.slug}`,
       lastModified: d.updatedAt,
       changeFrequency: "weekly" as const,
       priority: 0.6,
@@ -320,7 +319,7 @@ async function buildScrutinsWithSummarySitemap(): Promise<MetadataRoute.Sitemap>
   return scrutins
     .filter((s) => s.slug)
     .map((s) => ({
-      url: `${baseUrl}/votes/${s.slug}`,
+      url: `${SITE_URL}/votes/${s.slug}`,
       lastModified: s.updatedAt,
       changeFrequency: "monthly" as const,
       priority: 0.4,
@@ -338,7 +337,7 @@ async function buildScrutinsWithoutSummarySitemap(): Promise<MetadataRoute.Sitem
   return scrutins
     .filter((s) => s.slug)
     .map((s) => ({
-      url: `${baseUrl}/votes/${s.slug}`,
+      url: `${SITE_URL}/votes/${s.slug}`,
       lastModified: s.updatedAt,
       changeFrequency: "monthly" as const,
       priority: 0.2,
@@ -357,7 +356,7 @@ async function buildCommunesSitemap(): Promise<MetadataRoute.Sitemap> {
   `;
 
   return communes.map((c) => ({
-    url: `${baseUrl}/elections/municipales-2026/communes/${c.id}`,
+    url: `${SITE_URL}/elections/municipales-2026/communes/${c.id}`,
     lastModified: new Date(),
     changeFrequency: "weekly" as const,
     priority: 0.6,

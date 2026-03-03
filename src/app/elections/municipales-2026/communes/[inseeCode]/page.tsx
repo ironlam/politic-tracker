@@ -9,6 +9,7 @@ import { AlerteCumul } from "@/components/elections/municipales/PoliticianBridge
 import { IncumbentMayorCard } from "@/components/elections/municipales/IncumbentMayorCard";
 import { HistoriqueSection2020 } from "@/components/elections/municipales/HistoriqueSection2020";
 import { EventJsonLd, BreadcrumbJsonLd } from "@/components/seo/JsonLd";
+import { SITE_URL } from "@/config/site";
 
 export const revalidate = 3600; // ISR: revalidate every hour
 
@@ -47,8 +48,7 @@ export default async function CommuneDetailPage({ params }: PageProps) {
     notFound();
   }
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://poligraph.fr";
-  const communeUrl = `${siteUrl}/elections/municipales-2026/communes/${commune.id}`;
+  const communeUrl = `${SITE_URL}/elections/municipales-2026/communes/${commune.id}`;
 
   return (
     <>
@@ -63,11 +63,11 @@ export default async function CommuneDetailPage({ params }: PageProps) {
       )}
       <BreadcrumbJsonLd
         items={[
-          { name: "Accueil", url: siteUrl },
-          { name: "Élections", url: `${siteUrl}/elections` },
+          { name: "Accueil", url: SITE_URL },
+          { name: "Élections", url: `${SITE_URL}/elections` },
           {
             name: "Municipales 2026",
-            url: `${siteUrl}/elections/municipales-2026`,
+            url: `${SITE_URL}/elections/municipales-2026`,
           },
           { name: commune.name, url: communeUrl },
         ]}

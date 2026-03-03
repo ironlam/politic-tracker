@@ -2,10 +2,9 @@ import { db } from "@/lib/db";
 import { buildRss, createRssResponse } from "@/lib/rss";
 import { AFFAIR_CATEGORY_LABELS } from "@/config/labels";
 import type { AffairCategory } from "@/types";
+import { SITE_URL } from "@/config/site";
 
 export const revalidate = 300;
-
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://poligraph.fr";
 
 export async function GET() {
   const affairs = await db.affair.findMany({

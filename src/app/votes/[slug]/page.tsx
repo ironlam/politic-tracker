@@ -12,6 +12,7 @@ import { THEME_CATEGORY_LABELS, THEME_CATEGORY_COLORS } from "@/config/labels";
 import { ExternalLink, Calendar, Users, Sparkles } from "lucide-react";
 import { BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 import type { VotePosition } from "@/types";
+import { SITE_URL } from "@/config/site";
 
 export const revalidate = 3600; // ISR: revalidate every hour
 
@@ -143,15 +144,13 @@ export default async function ScrutinPage({ params }: PageProps) {
   const againstPercent = total > 0 ? (scrutin.votesAgainst / total) * 100 : 0;
   const abstainPercent = total > 0 ? (scrutin.votesAbstain / total) * 100 : 0;
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://poligraph.fr";
-
   return (
     <>
       <BreadcrumbJsonLd
         items={[
-          { name: "Accueil", url: siteUrl },
-          { name: "Votes", url: `${siteUrl}/votes` },
-          { name: scrutin.title, url: `${siteUrl}/votes/${scrutin.slug || scrutin.externalId}` },
+          { name: "Accueil", url: SITE_URL },
+          { name: "Votes", url: `${SITE_URL}/votes` },
+          { name: scrutin.title, url: `${SITE_URL}/votes/${scrutin.slug || scrutin.externalId}` },
         ]}
       />
       <div className="container mx-auto px-4 py-8">

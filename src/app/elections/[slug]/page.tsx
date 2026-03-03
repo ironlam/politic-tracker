@@ -22,6 +22,7 @@ import { isFeatureEnabled } from "@/lib/feature-flags";
 import { ELECTION_GUIDES } from "@/config/election-guides";
 import { EventJsonLd, BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 import type { ElectionStatus } from "@/types";
+import { SITE_URL } from "@/config/site";
 
 export const revalidate = 3600; // ISR: revalidate every hour
 
@@ -113,7 +114,6 @@ export default async function ElectionDetailPage({ params }: PageProps) {
   const statusLabel = ELECTION_STATUS_LABELS[election.status];
   const statusColor = ELECTION_STATUS_COLORS[election.status];
   const showCountdown = !isPhaseAtLeast(election.status, "ROUND_1") && election.round1Date;
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://poligraph.fr";
   const typeLabel = ELECTION_TYPE_LABELS[election.type];
   const showGuideSection = await isFeatureEnabled("ELECTION_GUIDE_SECTION");
 
@@ -126,15 +126,15 @@ export default async function ElectionDetailPage({ params }: PageProps) {
         }
         startDate={election.round1Date?.toISOString() || ""}
         location="France"
-        url={`${siteUrl}/elections/${election.slug}`}
+        url={`${SITE_URL}/elections/${election.slug}`}
       />
       <BreadcrumbJsonLd
         items={[
-          { name: "Accueil", url: siteUrl },
-          { name: "Élections", url: `${siteUrl}/elections` },
+          { name: "Accueil", url: SITE_URL },
+          { name: "Élections", url: `${SITE_URL}/elections` },
           {
             name: election.shortTitle || election.title,
-            url: `${siteUrl}/elections/${election.slug}`,
+            url: `${SITE_URL}/elections/${election.slug}`,
           },
         ]}
       />

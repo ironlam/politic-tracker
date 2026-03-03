@@ -15,7 +15,7 @@ import {
   type PoliticianName,
 } from "@/lib/name-matching";
 import { isDirectPoliticianClaim } from "@/config/labels";
-import { generateDateSlug } from "@/lib/utils";
+import { generateDateSlug, sleep } from "@/lib/utils";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -42,10 +42,6 @@ export interface FactcheckSyncStats {
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
 
 async function generateUniqueFactCheckSlug(date: Date | null, title: string): Promise<string> {
   const baseSlug = generateDateSlug(date, title);

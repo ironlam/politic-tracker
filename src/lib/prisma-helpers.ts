@@ -16,24 +16,6 @@ export function buildPoliticianSearchWhere(search: string) {
 }
 
 /**
- * Build a generic search WHERE clause for multiple fields
- */
-export function buildSearchWhere(search: string, fields: string[]) {
-  return {
-    OR: fields.map((field) => ({
-      [field]: { contains: search, mode: "insensitive" as const },
-    })),
-  };
-}
-
-/**
- * Calculate total pages for pagination
- */
-export function calculateTotalPages(total: number, limit: number): number {
-  return Math.ceil(total / limit);
-}
-
-/**
  * Standard include for politician with current party
  */
 export const POLITICIAN_WITH_PARTY_INCLUDE = {

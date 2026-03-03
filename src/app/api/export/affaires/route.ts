@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { toCSV, formatDateForCSV, createCSVResponse } from "@/lib/csv";
 import { AFFAIR_STATUS_LABELS, AFFAIR_CATEGORY_LABELS } from "@/config/labels";
 import type { AffairStatus, AffairCategory } from "@/types";
+import { SITE_URL } from "@/config/site";
 
 export const dynamic = "force-dynamic";
 
@@ -69,7 +70,7 @@ export async function GET(request: NextRequest) {
     description: a.description.substring(0, 500), // Truncate for CSV
     sourceUrl: a.sources[0]?.url || "",
     sourceTitle: a.sources[0]?.title || "",
-    pageUrl: `${process.env.NEXT_PUBLIC_SITE_URL || "https://poligraph.fr"}/affaires/${a.slug}`,
+    pageUrl: `${SITE_URL}/affaires/${a.slug}`,
   }));
 
   const columns = [

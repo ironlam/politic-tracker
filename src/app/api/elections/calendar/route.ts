@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { buildIcsCalendar, type IcsEvent } from "@/lib/ics";
-
-const BASE_URL = "https://poligraph.fr";
+import { SITE_URL } from "@/config/site";
 
 export async function GET() {
   try {
@@ -29,7 +28,7 @@ export async function GET() {
       if (!election.round1Date) continue;
 
       const status = election.dateConfirmed ? "CONFIRMED" : "TENTATIVE";
-      const url = `${BASE_URL}/elections/${election.slug}`;
+      const url = `${SITE_URL}/elections/${election.slug}`;
       const tentativeNote = election.dateConfirmed ? "" : " (date provisoire)";
 
       events.push({

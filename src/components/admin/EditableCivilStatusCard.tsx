@@ -9,6 +9,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select } from "@/components/ui/select";
+import {
+  PUBLICATION_STATUS_OPTIONS,
+  PUBLICATION_STATUS_STYLES,
+  PUBLICATION_STATUS_LABELS,
+} from "@/config/labels";
+import type { PublicationStatus } from "@/generated/prisma";
 
 interface ExternalIdData {
   id: string;
@@ -29,7 +35,7 @@ interface EditableCivilStatusCardProps {
     deathDate: Date | null;
     birthPlace: string | null;
     biography: string | null;
-    publicationStatus: string;
+    publicationStatus: PublicationStatus;
     photoUrl: string | null;
     photoSource: string | null;
     currentPartyId: string | null;
@@ -48,30 +54,6 @@ interface FormState {
   biography: string;
   publicationStatus: string;
 }
-
-const PUBLICATION_STATUS_OPTIONS = [
-  { value: "PUBLISHED", label: "Publié" },
-  { value: "DRAFT", label: "Brouillon" },
-  { value: "ARCHIVED", label: "Archivé" },
-  { value: "EXCLUDED", label: "Exclu" },
-  { value: "REJECTED", label: "Rejeté" },
-] as const;
-
-const PUBLICATION_STATUS_STYLES: Record<string, string> = {
-  PUBLISHED: "bg-emerald-50 text-emerald-700 border-emerald-300",
-  DRAFT: "bg-amber-50 text-amber-700 border-amber-300",
-  ARCHIVED: "bg-slate-50 text-slate-500 border-slate-300",
-  EXCLUDED: "bg-red-50 text-red-600 border-red-300",
-  REJECTED: "bg-red-50 text-red-600 border-red-300",
-};
-
-const PUBLICATION_STATUS_LABELS: Record<string, string> = {
-  PUBLISHED: "Publié",
-  DRAFT: "Brouillon",
-  ARCHIVED: "Archivé",
-  EXCLUDED: "Exclu",
-  REJECTED: "Rejeté",
-};
 
 function formatDateForInput(date: Date | null): string {
   if (!date) return "";

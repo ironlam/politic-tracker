@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { formatDate } from "@/lib/utils";
 import { FACTCHECK_RATING_LABELS, FACTCHECK_RATING_COLORS } from "@/config/labels";
 import { BreadcrumbJsonLd, ClaimReviewJsonLd } from "@/components/seo/JsonLd";
+import { SITE_URL } from "@/config/site";
 
 export const revalidate = 3600; // ISR: revalidate every hour
 
@@ -83,7 +84,6 @@ export default async function FactCheckDetailPage({ params }: PageProps) {
     notFound();
   }
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://poligraph.fr";
   const ratingLabel = FACTCHECK_RATING_LABELS[factCheck.verdictRating];
   const ratingColor = FACTCHECK_RATING_COLORS[factCheck.verdictRating];
 
@@ -91,16 +91,16 @@ export default async function FactCheckDetailPage({ params }: PageProps) {
     <div className="container mx-auto px-4 py-8 max-w-3xl">
       <BreadcrumbJsonLd
         items={[
-          { name: "Accueil", url: siteUrl },
-          { name: "Fact-checks", url: `${siteUrl}/factchecks` },
+          { name: "Accueil", url: SITE_URL },
+          { name: "Fact-checks", url: `${SITE_URL}/factchecks` },
           {
             name: factCheck.title,
-            url: `${siteUrl}/factchecks/${factCheck.slug}`,
+            url: `${SITE_URL}/factchecks/${factCheck.slug}`,
           },
         ]}
       />
       <ClaimReviewJsonLd
-        url={`${siteUrl}/factchecks/${factCheck.slug}`}
+        url={`${SITE_URL}/factchecks/${factCheck.slug}`}
         claimText={factCheck.claimText}
         claimant={factCheck.claimant}
         verdict={factCheck.verdict}

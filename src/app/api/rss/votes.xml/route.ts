@@ -2,10 +2,9 @@ import { db } from "@/lib/db";
 import { buildRss, createRssResponse } from "@/lib/rss";
 import { VOTING_RESULT_LABELS, CHAMBER_LABELS } from "@/config/labels";
 import type { VotingResult, Chamber } from "@/types";
+import { SITE_URL } from "@/config/site";
 
 export const revalidate = 300;
-
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://poligraph.fr";
 
 export async function GET() {
   const scrutins = await db.scrutin.findMany({

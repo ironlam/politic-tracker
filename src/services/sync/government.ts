@@ -4,6 +4,7 @@ import { MandateType, DataSource } from "@/generated/prisma";
 import { parse } from "csv-parse/sync";
 import { GouvernementCSV, GouvernementSyncResult, GOUV_FUNCTION_MAPPING } from "./types";
 import { politicianService } from "@/services/politician";
+import { parseFrenchDate as parseCanonicalFrenchDate } from "@/lib/parsing";
 import * as fs from "fs";
 import * as path from "path";
 import { HTTPClient } from "@/lib/api/http-client";
@@ -44,45 +45,15 @@ interface GovernmentCorrections {
 const DATA_GOUV_CSV_URL =
   "https://static.data.gouv.fr/resources/historique-des-gouvernements-de-la-veme-republique/20250313-105416/liste-membres-gouvernements-5eme-republique.csv";
 
-// French month names for date parsing
-const FRENCH_MONTHS: Record<string, number> = {
-  janvier: 0,
-  février: 1,
-  mars: 2,
-  avril: 3,
-  mai: 4,
-  juin: 5,
-  juillet: 6,
-  août: 7,
-  septembre: 8,
-  octobre: 9,
-  novembre: 10,
-  décembre: 11,
-};
-
 /**
  * Parse French date format: "vendredi 13 décembre 2024"
+ * Strips the leading day-name and delegates to the canonical parser.
  */
 function parseFrenchDate(dateStr: string): Date | null {
   if (!dateStr || dateStr.trim() === "") return null;
-
-  try {
-    // Remove day name and split
-    const parts = dateStr.trim().split(" ");
-    if (parts.length < 4) return null;
-
-    // Format: "day dayNum month year" -> we need dayNum, month, year
-    const dayNum = parseInt(parts[1]!, 10);
-    const monthName = parts[2]!.toLowerCase();
-    const year = parseInt(parts[3]!, 10);
-
-    const month = FRENCH_MONTHS[monthName];
-    if (month === undefined || isNaN(dayNum) || isNaN(year)) return null;
-
-    return new Date(year, month, dayNum);
-  } catch {
-    return null;
-  }
+  // Remove leading day name: "vendredi 13 décembre 2024" → "13 décembre 2024"
+  const withoutDayName = dateStr.trim().replace(/^\S+\s+/, "");
+  return parseCanonicalFrenchDate(withoutDayName);
 }
 
 /**

@@ -9,7 +9,7 @@
 import { db } from "@/lib/db";
 import { syncMetadata, hashVotes, ProgressTracker } from "@/lib/sync";
 import { HTTPClient } from "@/lib/api/http-client";
-import { decodeHtmlEntities } from "@/lib/parsing";
+import { decodeHtmlEntities, parseFrenchDate } from "@/lib/parsing";
 import { generateDateSlug } from "@/lib/utils";
 import { VotePosition, VotingResult, DataSource, Chamber } from "@/generated/prisma";
 import { SENAT_RATE_LIMIT_MS } from "@/config/rate-limits";
@@ -132,30 +132,8 @@ function parseScrutinMetadata(
     let date = new Date();
 
     if (dateMatch) {
-      const day = parseInt(dateMatch[1]!);
-      const monthName = dateMatch[2]!.toLowerCase();
-      const year = parseInt(dateMatch[3]!);
-
-      const months: Record<string, number> = {
-        janvier: 0,
-        février: 1,
-        fevrier: 1,
-        mars: 2,
-        avril: 3,
-        mai: 4,
-        juin: 5,
-        juillet: 6,
-        août: 7,
-        aout: 7,
-        septembre: 8,
-        octobre: 9,
-        novembre: 10,
-        décembre: 11,
-        decembre: 11,
-      };
-
-      const month = months[monthName] ?? 0;
-      date = new Date(year, month, day);
+      const parsed = parseFrenchDate(`${dateMatch[1]} ${dateMatch[2]} ${dateMatch[3]}`);
+      if (parsed) date = parsed;
     }
 
     // Extract vote counts

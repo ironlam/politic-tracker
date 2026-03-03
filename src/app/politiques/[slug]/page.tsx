@@ -28,6 +28,7 @@ import { VotesSection } from "@/components/politicians/VotesSection";
 import { getPoliticianVotingStats, getPoliticianParliamentaryCard } from "@/services/voteStats";
 import { getPolitician } from "@/lib/data/politicians";
 import { FollowButton } from "@/components/politicians/FollowButton";
+import { SITE_URL } from "@/config/site";
 
 export const revalidate = 3600; // ISR: revalidate every hour
 
@@ -149,8 +150,6 @@ export default async function PoliticianPage({ params }: PageProps) {
       parliamentaryGroup?: { code: string; name: string; color: string | null } | null;
     }
   )?.parliamentaryGroup;
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://poligraph.fr";
-
   const isActiveParliamentarian = politician.mandates.some(
     (m) => m.isCurrent && (m.type === "DEPUTE" || m.type === "SENATEUR")
   );
@@ -198,7 +197,7 @@ export default async function PoliticianPage({ params }: PageProps) {
         birthDate={politician.birthDate?.toISOString().split("T")[0]}
         deathDate={politician.deathDate?.toISOString().split("T")[0]}
         birthPlace={politician.birthPlace || undefined}
-        url={`${siteUrl}/politiques/${politician.slug}`}
+        url={`${SITE_URL}/politiques/${politician.slug}`}
         sameAs={politician.externalIds
           .map((e) => e.url)
           .filter((url): url is string => url != null)}
@@ -206,9 +205,9 @@ export default async function PoliticianPage({ params }: PageProps) {
       />
       <BreadcrumbJsonLd
         items={[
-          { name: "Accueil", url: siteUrl },
-          { name: "Politiques", url: `${siteUrl}/politiques` },
-          { name: politician.fullName, url: `${siteUrl}/politiques/${politician.slug}` },
+          { name: "Accueil", url: SITE_URL },
+          { name: "Politiques", url: `${SITE_URL}/politiques` },
+          { name: politician.fullName, url: `${SITE_URL}/politiques/${politician.slug}` },
         ]}
       />
 

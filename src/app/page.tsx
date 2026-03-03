@@ -11,6 +11,7 @@ import { HexPattern } from "@/components/ui/HexPattern";
 import { FadeIn } from "@/components/motion";
 import { isFeatureEnabled } from "@/lib/feature-flags";
 import { FACTCHECK_ALLOWED_SOURCES } from "@/config/labels";
+import { SITE_URL } from "@/config/site";
 
 async function getRecentFactChecks() {
   "use cache";
@@ -200,14 +201,13 @@ export default async function HomePage() {
   ]);
 
   const statsEnabled = await isFeatureEnabled("STATISTIQUES_SECTION");
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://poligraph.fr";
 
   return (
     <>
       <WebSiteJsonLd
         name="Poligraph"
         description="Observatoire citoyen de la vie politique. Mandats, votes, patrimoine, affaires judiciaires et fact-checking."
-        url={siteUrl}
+        url={SITE_URL}
       />
       <div className="min-h-screen">
         {/* Hero Section */}

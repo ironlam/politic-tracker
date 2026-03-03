@@ -26,10 +26,9 @@ import {
   getPartyTransparency,
   type DeclarationRow,
 } from "@/lib/data/declarations";
+import { SITE_URL } from "@/config/site";
 
 export const revalidate = 300;
-
-const BASE_URL = "https://poligraph.fr";
 
 export const metadata: Metadata = {
   title: "Patrimoine et déclarations d'intérêts des élus — HATVP",
@@ -76,24 +75,24 @@ export default async function DeclarationsPage({ searchParams }: PageProps) {
       {/* SEO structured data */}
       <BreadcrumbJsonLd
         items={[
-          { name: "Accueil", url: BASE_URL },
-          { name: "Déclarations HATVP", url: `${BASE_URL}/declarations-et-patrimoine` },
+          { name: "Accueil", url: SITE_URL },
+          { name: "Déclarations HATVP", url: `${SITE_URL}/declarations-et-patrimoine` },
         ]}
       />
       <CollectionPageJsonLd
         name="Déclarations HATVP des élus français"
         description="Déclarations d'intérêts et de patrimoine des députés, sénateurs et ministres français. Données officielles de la HATVP."
-        url={`${BASE_URL}/declarations-et-patrimoine`}
+        url={`${SITE_URL}/declarations-et-patrimoine`}
         numberOfItems={stats.totalDeclarations}
         about={{ name: "HATVP", url: "https://www.hatvp.fr" }}
       />
       <ItemListJsonLd
         name="Classement des élus par portefeuille déclaré"
         description="Les élus français avec les plus gros portefeuilles financiers déclarés auprès de la HATVP."
-        url={`${BASE_URL}/declarations-et-patrimoine`}
+        url={`${SITE_URL}/declarations-et-patrimoine`}
         items={topPortfolios.map((p, i) => ({
           name: p.fullName,
-          url: `${BASE_URL}/politiques/${p.slug}`,
+          url: `${SITE_URL}/politiques/${p.slug}`,
           position: i + 1,
         }))}
       />

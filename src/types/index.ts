@@ -39,6 +39,9 @@ import type {
 // Compare types
 export * from "./compare";
 
+// Activity feed types (watchlist)
+export * from "./activity";
+
 // Re-export Prisma types
 export type {
   Politician,

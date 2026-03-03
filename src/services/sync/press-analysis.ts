@@ -14,7 +14,7 @@
 
 import { db } from "@/lib/db";
 import type { AffairCategory, AffairStatus } from "@/generated/prisma";
-import { generateSlug } from "@/lib/utils";
+import { generateSlug, sleep } from "@/lib/utils";
 import { getArticleScraper } from "@/lib/api/article-scraper";
 import {
   analyzeArticle,
@@ -737,8 +737,4 @@ function feedSourceToPublisher(feedSource: string): string {
     googlenews: "Google News",
   };
   return publishers[feedSource] || feedSource;
-}
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
 }

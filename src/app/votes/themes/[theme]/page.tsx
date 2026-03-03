@@ -8,10 +8,10 @@ import { BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 import { SeoIntro } from "@/components/seo/SeoIntro";
 import { THEME_CATEGORY_LABELS, THEME_CATEGORY_ICONS } from "@/config/labels";
 import { formatDate } from "@/lib/utils";
+import { SITE_URL } from "@/config/site";
 
 export const revalidate = 3600;
 
-const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://poligraph.fr";
 const PAGE_SIZE = 20;
 
 export async function generateStaticParams() {
@@ -102,10 +102,10 @@ export default async function ThemePage({
     <div className="container mx-auto px-4 py-8">
       <BreadcrumbJsonLd
         items={[
-          { name: "Accueil", url: baseUrl },
-          { name: "Votes", url: `${baseUrl}/votes` },
-          { name: "Thematiques", url: `${baseUrl}/votes/themes` },
-          { name: label, url: `${baseUrl}/votes/themes/${themeToSlug(theme)}` },
+          { name: "Accueil", url: SITE_URL },
+          { name: "Votes", url: `${SITE_URL}/votes` },
+          { name: "Thematiques", url: `${SITE_URL}/votes/themes` },
+          { name: label, url: `${SITE_URL}/votes/themes/${themeToSlug(theme)}` },
         ]}
       />
 

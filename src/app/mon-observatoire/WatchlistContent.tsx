@@ -13,26 +13,7 @@ import {
   AFFAIR_CATEGORY_LABELS,
 } from "@/config/labels";
 import type { VotePosition, AffairCategory } from "@/generated/prisma";
-
-interface PoliticianInfo {
-  slug: string;
-  fullName: string;
-  photoUrl: string | null;
-  party: string | null;
-  partyColor: string | null;
-}
-
-interface ActivityItem {
-  type: "vote" | "press" | "affair";
-  date: string;
-  politician: PoliticianInfo;
-  data: Record<string, unknown>;
-}
-
-interface ActivityResponse {
-  activity: ActivityItem[];
-  politicians: PoliticianInfo[];
-}
+import type { ActivityItem, ActivityResponse } from "@/types/activity";
 
 export function WatchlistContent() {
   const { slugs, remove, count } = useWatchlist();

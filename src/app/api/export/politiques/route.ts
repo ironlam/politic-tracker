@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { toCSV, formatDateForCSV, createCSVResponse } from "@/lib/csv";
 import { MANDATE_TYPE_LABELS } from "@/config/labels";
 import type { MandateType } from "@/types";
+import { SITE_URL } from "@/config/site";
 
 export const dynamic = "force-dynamic";
 
@@ -71,7 +72,7 @@ export async function GET(request: NextRequest) {
     constituency: p.mandates[0]?.constituency || "",
     affairsCount: p._count.affairs,
     photoUrl: p.photoUrl || "",
-    profileUrl: `${process.env.NEXT_PUBLIC_SITE_URL || "https://poligraph.fr"}/politiques/${p.slug}`,
+    profileUrl: `${SITE_URL}/politiques/${p.slug}`,
   }));
 
   const columns = [

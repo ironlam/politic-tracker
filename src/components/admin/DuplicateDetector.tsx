@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { formatDateShort } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -81,15 +82,6 @@ function scoreBarColor(score: number): string {
   return "bg-amber-500";
 }
 
-function formatDate(iso: string | null): string {
-  if (!iso) return "—";
-  return new Date(iso).toLocaleDateString("fr-FR", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-}
-
 function AffairCard({
   affair,
   isPrimary,
@@ -146,10 +138,10 @@ function AffairCard({
         </dd>
 
         <dt className="text-muted-foreground">Faits</dt>
-        <dd className="font-medium font-mono">{formatDate(affair.factsDate)}</dd>
+        <dd className="font-medium font-mono">{formatDateShort(affair.factsDate)}</dd>
 
         <dt className="text-muted-foreground">Verdict</dt>
-        <dd className="font-medium font-mono">{formatDate(affair.verdictDate)}</dd>
+        <dd className="font-medium font-mono">{formatDateShort(affair.verdictDate)}</dd>
 
         <dt className="text-muted-foreground">Sources</dt>
         <dd className="font-medium">{affair.sourceCount}</dd>

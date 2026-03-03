@@ -1,3 +1,5 @@
+import { SITE_URL } from "@/config/site";
+
 const INDEXNOW_ENDPOINT = "https://api.indexnow.org/indexnow";
 
 /**
@@ -14,8 +16,7 @@ export async function submitToIndexNow(urls: string[]): Promise<void> {
   const key = process.env.INDEXNOW_KEY;
   if (!key || urls.length === 0) return;
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://poligraph.fr";
-  const host = new URL(siteUrl).host;
+  const host = new URL(SITE_URL).host;
 
   // IndexNow accepts max 10,000 URLs per request
   const BATCH_SIZE = 10000;
@@ -28,7 +29,7 @@ export async function submitToIndexNow(urls: string[]): Promise<void> {
         body: JSON.stringify({
           host,
           key,
-          keyLocation: `${siteUrl}/${key}.txt`,
+          keyLocation: `${SITE_URL}/${key}.txt`,
           urlList: batch,
         }),
       });

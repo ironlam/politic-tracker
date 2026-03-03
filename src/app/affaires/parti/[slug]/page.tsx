@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { PoliticianAvatar } from "@/components/politicians/PoliticianAvatar";
 import { BreadcrumbJsonLd, CollectionPageJsonLd } from "@/components/seo/JsonLd";
 import { ensureContrast } from "@/lib/contrast";
+import { SITE_URL } from "@/config/site";
 import {
   AFFAIR_STATUS_LABELS,
   AFFAIR_STATUS_COLORS,
@@ -222,8 +223,6 @@ export default async function PartyAffairsPage({ params }: PageProps) {
     victimPoliticians,
   } = data;
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://poligraph.fr";
-
   // Build factual summary (mis-en-cause focused)
   const summaryParts: string[] = [];
   if (activePoliticians.length > 0) {
@@ -254,22 +253,22 @@ export default async function PartyAffairsPage({ params }: PageProps) {
     <>
       <BreadcrumbJsonLd
         items={[
-          { name: "Accueil", url: siteUrl },
-          { name: "Affaires judiciaires", url: `${siteUrl}/affaires` },
+          { name: "Accueil", url: SITE_URL },
+          { name: "Affaires judiciaires", url: `${SITE_URL}/affaires` },
           {
             name: party.name,
-            url: `${siteUrl}/affaires/parti/${party.slug}`,
+            url: `${SITE_URL}/affaires/parti/${party.slug}`,
           },
         ]}
       />
       <CollectionPageJsonLd
         name={`Affaires judiciaires — ${party.name}`}
         description={summaryParts.join(" ")}
-        url={`${siteUrl}/affaires/parti/${party.slug}`}
+        url={`${SITE_URL}/affaires/parti/${party.slug}`}
         numberOfItems={affairs.length}
         about={{
           name: party.name,
-          url: `${siteUrl}/partis/${party.slug}`,
+          url: `${SITE_URL}/partis/${party.slug}`,
         }}
       />
 

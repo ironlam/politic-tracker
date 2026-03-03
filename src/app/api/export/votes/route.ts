@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { toCSV, formatDateForCSV, createCSVResponse } from "@/lib/csv";
 import { VOTING_RESULT_LABELS, CHAMBER_LABELS } from "@/config/labels";
 import type { VotingResult, Chamber } from "@/types";
+import { SITE_URL } from "@/config/site";
 
 export const dynamic = "force-dynamic";
 
@@ -52,7 +53,7 @@ export async function GET(request: NextRequest) {
     totalVotes: s.votesFor + s.votesAgainst + s.votesAbstain,
     result: VOTING_RESULT_LABELS[s.result],
     sourceUrl: s.sourceUrl || "",
-    pageUrl: `${process.env.NEXT_PUBLIC_SITE_URL || "https://poligraph.fr"}/votes/${s.slug || s.id}`,
+    pageUrl: `${SITE_URL}/votes/${s.slug || s.id}`,
   }));
 
   const columns = [

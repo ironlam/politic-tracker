@@ -10,6 +10,8 @@ import { StatusBadge, CategoryBadge } from "@/components/legislation";
 import { AMENDMENT_STATUS_LABELS, AMENDMENT_STATUS_COLORS } from "@/config/labels";
 import { ExternalLink, ArrowLeft, Calendar, FileText } from "lucide-react";
 import { LegislationJsonLd, BreadcrumbJsonLd } from "@/components/seo/JsonLd";
+import { SITE_URL } from "@/config/site";
+import { formatDate } from "@/lib/utils";
 
 export const revalidate = 3600; // ISR: revalidate every hour
 
@@ -109,17 +111,6 @@ export default async function DossierDetailPage({ params }: PageProps) {
     notFound();
   }
 
-  const formatDate = (date: Date | null) => {
-    if (!date) return null;
-    return new Date(date).toLocaleDateString("fr-FR", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    });
-  };
-
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://poligraph.fr";
-
   return (
     <>
       <LegislationJsonLd
@@ -127,15 +118,15 @@ export default async function DossierDetailPage({ params }: PageProps) {
         description={dossier.summary || undefined}
         datePublished={dossier.filingDate?.toISOString().split("T")[0]}
         legislationIdentifier={dossier.number || dossier.externalId}
-        url={`${siteUrl}/assemblee/${dossier.slug || dossier.externalId}`}
+        url={`${SITE_URL}/assemblee/${dossier.slug || dossier.externalId}`}
       />
       <BreadcrumbJsonLd
         items={[
-          { name: "Accueil", url: siteUrl },
-          { name: "Assemblée", url: `${siteUrl}/assemblee` },
+          { name: "Accueil", url: SITE_URL },
+          { name: "Assemblée", url: `${SITE_URL}/assemblee` },
           {
             name: dossier.shortTitle || dossier.title,
-            url: `${siteUrl}/assemblee/${dossier.slug || dossier.externalId}`,
+            url: `${SITE_URL}/assemblee/${dossier.slug || dossier.externalId}`,
           },
         ]}
       />

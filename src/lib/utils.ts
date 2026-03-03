@@ -5,6 +5,10 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+export function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export function generateSlug(text: string): string {
   return text
     .toLowerCase()
@@ -20,6 +24,16 @@ export function formatDate(date: Date | string | null): string {
   return d.toLocaleDateString("fr-FR", {
     day: "numeric",
     month: "long",
+    year: "numeric",
+  });
+}
+
+export function formatDateShort(date: Date | string | null): string {
+  if (!date) return "—";
+  const d = typeof date === "string" ? new Date(date) : date;
+  return d.toLocaleDateString("fr-FR", {
+    day: "numeric",
+    month: "short",
     year: "numeric",
   });
 }

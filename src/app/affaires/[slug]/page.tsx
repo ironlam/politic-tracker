@@ -24,6 +24,7 @@ import { AffairTimeline } from "@/components/affairs/AffairTimeline";
 import { PoliticianAvatar } from "@/components/politicians/PoliticianAvatar";
 import { ArticleJsonLd, BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 import type { AffairCategory, Involvement } from "@/types";
+import { SITE_URL } from "@/config/site";
 
 export const revalidate = 3600; // ISR: revalidate every hour
 
@@ -89,7 +90,6 @@ export default async function AffairDetailPage({ params }: PageProps) {
 
   const superCategory = CATEGORY_TO_SUPER[affair.category as AffairCategory];
   const partyToShow = affair.partyAtTime || affair.politician.currentParty;
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://poligraph.fr";
 
   return (
     <>
@@ -98,17 +98,17 @@ export default async function AffairDetailPage({ params }: PageProps) {
         description={affair.description.slice(0, 300)}
         datePublished={affair.factsDate?.toISOString().split("T")[0]}
         dateModified={affair.updatedAt?.toISOString().split("T")[0]}
-        url={`${siteUrl}/affaires/${affair.slug}`}
+        url={`${SITE_URL}/affaires/${affair.slug}`}
         about={{
           name: affair.politician.fullName,
-          url: `${siteUrl}/politiques/${affair.politician.slug}`,
+          url: `${SITE_URL}/politiques/${affair.politician.slug}`,
         }}
       />
       <BreadcrumbJsonLd
         items={[
-          { name: "Accueil", url: siteUrl },
-          { name: "Affaires", url: `${siteUrl}/affaires` },
-          { name: affair.title, url: `${siteUrl}/affaires/${affair.slug}` },
+          { name: "Accueil", url: SITE_URL },
+          { name: "Affaires", url: `${SITE_URL}/affaires` },
+          { name: affair.title, url: `${SITE_URL}/affaires/${affair.slug}` },
         ]}
       />
       <div className="container mx-auto px-4 py-8 max-w-4xl">

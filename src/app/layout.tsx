@@ -9,6 +9,7 @@ import { GlobalSearchProvider, GlobalSearchDialog } from "@/components/search";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { UmamiAnalytics } from "@/components/analytics/UmamiAnalytics";
 import { isFeatureEnabled } from "@/lib/feature-flags";
+import { SITE_URL } from "@/config/site";
 import "./globals.css";
 
 const outfit = Outfit({
@@ -25,10 +26,8 @@ const atkinson = Atkinson_Hyperlegible({
   display: "swap",
 });
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://poligraph.fr";
-
 export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
+  metadataBase: new URL(SITE_URL),
   title: {
     default: "Poligraph",
     template: "%s | Poligraph",
@@ -55,7 +54,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "fr_FR",
-    url: siteUrl,
+    url: SITE_URL,
     siteName: "Poligraph",
     title: "Poligraph",
     description:
@@ -94,7 +93,7 @@ export default async function RootLayout({
         <WebSiteJsonLd
           name="Poligraph"
           description="Observatoire citoyen de la vie politique. Mandats, votes, patrimoine, affaires judiciaires et fact-checking."
-          url={siteUrl}
+          url={SITE_URL}
         />
         <link
           rel="alternate"

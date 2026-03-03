@@ -1,7 +1,14 @@
-interface PaginationResult {
+export interface PaginationResult {
   page: number;
   limit: number;
   skip: number;
+}
+
+export interface PaginationMeta {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
 }
 
 interface PaginationOptions {
@@ -24,4 +31,11 @@ export function parsePagination(
   const limit = Math.min(maxLimit, Math.max(1, Number.isNaN(rawLimit) ? defaultLimit : rawLimit));
   const skip = (page - 1) * limit;
   return { page, limit, skip };
+}
+
+/**
+ * Build a pagination metadata object for API responses.
+ */
+export function buildPaginationMeta(page: number, limit: number, total: number): PaginationMeta {
+  return { page, limit, total, totalPages: Math.ceil(total / limit) };
 }

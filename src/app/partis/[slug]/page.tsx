@@ -22,6 +22,7 @@ import { PoliticianAvatar } from "@/components/politicians/PoliticianAvatar";
 import { PoliticalPositionBadge } from "@/components/parties/PoliticalPositionBadge";
 import { OrganizationJsonLd, BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 import { ensureContrast } from "@/lib/contrast";
+import { SITE_URL } from "@/config/site";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -101,7 +102,6 @@ export default async function PartyPage({ params }: PageProps) {
       [] as typeof party.partyMemberships
     );
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://poligraph.fr";
   const sameAsUrls = party.externalIds
     .map((e) => e.url)
     .filter((url): url is string => url != null);
@@ -114,16 +114,16 @@ export default async function PartyPage({ params }: PageProps) {
         alternateName={party.shortName}
         description={undefined}
         logo={party.logoUrl || undefined}
-        url={`${siteUrl}/partis/${party.slug}`}
+        url={`${SITE_URL}/partis/${party.slug}`}
         foundingDate={party.foundedDate?.toISOString().split("T")[0]}
         dissolutionDate={party.dissolvedDate?.toISOString().split("T")[0]}
         sameAs={sameAsUrls.length > 0 ? sameAsUrls : undefined}
       />
       <BreadcrumbJsonLd
         items={[
-          { name: "Accueil", url: siteUrl },
-          { name: "Partis", url: `${siteUrl}/partis` },
-          { name: party.shortName, url: `${siteUrl}/partis/${party.slug}` },
+          { name: "Accueil", url: SITE_URL },
+          { name: "Partis", url: `${SITE_URL}/partis` },
+          { name: party.shortName, url: `${SITE_URL}/partis/${party.slug}` },
         ]}
       />
 

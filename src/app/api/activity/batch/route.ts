@@ -1,25 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { withCache } from "@/lib/cache";
+import type { WatchlistPolitician, ActivityItem } from "@/types/activity";
 
 const MAX_SLUGS = 50;
 const DEFAULT_DAYS = 30;
 const MAX_ITEMS_PER_TYPE = 50;
-
-interface PoliticianInfo {
-  slug: string;
-  fullName: string;
-  photoUrl: string | null;
-  party: string | null;
-  partyColor: string | null;
-}
-
-interface ActivityItem {
-  type: "vote" | "press" | "affair";
-  date: string;
-  politician: PoliticianInfo;
-  data: Record<string, unknown>;
-}
 
 export async function POST(request: NextRequest) {
   try {
@@ -50,7 +36,7 @@ export async function POST(request: NextRequest) {
       return withCache(NextResponse.json({ activity: [], politicians: [] }), "daily");
     }
 
-    const infoById = new Map<string, PoliticianInfo>(
+    const infoById = new Map<string, WatchlistPolitician>(
       politicians.map((p) => [
         p.id,
         {

@@ -11,10 +11,9 @@ import {
   THEME_CATEGORY_COLORS,
 } from "@/config/labels";
 import type { ThemeCategory } from "@/types";
+import { SITE_URL } from "@/config/site";
 
 export const revalidate = 3600;
-
-const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://poligraph.fr";
 
 export const metadata: Metadata = {
   title: "Votes par thematique",
@@ -59,9 +58,9 @@ export default async function ThemesListingPage() {
     <div className="container mx-auto px-4 py-8">
       <BreadcrumbJsonLd
         items={[
-          { name: "Accueil", url: baseUrl },
-          { name: "Votes", url: `${baseUrl}/votes` },
-          { name: "Thematiques", url: `${baseUrl}/votes/themes` },
+          { name: "Accueil", url: SITE_URL },
+          { name: "Votes", url: `${SITE_URL}/votes` },
+          { name: "Thematiques", url: `${SITE_URL}/votes/themes` },
         ]}
       />
 

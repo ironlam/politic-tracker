@@ -25,4 +25,4 @@ export function isAutoPostEnabled(): boolean {
 }
 
 export const SLACK_SOCIAL_WEBHOOK_URL = process.env.SLACK_SOCIAL_WEBHOOK_URL;
-export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://poligraph.fr";
+export { SITE_URL } from "@/config/site";

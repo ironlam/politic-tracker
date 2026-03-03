@@ -13,6 +13,7 @@ import {
   AFFAIR_CATEGORY_LABELS,
   INVOLVEMENT_LABELS,
   SOURCE_TYPE_LABELS,
+  PUBLICATION_STATUS_OPTIONS,
 } from "@/config/labels";
 import type { AffairStatus, AffairCategory, Involvement, SourceType } from "@/types";
 import type { PublicationStatus } from "@/generated/prisma";
@@ -32,14 +33,6 @@ interface Source {
   excerpt?: string;
   sourceType?: SourceType;
 }
-
-const PUBLICATION_STATUS_OPTIONS: { value: PublicationStatus; label: string }[] = [
-  { value: "DRAFT", label: "Brouillon" },
-  { value: "PUBLISHED", label: "Publié" },
-  { value: "REJECTED", label: "Rejeté" },
-  { value: "ARCHIVED", label: "Archivé" },
-  { value: "EXCLUDED", label: "Exclu" },
-];
 
 interface AffairFormData {
   id?: string;

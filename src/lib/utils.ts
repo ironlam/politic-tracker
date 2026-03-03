@@ -78,6 +78,34 @@ export function formatCompactCurrency(value: number | null): string {
  * @param maxLength - Maximum total length of the slug (default: 120)
  * @returns A slugified string in format "YYYY-MM-DD-title-slug"
  */
+/**
+ * Generate a unique slug by appending a counter suffix if the base slug is already taken.
+ *
+ * @param baseSlug - The desired slug (already slugified)
+ * @param exists - Async predicate returning true if the slug is already in use
+ * @param maxLength - Maximum slug length before truncating (default: 80)
+ * @returns A unique slug guaranteed not to exist according to the `exists` predicate
+ */
+export async function generateUniqueSlug(
+  baseSlug: string,
+  exists: (slug: string) => Promise<boolean>,
+  maxLength: number = 80
+): Promise<string> {
+  let slug = baseSlug;
+  if (!(await exists(slug))) return slug;
+
+  let counter = 2;
+  while (counter <= 100) {
+    const suffix = `-${counter}`;
+    const truncatedBase = baseSlug.slice(0, maxLength - suffix.length).replace(/-$/, "");
+    slug = `${truncatedBase}${suffix}`;
+    if (!(await exists(slug))) return slug;
+    counter++;
+  }
+
+  return `${baseSlug.slice(0, 60)}-${Date.now()}`;
+}
+
 export function generateDateSlug(
   date: Date | null,
   title: string,

@@ -13,10 +13,9 @@
  */
 
 import { AI_RATE_LIMIT_MS } from "@/config/rate-limits";
-
 import { clampConfidenceScore } from "@/services/affairs/confidence";
+import { callAnthropic, extractToolUse } from "@/lib/api/anthropic";
 
-const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
 const MODEL = "claude-sonnet-4-5-20250929";
 const MAX_TOKENS = 2000;
 const MAX_WIKITEXT_CHARS = 8000;
@@ -231,11 +230,6 @@ EXTRACTION DES SOURCES :
 export async function extractAffairsFromWikipedia(
   input: WikipediaExtractionInput
 ): Promise<WikipediaExtractionResult> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    throw new Error("ANTHROPIC_API_KEY environment variable is not set");
-  }
-
   // Rate limiting
   const now = Date.now();
   const elapsed = now - lastCallTime;
@@ -259,62 +253,46 @@ Wikitext :
 ${truncatedWikitext}`;
 
   try {
-    const response = await fetch(ANTHROPIC_API_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        max_tokens: MAX_TOKENS,
-        system: SYSTEM_PROMPT,
-        tools: [EXTRACTION_TOOL],
-        tool_choice: { type: "tool", name: "extract_wikipedia_affairs" },
-        messages: [{ role: "user", content: userContent }],
-      }),
+    const data = await callAnthropic([{ role: "user", content: userContent }], {
+      model: MODEL,
+      maxTokens: MAX_TOKENS,
+      system: SYSTEM_PROMPT,
+      tools: [EXTRACTION_TOOL],
+      toolChoice: { type: "tool", name: "extract_wikipedia_affairs" },
     });
 
-    if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`Anthropic API error: ${response.status} - ${error}`);
-    }
-
-    const data = await response.json();
-
-    const toolUse = data.content?.find((c: { type: string }) => c.type === "tool_use");
-    if (!toolUse?.input) {
+    const result = extractToolUse(data) as Record<string, unknown> | null;
+    if (!result) {
       throw new Error("No tool_use content in API response");
     }
 
-    const result = toolUse.input;
-
     // Validate and map snake_case to camelCase
-    const affairs: ExtractedAffair[] = (result.affairs || []).map((a: Record<string, unknown>) => {
-      const category = validateEnum(a.category as string, AFFAIR_CATEGORIES, "AUTRE");
-      const status = validateEnum(a.status as string, AFFAIR_STATUSES, "ENQUETE_PRELIMINAIRE");
-      const involvement = validateEnum(
-        a.involvement as string,
-        ["DIRECT", "INDIRECT", "MENTIONED_ONLY", "VICTIM", "PLAINTIFF"] as const,
-        "MENTIONED_ONLY"
-      );
+    const affairs: ExtractedAffair[] = ((result.affairs as Record<string, unknown>[]) || []).map(
+      (a: Record<string, unknown>) => {
+        const category = validateEnum(a.category as string, AFFAIR_CATEGORIES, "AUTRE");
+        const status = validateEnum(a.status as string, AFFAIR_STATUSES, "ENQUETE_PRELIMINAIRE");
+        const involvement = validateEnum(
+          a.involvement as string,
+          ["DIRECT", "INDIRECT", "MENTIONED_ONLY", "VICTIM", "PLAINTIFF"] as const,
+          "MENTIONED_ONLY"
+        );
 
-      return {
-        title: String(a.title || ""),
-        description: String(a.description || ""),
-        category,
-        status,
-        involvement,
-        factsDate: a.facts_date ? String(a.facts_date) : null,
-        court: a.court ? String(a.court) : null,
-        charges: Array.isArray(a.charges) ? a.charges.map(String) : [],
-        confidenceScore: clampConfidenceScore(
-          typeof a.confidence_score === "number" ? a.confidence_score : 50
-        ),
-        sourceUrls: Array.isArray(a.source_urls) ? a.source_urls.map(String) : [],
-      };
-    });
+        return {
+          title: String(a.title || ""),
+          description: String(a.description || ""),
+          category,
+          status,
+          involvement,
+          factsDate: a.facts_date ? String(a.facts_date) : null,
+          court: a.court ? String(a.court) : null,
+          charges: Array.isArray(a.charges) ? a.charges.map(String) : [],
+          confidenceScore: clampConfidenceScore(
+            typeof a.confidence_score === "number" ? a.confidence_score : 50
+          ),
+          sourceUrls: Array.isArray(a.source_urls) ? a.source_urls.map(String) : [],
+        };
+      }
+    );
 
     return { affairs };
   } catch (error) {

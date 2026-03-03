@@ -8,7 +8,7 @@
  */
 
 import { db } from "@/lib/db";
-import { generateDateSlug } from "@/lib/utils";
+import { generateDateSlug, generateUniqueSlug } from "@/lib/utils";
 import { DossierStatus } from "@/generated/prisma";
 import * as fs from "fs";
 import * as path from "path";
@@ -192,23 +192,9 @@ function getCategory(procedure: string): string | null {
 
 async function generateUniqueDossierSlug(date: Date | null, title: string): Promise<string> {
   const baseSlug = generateDateSlug(date, title);
-  const existing = await db.legislativeDossier.findUnique({
-    where: { slug: baseSlug },
-  });
-  if (!existing) return baseSlug;
-  let counter = 2;
-  while (counter < 100) {
-    const suffix = `-${counter}`;
-    const maxBaseLength = 80 - suffix.length;
-    const truncatedBase = baseSlug.slice(0, maxBaseLength).replace(/-$/, "");
-    const slugWithSuffix = `${truncatedBase}${suffix}`;
-    const existsWithSuffix = await db.legislativeDossier.findUnique({
-      where: { slug: slugWithSuffix },
-    });
-    if (!existsWithSuffix) return slugWithSuffix;
-    counter++;
-  }
-  return `${baseSlug.slice(0, 60)}-${Date.now()}`;
+  return generateUniqueSlug(baseSlug, (s) =>
+    db.legislativeDossier.findUnique({ where: { slug: s } }).then(Boolean)
+  );
 }
 
 async function downloadFile(url: string, dest: string): Promise<void> {

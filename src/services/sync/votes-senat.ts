@@ -10,7 +10,7 @@ import { db } from "@/lib/db";
 import { syncMetadata, hashVotes, ProgressTracker } from "@/lib/sync";
 import { HTTPClient } from "@/lib/api/http-client";
 import { decodeHtmlEntities, parseFrenchDate } from "@/lib/parsing";
-import { generateDateSlug } from "@/lib/utils";
+import { generateDateSlug, generateUniqueSlug } from "@/lib/utils";
 import { VotePosition, VotingResult, DataSource, Chamber } from "@/generated/prisma";
 import { SENAT_RATE_LIMIT_MS } from "@/config/rate-limits";
 
@@ -234,26 +234,10 @@ async function buildMatriculeToIdMap(): Promise<Map<string, string>> {
  * Generate a unique slug for a Sénat scrutin (with "senat-" prefix)
  */
 async function generateUniqueScrutinSlug(date: Date, title: string): Promise<string> {
-  const baseSlug = generateDateSlug(date, title);
-  const senatSlug = `senat-${baseSlug}`.slice(0, 80);
-
-  const existing = await db.scrutin.findUnique({ where: { slug: senatSlug } });
-  if (!existing) return senatSlug;
-
-  let counter = 2;
-  while (counter < 100) {
-    const suffix = `-${counter}`;
-    const maxBaseLength = 80 - suffix.length;
-    const truncatedBase = senatSlug.slice(0, maxBaseLength).replace(/-$/, "");
-    const slugWithSuffix = `${truncatedBase}${suffix}`;
-
-    const existsWithSuffix = await db.scrutin.findUnique({ where: { slug: slugWithSuffix } });
-    if (!existsWithSuffix) return slugWithSuffix;
-
-    counter++;
-  }
-
-  return `${senatSlug.slice(0, 60)}-${Date.now()}`;
+  const senatSlug = `senat-${generateDateSlug(date, title)}`.slice(0, 80);
+  return generateUniqueSlug(senatSlug, (s) =>
+    db.scrutin.findUnique({ where: { slug: s } }).then(Boolean)
+  );
 }
 
 /**

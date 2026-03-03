@@ -1,8 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { PoliticalPosition } from "@/generated/prisma";
 import { withCache } from "@/lib/cache";
-import { parsePagination } from "@/lib/api/pagination";
+import { parsePagination, buildPaginationMeta } from "@/lib/api/pagination";
+import { withPublicRoute } from "@/lib/api/with-public-route";
 
 /**
  * @openapi
@@ -65,7 +66,7 @@ import { parsePagination } from "@/lib/api/pagination";
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-export async function GET(request: NextRequest) {
+export const GET = withPublicRoute(async (request) => {
   const { searchParams } = new URL(request.url);
 
   const search = searchParams.get("search");
@@ -88,51 +89,41 @@ export async function GET(request: NextRequest) {
     ...(active === "false" && { dissolvedDate: { not: null } }),
   };
 
-  try {
-    const [parties, total] = await Promise.all([
-      db.party.findMany({
-        where,
-        select: {
-          id: true,
-          slug: true,
-          name: true,
-          shortName: true,
-          color: true,
-          politicalPosition: true,
-          politicalPositionSource: true,
-          politicalPositionSourceUrl: true,
-          logoUrl: true,
-          foundedDate: true,
-          dissolvedDate: true,
-          website: true,
-          _count: { select: { politicians: true } },
-        },
-        orderBy: { name: "asc" },
-        skip,
-        take: limit,
-      }),
-      db.party.count({ where }),
-    ]);
+  const [parties, total] = await Promise.all([
+    db.party.findMany({
+      where,
+      select: {
+        id: true,
+        slug: true,
+        name: true,
+        shortName: true,
+        color: true,
+        politicalPosition: true,
+        politicalPositionSource: true,
+        politicalPositionSourceUrl: true,
+        logoUrl: true,
+        foundedDate: true,
+        dissolvedDate: true,
+        website: true,
+        _count: { select: { politicians: true } },
+      },
+      orderBy: { name: "asc" },
+      skip,
+      take: limit,
+    }),
+    db.party.count({ where }),
+  ]);
 
-    const data = parties.map(({ _count, ...party }) => ({
-      ...party,
-      memberCount: _count.politicians,
-    }));
+  const data = parties.map(({ _count, ...party }) => ({
+    ...party,
+    memberCount: _count.politicians,
+  }));
 
-    return withCache(
-      NextResponse.json({
-        data,
-        pagination: {
-          page,
-          limit,
-          total,
-          totalPages: Math.ceil(total / limit),
-        },
-      }),
-      "daily"
-    );
-  } catch (error) {
-    console.error("API error:", error);
-    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
-  }
-}
+  return withCache(
+    NextResponse.json({
+      data,
+      pagination: buildPaginationMeta(page, limit, total),
+    }),
+    "daily"
+  );
+});

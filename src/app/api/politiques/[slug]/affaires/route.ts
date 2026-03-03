@@ -1,11 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { Involvement } from "@/generated/prisma";
 import { withCache } from "@/lib/cache";
-
-interface RouteContext {
-  params: Promise<{ slug: string }>;
-}
+import { withPublicRoute } from "@/lib/api/with-public-route";
 
 /**
  * @openapi
@@ -47,7 +44,7 @@ interface RouteContext {
  *       500:
  *         description: Erreur serveur
  */
-export async function GET(request: NextRequest, context: RouteContext) {
+export const GET = withPublicRoute(async (request, context) => {
   const { slug } = await context.params;
   const { searchParams } = new URL(request.url);
   const involvement = searchParams.get("involvement");
@@ -65,74 +62,69 @@ export async function GET(request: NextRequest, context: RouteContext) {
         .filter((v) => VALID_INVOLVEMENTS.includes(v as Involvement)) as Involvement[])
     : ["DIRECT"];
 
-  try {
-    const politician = await db.politician.findUnique({
-      where: { slug },
-      select: {
-        id: true,
-        slug: true,
-        fullName: true,
-        firstName: true,
-        lastName: true,
-        photoUrl: true,
-        currentParty: {
-          select: { shortName: true, name: true, color: true },
-        },
-        affairs: {
-          where: { publicationStatus: "PUBLISHED", involvement: { in: requestedInvolvements } },
-          select: {
-            id: true,
-            slug: true,
-            title: true,
-            description: true,
-            status: true,
-            category: true,
-            factsDate: true,
-            startDate: true,
-            verdictDate: true,
-            sentence: true,
-            appeal: true,
-            createdAt: true,
-            partyAtTime: {
-              select: { shortName: true, name: true },
-            },
-            sources: {
-              select: {
-                id: true,
-                url: true,
-                title: true,
-                publisher: true,
-                publishedAt: true,
-              },
+  const politician = await db.politician.findUnique({
+    where: { slug },
+    select: {
+      id: true,
+      slug: true,
+      fullName: true,
+      firstName: true,
+      lastName: true,
+      photoUrl: true,
+      currentParty: {
+        select: { shortName: true, name: true, color: true },
+      },
+      affairs: {
+        where: { publicationStatus: "PUBLISHED", involvement: { in: requestedInvolvements } },
+        select: {
+          id: true,
+          slug: true,
+          title: true,
+          description: true,
+          status: true,
+          category: true,
+          factsDate: true,
+          startDate: true,
+          verdictDate: true,
+          sentence: true,
+          appeal: true,
+          createdAt: true,
+          partyAtTime: {
+            select: { shortName: true, name: true },
+          },
+          sources: {
+            select: {
+              id: true,
+              url: true,
+              title: true,
+              publisher: true,
+              publishedAt: true,
             },
           },
-          orderBy: { createdAt: "desc" },
         },
+        orderBy: { createdAt: "desc" },
       },
-    });
+    },
+  });
 
-    if (!politician) {
-      return NextResponse.json({ error: "Politique non trouvé" }, { status: 404 });
-    }
-
-    return withCache(
-      NextResponse.json({
-        politician: {
-          id: politician.id,
-          slug: politician.slug,
-          fullName: politician.fullName,
-          firstName: politician.firstName,
-          lastName: politician.lastName,
-          photoUrl: politician.photoUrl,
-          party: politician.currentParty,
-        },
-        affairs: politician.affairs,
-        total: politician.affairs.length,
-      }),
-      "daily"
-    );
-  } catch (error) {
-    console.error("API error:", error);
-    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
+  if (!politician) {
+    return NextResponse.json({ error: "Politique non trouvé" }, { status: 404 });
   }
-}
+
+  return withCache(
+    NextResponse.json({
+      politician: {
+        id: politician.id,
+        slug: politician.slug,
+        fullName: politician.fullName,
+        firstName: politician.firstName,
+        lastName: politician.lastName,
+        photoUrl: politician.photoUrl,
+        party: politician.currentParty,
+      },
+      affairs: politician.affairs,
+      total: politician.affairs.length,
+    }),
+    "daily"
+  );
+});

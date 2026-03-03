@@ -1,8 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { MandateType } from "@/generated/prisma";
 import { withCache } from "@/lib/cache";
-import { parsePagination } from "@/lib/api/pagination";
+import { parsePagination, buildPaginationMeta } from "@/lib/api/pagination";
+import { withPublicRoute } from "@/lib/api/with-public-route";
 
 /**
  * @openapi
@@ -70,7 +71,7 @@ import { parsePagination } from "@/lib/api/pagination";
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-export async function GET(request: NextRequest) {
+export const GET = withPublicRoute(async (request) => {
   const { searchParams } = new URL(request.url);
 
   const type = searchParams.get("type");
@@ -88,51 +89,41 @@ export async function GET(request: NextRequest) {
     }),
   };
 
-  try {
-    const [mandates, total] = await Promise.all([
-      db.mandate.findMany({
-        where,
-        select: {
-          id: true,
-          type: true,
-          title: true,
-          institution: true,
-          role: true,
-          constituency: true,
-          departmentCode: true,
-          startDate: true,
-          endDate: true,
-          isCurrent: true,
-          politician: {
-            select: {
-              id: true,
-              slug: true,
-              fullName: true,
-              photoUrl: true,
-            },
+  const [mandates, total] = await Promise.all([
+    db.mandate.findMany({
+      where,
+      select: {
+        id: true,
+        type: true,
+        title: true,
+        institution: true,
+        role: true,
+        constituency: true,
+        departmentCode: true,
+        startDate: true,
+        endDate: true,
+        isCurrent: true,
+        politician: {
+          select: {
+            id: true,
+            slug: true,
+            fullName: true,
+            photoUrl: true,
           },
         },
-        orderBy: { startDate: "desc" },
-        skip,
-        take: limit,
-      }),
-      db.mandate.count({ where }),
-    ]);
+      },
+      orderBy: { startDate: "desc" },
+      skip,
+      take: limit,
+    }),
+    db.mandate.count({ where }),
+  ]);
 
-    return withCache(
-      NextResponse.json({
-        data: mandates,
-        pagination: {
-          page,
-          limit,
-          total,
-          totalPages: Math.ceil(total / limit),
-        },
-      }),
-      "daily"
-    );
-  } catch (error) {
-    console.error("API error:", error);
-    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
-  }
-}
+  return withCache(
+    NextResponse.json({
+      data: mandates,
+      pagination: buildPaginationMeta(page, limit, total),
+    }),
+    "daily"
+  );
+});

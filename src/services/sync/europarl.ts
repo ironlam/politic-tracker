@@ -5,6 +5,7 @@ import { EuroparlMEP, EuroparlSyncResult } from "./types";
 import { EUROPEAN_GROUPS } from "@/config/parties";
 import { HTTPClient } from "@/lib/api/http-client";
 import { EUROPARL_RATE_LIMIT_MS } from "@/config/rate-limits";
+import { upsertPoliticianExternalId } from "@/lib/prisma-helpers";
 
 const client = new HTTPClient({ rateLimitMs: EUROPARL_RATE_LIMIT_MS });
 
@@ -103,35 +104,6 @@ function guessCivility(givenName: string): string | null {
   }
 
   return null; // Unknown
-}
-
-/**
- * Create or update ExternalId for a politician
- */
-async function upsertExternalId(
-  politicianId: string,
-  source: DataSource,
-  externalId: string,
-  url?: string
-) {
-  await db.externalId.upsert({
-    where: {
-      source_externalId: {
-        source,
-        externalId,
-      },
-    },
-    update: {
-      politicianId,
-      url,
-    },
-    create: {
-      politicianId,
-      source,
-      externalId,
-      url,
-    },
-  });
 }
 
 /**
@@ -236,7 +208,7 @@ async function syncMEP(
     }
 
     // Upsert external ID
-    await upsertExternalId(
+    await upsertPoliticianExternalId(
       politician.id,
       DataSource.PARLEMENT_EUROPEEN,
       europarlId,

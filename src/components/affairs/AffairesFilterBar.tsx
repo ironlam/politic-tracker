@@ -1,7 +1,8 @@
 "use client";
 
-import { useTransition, useRef, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useFilterParams } from "@/hooks/useFilterParams";
+import { DebouncedSearchInput, SelectFilter } from "@/components/filters";
+import { Spinner } from "@/components/ui/spinner";
 import { Badge } from "@/components/ui/badge";
 import {
   AFFAIR_STATUS_LABELS,
@@ -57,8 +58,7 @@ const STATUS_GROUPS: { label: string; statuses: AffairStatus[] }[] = [
   },
 ];
 
-const selectClassName =
-  "h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 cursor-pointer hover:border-primary/50 transition-colors";
+const VALID_GROUPS: InvolvementGroup[] = ["mise-en-cause", "victime", "mentionne"];
 
 export function AffairesFilterBar({
   currentFilters,
@@ -66,53 +66,13 @@ export function AffairesFilterBar({
   severityCounts,
   statusCounts,
 }: AffairesFilterBarProps) {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const [isPending, startTransition] = useTransition();
-  const inputRef = useRef<HTMLInputElement>(null);
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>(null);
+  const { isPending, updateParams } = useFilterParams();
 
-  // Sync input with URL on back/forward navigation + cleanup debounce
-  useEffect(() => {
-    if (inputRef.current && inputRef.current.value !== currentFilters.search) {
-      inputRef.current.value = currentFilters.search;
-    }
-  }, [currentFilters.search]);
-
-  useEffect(() => {
-    return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-    };
-  }, []);
-
-  const updateParams = (key: string, value: string) => {
-    const params = new URLSearchParams(searchParams.toString());
-    if (value) {
-      params.set(key, value);
-    } else {
-      params.delete(key);
-    }
-    params.delete("page");
-
-    startTransition(() => {
-      const qs = params.toString();
-      router.push(qs ? `/affaires?${qs}` : "/affaires", { scroll: false });
-    });
-  };
-
-  const VALID_GROUPS: InvolvementGroup[] = ["mise-en-cause", "victime", "mentionne"];
   const activeGroups: InvolvementGroup[] = currentFilters.involvement
     ? (currentFilters.involvement
         .split(",")
         .filter((v) => VALID_GROUPS.includes(v as InvolvementGroup)) as InvolvementGroup[])
     : ["mise-en-cause"];
-
-  const handleSearchInput = (value: string) => {
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => {
-      updateParams("search", value.trim());
-    }, 300);
-  };
 
   const toggleGroup = (group: InvolvementGroup) => {
     const current = new Set(activeGroups);
@@ -124,8 +84,41 @@ export function AffairesFilterBar({
     if (current.size === 0) current.add("mise-en-cause");
 
     const isDefault = current.size === 1 && current.has("mise-en-cause");
-    updateParams("involvement", isDefault ? "" : [...current].join(","));
+    updateParams({ involvement: isDefault ? "" : [...current].join(",") });
   };
+
+  const statusOptions = [
+    { value: "", label: "Tous les statuts" },
+    ...STATUS_GROUPS.flatMap((group) => {
+      const groupStatuses = group.statuses.filter((s) => (statusCounts[s] || 0) > 0);
+      if (groupStatuses.length === 0) return [];
+      return [
+        { value: `sep-${group.label}`, label: group.label, disabled: true },
+        ...groupStatuses.map((s) => ({
+          value: s,
+          label: `${AFFAIR_STATUS_LABELS[s]} (${statusCounts[s] || 0})`,
+        })),
+      ];
+    }),
+  ];
+
+  const severityOptions = [
+    { value: "", label: "Toutes" },
+    ...(Object.keys(AFFAIR_SEVERITY_EDITORIAL) as AffairSeverity[]).map((sev) => ({
+      value: sev,
+      label: `${AFFAIR_SEVERITY_EDITORIAL[sev]} (${severityCounts[sev] || 0})`,
+    })),
+  ];
+
+  const partyOptions = [
+    { value: "", label: "Tous les partis" },
+    ...parties.map((p) => ({
+      value: p.slug,
+      label: `${p.shortName} — ${p.name} (${p.count})`,
+    })),
+  ];
+
+  const sortOptions = Object.entries(SORT_OPTIONS).map(([value, label]) => ({ value, label }));
 
   return (
     <div className="mb-6 rounded-lg border bg-muted/40 p-4 space-y-3 relative">
@@ -133,147 +126,54 @@ export function AffairesFilterBar({
       {isPending && (
         <div className="absolute inset-0 rounded-lg bg-background/60 flex items-center justify-center z-10">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <svg
-              className="animate-spin h-4 w-4"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-              />
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-              />
-            </svg>
+            <Spinner />
             <span>Chargement...</span>
           </div>
         </div>
       )}
 
       {/* Search input */}
-      <div>
-        <label
-          htmlFor="search-affairs"
-          className="text-xs font-medium text-muted-foreground mb-1 block"
-        >
-          Recherche
-        </label>
-        <input
-          ref={inputRef}
-          id="search-affairs"
-          type="search"
-          placeholder="Rechercher une affaire..."
-          defaultValue={currentFilters.search}
-          onChange={(e) => handleSearchInput(e.target.value)}
-          className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 placeholder:text-muted-foreground"
-        />
-      </div>
+      <DebouncedSearchInput
+        id="search-affairs"
+        value={currentFilters.search}
+        onSearch={(v) => updateParams({ search: v })}
+        placeholder="Rechercher une affaire..."
+        label="Recherche"
+      />
 
       {/* Dropdowns grid: 2 cols mobile, 4 cols desktop */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <div>
-          <label
-            htmlFor="sort-affairs"
-            className="text-xs font-medium text-muted-foreground mb-1 block"
-          >
-            Trier par
-          </label>
-          <select
-            id="sort-affairs"
-            value={currentFilters.sort}
-            onChange={(e) => updateParams("sort", e.target.value)}
-            className={selectClassName}
-          >
-            {Object.entries(SORT_OPTIONS).map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </select>
-        </div>
+        <SelectFilter
+          id="sort-affairs"
+          label="Trier par"
+          value={currentFilters.sort}
+          onChange={(v) => updateParams({ sort: v })}
+          options={sortOptions}
+        />
 
-        <div>
-          <label
-            htmlFor="parti-affairs"
-            className="text-xs font-medium text-muted-foreground mb-1 block"
-          >
-            Parti
-          </label>
-          <select
-            id="parti-affairs"
-            value={currentFilters.parti}
-            onChange={(e) => updateParams("parti", e.target.value)}
-            className={selectClassName}
-          >
-            <option value="">Tous les partis</option>
-            {parties.map((p) => (
-              <option key={p.slug} value={p.slug}>
-                {p.shortName} — {p.name} ({p.count})
-              </option>
-            ))}
-          </select>
-        </div>
+        <SelectFilter
+          id="parti-affairs"
+          label="Parti"
+          value={currentFilters.parti}
+          onChange={(v) => updateParams({ parti: v })}
+          options={partyOptions}
+        />
 
-        <div>
-          <label
-            htmlFor="severity-affairs"
-            className="text-xs font-medium text-muted-foreground mb-1 block"
-          >
-            Gravité
-          </label>
-          <select
-            id="severity-affairs"
-            value={currentFilters.severity}
-            onChange={(e) => updateParams("severity", e.target.value)}
-            className={selectClassName}
-          >
-            <option value="">Toutes</option>
-            {(Object.keys(AFFAIR_SEVERITY_EDITORIAL) as AffairSeverity[]).map((sev) => (
-              <option key={sev} value={sev}>
-                {AFFAIR_SEVERITY_EDITORIAL[sev]} ({severityCounts[sev] || 0})
-              </option>
-            ))}
-          </select>
-        </div>
+        <SelectFilter
+          id="severity-affairs"
+          label="Gravité"
+          value={currentFilters.severity}
+          onChange={(v) => updateParams({ severity: v })}
+          options={severityOptions}
+        />
 
-        <div>
-          <label
-            htmlFor="status-affairs"
-            className="text-xs font-medium text-muted-foreground mb-1 block"
-          >
-            Statut
-          </label>
-          <select
-            id="status-affairs"
-            value={currentFilters.status}
-            onChange={(e) => updateParams("status", e.target.value)}
-            className={selectClassName}
-          >
-            <option value="">Tous les statuts</option>
-            {STATUS_GROUPS.map((group) => {
-              const groupStatuses = group.statuses.filter((s) => (statusCounts[s] || 0) > 0);
-              if (groupStatuses.length === 0) return null;
-              return [
-                <option key={`sep-${group.label}`} disabled>
-                  {group.label}
-                </option>,
-                ...groupStatuses.map((s) => (
-                  <option key={s} value={s}>
-                    {AFFAIR_STATUS_LABELS[s]} ({statusCounts[s] || 0})
-                  </option>
-                )),
-              ];
-            })}
-          </select>
-        </div>
+        <SelectFilter
+          id="status-affairs"
+          label="Statut"
+          value={currentFilters.status}
+          onChange={(v) => updateParams({ status: v })}
+          options={statusOptions}
+        />
       </div>
 
       {/* Involvement toggles */}

@@ -13,8 +13,7 @@
 
 import { AI_RATE_LIMIT_MS } from "@/config/rate-limits";
 import { clampConfidenceScore } from "@/services/affairs/confidence";
-
-const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
+import { callAnthropic, extractToolUse } from "@/lib/api/anthropic";
 
 const TIER_MODELS = {
   TIER_1: "claude-sonnet-4-5-20250929",
@@ -258,11 +257,6 @@ EXEMPLES DE FAUX POSITIFS À ÉVITER :
  * Analyze a press article for judicial affairs using Claude Haiku tool_use
  */
 export async function analyzeArticle(input: ArticleAnalysisInput): Promise<ArticleAnalysisResult> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    throw new Error("ANTHROPIC_API_KEY environment variable is not set");
-  }
-
   const tier: AnalysisTier = input.tier || "TIER_2";
   const model = TIER_MODELS[tier];
 
@@ -276,64 +270,48 @@ export async function analyzeArticle(input: ArticleAnalysisInput): Promise<Artic
     userContent += `\n\n--- CONTEXTE POLITICIENS CONNUS ---\n${input.politicianContext}\n\nSi un nom correspond à un politicien connu mais que l'article ne mentionne pas de fonction politique (député, sénateur, ministre, maire, etc.), retourner confidence_score < 30 et involvement: MENTIONED_ONLY.`;
   }
 
-  const response = await fetch(ANTHROPIC_API_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-    },
-    body: JSON.stringify({
-      model,
-      max_tokens: MAX_TOKENS,
-      system: SYSTEM_PROMPT,
-      tools: [ANALYSIS_TOOL],
-      tool_choice: { type: "tool", name: "analyze_press_article" },
-      messages: [{ role: "user", content: userContent }],
-    }),
+  const data = await callAnthropic([{ role: "user", content: userContent }], {
+    model,
+    maxTokens: MAX_TOKENS,
+    system: SYSTEM_PROMPT,
+    tools: [ANALYSIS_TOOL],
+    toolChoice: { type: "tool", name: "analyze_press_article" },
   });
 
-  if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`Anthropic API error: ${response.status} - ${error}`);
-  }
-
-  const data = await response.json();
-
-  const toolUse = data.content?.find((c: { type: string }) => c.type === "tool_use");
-  if (!toolUse?.input) {
+  const result = extractToolUse(data) as Record<string, unknown> | null;
+  if (!result) {
     throw new Error("No tool_use content in API response");
   }
 
-  const result = toolUse.input;
-
   // Validate and sanitize the result
-  const affairs: DetectedAffair[] = (result.affairs || []).map((a: Record<string, unknown>) => {
-    const category = validateEnum(a.category as string, AFFAIR_CATEGORIES, "AUTRE");
-    const status = validateEnum(a.status as string, AFFAIR_STATUSES, "ENQUETE_PRELIMINAIRE");
-    const involvement = validateEnum(
-      a.involvement as string,
-      ["DIRECT", "INDIRECT", "MENTIONED_ONLY", "VICTIM", "PLAINTIFF"] as const,
-      "MENTIONED_ONLY"
-    );
+  const affairs: DetectedAffair[] = ((result.affairs as Record<string, unknown>[]) || []).map(
+    (a: Record<string, unknown>) => {
+      const category = validateEnum(a.category as string, AFFAIR_CATEGORIES, "AUTRE");
+      const status = validateEnum(a.status as string, AFFAIR_STATUSES, "ENQUETE_PRELIMINAIRE");
+      const involvement = validateEnum(
+        a.involvement as string,
+        ["DIRECT", "INDIRECT", "MENTIONED_ONLY", "VICTIM", "PLAINTIFF"] as const,
+        "MENTIONED_ONLY"
+      );
 
-    return {
-      politicianName: String(a.politician_name || ""),
-      involvement,
-      category,
-      status,
-      title: String(a.title || ""),
-      description: String(a.description || ""),
-      factsDate: a.facts_date ? String(a.facts_date) : null,
-      court: a.court ? String(a.court) : null,
-      charges: Array.isArray(a.charges) ? a.charges.map(String) : [],
-      excerpts: Array.isArray(a.excerpts) ? a.excerpts.map(String).slice(0, 3) : [],
-      isNewRevelation: Boolean(a.is_new_revelation),
-      confidenceScore: clampConfidenceScore(
-        typeof a.confidence_score === "number" ? a.confidence_score : 50
-      ),
-    };
-  });
+      return {
+        politicianName: String(a.politician_name || ""),
+        involvement,
+        category,
+        status,
+        title: String(a.title || ""),
+        description: String(a.description || ""),
+        factsDate: a.facts_date ? String(a.facts_date) : null,
+        court: a.court ? String(a.court) : null,
+        charges: Array.isArray(a.charges) ? a.charges.map(String) : [],
+        excerpts: Array.isArray(a.excerpts) ? a.excerpts.map(String).slice(0, 3) : [],
+        isNewRevelation: Boolean(a.is_new_revelation),
+        confidenceScore: clampConfidenceScore(
+          typeof a.confidence_score === "number" ? a.confidence_score : 50
+        ),
+      };
+    }
+  );
 
   return {
     isAffairRelated: Boolean(result.is_affair_related),

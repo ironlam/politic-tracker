@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { withCache } from "@/lib/cache";
+import { withPublicRoute } from "@/lib/api/with-public-route";
 
 /**
  * @openapi
@@ -65,90 +66,82 @@ import { withCache } from "@/lib/cache";
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ slug: string }> }
-) {
-  const { slug } = await params;
+export const GET = withPublicRoute(async (_request, context) => {
+  const { slug } = await context.params;
 
-  try {
-    const party = await db.party.findUnique({
-      where: { slug },
-      include: {
-        politicians: {
-          select: {
-            id: true,
-            slug: true,
-            fullName: true,
-            photoUrl: true,
-            mandates: {
-              where: { isCurrent: true },
-              select: { type: true, title: true },
-              take: 1,
-            },
-            _count: { select: { affairs: { where: { publicationStatus: "PUBLISHED" } } } },
+  const party = await db.party.findUnique({
+    where: { slug },
+    include: {
+      politicians: {
+        select: {
+          id: true,
+          slug: true,
+          fullName: true,
+          photoUrl: true,
+          mandates: {
+            where: { isCurrent: true },
+            select: { type: true, title: true },
+            take: 1,
           },
-        },
-        externalIds: {
-          select: { source: true, externalId: true, url: true },
-        },
-        predecessor: {
-          select: { id: true, slug: true, name: true, shortName: true },
-        },
-        successors: {
-          select: { id: true, slug: true, name: true, shortName: true },
+          _count: { select: { affairs: { where: { publicationStatus: "PUBLISHED" } } } },
         },
       },
-    });
-
-    if (!party) {
-      return NextResponse.json({ error: "Parti non trouvé" }, { status: 404 });
-    }
-
-    // Fetch leadership history
-    const leadership = await db.mandate.findMany({
-      where: { type: "PRESIDENT_PARTI", partyId: party.id },
-      select: {
-        id: true,
-        title: true,
-        startDate: true,
-        endDate: true,
-        isCurrent: true,
-        politician: {
-          select: { id: true, slug: true, fullName: true, photoUrl: true },
-        },
+      externalIds: {
+        select: { source: true, externalId: true, url: true },
       },
-      orderBy: { startDate: "desc" },
-    });
+      predecessor: {
+        select: { id: true, slug: true, name: true, shortName: true },
+      },
+      successors: {
+        select: { id: true, slug: true, name: true, shortName: true },
+      },
+    },
+  });
 
-    const { politicians, ...rest } = party;
-
-    const members = politicians.map(({ mandates, _count, ...p }) => ({
-      ...p,
-      currentMandate: mandates[0] ? { type: mandates[0].type, title: mandates[0].title } : null,
-      affairsCount: _count.affairs,
-    }));
-
-    return withCache(
-      NextResponse.json({
-        ...rest,
-        memberCount: members.length,
-        members,
-        leadership: leadership.map((m) => ({
-          politicianId: m.politician.id,
-          politicianSlug: m.politician.slug,
-          politicianName: m.politician.fullName,
-          politicianPhoto: m.politician.photoUrl,
-          title: m.title,
-          startDate: m.startDate,
-          endDate: m.endDate,
-          isCurrent: m.isCurrent,
-        })),
-      }),
-      "daily"
-    );
-  } catch (error) {
-    console.error("API error:", error);
-    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
+  if (!party) {
+    return NextResponse.json({ error: "Parti non trouvé" }, { status: 404 });
   }
-}
+
+  // Fetch leadership history
+  const leadership = await db.mandate.findMany({
+    where: { type: "PRESIDENT_PARTI", partyId: party.id },
+    select: {
+      id: true,
+      title: true,
+      startDate: true,
+      endDate: true,
+      isCurrent: true,
+      politician: {
+        select: { id: true, slug: true, fullName: true, photoUrl: true },
+      },
+    },
+    orderBy: { startDate: "desc" },
+  });
+
+  const { politicians, ...rest } = party;
+
+  const members = politicians.map(({ mandates, _count, ...p }) => ({
+    ...p,
+    currentMandate: mandates[0] ? { type: mandates[0].type, title: mandates[0].title } : null,
+    affairsCount: _count.affairs,
+  }));
+
+  return withCache(
+    NextResponse.json({
+      ...rest,
+      memberCount: members.length,
+      members,
+      leadership: leadership.map((m) => ({
+        politicianId: m.politician.id,
+        politicianSlug: m.politician.slug,
+        politicianName: m.politician.fullName,
+        politicianPhoto: m.politician.photoUrl,
+        title: m.title,
+        startDate: m.startDate,
+        endDate: m.endDate,
+        isCurrent: m.isCurrent,
+      })),
+    }),
+    "daily"
+  );
+});

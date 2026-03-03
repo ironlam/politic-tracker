@@ -5,7 +5,13 @@
  * Designed for batch processing, not real-time use.
  */
 
-const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
+import {
+  callAnthropic,
+  extractText,
+  extractToolUse,
+  parseAnthropicJSON,
+} from "@/lib/api/anthropic";
+
 const MODEL = "claude-haiku-4-5-20251001";
 const MAX_TOKENS = 800;
 
@@ -24,12 +30,6 @@ export interface SummaryResponse {
  * Generate a summary for a legislative dossier
  */
 export async function summarizeDossier(request: SummaryRequest): Promise<SummaryResponse> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-
-  if (!apiKey) {
-    throw new Error("ANTHROPIC_API_KEY environment variable is not set");
-  }
-
   const hasRichContent = request.content !== request.title && request.content.length > 200;
 
   const prompt = `Tu es un expert en politique française. Résume ce dossier législatif de manière claire et accessible pour les citoyens.
@@ -56,50 +56,19 @@ Consignes:
 - Maximum 5 points clés
 ${hasRichContent ? "- Un exposé des motifs complet est fourni : extrais les mesures concrètes proposées et le contexte politique" : "- Si le contenu est insuffisant, génère un résumé basé uniquement sur le titre"}`;
 
-  const response = await fetch(ANTHROPIC_API_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-    },
-    body: JSON.stringify({
-      model: MODEL,
-      max_tokens: MAX_TOKENS,
-      messages: [
-        {
-          role: "user",
-          content: prompt,
-        },
-      ],
-    }),
+  const data = await callAnthropic([{ role: "user", content: prompt }], {
+    model: MODEL,
+    maxTokens: MAX_TOKENS,
   });
 
-  if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`Anthropic API error: ${response.status} - ${error}`);
-  }
-
-  const data = await response.json();
-
-  // Extract the text content
-  const textContent = data.content?.find((c: { type: string }) => c.type === "text");
-  if (!textContent?.text) {
+  const textContent = extractText(data);
+  if (!textContent) {
     throw new Error("No text content in API response");
   }
 
   // Parse the JSON response
   try {
-    // Try to extract JSON from the response (may have markdown code blocks)
-    let jsonStr = textContent.text;
-
-    // Remove markdown code blocks if present
-    const jsonMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/);
-    if (jsonMatch) {
-      jsonStr = jsonMatch[1];
-    }
-
-    const parsed = JSON.parse(jsonStr.trim());
+    const parsed = parseAnthropicJSON<{ shortSummary?: string; keyPoints?: string[] }>(textContent);
 
     return {
       shortSummary: parsed.shortSummary || "",
@@ -107,7 +76,7 @@ ${hasRichContent ? "- Un exposé des motifs complet est fourni : extrais les mes
     };
   } catch {
     // If JSON parsing fails, try to extract content manually
-    console.error("Failed to parse JSON response:", textContent.text);
+    console.error("Failed to parse JSON response:", textContent);
 
     return {
       shortSummary: request.title,
@@ -130,12 +99,6 @@ export interface ScrutinSummaryRequest {
  * Generate a summary for a parliamentary scrutin (vote)
  */
 export async function summarizeScrutin(request: ScrutinSummaryRequest): Promise<SummaryResponse> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-
-  if (!apiKey) {
-    throw new Error("ANTHROPIC_API_KEY environment variable is not set");
-  }
-
   const chamberLabel = request.chamber === "AN" ? "Assemblée nationale" : "Sénat";
   const resultLabel = request.result === "ADOPTED" ? "Adopté" : "Rejeté";
   const total = request.votesFor + request.votesAgainst + request.votesAbstain;
@@ -168,53 +131,25 @@ Consignes:
 - Maximum 4 points clés
 - Si le titre mentionne un article, un amendement ou un texte de loi, explique brièvement de quoi il s'agit`;
 
-  const response = await fetch(ANTHROPIC_API_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-    },
-    body: JSON.stringify({
-      model: MODEL,
-      max_tokens: MAX_TOKENS,
-      messages: [
-        {
-          role: "user",
-          content: prompt,
-        },
-      ],
-    }),
+  const data = await callAnthropic([{ role: "user", content: prompt }], {
+    model: MODEL,
+    maxTokens: MAX_TOKENS,
   });
 
-  if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`Anthropic API error: ${response.status} - ${error}`);
-  }
-
-  const data = await response.json();
-
-  const textContent = data.content?.find((c: { type: string }) => c.type === "text");
-  if (!textContent?.text) {
+  const textContent = extractText(data);
+  if (!textContent) {
     throw new Error("No text content in API response");
   }
 
   try {
-    let jsonStr = textContent.text;
-
-    const jsonMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/);
-    if (jsonMatch) {
-      jsonStr = jsonMatch[1];
-    }
-
-    const parsed = JSON.parse(jsonStr.trim());
+    const parsed = parseAnthropicJSON<{ shortSummary?: string; keyPoints?: string[] }>(textContent);
 
     return {
       shortSummary: parsed.shortSummary || "",
       keyPoints: Array.isArray(parsed.keyPoints) ? parsed.keyPoints : [],
     };
   } catch {
-    console.error("Failed to parse JSON response:", textContent.text);
+    console.error("Failed to parse JSON response:", textContent);
 
     return {
       shortSummary: request.title,
@@ -256,12 +191,6 @@ export interface BiographyRequest {
  * Generate a factual biography for a politician based on structured data
  */
 export async function generateBiography(request: BiographyRequest): Promise<string> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-
-  if (!apiKey) {
-    throw new Error("ANTHROPIC_API_KEY environment variable is not set");
-  }
-
   const currentMandates = request.mandates.filter((m) => m.isCurrent);
   const pastMandates = request.mandates.filter((m) => !m.isCurrent);
 
@@ -315,38 +244,17 @@ CONSIGNES STRICTES :
 - Pas de listes à puces, un paragraphe fluide
 - Pas de formule d'introduction ou de conclusion laudative`;
 
-  const response = await fetch(ANTHROPIC_API_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-    },
-    body: JSON.stringify({
-      model: MODEL,
-      max_tokens: 500,
-      messages: [
-        {
-          role: "user",
-          content: prompt,
-        },
-      ],
-    }),
+  const data = await callAnthropic([{ role: "user", content: prompt }], {
+    model: MODEL,
+    maxTokens: 500,
   });
 
-  if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`Anthropic API error: ${response.status} - ${error}`);
-  }
-
-  const data = await response.json();
-
-  const textContent = data.content?.find((c: { type: string }) => c.type === "text");
-  if (!textContent?.text) {
+  const textContent = extractText(data);
+  if (!textContent) {
     throw new Error("No text content in API response");
   }
 
-  return textContent.text.trim();
+  return textContent.trim();
 }
 
 // ============================================
@@ -379,12 +287,6 @@ export async function classifyTheme(
   summary?: string | null,
   context?: string | null
 ): Promise<ThemeCategoryValue | null> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-
-  if (!apiKey) {
-    throw new Error("ANTHROPIC_API_KEY environment variable is not set");
-  }
-
   let input = `Titre : ${title}`;
   if (summary) input += `\nRésumé : ${summary}`;
   if (context) input += `\nContexte : ${context}`;
@@ -426,40 +328,19 @@ Guide des catégories :
     },
   ];
 
-  const response = await fetch(ANTHROPIC_API_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-    },
-    body: JSON.stringify({
-      model: MODEL,
-      max_tokens: 100,
-      tools,
-      tool_choice: { type: "tool", name: "classify_theme" },
-      messages: [
-        {
-          role: "user",
-          content: prompt,
-        },
-      ],
-    }),
+  const data = await callAnthropic([{ role: "user", content: prompt }], {
+    model: MODEL,
+    maxTokens: 100,
+    tools,
+    toolChoice: { type: "tool", name: "classify_theme" },
   });
 
-  if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`Anthropic API error: ${response.status} - ${error}`);
-  }
-
-  const data = await response.json();
-
-  const toolUse = data.content?.find((c: { type: string }) => c.type === "tool_use");
-  if (!toolUse?.input?.theme) {
+  const toolInput = extractToolUse(data) as { theme?: string } | null;
+  if (!toolInput?.theme) {
     throw new Error("No tool_use content in API response");
   }
 
-  let theme = toolUse.input.theme;
+  let theme = toolInput.theme;
 
   // Fallback: AI may still rarely return inverted names despite enum constraint
   const THEME_ALIASES: Record<string, ThemeCategoryValue> = {
@@ -476,11 +357,11 @@ Guide des catégories :
   };
 
   if (theme && THEME_ALIASES[theme]) {
-    theme = THEME_ALIASES[theme];
+    theme = THEME_ALIASES[theme]!;
   }
 
-  if (THEME_VALUES.includes(theme)) {
-    return theme;
+  if (THEME_VALUES.includes(theme as ThemeCategoryValue)) {
+    return theme as ThemeCategoryValue;
   }
 
   console.warn(`Invalid theme value: ${theme}`);

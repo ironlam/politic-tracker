@@ -7,6 +7,7 @@ import { politicianService } from "@/services/politician";
 import { ASSEMBLY_GROUPS, type ParliamentaryGroupConfig } from "@/config/parliamentaryGroups";
 import { HTTPClient } from "@/lib/api/http-client";
 import { DATA_GOUV_RATE_LIMIT_MS } from "@/config/rate-limits";
+import { upsertPoliticianExternalId } from "@/lib/prisma-helpers";
 
 const client = new HTTPClient({ rateLimitMs: DATA_GOUV_RATE_LIMIT_MS });
 
@@ -282,44 +283,20 @@ function getOrdinalSuffix(n: string): string {
  */
 async function upsertExternalIds(politicianId: string, anId: string, slug: string): Promise<void> {
   // Assemblée Nationale ID
-  await db.externalId.upsert({
-    where: {
-      source_externalId: {
-        source: DataSource.ASSEMBLEE_NATIONALE,
-        externalId: anId,
-      },
-    },
-    create: {
-      politicianId,
-      source: DataSource.ASSEMBLEE_NATIONALE,
-      externalId: anId,
-      url: `https://www.assemblee-nationale.fr/dyn/deputes/${anId}`,
-    },
-    update: {
-      politicianId,
-      url: `https://www.assemblee-nationale.fr/dyn/deputes/${anId}`,
-    },
-  });
+  await upsertPoliticianExternalId(
+    politicianId,
+    DataSource.ASSEMBLEE_NATIONALE,
+    anId,
+    `https://www.assemblee-nationale.fr/dyn/deputes/${anId}`
+  );
 
   // NosDéputés ID (uses slug)
-  await db.externalId.upsert({
-    where: {
-      source_externalId: {
-        source: DataSource.NOSDEPUTES,
-        externalId: slug,
-      },
-    },
-    create: {
-      politicianId,
-      source: DataSource.NOSDEPUTES,
-      externalId: slug,
-      url: `https://www.nosdeputes.fr/${slug}`,
-    },
-    update: {
-      politicianId,
-      url: `https://www.nosdeputes.fr/${slug}`,
-    },
-  });
+  await upsertPoliticianExternalId(
+    politicianId,
+    DataSource.NOSDEPUTES,
+    slug,
+    `https://www.nosdeputes.fr/${slug}`
+  );
 }
 
 /**

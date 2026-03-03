@@ -6,6 +6,7 @@ import { HTTPClient } from "@/lib/api/http-client";
 import { HATVP_RATE_LIMIT_MS } from "@/config/rate-limits";
 import { parseHATVPXml } from "./hatvp-xml";
 import { DeclarationDetails } from "@/types/hatvp";
+import { upsertPoliticianExternalId } from "@/lib/prisma-helpers";
 
 const client = new HTTPClient({ rateLimitMs: HATVP_RATE_LIMIT_MS });
 
@@ -235,42 +236,6 @@ async function updatePhotoFromHATVP(politicianId: string, photoUrl: string | nul
 }
 
 /**
- * Create/update HATVP external ID using the `classement` field.
- * This is the canonical HATVP person ID (Wikidata P4703),
- * usable via https://www.hatvp.fr/fiche-nominative/?declarant={classement}
- */
-async function upsertHATVPExternalId(
-  politicianId: string,
-  classement: string,
-  urlDossier: string
-): Promise<void> {
-  if (!classement) return;
-
-  const url = urlDossier
-    ? `https://www.hatvp.fr${urlDossier}`
-    : `https://www.hatvp.fr/fiche-nominative/?declarant=${classement}`;
-
-  await db.externalId.upsert({
-    where: {
-      source_externalId: {
-        source: DataSource.HATVP,
-        externalId: classement,
-      },
-    },
-    create: {
-      politicianId,
-      source: DataSource.HATVP,
-      externalId: classement,
-      url,
-    },
-    update: {
-      politicianId,
-      url,
-    },
-  });
-}
-
-/**
  * Main sync function - imports HATVP declarations
  */
 export async function syncHATVP(): Promise<HATVPSyncResult> {
@@ -337,8 +302,18 @@ export async function syncHATVP(): Promise<HATVPSyncResult> {
       // Update photo if available
       await updatePhotoFromHATVP(politicianId, firstDecl!.url_photo);
 
-      // Create HATVP external ID (classement = canonical HATVP person ID)
-      await upsertHATVPExternalId(politicianId, firstDecl!.classement, firstDecl!.url_dossier);
+      // Create HATVP external ID (classement = canonical HATVP person ID, Wikidata P4703)
+      if (firstDecl!.classement) {
+        const hatvpUrl = firstDecl!.url_dossier
+          ? `https://www.hatvp.fr${firstDecl!.url_dossier}`
+          : `https://www.hatvp.fr/fiche-nominative/?declarant=${firstDecl!.classement}`;
+        await upsertPoliticianExternalId(
+          politicianId,
+          DataSource.HATVP,
+          firstDecl!.classement,
+          hatvpUrl
+        );
+      }
 
       // Sync all declarations for this politician
       for (const decl of declarations) {

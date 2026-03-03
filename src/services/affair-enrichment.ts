@@ -21,8 +21,8 @@ import { Readability } from "@mozilla/readability";
 import { invalidateEntity } from "@/lib/cache";
 import { extractDateFromUrl } from "@/lib/extract-date-from-url";
 import { removeSidebarElements } from "@/lib/parsing/html-utils";
+import { callAnthropic, extractToolUse } from "@/lib/api/anthropic";
 
-const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
 const MODEL = "claude-sonnet-4-5-20250929";
 const MAX_TOKENS = 2000;
 const MAX_SCRAPE_LENGTH = 12_000;
@@ -612,11 +612,6 @@ async function callEnrichmentAI(
   currentCategory: string,
   articleContexts: string[]
 ): Promise<AIEnrichmentOutput | null> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    throw new Error("ANTHROPIC_API_KEY not set");
-  }
-
   const userMessage = `AFFAIRE À ENRICHIR :
 - Politicien : ${politicianName}
 - Titre actuel : ${currentTitle}
@@ -635,34 +630,19 @@ INSTRUCTIONS :
 4. Corrige le statut si nécessaire (attention : CONDAMNATION_DEFINITIVE seulement si explicitement confirmé)
 5. Indique ta confiance : haute si correspondance claire, basse si doute`;
 
-  const response = await fetch(ANTHROPIC_API_URL, {
-    method: "POST",
-    headers: {
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: MODEL,
-      max_tokens: MAX_TOKENS,
-      system: SYSTEM_PROMPT,
-      tools: [ENRICHMENT_TOOL],
-      tool_choice: { type: "tool", name: "enrich_affair" },
-      messages: [{ role: "user", content: userMessage }],
-    }),
+  const data = await callAnthropic([{ role: "user", content: userMessage }], {
+    model: MODEL,
+    maxTokens: MAX_TOKENS,
+    system: SYSTEM_PROMPT,
+    tools: [ENRICHMENT_TOOL],
+    toolChoice: { type: "tool", name: "enrich_affair" },
   });
 
-  if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`Anthropic API error: ${response.status} - ${error}`);
-  }
+  const toolInput = extractToolUse(data);
 
-  const data = await response.json();
-  const toolUse = data.content?.find((c: { type: string }) => c.type === "tool_use");
-
-  if (!toolUse?.input) {
+  if (!toolInput) {
     return null;
   }
 
-  return toolUse.input as AIEnrichmentOutput;
+  return toolInput as AIEnrichmentOutput;
 }

@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { withCache } from "@/lib/cache";
-import { parsePagination } from "@/lib/api/pagination";
+import { parsePagination, buildPaginationMeta } from "@/lib/api/pagination";
+import { withPublicRoute } from "@/lib/api/with-public-route";
 
 /**
  * @openapi
@@ -64,7 +65,7 @@ import { parsePagination } from "@/lib/api/pagination";
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-export async function GET(request: NextRequest) {
+export const GET = withPublicRoute(async (request) => {
   const { searchParams } = new URL(request.url);
 
   const search = searchParams.get("search");
@@ -80,50 +81,40 @@ export async function GET(request: NextRequest) {
     ...(legislature && { legislature: parseInt(legislature, 10) }),
   };
 
-  try {
-    const [scrutins, total] = await Promise.all([
-      db.scrutin.findMany({
-        where,
-        select: {
-          id: true,
-          externalId: true,
-          title: true,
-          votingDate: true,
-          legislature: true,
-          votesFor: true,
-          votesAgainst: true,
-          votesAbstain: true,
-          result: true,
-          sourceUrl: true,
-          _count: {
-            select: { votes: true },
-          },
+  const [scrutins, total] = await Promise.all([
+    db.scrutin.findMany({
+      where,
+      select: {
+        id: true,
+        externalId: true,
+        title: true,
+        votingDate: true,
+        legislature: true,
+        votesFor: true,
+        votesAgainst: true,
+        votesAbstain: true,
+        result: true,
+        sourceUrl: true,
+        _count: {
+          select: { votes: true },
         },
-        orderBy: { votingDate: "desc" },
-        skip,
-        take: limit,
-      }),
-      db.scrutin.count({ where }),
-    ]);
+      },
+      orderBy: { votingDate: "desc" },
+      skip,
+      take: limit,
+    }),
+    db.scrutin.count({ where }),
+  ]);
 
-    return withCache(
-      NextResponse.json({
-        data: scrutins.map((s) => ({
-          ...s,
-          totalVotes: s._count.votes,
-          _count: undefined,
-        })),
-        pagination: {
-          page,
-          limit,
-          total,
-          totalPages: Math.ceil(total / limit),
-        },
-      }),
-      "daily"
-    );
-  } catch (error) {
-    console.error("API error:", error);
-    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
-  }
-}
+  return withCache(
+    NextResponse.json({
+      data: scrutins.map((s) => ({
+        ...s,
+        totalVotes: s._count.votes,
+        _count: undefined,
+      })),
+      pagination: buildPaginationMeta(page, limit, total),
+    }),
+    "daily"
+  );
+});

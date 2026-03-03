@@ -1,12 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { withCache } from "@/lib/cache";
 import { getPoliticianVotingStats } from "@/services/voteStats";
-import { parsePagination } from "@/lib/api/pagination";
-
-interface RouteContext {
-  params: Promise<{ slug: string }>;
-}
+import { parsePagination, buildPaginationMeta } from "@/lib/api/pagination";
+import { withPublicRoute } from "@/lib/api/with-public-route";
 
 /**
  * @openapi
@@ -61,90 +58,80 @@ interface RouteContext {
  *       500:
  *         description: Erreur serveur
  */
-export async function GET(request: NextRequest, context: RouteContext) {
+export const GET = withPublicRoute(async (request, context) => {
   const { slug } = await context.params;
   const { searchParams } = new URL(request.url);
 
   const { page, limit, skip } = parsePagination(searchParams, { defaultLimit: 20 });
 
-  try {
-    const politician = await db.politician.findUnique({
-      where: { slug },
-      select: {
-        id: true,
-        slug: true,
-        fullName: true,
-        firstName: true,
-        lastName: true,
-        photoUrl: true,
-        currentParty: {
-          select: { shortName: true, name: true, color: true },
-        },
+  const politician = await db.politician.findUnique({
+    where: { slug },
+    select: {
+      id: true,
+      slug: true,
+      fullName: true,
+      firstName: true,
+      lastName: true,
+      photoUrl: true,
+      currentParty: {
+        select: { shortName: true, name: true, color: true },
       },
-    });
+    },
+  });
 
-    if (!politician) {
-      return NextResponse.json({ error: "Politique non trouvé" }, { status: 404 });
-    }
+  if (!politician) {
+    return NextResponse.json({ error: "Politique non trouvé" }, { status: 404 });
+  }
 
-    // Get votes with scrutin info
-    const [votes, total, votingStats] = await Promise.all([
-      db.vote.findMany({
-        where: { politicianId: politician.id },
-        include: {
-          scrutin: {
-            select: {
-              id: true,
-              externalId: true,
-              title: true,
-              votingDate: true,
-              legislature: true,
-              votesFor: true,
-              votesAgainst: true,
-              votesAbstain: true,
-              result: true,
-              sourceUrl: true,
-            },
+  // Get votes with scrutin info
+  const [votes, total, votingStats] = await Promise.all([
+    db.vote.findMany({
+      where: { politicianId: politician.id },
+      include: {
+        scrutin: {
+          select: {
+            id: true,
+            externalId: true,
+            title: true,
+            votingDate: true,
+            legislature: true,
+            votesFor: true,
+            votesAgainst: true,
+            votesAbstain: true,
+            result: true,
+            sourceUrl: true,
           },
         },
-        orderBy: { scrutin: { votingDate: "desc" } },
-        skip,
-        take: limit,
-      }),
-      db.vote.count({
-        where: { politicianId: politician.id },
-      }),
-      getPoliticianVotingStats(politician.id),
-    ]);
+      },
+      orderBy: { scrutin: { votingDate: "desc" } },
+      skip,
+      take: limit,
+    }),
+    db.vote.count({
+      where: { politicianId: politician.id },
+    }),
+    getPoliticianVotingStats(politician.id),
+  ]);
 
-    return withCache(
-      NextResponse.json({
-        politician: {
-          id: politician.id,
-          slug: politician.slug,
-          fullName: politician.fullName,
-          firstName: politician.firstName,
-          lastName: politician.lastName,
-          photoUrl: politician.photoUrl,
-          party: politician.currentParty,
-        },
-        stats: votingStats,
-        votes: votes.map((v) => ({
-          id: v.id,
-          position: v.position,
-          scrutin: v.scrutin,
-        })),
-        pagination: {
-          page,
-          limit,
-          total,
-          totalPages: Math.ceil(total / limit),
-        },
-      }),
-      "daily"
-    );
-  } catch (error) {
-    console.error("API error:", error);
-    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
-  }
-}
+  return withCache(
+    NextResponse.json({
+      politician: {
+        id: politician.id,
+        slug: politician.slug,
+        fullName: politician.fullName,
+        firstName: politician.firstName,
+        lastName: politician.lastName,
+        photoUrl: politician.photoUrl,
+        party: politician.currentParty,
+      },
+      stats: votingStats,
+      votes: votes.map((v) => ({
+        id: v.id,
+        position: v.position,
+        scrutin: v.scrutin,
+      })),
+      pagination: buildPaginationMeta(page, limit, total),
+    }),
+    "daily"
+  );
+});

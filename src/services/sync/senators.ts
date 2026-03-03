@@ -7,6 +7,7 @@ import { SENATE_GROUPS, type ParliamentaryGroupConfig } from "@/config/parliamen
 import { findDepartmentCode } from "@/config/departments";
 import { HTTPClient } from "@/lib/api/http-client";
 import { SENAT_RATE_LIMIT_MS } from "@/config/rate-limits";
+import { upsertPoliticianExternalId } from "@/lib/prisma-helpers";
 
 const client = new HTTPClient({ rateLimitMs: SENAT_RATE_LIMIT_MS });
 
@@ -346,45 +347,22 @@ async function upsertExternalIds(
   slug: string
 ): Promise<void> {
   // Sénat ID
-  await db.externalId.upsert({
-    where: {
-      source_externalId: {
-        source: DataSource.SENAT,
-        externalId: matricule,
-      },
-    },
-    create: {
-      politicianId,
-      source: DataSource.SENAT,
-      externalId: matricule,
-      url: `https://www.senat.fr/senateur/${matricule}/`,
-    },
-    update: {
-      politicianId,
-      url: `https://www.senat.fr/senateur/${matricule}/`,
-    },
-  });
+  await upsertPoliticianExternalId(
+    politicianId,
+    DataSource.SENAT,
+    matricule,
+    `https://www.senat.fr/senateur/${matricule}/`
+  );
 
   // NosSénateurs ID (if different from matricule)
   // Using slug as the ID since that's how NosSénateurs URLs work
-  await db.externalId.upsert({
-    where: {
-      source_externalId: {
-        source: DataSource.NOSDEPUTES, // Reusing NOSDEPUTES for NosSénateurs (same platform)
-        externalId: `senateur-${slug}`,
-      },
-    },
-    create: {
-      politicianId,
-      source: DataSource.NOSDEPUTES,
-      externalId: `senateur-${slug}`,
-      url: `https://archive.nossenateurs.fr/${slug}`,
-    },
-    update: {
-      politicianId,
-      url: `https://archive.nossenateurs.fr/${slug}`,
-    },
-  });
+  // Reusing NOSDEPUTES for NosSénateurs (same platform)
+  await upsertPoliticianExternalId(
+    politicianId,
+    DataSource.NOSDEPUTES,
+    `senateur-${slug}`,
+    `https://archive.nossenateurs.fr/${slug}`
+  );
 }
 
 /**

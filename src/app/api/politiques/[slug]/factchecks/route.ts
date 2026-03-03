@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { withCache } from "@/lib/cache";
-import { parsePagination } from "@/lib/api/pagination";
+import { parsePagination, buildPaginationMeta } from "@/lib/api/pagination";
+import { withPublicRoute } from "@/lib/api/with-public-route";
 
 /**
  * @openapi
@@ -38,85 +39,75 @@ import { parsePagination } from "@/lib/api/pagination";
  *       500:
  *         description: Erreur serveur
  */
-export async function GET(request: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params;
+export const GET = withPublicRoute(async (request, context) => {
+  const { slug } = await context.params;
   const { searchParams } = new URL(request.url);
 
   const { page, limit, skip } = parsePagination(searchParams, { defaultLimit: 20 });
 
-  try {
-    const politician = await db.politician.findUnique({
-      where: { slug },
-      select: {
-        id: true,
-        slug: true,
-        fullName: true,
-        firstName: true,
-        lastName: true,
-        photoUrl: true,
-        currentParty: {
-          select: { shortName: true, name: true, color: true },
-        },
+  const politician = await db.politician.findUnique({
+    where: { slug },
+    select: {
+      id: true,
+      slug: true,
+      fullName: true,
+      firstName: true,
+      lastName: true,
+      photoUrl: true,
+      currentParty: {
+        select: { shortName: true, name: true, color: true },
       },
-    });
+    },
+  });
 
-    if (!politician) {
-      return NextResponse.json({ error: "Politicien non trouvé" }, { status: 404 });
-    }
+  if (!politician) {
+    return NextResponse.json({ error: "Politicien non trouvé" }, { status: 404 });
+  }
 
-    const mentionWhere = { politicianId: politician.id };
+  const mentionWhere = { politicianId: politician.id };
 
-    const [mentions, total] = await Promise.all([
-      db.factCheckMention.findMany({
-        where: mentionWhere,
-        select: {
-          factCheck: {
-            select: {
-              id: true,
-              slug: true,
-              claimText: true,
-              claimant: true,
-              title: true,
-              verdict: true,
-              verdictRating: true,
-              source: true,
-              sourceUrl: true,
-              publishedAt: true,
-              claimDate: true,
-            },
+  const [mentions, total] = await Promise.all([
+    db.factCheckMention.findMany({
+      where: mentionWhere,
+      select: {
+        factCheck: {
+          select: {
+            id: true,
+            slug: true,
+            claimText: true,
+            claimant: true,
+            title: true,
+            verdict: true,
+            verdictRating: true,
+            source: true,
+            sourceUrl: true,
+            publishedAt: true,
+            claimDate: true,
           },
         },
-        orderBy: { factCheck: { publishedAt: "desc" } },
-        skip,
-        take: limit,
-      }),
-      db.factCheckMention.count({ where: mentionWhere }),
-    ]);
+      },
+      orderBy: { factCheck: { publishedAt: "desc" } },
+      skip,
+      take: limit,
+    }),
+    db.factCheckMention.count({ where: mentionWhere }),
+  ]);
 
-    return withCache(
-      NextResponse.json({
-        politician: {
-          id: politician.id,
-          slug: politician.slug,
-          fullName: politician.fullName,
-          firstName: politician.firstName,
-          lastName: politician.lastName,
-          photoUrl: politician.photoUrl,
-          party: politician.currentParty,
-        },
-        factchecks: mentions.map((m) => m.factCheck),
-        total,
-        pagination: {
-          page,
-          limit,
-          total,
-          totalPages: Math.ceil(total / limit),
-        },
-      }),
-      "daily"
-    );
-  } catch (error) {
-    console.error("API error:", error);
-    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
-  }
-}
+  return withCache(
+    NextResponse.json({
+      politician: {
+        id: politician.id,
+        slug: politician.slug,
+        fullName: politician.fullName,
+        firstName: politician.firstName,
+        lastName: politician.lastName,
+        photoUrl: politician.photoUrl,
+        party: politician.currentParty,
+      },
+      factchecks: mentions.map((m) => m.factCheck),
+      total,
+      pagination: buildPaginationMeta(page, limit, total),
+    }),
+    "daily"
+  );
+});

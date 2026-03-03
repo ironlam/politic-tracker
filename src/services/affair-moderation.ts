@@ -12,8 +12,7 @@
  */
 
 import { AI_RATE_LIMIT_MS } from "@/config/rate-limits";
-
-const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
+import { callAnthropic, extractToolUse } from "@/lib/api/anthropic";
 
 const MODEL = "claude-sonnet-4-5-20250929";
 const MAX_TOKENS = 2000;
@@ -285,11 +284,6 @@ DÉTECTION DE DOUBLONS :
  * Returns a structured recommendation (PUBLISH / REJECT / NEEDS_REVIEW).
  */
 export async function moderateAffair(input: ModerationInput): Promise<ModerationResult> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    throw new Error("ANTHROPIC_API_KEY environment variable is not set");
-  }
-
   // Build user message with all affair data
   let userContent = `Modère cette affaire judiciaire :\n`;
   userContent += `\nPoliticien : ${input.politicianName} (slug: ${input.politicianSlug})`;
@@ -333,36 +327,18 @@ export async function moderateAffair(input: ModerationInput): Promise<Moderation
     }
   }
 
-  const response = await fetch(ANTHROPIC_API_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-    },
-    body: JSON.stringify({
-      model: MODEL,
-      max_tokens: MAX_TOKENS,
-      system: SYSTEM_PROMPT,
-      tools: [MODERATION_TOOL],
-      tool_choice: { type: "tool", name: "moderate_affair" },
-      messages: [{ role: "user", content: userContent }],
-    }),
+  const data = await callAnthropic([{ role: "user", content: userContent }], {
+    model: MODEL,
+    maxTokens: MAX_TOKENS,
+    system: SYSTEM_PROMPT,
+    tools: [MODERATION_TOOL],
+    toolChoice: { type: "tool", name: "moderate_affair" },
   });
 
-  if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`Anthropic API error: ${response.status} - ${error}`);
-  }
-
-  const data = await response.json();
-
-  const toolUse = data.content?.find((c: { type: string }) => c.type === "tool_use");
-  if (!toolUse?.input) {
+  const result = extractToolUse(data) as Record<string, unknown> | null;
+  if (!result) {
     throw new Error("No tool_use content in API response");
   }
-
-  const result = toolUse.input;
 
   // Parse and validate the result
   const recommendation = validateEnum(

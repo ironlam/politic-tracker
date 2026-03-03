@@ -1,9 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { FactCheckRating } from "@/generated/prisma";
 import { withCache } from "@/lib/cache";
 import { FACTCHECK_ALLOWED_SOURCES } from "@/config/labels";
-import { parsePagination } from "@/lib/api/pagination";
+import { parsePagination, buildPaginationMeta } from "@/lib/api/pagination";
+import { withPublicRoute } from "@/lib/api/with-public-route";
 
 /**
  * @openapi
@@ -55,7 +56,7 @@ import { parsePagination } from "@/lib/api/pagination";
  *       500:
  *         description: Erreur serveur
  */
-export async function GET(request: NextRequest) {
+export const GET = withPublicRoute(async (request) => {
   const { searchParams } = new URL(request.url);
 
   const search = searchParams.get("search");
@@ -87,62 +88,52 @@ export async function GET(request: NextRequest) {
     where.verdictRating = verdict as FactCheckRating;
   }
 
-  try {
-    const [factchecks, total] = await Promise.all([
-      db.factCheck.findMany({
-        where,
-        select: {
-          id: true,
-          slug: true,
-          claimText: true,
-          claimant: true,
-          title: true,
-          verdict: true,
-          verdictRating: true,
-          source: true,
-          sourceUrl: true,
-          publishedAt: true,
-          claimDate: true,
-          mentions: {
-            select: {
-              politician: {
-                select: {
-                  id: true,
-                  slug: true,
-                  fullName: true,
-                  currentParty: {
-                    select: { shortName: true, name: true },
-                  },
+  const [factchecks, total] = await Promise.all([
+    db.factCheck.findMany({
+      where,
+      select: {
+        id: true,
+        slug: true,
+        claimText: true,
+        claimant: true,
+        title: true,
+        verdict: true,
+        verdictRating: true,
+        source: true,
+        sourceUrl: true,
+        publishedAt: true,
+        claimDate: true,
+        mentions: {
+          select: {
+            politician: {
+              select: {
+                id: true,
+                slug: true,
+                fullName: true,
+                currentParty: {
+                  select: { shortName: true, name: true },
                 },
               },
             },
           },
         },
-        orderBy: { publishedAt: "desc" },
-        skip,
-        take: limit,
-      }),
-      db.factCheck.count({ where }),
-    ]);
+      },
+      orderBy: { publishedAt: "desc" },
+      skip,
+      take: limit,
+    }),
+    db.factCheck.count({ where }),
+  ]);
 
-    return withCache(
-      NextResponse.json({
-        data: factchecks.map((fc) => ({
-          ...fc,
-          politicians: fc.mentions.map((m) => m.politician),
-          mentions: undefined,
-        })),
-        pagination: {
-          page,
-          limit,
-          total,
-          totalPages: Math.ceil(total / limit),
-        },
-      }),
-      "daily"
-    );
-  } catch (error) {
-    console.error("API error:", error);
-    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
-  }
-}
+  return withCache(
+    NextResponse.json({
+      data: factchecks.map((fc) => ({
+        ...fc,
+        politicians: fc.mentions.map((m) => m.politician),
+        mentions: undefined,
+      })),
+      pagination: buildPaginationMeta(page, limit, total),
+    }),
+    "daily"
+  );
+});

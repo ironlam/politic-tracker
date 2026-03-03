@@ -1,8 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { AffairStatus, AffairCategory, Involvement } from "@/generated/prisma";
 import { withCache } from "@/lib/cache";
-import { parsePagination } from "@/lib/api/pagination";
+import { parsePagination, buildPaginationMeta } from "@/lib/api/pagination";
+import { withPublicRoute } from "@/lib/api/with-public-route";
 
 /**
  * @openapi
@@ -66,7 +67,7 @@ import { parsePagination } from "@/lib/api/pagination";
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-export async function GET(request: NextRequest) {
+export const GET = withPublicRoute(async (request) => {
   const { searchParams } = new URL(request.url);
 
   const status = searchParams.get("status");
@@ -94,69 +95,59 @@ export async function GET(request: NextRequest) {
     ...(category && { category: category as AffairCategory }),
   };
 
-  try {
-    const [affairs, total] = await Promise.all([
-      db.affair.findMany({
-        where,
-        select: {
-          id: true,
-          slug: true,
-          title: true,
-          description: true,
-          status: true,
-          category: true,
-          factsDate: true,
-          startDate: true,
-          verdictDate: true,
-          sentence: true,
-          appeal: true,
-          createdAt: true,
-          updatedAt: true,
-          politician: {
-            select: {
-              id: true,
-              slug: true,
-              fullName: true,
-              currentParty: {
-                select: { shortName: true, name: true },
-              },
-            },
-          },
-          partyAtTime: {
-            select: { shortName: true, name: true },
-          },
-          sources: {
-            select: {
-              id: true,
-              url: true,
-              title: true,
-              publisher: true,
-              publishedAt: true,
-              sourceType: true,
+  const [affairs, total] = await Promise.all([
+    db.affair.findMany({
+      where,
+      select: {
+        id: true,
+        slug: true,
+        title: true,
+        description: true,
+        status: true,
+        category: true,
+        factsDate: true,
+        startDate: true,
+        verdictDate: true,
+        sentence: true,
+        appeal: true,
+        createdAt: true,
+        updatedAt: true,
+        politician: {
+          select: {
+            id: true,
+            slug: true,
+            fullName: true,
+            currentParty: {
+              select: { shortName: true, name: true },
             },
           },
         },
-        orderBy: { createdAt: "desc" },
-        skip,
-        take: limit,
-      }),
-      db.affair.count({ where }),
-    ]);
+        partyAtTime: {
+          select: { shortName: true, name: true },
+        },
+        sources: {
+          select: {
+            id: true,
+            url: true,
+            title: true,
+            publisher: true,
+            publishedAt: true,
+            sourceType: true,
+          },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+      skip,
+      take: limit,
+    }),
+    db.affair.count({ where }),
+  ]);
 
-    return withCache(
-      NextResponse.json({
-        data: affairs,
-        pagination: {
-          page,
-          limit,
-          total,
-          totalPages: Math.ceil(total / limit),
-        },
-      }),
-      "daily"
-    );
-  } catch (error) {
-    console.error("API error:", error);
-    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
-  }
-}
+  return withCache(
+    NextResponse.json({
+      data: affairs,
+      pagination: buildPaginationMeta(page, limit, total),
+    }),
+    "daily"
+  );
+});

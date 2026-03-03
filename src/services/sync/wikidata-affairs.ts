@@ -11,6 +11,7 @@ import { generateSlug } from "@/lib/utils";
 import { WIKIDATA_SPARQL_RATE_LIMIT_MS } from "@/config/rate-limits";
 import { isDuplicate } from "@/services/affairs/matching";
 import { HTTPClient } from "@/lib/api/http-client";
+import { upsertPoliticianExternalId } from "@/lib/prisma-helpers";
 
 // Wikidata SPARQL endpoint
 const WIKIDATA_ENDPOINT = "https://query.wikidata.org/sparql";
@@ -273,24 +274,12 @@ export async function findOrCreateParty(partyName: string): Promise<string | nul
  * Upsert Wikidata external ID for a politician
  */
 export async function upsertWikidataId(politicianId: string, wikidataId: string): Promise<void> {
-  await db.externalId.upsert({
-    where: {
-      source_externalId: {
-        source: DataSource.WIKIDATA,
-        externalId: wikidataId,
-      },
-    },
-    create: {
-      politicianId,
-      source: DataSource.WIKIDATA,
-      externalId: wikidataId,
-      url: `https://www.wikidata.org/wiki/${wikidataId}`,
-    },
-    update: {
-      politicianId,
-      url: `https://www.wikidata.org/wiki/${wikidataId}`,
-    },
-  });
+  await upsertPoliticianExternalId(
+    politicianId,
+    DataSource.WIKIDATA,
+    wikidataId,
+    `https://www.wikidata.org/wiki/${wikidataId}`
+  );
 }
 
 /**

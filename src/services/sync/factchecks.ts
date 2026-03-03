@@ -15,7 +15,7 @@ import {
   type PoliticianName,
 } from "@/lib/name-matching";
 import { isDirectPoliticianClaim } from "@/config/labels";
-import { generateDateSlug, sleep } from "@/lib/utils";
+import { generateDateSlug, generateUniqueSlug, sleep } from "@/lib/utils";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -45,18 +45,9 @@ export interface FactcheckSyncStats {
 
 async function generateUniqueFactCheckSlug(date: Date | null, title: string): Promise<string> {
   const baseSlug = generateDateSlug(date, title);
-  let slug = baseSlug;
-  let counter = 2;
-
-  while (await db.factCheck.findUnique({ where: { slug } })) {
-    const suffix = `-${counter}`;
-    const maxBaseLength = 80 - suffix.length;
-    const truncatedBase = baseSlug.slice(0, maxBaseLength).replace(/-$/, "");
-    slug = `${truncatedBase}${suffix}`;
-    counter++;
-  }
-
-  return slug;
+  return generateUniqueSlug(baseSlug, (s) =>
+    db.factCheck.findUnique({ where: { slug: s } }).then(Boolean)
+  );
 }
 
 /**

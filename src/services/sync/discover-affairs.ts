@@ -8,7 +8,7 @@
  */
 
 import { db } from "@/lib/db";
-import { generateSlug } from "@/lib/utils";
+import { generateSlug, generateUniqueSlug } from "@/lib/utils";
 import { WikidataService } from "@/lib/api/wikidata";
 import { WD_PROPS } from "@/config/wikidata";
 import { mapWikidataOffense, getOffenseLabel } from "@/config/wikidata-affairs";
@@ -78,18 +78,11 @@ function extractPublisherFromUrl(url: string): string {
 
 async function generateUniqueAffairSlug(title: string): Promise<string> {
   const baseSlug = generateSlug(title);
-  let slug = baseSlug;
-  let counter = 2;
-
-  while (await db.affair.findUnique({ where: { slug } })) {
-    const suffix = `-${counter}`;
-    const maxBaseLength = 120 - suffix.length;
-    const truncatedBase = baseSlug.slice(0, maxBaseLength).replace(/-$/, "");
-    slug = `${truncatedBase}${suffix}`;
-    counter++;
-  }
-
-  return slug;
+  return generateUniqueSlug(
+    baseSlug,
+    (s) => db.affair.findUnique({ where: { slug: s } }).then(Boolean),
+    120
+  );
 }
 
 export async function discoverAffairs(options?: {

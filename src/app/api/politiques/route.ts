@@ -1,8 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { MandateType, PublicationStatus } from "@/generated/prisma";
 import { getPoliticians } from "@/services/politicians";
 import { withCache } from "@/lib/cache";
 import { parsePagination } from "@/lib/api/pagination";
+import { withPublicRoute } from "@/lib/api/with-public-route";
 
 /**
  * @openapi
@@ -83,7 +84,7 @@ import { parsePagination } from "@/lib/api/pagination";
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-export async function GET(request: NextRequest) {
+export const GET = withPublicRoute(async (request) => {
   const { searchParams } = new URL(request.url);
 
   const search = searchParams.get("search") || undefined;
@@ -96,51 +97,46 @@ export async function GET(request: NextRequest) {
   const sort = searchParams.get("sort");
   const { page, limit } = parsePagination(searchParams, { defaultLimit: 20 });
 
-  try {
-    const result = await getPoliticians({
-      search,
-      partyId,
-      mandateType: mandateType as MandateType,
-      hasAffairs,
-      ...(status !== "all" && { publicationStatus: status as PublicationStatus }),
-      ...(sort === "prominence" && { sortBy: "prominence" as const }),
-      page,
-      limit,
-    });
+  const result = await getPoliticians({
+    search,
+    partyId,
+    mandateType: mandateType as MandateType,
+    hasAffairs,
+    ...(status !== "all" && { publicationStatus: status as PublicationStatus }),
+    ...(sort === "prominence" && { sortBy: "prominence" as const }),
+    page,
+    limit,
+  });
 
-    return withCache(
-      NextResponse.json({
-        data: result.data.map((p) => ({
-          id: p.id,
-          slug: p.slug,
-          fullName: p.fullName,
-          firstName: p.firstName,
-          lastName: p.lastName,
-          civility: p.civility,
-          birthDate: p.birthDate,
-          deathDate: p.deathDate,
-          birthPlace: p.birthPlace,
-          photoUrl: p.photoUrl,
-          currentParty: p.currentParty
-            ? {
-                id: p.currentParty.id,
-                name: p.currentParty.name,
-                shortName: p.currentParty.shortName,
-                color: p.currentParty.color,
-              }
-            : null,
-        })),
-        pagination: {
-          page: result.page,
-          limit: result.limit,
-          total: result.total,
-          totalPages: result.totalPages,
-        },
-      }),
-      "daily"
-    );
-  } catch (error) {
-    console.error("API error:", error);
-    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
-  }
-}
+  return withCache(
+    NextResponse.json({
+      data: result.data.map((p) => ({
+        id: p.id,
+        slug: p.slug,
+        fullName: p.fullName,
+        firstName: p.firstName,
+        lastName: p.lastName,
+        civility: p.civility,
+        birthDate: p.birthDate,
+        deathDate: p.deathDate,
+        birthPlace: p.birthPlace,
+        photoUrl: p.photoUrl,
+        currentParty: p.currentParty
+          ? {
+              id: p.currentParty.id,
+              name: p.currentParty.name,
+              shortName: p.currentParty.shortName,
+              color: p.currentParty.color,
+            }
+          : null,
+      })),
+      pagination: {
+        page: result.page,
+        limit: result.limit,
+        total: result.total,
+        totalPages: result.totalPages,
+      },
+    }),
+    "daily"
+  );
+});

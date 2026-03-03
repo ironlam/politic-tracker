@@ -9,6 +9,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { HTTPClient } from "@/lib/api/http-client";
 import { DATA_GOUV_RATE_LIMIT_MS } from "@/config/rate-limits";
+import { upsertPoliticianExternalId } from "@/lib/prisma-helpers";
 
 const client = new HTTPClient({ rateLimitMs: DATA_GOUV_RATE_LIMIT_MS });
 
@@ -219,7 +220,12 @@ async function syncGovernmentMember(
       }
 
       // Upsert external ID
-      await upsertExternalId(existing.id, externalId);
+      await upsertPoliticianExternalId(
+        existing.id,
+        DataSource.GOUVERNEMENT,
+        externalId,
+        "https://www.info.gouv.fr/composition-du-gouvernement"
+      );
     } else {
       // Create new politician with mandate
       const newPolitician = await db.politician.create({
@@ -230,7 +236,12 @@ async function syncGovernmentMember(
         },
       });
 
-      await upsertExternalId(newPolitician.id, externalId);
+      await upsertPoliticianExternalId(
+        newPolitician.id,
+        DataSource.GOUVERNEMENT,
+        externalId,
+        "https://www.info.gouv.fr/composition-du-gouvernement"
+      );
       status = "created";
       mandateCreated = true;
     }
@@ -240,29 +251,6 @@ async function syncGovernmentMember(
     console.error(`Error syncing ${member.prenom} ${member.nom}:`, error);
     return { status: "error", mandateCreated: false };
   }
-}
-
-/**
- * Upsert external ID for government member
- */
-async function upsertExternalId(politicianId: string, externalId: string): Promise<void> {
-  await db.externalId.upsert({
-    where: {
-      source_externalId: {
-        source: DataSource.GOUVERNEMENT,
-        externalId,
-      },
-    },
-    create: {
-      politicianId,
-      source: DataSource.GOUVERNEMENT,
-      externalId,
-      url: "https://www.info.gouv.fr/composition-du-gouvernement",
-    },
-    update: {
-      politicianId,
-    },
-  });
 }
 
 /**

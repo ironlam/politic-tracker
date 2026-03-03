@@ -1,8 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { ElectionType, ElectionStatus } from "@/generated/prisma";
 import { withCache } from "@/lib/cache";
-import { parsePagination } from "@/lib/api/pagination";
+import { parsePagination, buildPaginationMeta } from "@/lib/api/pagination";
+import { withPublicRoute } from "@/lib/api/with-public-route";
 
 /**
  * @openapi
@@ -65,7 +66,7 @@ import { parsePagination } from "@/lib/api/pagination";
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-export async function GET(request: NextRequest) {
+export const GET = withPublicRoute(async (request) => {
   const { searchParams } = new URL(request.url);
 
   const type = searchParams.get("type");
@@ -86,51 +87,41 @@ export async function GET(request: NextRequest) {
     }),
   };
 
-  try {
-    const [elections, total] = await Promise.all([
-      db.election.findMany({
-        where,
-        select: {
-          id: true,
-          slug: true,
-          type: true,
-          title: true,
-          shortTitle: true,
-          status: true,
-          scope: true,
-          suffrage: true,
-          round1Date: true,
-          round2Date: true,
-          dateConfirmed: true,
-          totalSeats: true,
-          _count: { select: { candidacies: true } },
-        },
-        orderBy: { round1Date: "desc" },
-        skip,
-        take: limit,
-      }),
-      db.election.count({ where }),
-    ]);
+  const [elections, total] = await Promise.all([
+    db.election.findMany({
+      where,
+      select: {
+        id: true,
+        slug: true,
+        type: true,
+        title: true,
+        shortTitle: true,
+        status: true,
+        scope: true,
+        suffrage: true,
+        round1Date: true,
+        round2Date: true,
+        dateConfirmed: true,
+        totalSeats: true,
+        _count: { select: { candidacies: true } },
+      },
+      orderBy: { round1Date: "desc" },
+      skip,
+      take: limit,
+    }),
+    db.election.count({ where }),
+  ]);
 
-    const data = elections.map(({ _count, ...election }) => ({
-      ...election,
-      candidacyCount: _count.candidacies,
-    }));
+  const data = elections.map(({ _count, ...election }) => ({
+    ...election,
+    candidacyCount: _count.candidacies,
+  }));
 
-    return withCache(
-      NextResponse.json({
-        data,
-        pagination: {
-          page,
-          limit,
-          total,
-          totalPages: Math.ceil(total / limit),
-        },
-      }),
-      "daily"
-    );
-  } catch (error) {
-    console.error("API error:", error);
-    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
-  }
-}
+  return withCache(
+    NextResponse.json({
+      data,
+      pagination: buildPaginationMeta(page, limit, total),
+    }),
+    "daily"
+  );
+});

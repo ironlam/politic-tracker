@@ -4,11 +4,10 @@ import { cacheTag, cacheLife } from "next/cache";
 import { db } from "@/lib/db";
 import { isFeatureEnabled } from "@/lib/feature-flags";
 import { voteStatsService } from "@/services/voteStats";
+import { factcheckStatsService } from "@/services/factcheckStats";
 import {
   CATEGORY_TO_SUPER,
   AFFAIR_CATEGORY_LABELS,
-  VERDICT_GROUPS,
-  FACTCHECK_ALLOWED_SOURCES,
   type AffairSuperCategory,
 } from "@/config/labels";
 import type { AffairStatus, AffairCategory } from "@/types";
@@ -18,7 +17,6 @@ import { LegislativeSection } from "@/components/stats/LegislativeSection";
 import { JudicialSection } from "@/components/stats/JudicialSection";
 import { FactCheckSection } from "@/components/stats/FactCheckSection";
 import { ParticipationSection } from "@/components/stats/ParticipationSection";
-import { bayesianScore } from "@/lib/bayesianScore";
 
 export const revalidate = 300;
 
@@ -187,249 +185,12 @@ async function getJudicialData() {
 
 // ── Fact-check data ──────────────────────────────────────────
 
-interface VerdictBreakdown {
-  vrai: number;
-  trompeur: number;
-  faux: number;
-  inverifiable: number;
-}
-
-interface RankedPolitician {
-  fullName: string;
-  slug: string;
-  photoUrl: string | null;
-  party: string | null;
-  partyColor: string | null;
-  totalMentions: number;
-  breakdown: VerdictBreakdown;
-  scoreVrai: number;
-  scoreFaux: number;
-}
-
-interface RankedParty {
-  name: string;
-  shortName: string | null;
-  color: string | null;
-  slug: string | null;
-  totalMentions: number;
-  breakdown: VerdictBreakdown;
-  scoreVrai: number;
-  scoreFaux: number;
-}
-
-function classifyRating(rating: string): keyof VerdictBreakdown {
-  if ((VERDICT_GROUPS.vrai as readonly string[]).includes(rating)) return "vrai";
-  if ((VERDICT_GROUPS.trompeur as readonly string[]).includes(rating)) return "trompeur";
-  if ((VERDICT_GROUPS.faux as readonly string[]).includes(rating)) return "faux";
-  return "inverifiable";
-}
-
-const MIN_MENTIONS = 3;
-
 async function getFactCheckData() {
   "use cache";
   cacheTag("statistics", "factchecks");
   cacheLife("minutes");
 
-  const [total, byRating, bySource, allMentions] = await Promise.all([
-    db.factCheck.count({ where: { source: { in: FACTCHECK_ALLOWED_SOURCES } } }),
-    db.factCheck.groupBy({
-      by: ["verdictRating"],
-      where: { source: { in: FACTCHECK_ALLOWED_SOURCES } },
-      _count: true,
-      orderBy: { _count: { verdictRating: "desc" } },
-    }),
-    db.factCheck.groupBy({
-      by: ["source"],
-      where: { source: { in: FACTCHECK_ALLOWED_SOURCES } },
-      _count: true,
-      orderBy: { _count: { source: "desc" } },
-    }),
-    // Fetch only claimant mentions (politician actually made the claim)
-    db.factCheckMention.findMany({
-      where: {
-        isClaimant: true,
-        factCheck: { source: { in: FACTCHECK_ALLOWED_SOURCES } },
-      },
-      select: {
-        factCheck: { select: { verdictRating: true } },
-        politician: {
-          select: {
-            id: true,
-            fullName: true,
-            slug: true,
-            photoUrl: true,
-            currentParty: {
-              select: { name: true, shortName: true, color: true, slug: true },
-            },
-          },
-        },
-      },
-    }),
-  ]);
-
-  // Global verdict groups
-  const ratingMap: Record<string, number> = {};
-  byRating.forEach((r) => {
-    ratingMap[r.verdictRating] = r._count;
-  });
-
-  const groups: VerdictBreakdown = {
-    vrai: VERDICT_GROUPS.vrai.reduce((sum, r) => sum + (ratingMap[r] || 0), 0),
-    trompeur: VERDICT_GROUPS.trompeur.reduce((sum, r) => sum + (ratingMap[r] || 0), 0),
-    faux: VERDICT_GROUPS.faux.reduce((sum, r) => sum + (ratingMap[r] || 0), 0),
-    inverifiable: ratingMap["UNVERIFIABLE"] || 0,
-  };
-
-  // Aggregate mentions by politician and party
-  const politicianMap = new Map<
-    string,
-    {
-      fullName: string;
-      slug: string;
-      photoUrl: string | null;
-      party: string | null;
-      partyColor: string | null;
-      breakdown: VerdictBreakdown;
-      total: number;
-    }
-  >();
-  const partyMap = new Map<
-    string,
-    {
-      name: string;
-      shortName: string | null;
-      color: string | null;
-      slug: string | null;
-      breakdown: VerdictBreakdown;
-      total: number;
-    }
-  >();
-
-  for (const mention of allMentions) {
-    const pol = mention.politician;
-    const verdict = classifyRating(mention.factCheck.verdictRating);
-    const partyKey = pol.currentParty?.slug || null;
-    const partyDisplayName = pol.currentParty?.name || pol.currentParty?.shortName || null;
-
-    // By politician
-    if (!politicianMap.has(pol.id)) {
-      politicianMap.set(pol.id, {
-        fullName: pol.fullName,
-        slug: pol.slug,
-        photoUrl: pol.photoUrl,
-        party: partyDisplayName,
-        partyColor: pol.currentParty?.color || null,
-        breakdown: { vrai: 0, trompeur: 0, faux: 0, inverifiable: 0 },
-        total: 0,
-      });
-    }
-    const polEntry = politicianMap.get(pol.id)!;
-    polEntry.breakdown[verdict]++;
-    polEntry.total++;
-
-    // By party
-    if (partyKey) {
-      if (!partyMap.has(partyKey)) {
-        partyMap.set(partyKey, {
-          name: partyDisplayName!,
-          shortName: pol.currentParty!.shortName,
-          color: pol.currentParty!.color,
-          slug: pol.currentParty!.slug,
-          breakdown: { vrai: 0, trompeur: 0, faux: 0, inverifiable: 0 },
-          total: 0,
-        });
-      }
-      const partyEntry = partyMap.get(partyKey)!;
-      partyEntry.breakdown[verdict]++;
-      partyEntry.total++;
-    }
-  }
-
-  // Compute global means for Bayesian scoring (excluding inverifiable)
-  const allPols = [...politicianMap.values()].filter((p) => p.total >= MIN_MENTIONS);
-  const totalScorable = allPols.reduce((sum, p) => sum + p.total - p.breakdown.inverifiable, 0);
-  const totalVrai = allPols.reduce((sum, p) => sum + p.breakdown.vrai, 0);
-  const totalFaux = allPols.reduce((sum, p) => sum + p.breakdown.faux, 0);
-  const globalMeanVrai = totalScorable > 0 ? totalVrai / totalScorable : 0;
-  const globalMeanFaux = totalScorable > 0 ? totalFaux / totalScorable : 0;
-
-  // Score and rank politicians
-  const scorePolitician = (p: (typeof allPols)[number]): RankedPolitician => {
-    const scorable = p.total - p.breakdown.inverifiable;
-    const pVrai = scorable > 0 ? p.breakdown.vrai / scorable : 0;
-    const pFaux = scorable > 0 ? p.breakdown.faux / scorable : 0;
-    return {
-      fullName: p.fullName,
-      slug: p.slug,
-      photoUrl: p.photoUrl,
-      party: p.party,
-      partyColor: p.partyColor,
-      totalMentions: p.total,
-      breakdown: p.breakdown,
-      scoreVrai: bayesianScore(pVrai, scorable, globalMeanVrai),
-      scoreFaux: bayesianScore(pFaux, scorable, globalMeanFaux),
-    };
-  };
-
-  const rankedPoliticians = allPols.map(scorePolitician);
-  const mostReliablePoliticians = [...rankedPoliticians]
-    .sort((a, b) => b.scoreVrai - a.scoreVrai)
-    .slice(0, 5);
-  const mostReliableSlugs = new Set(mostReliablePoliticians.map((p) => p.slug));
-  const leastReliablePoliticians = [...rankedPoliticians]
-    .filter((p) => !mostReliableSlugs.has(p.slug))
-    .sort((a, b) => b.scoreFaux - a.scoreFaux)
-    .slice(0, 5);
-
-  // Score and rank parties
-  const allParties = [...partyMap.values()].filter((p) => p.total >= MIN_MENTIONS);
-
-  // Compute party-level global means
-  const partyTotalScorable = allParties.reduce(
-    (sum, p) => sum + p.total - p.breakdown.inverifiable,
-    0
-  );
-  const partyTotalVrai = allParties.reduce((sum, p) => sum + p.breakdown.vrai, 0);
-  const partyTotalFaux = allParties.reduce((sum, p) => sum + p.breakdown.faux, 0);
-  const partyGlobalMeanVrai = partyTotalScorable > 0 ? partyTotalVrai / partyTotalScorable : 0;
-  const partyGlobalMeanFaux = partyTotalScorable > 0 ? partyTotalFaux / partyTotalScorable : 0;
-
-  const scoreParty = (p: (typeof allParties)[number]): RankedParty => {
-    const scorable = p.total - p.breakdown.inverifiable;
-    const pVrai = scorable > 0 ? p.breakdown.vrai / scorable : 0;
-    const pFaux = scorable > 0 ? p.breakdown.faux / scorable : 0;
-    return {
-      name: p.name,
-      shortName: p.shortName,
-      color: p.color,
-      slug: p.slug,
-      totalMentions: p.total,
-      breakdown: p.breakdown,
-      scoreVrai: bayesianScore(pVrai, scorable, partyGlobalMeanVrai),
-      scoreFaux: bayesianScore(pFaux, scorable, partyGlobalMeanFaux),
-    };
-  };
-
-  const rankedParties = allParties.map(scoreParty);
-  const mostReliableParties = [...rankedParties]
-    .sort((a, b) => b.scoreVrai - a.scoreVrai)
-    .slice(0, 5);
-  const mostReliablePartyNames = new Set(mostReliableParties.map((p) => p.name));
-  const leastReliableParties = [...rankedParties]
-    .filter((p) => !mostReliablePartyNames.has(p.name))
-    .sort((a, b) => b.scoreFaux - a.scoreFaux)
-    .slice(0, 5);
-
-  return {
-    total,
-    groups,
-    bySource: bySource.map((s) => ({ source: s.source, count: s._count })),
-    mostReliablePoliticians,
-    leastReliablePoliticians,
-    mostReliableParties,
-    leastReliableParties,
-  };
+  return factcheckStatsService.getStatisticsData();
 }
 
 // ── Legislative data ─────────────────────────────────────────

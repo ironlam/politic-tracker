@@ -97,6 +97,12 @@ export const NAV_GROUPS: NavGroup[] = [
         description: "Trouvez votre député par code postal",
         featureFlag: "MON_DEPUTE_SECTION",
       },
+      {
+        href: "/mon-observatoire",
+        label: "Mon Observatoire",
+        icon: "star",
+        description: "Suivez l'activité de vos représentants",
+      },
     ],
   },
   {
@@ -201,6 +207,7 @@ export const FOOTER_SECTIONS: FooterSection[] = [
       { href: "/assemblee", label: "Dossiers législatifs", featureFlag: "ASSEMBLEE_SECTION" },
       { href: "/institutions", label: "Institutions", featureFlag: "INSTITUTIONS_SECTION" },
       { href: "/recherche", label: "Recherche" },
+      { href: "/mon-observatoire", label: "Mon Observatoire" },
     ],
   },
   {

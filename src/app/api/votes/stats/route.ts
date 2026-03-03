@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { Chamber } from "@/generated/prisma";
 import { voteStatsService } from "@/services/voteStats";
 import { withCache } from "@/lib/cache";
+import { parsePagination } from "@/lib/api/pagination";
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const chamber = searchParams.get("chamber") as Chamber | null;
-  const limit = parseInt(searchParams.get("limit") || "20");
+  const { limit } = parsePagination(searchParams, { defaultLimit: 20, maxLimit: 100 });
 
   try {
     const stats = await voteStatsService.getVoteStats(chamber || undefined, {

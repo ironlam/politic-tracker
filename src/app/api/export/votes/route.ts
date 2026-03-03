@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { toCSV, formatDateForCSV, createCSVResponse } from "@/lib/csv";
 import { VOTING_RESULT_LABELS, CHAMBER_LABELS } from "@/config/labels";
+import { parsePagination } from "@/lib/api/pagination";
 import type { VotingResult, Chamber } from "@/types";
 import { SITE_URL } from "@/config/site";
 
@@ -14,7 +15,7 @@ export async function GET(request: NextRequest) {
   const chamber = searchParams.get("chamber") as Chamber | null;
   const result = searchParams.get("result") as VotingResult | null;
   const legislature = searchParams.get("legislature");
-  const limit = Math.min(parseInt(searchParams.get("limit") || "10000", 10), 50000);
+  const { limit } = parsePagination(searchParams, { defaultLimit: 10000, maxLimit: 50000 });
 
   // Build where clause
   const where: Record<string, unknown> = {};

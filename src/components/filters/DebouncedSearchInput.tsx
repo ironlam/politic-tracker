@@ -78,7 +78,7 @@ export function DebouncedSearchInput({
           <button
             type="button"
             onClick={handleClear}
-            className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            className="absolute right-1 top-1/2 -translate-y-1/2 size-7 flex items-center justify-center rounded-sm text-muted-foreground hover:text-foreground"
             aria-label="Effacer la recherche"
           >
             <X className="h-4 w-4" />

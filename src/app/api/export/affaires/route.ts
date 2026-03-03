@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { toCSV, formatDateForCSV, createCSVResponse } from "@/lib/csv";
 import { AFFAIR_STATUS_LABELS, AFFAIR_CATEGORY_LABELS } from "@/config/labels";
+import { parsePagination } from "@/lib/api/pagination";
 import type { AffairStatus, AffairCategory } from "@/types";
 import { SITE_URL } from "@/config/site";
 
@@ -14,7 +15,7 @@ export async function GET(request: NextRequest) {
   const status = searchParams.get("status") as AffairStatus | null;
   const category = searchParams.get("category") as AffairCategory | null;
   const politicianId = searchParams.get("politicianId");
-  const limit = Math.min(parseInt(searchParams.get("limit") || "10000", 10), 50000);
+  const { limit } = parsePagination(searchParams, { defaultLimit: 10000, maxLimit: 50000 });
 
   // Build where clause
   const where: Record<string, unknown> = {

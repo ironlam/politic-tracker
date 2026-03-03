@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useCallback, useEffect, useSyncExternalStore, useMemo } from "react";
+import { useRef, useState, useCallback, useEffect, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { GraphNode, Cluster } from "@/types/relations";
 import { RELATION_TYPE_COLORS } from "@/config/relations";
@@ -84,13 +84,13 @@ export function RelationsGraph({ center, clusters, width, height }: RelationsGra
   const { viewBox, links, clusterLabels, nodes } = layout;
 
   // Reset transform when layout changes significantly
-  const layoutKey = useMemo(
-    () => `${width}-${height}-${clusters.length}`,
-    [width, height, clusters.length]
-  );
-  useEffect(() => {
+  // (React pattern: adjust state during render instead of useEffect — avoids extra commit cycle)
+  const layoutKey = `${width}-${height}-${clusters.length}`;
+  const [prevLayoutKey, setPrevLayoutKey] = useState(layoutKey);
+  if (prevLayoutKey !== layoutKey) {
+    setPrevLayoutKey(layoutKey);
     setTransform({ x: 0, y: 0, scale: 1 });
-  }, [layoutKey]);
+  }
 
   // Ctrl+wheel zoom
   useEffect(() => {

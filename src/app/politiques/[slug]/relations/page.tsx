@@ -37,6 +37,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return {
     title: `Relations de ${politician.fullName} | Poligraph`,
     description: `Découvrez les relations politiques de ${politician.fullName} : gouvernement, entreprises, département, parcours partisan.`,
+    alternates: { canonical: `/politiques/${slug}/relations` },
   };
 }
 

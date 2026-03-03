@@ -31,6 +31,7 @@ export async function generateMetadata({
   return {
     title: `Votes ${label}`,
     description: `Tous les scrutins parlementaires sur le theme ${label}. Resultats des votes de l'Assemblee nationale et du Senat.`,
+    alternates: { canonical: `/votes/themes/${slug}` },
   };
 }
 

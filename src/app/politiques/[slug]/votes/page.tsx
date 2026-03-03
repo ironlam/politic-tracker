@@ -73,6 +73,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return {
     title: `Votes de ${politician.fullName}`,
     description: `Historique complet des votes parlementaires de ${politician.fullName} à l'Assemblée nationale.`,
+    alternates: { canonical: `/politiques/${slug}/votes` },
   };
 }
 

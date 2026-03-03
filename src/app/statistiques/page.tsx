@@ -24,6 +24,7 @@ export const metadata: Metadata = {
   title: "Statistiques",
   description:
     "Statistiques sur la vie politique française : travail législatif, transparence judiciaire, fact-checking",
+  alternates: { canonical: "/statistiques" },
 };
 
 // ── Judicial data ────────────────────────────────────────────

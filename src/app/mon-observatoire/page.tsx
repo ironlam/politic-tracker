@@ -4,6 +4,7 @@ import { WatchlistContent } from "./WatchlistContent";
 export const metadata: Metadata = {
   title: "Mon Observatoire",
   description: "Suivez l'activité de vos représentants : votes, presse, affaires judiciaires.",
+  alternates: { canonical: "/mon-observatoire" },
 };
 
 export default function MonObservatoirePage() {

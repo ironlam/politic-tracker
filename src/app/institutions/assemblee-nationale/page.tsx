@@ -21,6 +21,7 @@ export const metadata: Metadata = {
   title: "L'Assemblée nationale — Fonctionnement et votes",
   description:
     "Comprendre le fonctionnement de l'Assemblée nationale : types de votes, rôle du président de séance, délégation de vote et réalité de l'absentéisme parlementaire.",
+  alternates: { canonical: "/institutions/assemblee-nationale" },
 };
 
 const KEY_NUMBERS = [

@@ -36,6 +36,7 @@ export async function generateMetadata({ searchParams }: PageProps) {
   return {
     title: `Concordance des votes — ${label}`,
     description: `Détail de la concordance des votes entre deux ${label.toLowerCase()}.`,
+    alternates: { canonical: "/comparer/votes" },
   };
 }
 

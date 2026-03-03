@@ -35,6 +35,7 @@ export const metadata: Metadata = {
     title: "Municipales 2026 — Qui se présente chez vous ?",
     description: "Découvrez les candidats aux élections municipales 2026 dans votre commune.",
   },
+  alternates: { canonical: "/elections/municipales-2026" },
 };
 
 export default async function MunicipalesLandingPage() {

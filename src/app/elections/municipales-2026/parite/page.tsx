@@ -10,6 +10,7 @@ export const metadata: Metadata = {
   title: "Parité femmes-hommes — Municipales 2026 | Poligraph",
   description:
     "Analyse de la parité femmes-hommes dans les candidatures aux élections municipales 2026 par parti, par taille de commune et par liste.",
+  alternates: { canonical: "/elections/municipales-2026/parite" },
 };
 
 function parityColor(rate: number): string {

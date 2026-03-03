@@ -11,6 +11,7 @@ export const metadata: Metadata = {
   title: "Cumul des mandats — Municipales 2026 | Poligraph",
   description:
     "Quels députés, sénateurs et ministres se présentent aux élections municipales 2026 ? Découvrez les cumuls de mandats et les maires sortants absents.",
+  alternates: { canonical: "/elections/municipales-2026/cumul" },
 };
 
 // ---------------------------------------------------------------------------

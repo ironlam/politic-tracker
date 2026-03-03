@@ -19,6 +19,7 @@ export const metadata: Metadata = {
     description:
       "35 000 maires passés au crible : parité, étiquette politique, ancienneté dans le poste.",
   },
+  alternates: { canonical: "/elections/municipales-2026/maires" },
 };
 
 interface PageProps {

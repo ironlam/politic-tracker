@@ -87,6 +87,13 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
+      // Redirect www to non-www (canonical domain)
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: "www.poligraph.fr" }],
+        destination: "https://poligraph.fr/:path*",
+        permanent: true,
+      },
       {
         source: "/stats",
         destination: "/statistiques",

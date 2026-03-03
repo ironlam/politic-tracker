@@ -13,6 +13,7 @@ export const metadata: Metadata = {
   title: "Calendrier électoral",
   description:
     "Calendrier des prochaines élections en France : présidentielle, législatives, municipales, européennes. Compte à rebours, dates et informations clés.",
+  alternates: { canonical: "/elections" },
 };
 
 interface PageProps {

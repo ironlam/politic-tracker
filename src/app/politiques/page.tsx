@@ -17,6 +17,7 @@ export const revalidate = 300; // 5 minutes — CDN edge cache with ISR
 export const metadata: Metadata = {
   title: "Représentants politiques",
   description: "Liste des représentants politiques français - députés, sénateurs, ministres",
+  alternates: { canonical: "/politiques" },
 };
 
 interface PageProps {

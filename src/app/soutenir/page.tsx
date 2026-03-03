@@ -7,6 +7,7 @@ export const metadata: Metadata = {
   title: "Soutenez Poligraph",
   description:
     "Aidez-nous à maintenir et développer cette plateforme citoyenne d'information politique",
+  alternates: { canonical: "/soutenir" },
 };
 
 const EXPENSES = [

@@ -16,6 +16,7 @@ export const metadata: Metadata = {
       "Carte interactive des résultats électoraux par département. Visualisez la répartition politique des sièges aux législatives 2024.",
     type: "website",
   },
+  alternates: { canonical: "/carte" },
 };
 
 export default async function CartePage() {

@@ -24,6 +24,7 @@ export const metadata: Metadata = {
   title: "Fact-checks",
   description:
     "Vérification des déclarations des responsables politiques français. Fact-checks d'AFP Factuel, Les Décodeurs et autres sources reconnues.",
+  alternates: { canonical: "/factchecks" },
 };
 
 interface PageProps {

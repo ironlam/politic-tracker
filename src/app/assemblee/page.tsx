@@ -25,6 +25,7 @@ export const metadata: Metadata = {
   title: "En direct de l'Assemblée",
   description:
     "Suivez les textes en discussion à l'Assemblée nationale : projets de loi, propositions, résumés simplifiés",
+  alternates: { canonical: "/assemblee" },
 };
 
 interface PageProps {

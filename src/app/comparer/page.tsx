@@ -46,6 +46,7 @@ export async function generateMetadata({ searchParams }: PageProps) {
   return {
     title: `Comparer des ${label.toLowerCase()}`,
     description: `Comparez deux ${label.toLowerCase()} : votes, mandats, affaires judiciaires, fact-checks.`,
+    alternates: { canonical: "/comparer" },
   };
 }
 

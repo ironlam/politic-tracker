@@ -7,6 +7,7 @@ export const metadata: Metadata = {
   title: "Sources et Méthodologie",
   description:
     "Nos sources de données, notre méthodologie et notre engagement pour la transparence",
+  alternates: { canonical: "/sources" },
 };
 
 const DATA_SOURCES = [

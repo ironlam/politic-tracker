@@ -19,6 +19,7 @@ export const metadata: Metadata = {
   title: "Votes par thematique",
   description:
     "Explorez les scrutins parlementaires classes par thematique : economie, sante, securite, environnement et plus. Decouvrez les votes de vos representants par sujet.",
+  alternates: { canonical: "/votes/themes" },
 };
 
 export default async function ThemesListingPage() {

@@ -199,6 +199,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       description,
       type: "website",
     },
+    alternates: { canonical: `/affaires/parti/${slug}` },
   };
 }
 

@@ -10,6 +10,7 @@ export const metadata: Metadata = {
   title: "Carte des forces politiques — Municipales 2026 | Poligraph",
   description:
     "Cartographie des forces politiques par département pour les élections municipales 2026. Découvrez quel parti domine dans chaque département.",
+  alternates: { canonical: "/elections/municipales-2026/carte" },
 };
 
 export default async function CartePage() {

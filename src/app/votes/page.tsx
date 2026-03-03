@@ -22,6 +22,7 @@ export const metadata: Metadata = {
   title: "Votes parlementaires",
   description:
     "Suivez les votes de l'Assemblée nationale et du Sénat. Consultez les scrutins et découvrez comment votent vos représentants.",
+  alternates: { canonical: "/votes" },
 };
 
 interface PageProps {

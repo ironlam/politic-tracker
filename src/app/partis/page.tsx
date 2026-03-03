@@ -17,6 +17,7 @@ export const revalidate = 300; // 5 minutes, cohérent avec l'API
 export const metadata: Metadata = {
   title: "Partis politiques",
   description: "Liste des partis politiques français avec leurs membres et historique",
+  alternates: { canonical: "/partis" },
 };
 
 type SortOption = "members" | "alpha" | "alpha-desc";

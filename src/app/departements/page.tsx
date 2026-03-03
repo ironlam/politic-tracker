@@ -10,6 +10,7 @@ export const metadata: Metadata = {
   title: "Départements",
   description:
     "Liste des départements français et leurs représentants politiques - députés et sénateurs par département.",
+  alternates: { canonical: "/departements" },
 };
 
 async function getDepartmentStats() {

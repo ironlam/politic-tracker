@@ -36,6 +36,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       title,
       description,
     },
+    alternates: { canonical: `/elections/municipales-2026/communes/${inseeCode}` },
   };
 }
 

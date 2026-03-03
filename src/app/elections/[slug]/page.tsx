@@ -99,6 +99,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       title: election.title,
       description,
     },
+    alternates: { canonical: `/elections/${slug}` },
   };
 }
 

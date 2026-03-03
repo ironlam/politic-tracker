@@ -39,6 +39,7 @@ export const metadata: Metadata = {
     description:
       "Classement des élus par patrimoine déclaré, entreprises détenues et revenus. Source officielle : HATVP.",
   },
+  alternates: { canonical: "/declarations-et-patrimoine" },
 };
 
 interface PageProps {

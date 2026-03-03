@@ -16,6 +16,7 @@ export const metadata: Metadata = {
   title: "Revue de presse",
   description:
     "Suivez l'actualité politique française. Articles du Monde, Politico et Mediapart mentionnant les responsables politiques.",
+  alternates: { canonical: "/presse" },
 };
 
 interface PageProps {

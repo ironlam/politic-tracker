@@ -9,6 +9,7 @@ export const metadata: Metadata = {
   title: "Qui est mon député ?",
   description:
     "Trouvez votre député en entrant votre code postal. Accédez à sa fiche, ses mandats et ses déclarations.",
+  alternates: { canonical: "/mon-depute" },
 };
 
 export default async function MonDeputePage() {

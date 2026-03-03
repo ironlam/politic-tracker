@@ -94,6 +94,7 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
       title: `${title} | Poligraph`,
       description,
     },
+    alternates: { canonical: "/affaires" },
   };
 }
 

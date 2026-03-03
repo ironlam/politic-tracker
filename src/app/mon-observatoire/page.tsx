@@ -14,7 +14,7 @@ export default function MonObservatoirePage() {
           Mon Observatoire
         </h1>
         <p className="text-sm text-muted-foreground">
-          Suivez l'activité récente des représentants que vous avez ajoutés à votre liste.
+          Suivez l{"'"}activité récente des représentants que vous avez ajoutés à votre liste.
         </p>
       </div>
       <WatchlistContent />

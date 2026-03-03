@@ -60,7 +60,7 @@ async function fetchAllMairies(): Promise<Map<string, string>> {
 
     if (!Array.isArray(siteArr) || siteArr.length === 0) continue;
 
-    const rawUrl = siteArr[0].valeur?.trim();
+    const rawUrl = siteArr[0]?.valeur?.trim();
     if (!rawUrl) continue;
 
     // Normalize URL

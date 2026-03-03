@@ -132,7 +132,7 @@ export function WebSiteJsonLd({ name, description, url }: WebSiteJsonLdProps) {
       "@type": "SearchAction",
       target: {
         "@type": "EntryPoint",
-        urlTemplate: `${url}/politiques?search={search_term_string}`,
+        urlTemplate: `${url}/recherche?q={search_term_string}`,
       },
       "query-input": "required name=search_term_string",
     },

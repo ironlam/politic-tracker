@@ -3,9 +3,8 @@ import Link from "next/link";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { MobileMenu } from "./MobileMenu";
 import { NavDropdown } from "./NavDropdown";
-import { NAV_GROUPS, NAV_TOP_LEVEL, CTA_COMPARER, CTA_ASSISTANT } from "@/config/navigation";
-import { GitCompare, Bot, Scale, ShieldCheck } from "lucide-react";
-import { GlobalSearchTrigger } from "@/components/search";
+import { NAV_GROUPS, NAV_TOP_LEVEL, CTA_COMPARER } from "@/config/navigation";
+import { ArrowLeftRight, Scale, ShieldCheck, Search, Telescope } from "lucide-react";
 import { getEnabledFlags } from "@/lib/feature-flags";
 
 export async function Header() {
@@ -18,8 +17,6 @@ export async function Header() {
   })).filter((group) => group.items.length > 0);
 
   const showComparer = !CTA_COMPARER.featureFlag || enabledFlags.has(CTA_COMPARER.featureFlag);
-  const showAssistant = !CTA_ASSISTANT.featureFlag || enabledFlags.has(CTA_ASSISTANT.featureFlag);
-  const electionsBoost = enabledFlags.has("ELECTIONS_BOOST");
 
   return (
     <header
@@ -64,34 +61,41 @@ export async function Header() {
               <NavDropdown
                 key={group.label}
                 group={group}
-                boost={group.label === "Élections" && electionsBoost}
+                boost={group.label === "Élections" && enabledFlags.has("ELECTIONS_BOOST")}
               />
             ))}
 
-            {/* Global search */}
-            <GlobalSearchTrigger variant="desktop" />
+            {/* Search */}
+            <Link
+              href="/recherche"
+              className="flex items-center justify-center w-9 h-9 text-muted-foreground border border-border rounded-lg hover:bg-muted/50 hover:text-foreground transition-colors"
+              aria-label="Rechercher sur Poligraph (⌘K)"
+            >
+              <Search className="h-4 w-4" aria-hidden="true" />
+            </Link>
 
             {/* Separator */}
-            <div className="h-6 w-px bg-border mx-2" />
+            <div className="h-6 w-px bg-border mx-1.5" aria-hidden="true" />
 
-            {/* CTA Buttons */}
+            {/* Mon Observatoire */}
+            <Link
+              href="/mon-observatoire"
+              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted/50 transition-colors"
+              aria-label="Mon Observatoire — Suivre des représentants"
+            >
+              <Telescope className="h-4 w-4" aria-hidden="true" />
+              <span className="hidden xl:inline">Observatoire</span>
+            </Link>
+
+            {/* Comparer (CTA style) */}
             {showComparer && (
               <Link
                 href={CTA_COMPARER.href}
-                className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted/50 transition-colors"
+                className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-primary border border-primary/30 rounded-lg hover:bg-primary/10 transition-colors"
+                aria-label="Comparer des représentants"
               >
-                <GitCompare className="h-4 w-4" />
-                {CTA_COMPARER.label}
-              </Link>
-            )}
-
-            {showAssistant && (
-              <Link
-                href={CTA_ASSISTANT.href}
-                className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted/50 transition-colors"
-              >
-                <Bot className="h-4 w-4" />
-                {CTA_ASSISTANT.label}
+                <ArrowLeftRight className="h-4 w-4" aria-hidden="true" />
+                <span className="hidden xl:inline">Comparer</span>
               </Link>
             )}
 
@@ -100,7 +104,7 @@ export async function Header() {
           </nav>
 
           {/* Mobile navigation */}
-          <MobileMenu enabledFlags={[...enabledFlags]} />
+          <MobileMenu enabledFlags={[...enabledFlags]} showComparer={showComparer} />
         </div>
       </div>
     </header>

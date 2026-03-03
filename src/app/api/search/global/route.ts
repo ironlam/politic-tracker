@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { withCache } from "@/lib/cache";
 
+const LIMIT = 8;
+
 export async function GET(request: NextRequest) {
   const query = request.nextUrl.searchParams.get("q") || "";
 
@@ -9,12 +11,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       politicians: [],
       parties: [],
+      affairs: [],
       scrutins: [],
-      dossiers: [],
     });
   }
 
-  const [politicians, parties, scrutins] = await Promise.all([
+  const [politicians, parties, affairs, scrutins] = await Promise.all([
     // Politicians: ILIKE on fullName/lastName/firstName
     db.politician.findMany({
       where: {
@@ -40,7 +42,7 @@ export async function GET(request: NextRequest) {
         },
       },
       orderBy: [{ prominenceScore: "desc" }, { lastName: "asc" }],
-      take: 5,
+      take: LIMIT,
     }),
 
     // Parties: ILIKE on name/shortName
@@ -59,7 +61,25 @@ export async function GET(request: NextRequest) {
         _count: { select: { politicians: true } },
       },
       orderBy: { name: "asc" },
-      take: 5,
+      take: LIMIT,
+    }),
+
+    // Affairs: ILIKE on title
+    db.affair.findMany({
+      where: {
+        publicationStatus: "PUBLISHED",
+        title: { contains: query, mode: "insensitive" },
+      },
+      select: {
+        slug: true,
+        title: true,
+        status: true,
+        politician: {
+          select: { fullName: true, slug: true },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+      take: LIMIT,
     }),
 
     // Scrutins: ILIKE on title
@@ -75,7 +95,7 @@ export async function GET(request: NextRequest) {
         chamber: true,
       },
       orderBy: { votingDate: "desc" },
-      take: 5,
+      take: LIMIT,
     }),
   ]);
 
@@ -97,6 +117,13 @@ export async function GET(request: NextRequest) {
         color: p.color,
         memberCount: p._count.politicians,
       })),
+      affairs: affairs.map((a) => ({
+        slug: a.slug,
+        title: a.title,
+        status: a.status,
+        politicianName: a.politician.fullName,
+        politicianSlug: a.politician.slug,
+      })),
       scrutins: scrutins.map((s) => ({
         slug: s.slug,
         id: s.id,
@@ -104,8 +131,6 @@ export async function GET(request: NextRequest) {
         votingDate: s.votingDate.toISOString(),
         chamber: s.chamber,
       })),
-      // Dossiers: disabled until a public page exists (see #118)
-      dossiers: [],
     }),
     "daily"
   );

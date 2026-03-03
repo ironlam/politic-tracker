@@ -1,38 +1,38 @@
 import { Metadata } from "next";
 import { Suspense } from "react";
-import { AdvancedSearchClient } from "./AdvancedSearchClient";
+import { SearchClient } from "./SearchClient";
 
-export const metadata: Metadata = {
-  title: "Recherche avancée",
-  description: "Recherche avancée de représentants politiques avec filtres multiples",
-  robots: { index: false, follow: true },
-};
+interface Props {
+  searchParams: Promise<{ q?: string }>;
+}
+
+export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
+  const { q } = await searchParams;
+  const title = q ? `${q} — Recherche` : "Recherche";
+  return {
+    title,
+    description:
+      "Recherche globale : représentants politiques, partis, affaires judiciaires et votes parlementaires.",
+    robots: { index: true, follow: true },
+  };
+}
 
 function SearchLoading() {
   return (
-    <div className="animate-pulse space-y-4">
-      <div className="h-10 bg-muted rounded-md w-full" />
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {[...Array(6)].map((_, i) => (
-          <div key={i} className="h-10 bg-muted rounded-md" />
-        ))}
-      </div>
+    <div className="max-w-2xl mx-auto">
+      <div className="h-14 bg-muted rounded-2xl animate-pulse" />
     </div>
   );
 }
 
 export default function RecherchePage() {
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Recherche avancée</h1>
-        <p className="text-muted-foreground">
-          Trouvez des représentants politiques avec des critères précis
-        </p>
-      </div>
-
+    <div className="container mx-auto px-4 py-10">
+      <h1 className="text-3xl font-display font-extrabold tracking-tight mb-8 max-w-2xl mx-auto">
+        Recherche
+      </h1>
       <Suspense fallback={<SearchLoading />}>
-        <AdvancedSearchClient />
+        <SearchClient />
       </Suspense>
     </div>
   );

@@ -5,7 +5,7 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { WebSiteJsonLd } from "@/components/seo/JsonLd";
 import { ChatWidget } from "@/components/chat/ChatWidget";
-import { GlobalSearchProvider, GlobalSearchDialog } from "@/components/search";
+import { GlobalSearchProvider } from "@/components/search";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { UmamiAnalytics } from "@/components/analytics/UmamiAnalytics";
 import { isFeatureEnabled } from "@/lib/feature-flags";
@@ -139,7 +139,6 @@ export default async function RootLayout({
               </main>
               <Footer />
               {chatEnabled && <ChatWidget />}
-              <GlobalSearchDialog />
             </GlobalSearchProvider>
           </TooltipProvider>
         </ThemeProvider>

@@ -1,14 +1,10 @@
-"use client";
-
 import Image from "next/image";
 import Link from "next/link";
 import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { HexPattern } from "@/components/ui/HexPattern";
-import { useGlobalSearch } from "@/components/search/GlobalSearchProvider";
 
 export default function NotFound() {
-  const { openSearch } = useGlobalSearch();
   return (
     <div className="relative flex flex-col items-center justify-center min-h-[70vh] px-4 text-center bg-gradient-to-br from-primary/5 via-background to-accent/10">
       <HexPattern className="absolute inset-0 text-primary opacity-[0.03] dark:opacity-[0.05] pointer-events-none" />
@@ -22,9 +18,11 @@ export default function NotFound() {
           <Button asChild>
             <Link href="/">Retour à l&apos;accueil</Link>
           </Button>
-          <Button variant="outline" onClick={openSearch}>
-            <Search className="h-4 w-4 mr-2" aria-hidden="true" />
-            Rechercher
+          <Button asChild variant="outline">
+            <Link href="/recherche">
+              <Search className="h-4 w-4 mr-2" aria-hidden="true" />
+              Rechercher
+            </Link>
           </Button>
           <Button variant="link" asChild>
             <Link href="/politiques">Explorer les représentants</Link>

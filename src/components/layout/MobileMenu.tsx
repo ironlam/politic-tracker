@@ -4,9 +4,9 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
-import { NAV_GROUPS, NAV_TOP_LEVEL, CTA_COMPARER, CTA_ASSISTANT } from "@/config/navigation";
+import { NAV_GROUPS, NAV_TOP_LEVEL, CTA_ASSISTANT } from "@/config/navigation";
 import {
-  GitCompare,
+  ArrowLeftRight,
   Bot,
   Map,
   MapPin,
@@ -18,9 +18,10 @@ import {
   Calendar,
   Vote,
   Landmark,
+  Search,
+  Telescope,
   type LucideIcon,
 } from "lucide-react";
-import { GlobalSearchTrigger } from "@/components/search";
 
 const ICON_MAP: Record<string, LucideIcon> = {
   map: Map,
@@ -46,9 +47,11 @@ function getFocusableElements(container: HTMLElement): HTMLElement[] {
 interface MobileMenuProps {
   /** Enabled feature flag names, passed from server component */
   enabledFlags?: string[];
+  /** Whether the Comparer CTA is visible (pre-computed from feature flags) */
+  showComparer?: boolean;
 }
 
-export function MobileMenu({ enabledFlags = [] }: MobileMenuProps) {
+export function MobileMenu({ enabledFlags = [], showComparer = false }: MobileMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
   const menuRef = useRef<HTMLDivElement>(null);
@@ -119,8 +122,31 @@ export function MobileMenu({ enabledFlags = [] }: MobileMenuProps) {
 
   return (
     <div className="lg:hidden">
-      {/* Hamburger button */}
-      <div className="flex items-center gap-2">
+      {/* Header icon bar */}
+      <div className="flex items-center gap-1">
+        <Link
+          href="/recherche"
+          className="p-2 rounded-lg hover:bg-accent transition-colors touch-target"
+          aria-label="Rechercher sur Poligraph"
+        >
+          <Search className="w-5 h-5" aria-hidden="true" />
+        </Link>
+        <Link
+          href="/mon-observatoire"
+          className="p-2 rounded-lg hover:bg-accent transition-colors touch-target"
+          aria-label="Mon Observatoire — Suivre des représentants"
+        >
+          <Telescope className="w-5 h-5" aria-hidden="true" />
+        </Link>
+        {showComparer && (
+          <Link
+            href="/comparer"
+            className="p-2 rounded-lg hover:bg-accent transition-colors touch-target"
+            aria-label="Comparer des représentants"
+          >
+            <ArrowLeftRight className="w-5 h-5" aria-hidden="true" />
+          </Link>
+        )}
         <ThemeToggle />
         <button
           ref={buttonRef}
@@ -131,7 +157,6 @@ export function MobileMenu({ enabledFlags = [] }: MobileMenuProps) {
           aria-controls="mobile-menu"
         >
           {isOpen ? (
-            // X icon
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
@@ -147,7 +172,6 @@ export function MobileMenu({ enabledFlags = [] }: MobileMenuProps) {
               <path d="m6 6 12 12" />
             </svg>
           ) : (
-            // Menu icon
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
@@ -178,11 +202,6 @@ export function MobileMenu({ enabledFlags = [] }: MobileMenuProps) {
           aria-label="Menu de navigation"
         >
           <nav className="container mx-auto px-4 py-4" aria-label="Navigation mobile">
-            {/* Global search */}
-            <div className="mb-4">
-              <GlobalSearchTrigger variant="mobile" onBeforeOpen={() => setIsOpen(false)} />
-            </div>
-
             {/* Transparency links (top priority) */}
             <div className="flex gap-2 mb-4">
               {NAV_TOP_LEVEL.map((item) => {
@@ -200,36 +219,24 @@ export function MobileMenu({ enabledFlags = [] }: MobileMenuProps) {
                     }`}
                     aria-current={isActive ? "page" : undefined}
                   >
-                    {Icon && <Icon className="h-5 w-5" />}
+                    {Icon && <Icon className="h-5 w-5" aria-hidden="true" />}
                     {item.label}
                   </Link>
                 );
               })}
             </div>
 
-            {/* CTA Buttons */}
-            <div className="flex gap-2 mb-4">
-              {isVisible(CTA_COMPARER.featureFlag) && (
-                <Link
-                  href={CTA_COMPARER.href}
-                  onClick={() => setIsOpen(false)}
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-3 border border-border font-medium rounded-lg hover:bg-muted/50"
-                >
-                  <GitCompare className="h-5 w-5" />
-                  {CTA_COMPARER.label}
-                </Link>
-              )}
-              {isVisible(CTA_ASSISTANT.featureFlag) && (
-                <Link
-                  href={CTA_ASSISTANT.href}
-                  onClick={() => setIsOpen(false)}
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-3 border border-border font-medium rounded-lg hover:bg-muted/50"
-                >
-                  <Bot className="h-5 w-5" />
-                  {CTA_ASSISTANT.label}
-                </Link>
-              )}
-            </div>
+            {/* Assistant IA CTA */}
+            {isVisible(CTA_ASSISTANT.featureFlag) && (
+              <Link
+                href={CTA_ASSISTANT.href}
+                onClick={() => setIsOpen(false)}
+                className="flex items-center justify-center gap-2 px-4 py-3 mb-4 border border-border font-medium rounded-lg hover:bg-muted/50"
+              >
+                <Bot className="h-5 w-5" aria-hidden="true" />
+                {CTA_ASSISTANT.label}
+              </Link>
+            )}
 
             {/* Navigation groups */}
             {filteredGroups.map((group) => (
@@ -256,7 +263,7 @@ export function MobileMenu({ enabledFlags = [] }: MobileMenuProps) {
                             ICON_MAP[item.icon] &&
                             (() => {
                               const Icon = ICON_MAP[item.icon!]!;
-                              return <Icon className="h-5 w-5 shrink-0" />;
+                              return <Icon className="h-5 w-5 shrink-0" aria-hidden="true" />;
                             })()}
                           <div>
                             <span>{item.label}</span>

@@ -122,7 +122,7 @@ function ChamberSection({ chamber, scrutins }: { chamber: Chamber; scrutins: Dai
     <section className="mb-10">
       <div className="flex items-center gap-2.5 mb-4">
         <Building2
-          className={`h-4 w-4 ${chamber === "AN" ? "text-blue-600" : "text-rose-600"}`}
+          className={`h-4 w-4 ${chamber === "AN" ? "text-blue-700" : "text-rose-700"}`}
           aria-hidden="true"
         />
         <h2 className="text-lg font-semibold">{CHAMBER_LABELS[chamber]}</h2>

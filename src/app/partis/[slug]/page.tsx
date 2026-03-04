@@ -20,6 +20,7 @@ import {
 import type { AffairStatus, AffairSeverity } from "@/types";
 import { PoliticianAvatar } from "@/components/politicians/PoliticianAvatar";
 import { PoliticalPositionBadge } from "@/components/parties/PoliticalPositionBadge";
+import { CollapsibleCard } from "@/components/ui/CollapsibleCard";
 import { OrganizationJsonLd, BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 import { ensureContrast } from "@/lib/contrast";
 import { SITE_URL } from "@/config/site";
@@ -38,7 +39,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   const memberCount = party.politicians.length;
   const affairCount = party.affairsAtTime.length;
-  const description = `${party.name} (${party.shortName}) - ${memberCount} membre${memberCount > 1 ? "s" : ""} actuels.${affairCount > 0 ? ` ${affairCount} affaire${affairCount > 1 ? "s" : ""} judiciaire${affairCount > 1 ? "s" : ""} documentée${affairCount > 1 ? "s" : ""}.` : ""} Consultez la liste des élus et l'historique du parti.`;
+  const description =
+    party.description ||
+    `${party.name} (${party.shortName}) - ${memberCount} membre${memberCount > 1 ? "s" : ""} actuels.${affairCount > 0 ? ` ${affairCount} affaire${affairCount > 1 ? "s" : ""} judiciaire${affairCount > 1 ? "s" : ""} documentée${affairCount > 1 ? "s" : ""}.` : ""} Consultez la liste des élus et l'historique du parti.`;
 
   return {
     title: `${party.name} (${party.shortName})`,
@@ -113,7 +116,7 @@ export default async function PartyPage({ params }: PageProps) {
       <OrganizationJsonLd
         name={party.name}
         alternateName={party.shortName}
-        description={undefined}
+        description={party.description || undefined}
         logo={party.logoUrl || undefined}
         url={`${SITE_URL}/partis/${party.slug}`}
         foundingDate={party.foundedDate?.toISOString().split("T")[0]}
@@ -183,6 +186,11 @@ export default async function PartyPage({ params }: PageProps) {
             </div>
           </div>
         </div>
+
+        {/* Description */}
+        {party.description && (
+          <p className="text-muted-foreground leading-relaxed mb-8">{party.description}</p>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main content */}
@@ -297,105 +305,103 @@ export default async function PartyPage({ params }: PageProps) {
             )}
 
             {/* Current members */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Membres actuels ({party.politicians.length})</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {party.politicians.length > 0 ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {party.politicians.map((politician) => (
-                      <div
-                        key={politician.id}
-                        className={`flex items-center gap-3 p-2 rounded-lg ${
-                          politician._count.affairs > 0
-                            ? "ring-1 ring-red-200 bg-red-50/50 dark:ring-red-900 dark:bg-red-950/30"
-                            : ""
-                        }`}
+            <CollapsibleCard
+              title="Membres actuels"
+              count={party.politicians.length}
+              defaultOpen={party.politicians.length > 0 && party.politicians.length <= 10}
+            >
+              {party.politicians.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {party.politicians.map((politician) => (
+                    <div
+                      key={politician.id}
+                      className={`flex items-center gap-3 p-2 rounded-lg ${
+                        politician._count.affairs > 0
+                          ? "ring-1 ring-red-200 bg-red-50/50 dark:ring-red-900 dark:bg-red-950/30"
+                          : ""
+                      }`}
+                    >
+                      <Link
+                        href={`/politiques/${politician.slug}`}
+                        className="relative shrink-0 hover:opacity-80 transition-opacity"
                       >
+                        <PoliticianAvatar
+                          photoUrl={politician.photoUrl}
+                          firstName={politician.firstName}
+                          lastName={politician.lastName}
+                          size="sm"
+                        />
+                      </Link>
+                      <div className="min-w-0 flex-1">
                         <Link
                           href={`/politiques/${politician.slug}`}
-                          className="relative shrink-0 hover:opacity-80 transition-opacity"
+                          className="font-medium truncate block hover:text-primary transition-colors"
                         >
-                          <PoliticianAvatar
-                            photoUrl={politician.photoUrl}
-                            firstName={politician.firstName}
-                            lastName={politician.lastName}
-                            size="sm"
-                          />
+                          {politician.fullName}
                         </Link>
-                        <div className="min-w-0 flex-1">
-                          <Link
-                            href={`/politiques/${politician.slug}`}
-                            className="font-medium truncate block hover:text-primary transition-colors"
-                          >
-                            {politician.fullName}
-                          </Link>
-                          {politician.mandates[0] && (
-                            <p className="text-xs text-muted-foreground truncate">
-                              {politician.mandates[0].title}
-                            </p>
-                          )}
-                        </div>
-                        {politician._count.affairs > 0 && (
-                          <Link
-                            href={`/politiques/${politician.slug}/affaires`}
-                            className="shrink-0 flex items-center gap-1 px-2 py-1 text-xs font-medium text-red-700 dark:text-red-400 bg-red-100 dark:bg-red-950/50 rounded-full hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
-                            title={`${politician._count.affairs} condamnation(s) définitive(s)`}
-                          >
-                            <span>{politician._count.affairs}</span>
-                            <span className="hidden sm:inline">
-                              affaire{politician._count.affairs > 1 ? "s" : ""}
-                            </span>
-                          </Link>
+                        {politician.mandates[0] && (
+                          <p className="text-xs text-muted-foreground truncate">
+                            {politician.mandates[0].title}
+                          </p>
                         )}
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-muted-foreground">Aucun membre actuel</p>
-                )}
-              </CardContent>
-            </Card>
+                      {politician._count.affairs > 0 && (
+                        <Link
+                          href={`/politiques/${politician.slug}/affaires`}
+                          className="shrink-0 flex items-center gap-1 px-2 py-1 text-xs font-medium text-red-700 dark:text-red-400 bg-red-100 dark:bg-red-950/50 rounded-full hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
+                          title={`${politician._count.affairs} condamnation(s) définitive(s)`}
+                        >
+                          <span>{politician._count.affairs}</span>
+                          <span className="hidden sm:inline">
+                            affaire{politician._count.affairs > 1 ? "s" : ""}
+                          </span>
+                        </Link>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-muted-foreground">Aucun membre actuel</p>
+              )}
+            </CollapsibleCard>
 
             {/* Historical members */}
             {historicalMembers.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Anciens membres ({historicalMembers.length})</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    {historicalMembers.slice(0, 20).map((membership) => (
-                      <Link
-                        key={membership.id}
-                        href={`/politiques/${membership.politician.slug}`}
-                        className="flex items-center justify-between p-2 rounded-lg hover:bg-muted transition-colors"
-                      >
-                        <div className="flex items-center gap-3">
-                          <PoliticianAvatar
-                            photoUrl={membership.politician.photoUrl}
-                            firstName={membership.politician.firstName}
-                            lastName={membership.politician.lastName}
-                            size="sm"
-                          />
-                          <span className="font-medium">{membership.politician.fullName}</span>
-                        </div>
-                        <span className="text-sm text-muted-foreground">
-                          {membership.startDate ? formatDate(membership.startDate) : ""}
-                          {membership.endDate &&
-                            `${membership.startDate ? " - " : ""}${formatDate(membership.endDate)}`}
-                        </span>
-                      </Link>
-                    ))}
-                    {historicalMembers.length > 20 && (
-                      <p className="text-sm text-muted-foreground text-center pt-2">
-                        Et {historicalMembers.length - 20} autres...
-                      </p>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
+              <CollapsibleCard
+                title="Anciens membres"
+                count={historicalMembers.length}
+                defaultOpen={false}
+              >
+                <div className="space-y-2">
+                  {historicalMembers.slice(0, 20).map((membership) => (
+                    <Link
+                      key={membership.id}
+                      href={`/politiques/${membership.politician.slug}`}
+                      className="flex items-center justify-between p-2 rounded-lg hover:bg-muted transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <PoliticianAvatar
+                          photoUrl={membership.politician.photoUrl}
+                          firstName={membership.politician.firstName}
+                          lastName={membership.politician.lastName}
+                          size="sm"
+                        />
+                        <span className="font-medium">{membership.politician.fullName}</span>
+                      </div>
+                      <span className="text-sm text-muted-foreground">
+                        {membership.startDate ? formatDate(membership.startDate) : ""}
+                        {membership.endDate &&
+                          `${membership.startDate ? " - " : ""}${formatDate(membership.endDate)}`}
+                      </span>
+                    </Link>
+                  ))}
+                  {historicalMembers.length > 20 && (
+                    <p className="text-sm text-muted-foreground text-center pt-2">
+                      Et {historicalMembers.length - 20} autres...
+                    </p>
+                  )}
+                </div>
+              </CollapsibleCard>
             )}
 
             {/* Affairs */}

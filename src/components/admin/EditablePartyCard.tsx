@@ -23,7 +23,7 @@ interface PartyMembership {
   id: string;
   partyId: string;
   role: string;
-  startDate: Date;
+  startDate: Date | null;
   endDate: Date | null;
   party: Party;
 }

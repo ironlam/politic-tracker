@@ -24,7 +24,7 @@ interface CareerTimelineProps {
   mandates: SerializedMandate[];
   partyHistory: {
     id: string;
-    startDate: Date;
+    startDate: Date | null;
     endDate: Date | null;
     role: string;
     party: {
@@ -168,7 +168,7 @@ export function CareerTimeline({
       if (m.endDate) careerDates.push(new Date(m.endDate));
     });
     partyHistory.forEach((ph) => {
-      careerDates.push(new Date(ph.startDate));
+      if (ph.startDate) careerDates.push(new Date(ph.startDate));
       if (ph.endDate) careerDates.push(new Date(ph.endDate));
     });
     affairs.forEach((a) => {
@@ -505,27 +505,29 @@ function DesktopTimeline({
 
           {/* ─── Party band ─── */}
           {hasPartyBand &&
-            partyHistory.map((ph) => {
-              const start = xScale(new Date(ph.startDate));
-              const end = xScale(ph.endDate ? new Date(ph.endDate) : new Date());
-              const width = Math.max(end - start, MIN_BAR_WIDTH);
-              const color = ph.party.color || "#9ca3af";
-              return (
-                <div
-                  key={ph.id}
-                  className="absolute rounded-sm"
-                  title={ph.party.shortName}
-                  style={{
-                    left: start,
-                    top: YEAR_AXIS_HEIGHT,
-                    width,
-                    height: PARTY_BAND_HEIGHT,
-                    backgroundColor: color,
-                    opacity: 0.12,
-                  }}
-                />
-              );
-            })}
+            partyHistory
+              .filter((ph) => ph.startDate)
+              .map((ph) => {
+                const start = xScale(new Date(ph.startDate!));
+                const end = xScale(ph.endDate ? new Date(ph.endDate) : new Date());
+                const width = Math.max(end - start, MIN_BAR_WIDTH);
+                const color = ph.party.color || "#9ca3af";
+                return (
+                  <div
+                    key={ph.id}
+                    className="absolute rounded-sm"
+                    title={ph.party.shortName}
+                    style={{
+                      left: start,
+                      top: YEAR_AXIS_HEIGHT,
+                      width,
+                      height: PARTY_BAND_HEIGHT,
+                      backgroundColor: color,
+                      opacity: 0.12,
+                    }}
+                  />
+                );
+              })}
 
           {/* ─── Row labels ─── */}
           {mandateRows.map(({ label }, index) => (
@@ -695,7 +697,9 @@ function MobileTimeline({
     });
 
     partyHistory.forEach((ph) => {
-      all.push({ type: "party-change", date: new Date(ph.startDate), party: ph });
+      if (ph.startDate) {
+        all.push({ type: "party-change", date: new Date(ph.startDate), party: ph });
+      }
     });
 
     timelineAffairs.forEach((a) => {

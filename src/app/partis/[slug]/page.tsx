@@ -382,8 +382,9 @@ export default async function PartyPage({ params }: PageProps) {
                           <span className="font-medium">{membership.politician.fullName}</span>
                         </div>
                         <span className="text-sm text-muted-foreground">
-                          {formatDate(membership.startDate)}
-                          {membership.endDate && ` - ${formatDate(membership.endDate)}`}
+                          {membership.startDate ? formatDate(membership.startDate) : ""}
+                          {membership.endDate &&
+                            `${membership.startDate ? " - " : ""}${formatDate(membership.endDate)}`}
                         </span>
                       </Link>
                     ))}

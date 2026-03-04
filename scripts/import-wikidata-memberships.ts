@@ -180,12 +180,10 @@ async function importMemberships(results: WikidataMembershipResult[]): Promise<{
       }
 
       // Parse and validate dates
-      let startDate: Date;
+      let startDate: Date | null = null;
       if (membership.startDate?.value) {
         const parsed = new Date(membership.startDate.value);
-        startDate = isNaN(parsed.getTime()) ? new Date("1958-01-01") : parsed;
-      } else {
-        startDate = new Date("1958-01-01"); // Default to Ve République start
+        startDate = isNaN(parsed.getTime()) ? null : parsed;
       }
 
       let endDate: Date | null = null;
@@ -199,10 +197,14 @@ async function importMemberships(results: WikidataMembershipResult[]): Promise<{
         where: {
           politicianId,
           partyId,
-          startDate: {
-            gte: new Date(startDate.getTime() - 86400000), // Within 1 day tolerance
-            lte: new Date(startDate.getTime() + 86400000),
-          },
+          ...(startDate
+            ? {
+                startDate: {
+                  gte: new Date(startDate.getTime() - 86400000), // Within 1 day tolerance
+                  lte: new Date(startDate.getTime() + 86400000),
+                },
+              }
+            : { startDate: null }),
         },
       });
 

@@ -231,7 +231,7 @@ model PartyMembership {
   party        Party      @relation(fields: [partyId], references: [id])
   partyId      String
   role         PartyRole  @default(MEMBER)
-  startDate    DateTime
+  startDate    DateTime?
   endDate      DateTime?
 
   createdAt DateTime @default(now())

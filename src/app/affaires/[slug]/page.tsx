@@ -1,6 +1,6 @@
 import { cache } from "react";
 import { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import Link from "next/link";
 import { db } from "@/lib/db";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -24,6 +24,7 @@ import { AffairTimeline } from "@/components/affairs/AffairTimeline";
 import { PoliticianAvatar } from "@/components/politicians/PoliticianAvatar";
 import { ArticleJsonLd, BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 import type { AffairCategory, Involvement } from "@/types";
+import type { Prisma } from "@/generated/prisma";
 import { SITE_URL } from "@/config/site";
 
 export const revalidate = 3600; // ISR: revalidate every hour
@@ -42,38 +43,60 @@ interface PageProps {
   params: Promise<{ slug: string }>;
 }
 
-const getAffair = cache(async function getAffair(slug: string) {
-  return db.affair.findFirst({
-    where: { slug, publicationStatus: "PUBLISHED" },
-    include: {
-      politician: {
-        select: {
-          id: true,
-          fullName: true,
-          slug: true,
-          photoUrl: true,
-          civility: true,
-          currentParty: {
-            select: { id: true, shortName: true, name: true, color: true },
-          },
-        },
-      },
-      partyAtTime: {
-        select: { id: true, slug: true, shortName: true, name: true, color: true },
-      },
-      sources: {
-        orderBy: { publishedAt: "desc" },
-      },
-      events: {
-        orderBy: { date: "asc" },
+const affairInclude = {
+  politician: {
+    select: {
+      id: true,
+      fullName: true,
+      slug: true,
+      photoUrl: true,
+      civility: true,
+      currentParty: {
+        select: { id: true, shortName: true, name: true, color: true },
       },
     },
+  },
+  partyAtTime: {
+    select: { id: true, slug: true, shortName: true, name: true, color: true },
+  },
+  sources: {
+    orderBy: { publishedAt: "desc" as const },
+  },
+  events: {
+    orderBy: { date: "asc" as const },
+  },
+};
+
+function findAffair(where: Prisma.AffairWhereInput) {
+  return db.affair.findFirst({ where, include: affairInclude });
+}
+
+type AffairResult = NonNullable<Awaited<ReturnType<typeof findAffair>>>;
+
+const getAffairWithRedirect = cache(async function getAffairWithRedirect(
+  slugOrId: string
+): Promise<{ affair: AffairResult | null; redirect: string | null }> {
+  // 1. Try current slug (canonical)
+  let affair = await findAffair({ slug: slugOrId, publicationStatus: "PUBLISHED" });
+  if (affair) return { affair, redirect: null };
+
+  // 2. Try old slugs (301 redirect)
+  affair = await findAffair({ oldSlugs: { has: slugOrId }, publicationStatus: "PUBLISHED" });
+  if (affair) return { affair, redirect: affair.slug };
+
+  // 3. Try by ID (CUID)
+  affair = await db.affair.findFirst({
+    where: { id: slugOrId },
+    include: affairInclude,
   });
+  if (affair) return { affair, redirect: affair.slug };
+
+  return { affair: null, redirect: null };
 });
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const affair = await getAffair(slug);
+  const { affair } = await getAffairWithRedirect(slug);
 
   if (!affair) {
     return { title: "Affaire non trouvée" };
@@ -82,7 +105,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return {
     title: `${affair.title} - ${affair.politician.fullName}`,
     description: affair.description.slice(0, 160),
-    alternates: { canonical: `/affaires/${slug}` },
+    alternates: { canonical: `/affaires/${affair.slug}` },
     openGraph: {
       title: `${affair.title} - ${affair.politician.fullName}`,
       description: affair.description.slice(0, 160),
@@ -93,7 +116,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function AffairDetailPage({ params }: PageProps) {
   const { slug } = await params;
-  const affair = await getAffair(slug);
+  const { affair, redirect } = await getAffairWithRedirect(slug);
+
+  if (redirect) {
+    permanentRedirect(`/affaires/${redirect}`);
+  }
 
   if (!affair) {
     notFound();

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { withAdminAuth } from "@/lib/api/with-admin-auth";
 import { invalidateEntity } from "@/lib/cache";
-import { generateSlug } from "@/lib/utils";
+import { generateAffairSlug } from "@/lib/utils";
 import { trackStatusChange } from "@/services/affairs/status-tracking";
 import { updateAffairSchema } from "@/lib/validations/affairs";
 import { computeSeverity, isInherentlyMandateCategory } from "@/config/labels";
@@ -39,17 +39,28 @@ export const PUT = withAdminAuth(async (request: NextRequest, context) => {
   // Check affair exists
   const existing = await db.affair.findUnique({
     where: { id },
-    include: { sources: true },
+    include: { sources: true, politician: { select: { slug: true } } },
   });
 
   if (!existing) {
     return NextResponse.json({ error: "Affaire non trouvée" }, { status: 404 });
   }
 
-  // Regenerate slug if title changed
+  // Regenerate slug if title or politician changed
   let newSlug: string | undefined;
-  if (existing.title !== data.title) {
-    const baseSlug = generateSlug(data.title);
+  let oldSlugToSave: string | undefined;
+  if (existing.title !== data.title || existing.politicianId !== data.politicianId) {
+    const politicianSlug =
+      existing.politicianId !== data.politicianId
+        ? ((
+            await db.politician.findUnique({
+              where: { id: data.politicianId },
+              select: { slug: true },
+            })
+          )?.slug ?? existing.politician.slug)
+        : existing.politician.slug;
+
+    const baseSlug = generateAffairSlug(politicianSlug, data.title);
     newSlug = baseSlug;
     let counter = 1;
     while (
@@ -59,6 +70,10 @@ export const PUT = withAdminAuth(async (request: NextRequest, context) => {
     ) {
       newSlug = `${baseSlug}-${counter}`;
       counter++;
+    }
+    // Save old slug for redirect
+    if (newSlug !== existing.slug) {
+      oldSlugToSave = existing.slug;
     }
   }
 
@@ -73,6 +88,7 @@ export const PUT = withAdminAuth(async (request: NextRequest, context) => {
       politicianId: data.politicianId,
       title: data.title,
       ...(newSlug && { slug: newSlug }),
+      ...(oldSlugToSave && { oldSlugs: { push: oldSlugToSave } }),
       description: data.description,
       status: data.status,
       category: data.category,

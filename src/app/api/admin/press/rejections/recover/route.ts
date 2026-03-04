@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { withAdminAuth } from "@/lib/api/with-admin-auth";
-import { generateSlug } from "@/lib/utils";
+import { generateAffairSlug } from "@/lib/utils";
 import { invalidateEntity } from "@/lib/cache";
 import { computeSeverity, isInherentlyMandateCategory } from "@/config/labels";
 import type { AffairCategory, AffairStatus } from "@/generated/prisma";
@@ -68,8 +68,14 @@ export const POST = withAdminAuth(async (request: NextRequest) => {
   const detected = rejection.detectedAffair as unknown as DetectedAffair;
   const title = `[À VÉRIFIER] ${detected.title}`;
 
-  // Generate unique slug
-  const baseSlug = generateSlug(title);
+  // Get politician slug for SEO-friendly affair slug
+  const politician = await db.politician.findUnique({
+    where: { id: rejection.politicianId! },
+    select: { slug: true },
+  });
+
+  // Generate unique slug with politician name
+  const baseSlug = generateAffairSlug(politician?.slug ?? "", title);
   let slug = baseSlug;
   let counter = 1;
   while (await db.affair.findUnique({ where: { slug }, select: { id: true } })) {

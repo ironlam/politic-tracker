@@ -6,7 +6,7 @@ import type {
   AffairWithSources,
   CreateAffairInput,
 } from "@/types";
-import { generateSlug } from "@/lib/utils";
+import { generateAffairSlug } from "@/lib/utils";
 import { computeSeverity, isInherentlyMandateCategory } from "@/config/labels";
 
 // Re-export matching service
@@ -91,7 +91,11 @@ export async function getRecentAffairs(limit = 10): Promise<AffairWithPolitician
 }
 
 export async function createAffair(input: CreateAffairInput): Promise<AffairWithSources> {
-  const slug = generateSlug(input.title);
+  const politician = await db.politician.findUnique({
+    where: { id: input.politicianId },
+    select: { slug: true },
+  });
+  const slug = generateAffairSlug(politician?.slug ?? "", input.title);
 
   // Compute severity from category and mandate relation
   const mandateRelated = input.isRelatedToMandate ?? isInherentlyMandateCategory(input.category);

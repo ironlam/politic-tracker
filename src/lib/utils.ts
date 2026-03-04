@@ -18,6 +18,31 @@ export function generateSlug(text: string): string {
     .replace(/(^-|-$)/g, "");
 }
 
+/**
+ * Clean affair title for slug generation:
+ * - Strip "À vérifier — " / "À vérifier - " prefix
+ * - Strip "Affaire de/des/du/de la/de l'" prefix
+ */
+export function cleanAffairTitle(title: string): string {
+  return title
+    .replace(/^\[?[AÀ]\s*V[ÉEée]RIFIER\]?\s*[—–-]?\s*/i, "")
+    .replace(/^Affaire\s+de\s+l['']/i, "")
+    .replace(/^Affaire\s+de\s+la\s+/i, "")
+    .replace(/^Affaire\s+des?\s+/i, "")
+    .replace(/^Affaire\s+du\s+/i, "")
+    .replace(/^Affaire\s+/i, "")
+    .trim();
+}
+
+/**
+ * Generate an affair slug with politician name prefix.
+ * Example: "eric-zemmour-propos-trafiquants-crack-senegalais"
+ */
+export function generateAffairSlug(politicianSlug: string, title: string): string {
+  const cleanTitle = cleanAffairTitle(title);
+  return generateSlug(`${politicianSlug} ${cleanTitle}`);
+}
+
 export function formatDate(date: Date | string | null): string {
   if (!date) return "—";
   const d = typeof date === "string" ? new Date(date) : date;

@@ -405,8 +405,9 @@ model Affair {
   partyAtTimeId String?
 
   title       String // Ex: "Affaire des emplois fictifs du MoDem"
-  slug        String @unique
-  description String @db.Text
+  slug        String   @unique
+  oldSlugs    String[] @default([])
+  description String   @db.Text
 
   status      AffairStatus
   category    AffairCategory

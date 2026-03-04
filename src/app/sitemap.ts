@@ -5,7 +5,7 @@ import { getAllThemeSlugs } from "@/lib/theme-utils";
 import { SITE_URL } from "@/config/site";
 
 export async function generateSitemaps() {
-  return [{ id: 0 }, { id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }, { id: 5 }];
+  return [{ id: 0 }, { id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }];
 }
 
 export default async function sitemap(props: {
@@ -20,10 +20,8 @@ export default async function sitemap(props: {
     case 2:
       return buildDossiersSitemap();
     case 3:
-      return buildScrutinsWithSummarySitemap();
+      return buildScrutinsSitemap();
     case 4:
-      return buildScrutinsWithoutSummarySitemap();
-    case 5:
       return buildCommunesSitemap();
     default:
       return [];
@@ -290,12 +288,13 @@ async function buildAffairsPartiesElectionsDepartmentsSitemap(): Promise<Metadat
   ];
 }
 
-// Sitemap 2: Legislative dossiers (priority 0.5-0.6)
+// Sitemap 2: Legislative dossiers — top 300 most recent (priority 0.6)
 async function buildDossiersSitemap(): Promise<MetadataRoute.Sitemap> {
   const dossiers = await db.legislativeDossier.findMany({
     where: { slug: { not: null } },
     select: { slug: true, updatedAt: true },
     orderBy: { filingDate: "desc" },
+    take: 300,
   });
 
   return dossiers
@@ -308,12 +307,13 @@ async function buildDossiersSitemap(): Promise<MetadataRoute.Sitemap> {
     }));
 }
 
-// Sitemap 3: Scrutins WITH AI summary (priority 0.4)
-async function buildScrutinsWithSummarySitemap(): Promise<MetadataRoute.Sitemap> {
+// Sitemap 3: Top 500 scrutins by recency (priority 0.4)
+async function buildScrutinsSitemap(): Promise<MetadataRoute.Sitemap> {
   const scrutins = await db.scrutin.findMany({
-    where: { slug: { not: null }, summary: { not: null } },
+    where: { slug: { not: null } },
     select: { slug: true, updatedAt: true },
     orderBy: { votingDate: "desc" },
+    take: 500,
   });
 
   return scrutins
@@ -326,33 +326,14 @@ async function buildScrutinsWithSummarySitemap(): Promise<MetadataRoute.Sitemap>
     }));
 }
 
-// Sitemap 4: Scrutins WITHOUT AI summary (priority 0.2)
-async function buildScrutinsWithoutSummarySitemap(): Promise<MetadataRoute.Sitemap> {
-  const scrutins = await db.scrutin.findMany({
-    where: { slug: { not: null }, summary: null },
-    select: { slug: true, updatedAt: true },
-    orderBy: { votingDate: "desc" },
-  });
-
-  return scrutins
-    .filter((s) => s.slug)
-    .map((s) => ({
-      url: `${SITE_URL}/votes/${s.slug}`,
-      lastModified: s.updatedAt,
-      changeFrequency: "monthly" as const,
-      priority: 0.2,
-    }));
-}
-
-// Sitemap 5: Commune pages for municipales 2026 (priority 0.6)
+// Sitemap 4: Top 500 communes by population (priority 0.6)
 async function buildCommunesSitemap(): Promise<MetadataRoute.Sitemap> {
-  // Only include communes that have at least 1 candidacy
-  // Use a raw query for efficiency — we don't want to load 35K communes unnecessarily
   const communes: Array<{ id: string }> = await db.$queryRaw`
     SELECT DISTINCT c.id
     FROM "Commune" c
     INNER JOIN "Candidacy" ca ON ca."communeId" = c.id
-    ORDER BY c.id
+    ORDER BY c.population DESC NULLS LAST
+    LIMIT 500
   `;
 
   return communes.map((c) => ({

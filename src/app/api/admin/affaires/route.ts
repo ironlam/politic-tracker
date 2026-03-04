@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { generateSlug } from "@/lib/utils";
+import { generateAffairSlug } from "@/lib/utils";
 import { withAdminAuth } from "@/lib/api/with-admin-auth";
 import { invalidateEntity } from "@/lib/cache";
 import { createAffairSchema } from "@/lib/validations/affairs";
@@ -91,14 +91,15 @@ export const POST = withAdminAuth(async (request: NextRequest) => {
   // Check politician exists
   const politician = await db.politician.findUnique({
     where: { id: data.politicianId },
+    select: { id: true, slug: true },
   });
 
   if (!politician) {
     return NextResponse.json({ error: "Politique non trouvé" }, { status: 404 });
   }
 
-  // Generate unique slug
-  const baseSlug = generateSlug(data.title);
+  // Generate unique slug with politician name
+  const baseSlug = generateAffairSlug(politician.slug, data.title);
   let slug = baseSlug;
   let counter = 1;
 

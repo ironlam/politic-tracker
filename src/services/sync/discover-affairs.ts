@@ -8,7 +8,7 @@
  */
 
 import { db } from "@/lib/db";
-import { generateSlug, generateUniqueSlug } from "@/lib/utils";
+import { generateAffairSlug, generateUniqueSlug } from "@/lib/utils";
 import { WikidataService } from "@/lib/api/wikidata";
 import { WD_PROPS } from "@/config/wikidata";
 import { mapWikidataOffense, getOffenseLabel } from "@/config/wikidata-affairs";
@@ -76,8 +76,8 @@ function extractPublisherFromUrl(url: string): string {
   }
 }
 
-async function generateUniqueAffairSlug(title: string): Promise<string> {
-  const baseSlug = generateSlug(title);
+async function generateUniqueAffairSlug(politicianSlug: string, title: string): Promise<string> {
+  const baseSlug = generateAffairSlug(politicianSlug, title);
   return generateUniqueSlug(
     baseSlug,
     (s) => db.affair.findUnique({ where: { slug: s } }).then(Boolean),
@@ -356,7 +356,11 @@ async function runPhase3Reconciliation(
         continue;
       }
 
-      const slug = await generateUniqueAffairSlug(affair.title);
+      const politician = await db.politician.findUnique({
+        where: { id: affair.politicianId },
+        select: { slug: true },
+      });
+      const slug = await generateUniqueAffairSlug(politician?.slug ?? "", affair.title);
 
       await db.affair.create({
         data: {

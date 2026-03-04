@@ -24,6 +24,16 @@ import { CollapsibleCard } from "@/components/ui/CollapsibleCard";
 import { OrganizationJsonLd, BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 import { ensureContrast } from "@/lib/contrast";
 import { SITE_URL } from "@/config/site";
+import { db } from "@/lib/db";
+
+export async function generateStaticParams() {
+  const parties = await db.party.findMany({
+    select: { slug: true },
+    orderBy: { name: "asc" },
+    take: 50,
+  });
+  return parties.map((p) => ({ slug: p.slug }));
+}
 
 interface PageProps {
   params: Promise<{ slug: string }>;

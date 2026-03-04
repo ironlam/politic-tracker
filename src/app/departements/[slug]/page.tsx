@@ -6,9 +6,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { PoliticianAvatar } from "@/components/politicians/PoliticianAvatar";
 import { ensureContrast } from "@/lib/contrast";
-import { getDepartmentBySlug } from "@/config/departments";
+import { getDepartmentBySlug, DEPARTMENTS } from "@/config/departments";
 
 export const revalidate = 3600; // ISR: revalidate every hour
+
+export function generateStaticParams() {
+  return Object.keys(DEPARTMENTS).map((slug) => ({ slug }));
+}
 
 interface PageProps {
   params: Promise<{ slug: string }>;

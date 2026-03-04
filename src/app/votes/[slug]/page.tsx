@@ -20,6 +20,16 @@ const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 
 export const revalidate = 3600; // ISR: revalidate every hour
 
+export async function generateStaticParams() {
+  const scrutins = await db.scrutin.findMany({
+    where: { slug: { not: null } },
+    select: { slug: true },
+    take: 200,
+    orderBy: { votingDate: "desc" },
+  });
+  return scrutins.filter((s) => s.slug !== null).map((s) => ({ slug: s.slug! }));
+}
+
 interface PageProps {
   params: Promise<{ slug: string }>;
 }

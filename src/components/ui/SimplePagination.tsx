@@ -10,13 +10,13 @@ export function SimplePagination({ page, totalPages, buildUrl }: SimplePaginatio
   if (totalPages <= 1) return null;
 
   return (
-    <div className="flex justify-center gap-2 mt-8">
+    <nav aria-label="Pagination" className="flex justify-center gap-2 mt-8">
       {page > 1 && (
         <Link href={buildUrl(page - 1)} className="px-4 py-2 rounded-lg bg-muted hover:bg-muted/80">
           Précédent
         </Link>
       )}
-      <span className="px-4 py-2 text-muted-foreground">
+      <span className="px-4 py-2 text-muted-foreground" aria-current="page">
         Page {page} sur {totalPages}
       </span>
       {page < totalPages && (
@@ -24,6 +24,6 @@ export function SimplePagination({ page, totalPages, buildUrl }: SimplePaginatio
           Suivant
         </Link>
       )}
-    </div>
+    </nav>
   );
 }

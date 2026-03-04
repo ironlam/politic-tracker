@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useId, useMemo } from "react";
 import { scaleLinear } from "d3-scale";
 
 interface ParityBarData {
@@ -20,6 +20,7 @@ const PCT_WIDTH = 80;
 const GAP = 4;
 
 export function ParityChart({ data, title }: ParityChartProps) {
+  const descId = useId();
   const sorted = useMemo(
     () => [...data].sort((a, b) => Math.abs(0.5 - a.femaleRate) - Math.abs(0.5 - b.femaleRate)),
     [data]
@@ -40,7 +41,8 @@ export function ParityChart({ data, title }: ParityChartProps) {
           viewBox={`0 0 ${svgWidth} ${svgHeight}`}
           className="w-full max-w-2xl"
           role="img"
-          aria-label={title}
+          aria-label={`${title} : ${sorted.map((d) => `${d.label} ${Math.round(d.femaleRate * 100)}% F`).join(", ")}`}
+          aria-describedby={descId}
         >
           {/* 50% reference line */}
           <line
@@ -107,6 +109,29 @@ export function ParityChart({ data, title }: ParityChartProps) {
           })}
         </svg>
       </div>
+
+      {/* Screen reader table */}
+      <table className="sr-only" id={descId}>
+        <caption>{title}</caption>
+        <thead>
+          <tr>
+            <th>Catégorie</th>
+            <th>Femmes (%)</th>
+            <th>Hommes (%)</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          {sorted.map((item) => (
+            <tr key={item.label}>
+              <td>{item.label}</td>
+              <td>{Math.round(item.femaleRate * 100)}%</td>
+              <td>{100 - Math.round(item.femaleRate * 100)}%</td>
+              <td>{item.totalCount}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
 
       {/* Legend */}
       <div className="flex items-center gap-4 mt-3 text-sm text-muted-foreground">

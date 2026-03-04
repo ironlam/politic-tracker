@@ -26,6 +26,15 @@ import { SITE_URL } from "@/config/site";
 
 export const revalidate = 3600; // ISR: revalidate every hour
 
+export async function generateStaticParams() {
+  const elections = await db.election.findMany({
+    select: { slug: true },
+    take: 50,
+    orderBy: { round1Date: "desc" },
+  });
+  return elections.map((e) => ({ slug: e.slug }));
+}
+
 interface PageProps {
   params: Promise<{ slug: string }>;
 }

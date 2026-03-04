@@ -10,8 +10,19 @@ import { IncumbentMayorCard } from "@/components/elections/municipales/Incumbent
 import { HistoriqueSection2020 } from "@/components/elections/municipales/HistoriqueSection2020";
 import { EventJsonLd, BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 import { SITE_URL } from "@/config/site";
+import { db } from "@/lib/db";
 
 export const revalidate = 3600; // ISR: revalidate every hour
+
+export async function generateStaticParams() {
+  const communes = await db.commune.findMany({
+    where: { candidacies: { some: {} } },
+    select: { id: true },
+    take: 500,
+    orderBy: { population: "desc" },
+  });
+  return communes.map((c) => ({ inseeCode: c.id }));
+}
 
 interface PageProps {
   params: Promise<{ inseeCode: string }>;

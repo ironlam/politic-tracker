@@ -66,6 +66,7 @@ export function ChatWidget() {
             !hasInteracted && "animate-pulse"
           )}
           aria-label="Ouvrir l'assistant IA"
+          aria-expanded={false}
         >
           <MessageSquare className="w-6 h-6" />
         </button>

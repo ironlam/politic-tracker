@@ -5,7 +5,7 @@ import { cacheTag, cacheLife } from "next/cache";
 import { db } from "@/lib/db";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ActivityTabs, QuickTools, UpcomingElections } from "@/components/home";
+import { ActivityTabs, QuickTools, UpcomingElections, TodayVotesWidget } from "@/components/home";
 import { WebSiteJsonLd } from "@/components/seo/JsonLd";
 import { Heart } from "lucide-react";
 import { HexPattern } from "@/components/ui/HexPattern";
@@ -13,6 +13,7 @@ import { FadeIn } from "@/components/motion";
 import { isFeatureEnabled } from "@/lib/feature-flags";
 import { FACTCHECK_ALLOWED_SOURCES } from "@/config/labels";
 import { SITE_URL } from "@/config/site";
+import { getTodayVotesSummary } from "@/lib/data/votes";
 
 export const metadata: Metadata = {
   title: "Poligraph — Observatoire citoyen de la politique française",
@@ -199,6 +200,7 @@ export default async function HomePage() {
     recentArticles,
     recentAffairs,
     upcomingElections,
+    todayVotes,
   ] = await Promise.all([
     getRecentFactChecks(),
     getRecentVotes(),
@@ -206,6 +208,7 @@ export default async function HomePage() {
     getRecentArticles(),
     getRecentAffairs(),
     getUpcomingElections(),
+    getTodayVotesSummary(),
   ]);
 
   const statsEnabled = await isFeatureEnabled("STATISTIQUES_SECTION");
@@ -283,6 +286,15 @@ export default async function HomePage() {
         {/* Upcoming Elections */}
         <FadeIn>
           <UpcomingElections elections={upcomingElections} />
+        </FadeIn>
+
+        {/* Today's Votes Widget */}
+        <FadeIn>
+          <TodayVotesWidget
+            total={todayVotes.total}
+            adopted={todayVotes.adopted}
+            rejected={todayVotes.rejected}
+          />
         </FadeIn>
 
         {/* Activity Tabs */}

@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { VotingResultBadge, VotePositionBadge } from "@/components/votes";
+import { DailyVotesPage } from "@/components/votes/DailyVotesPage";
 import { PoliticianAvatar } from "@/components/politicians/PoliticianAvatar";
 import { formatDate } from "@/lib/utils";
 import { THEME_CATEGORY_LABELS, THEME_CATEGORY_COLORS } from "@/config/labels";
@@ -13,6 +14,9 @@ import { ExternalLink, Calendar, Users, Sparkles } from "lucide-react";
 import { BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 import type { VotePosition } from "@/types";
 import { SITE_URL } from "@/config/site";
+
+// Matches bare YYYY-MM-DD (never collides with scrutin slugs which are YYYY-MM-DD-title)
+const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 
 export const revalidate = 3600; // ISR: revalidate every hour
 
@@ -93,6 +97,25 @@ const getScrutinWithRedirect = cache(async function getScrutinWithRedirect(slugO
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
+
+  // Date archive page (e.g., /votes/2026-03-04)
+  if (DATE_REGEX.test(slug)) {
+    const date = new Date(slug + "T00:00:00Z");
+    if (!isNaN(date.getTime())) {
+      const formatted = date.toLocaleDateString("fr-FR", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+        timeZone: "UTC",
+      });
+      return {
+        title: `Votes du ${formatted}`,
+        description: `Scrutins de l'Assemblée nationale et du Sénat du ${formatted}. Résultats, résumés et détails des votes parlementaires.`,
+        alternates: { canonical: `/votes/${slug}` },
+      };
+    }
+  }
+
   const { scrutin } = await getScrutinWithRedirect(slug);
 
   if (!scrutin) {
@@ -117,6 +140,15 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function ScrutinPage({ params }: PageProps) {
   const { slug } = await params;
+
+  // Date archive page (e.g., /votes/2026-03-04)
+  if (DATE_REGEX.test(slug)) {
+    const date = new Date(slug + "T00:00:00Z");
+    if (!isNaN(date.getTime())) {
+      return <DailyVotesPage date={slug} />;
+    }
+  }
+
   const { scrutin, redirect } = await getScrutinWithRedirect(slug);
 
   // Redirect legacy URLs to canonical slug URL

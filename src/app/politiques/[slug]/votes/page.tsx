@@ -126,17 +126,17 @@ export default async function PoliticianVotesPage({ params, searchParams }: Page
       {/* NON_VOTANT context note for president of chamber */}
       {(() => {
         const presidentMandate = politician.mandates.find(
-          (m) => m.role && /^(Président|Vice-président) /.test(m.role)
+          (m) => m.role && /^Président /.test(m.role)
         );
-        if (presidentMandate && stats.nonVotant > 0) {
+        if (presidentMandate) {
           const roleLabel = feminizeRole(presidentMandate.role!, politician.civility);
           return (
             <div className="flex items-start gap-3 p-4 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900 rounded-lg mb-8">
               <Info className="h-5 w-5 text-primary shrink-0 mt-0.5" />
               <p className="text-sm text-blue-800 dark:text-blue-200">
                 En tant que <strong>{roleLabel}</strong>, {politician.fullName} ne participe
-                traditionnellement pas aux votes. Les votes &quot;Non-votant&quot; (
-                {stats.nonVotant}) reflètent cette convention institutionnelle.
+                traditionnellement pas aux votes afin de garantir l&apos;impartialité de la
+                présidence. Les statistiques de participation ne sont pas significatives.
               </p>
             </div>
           );
@@ -199,7 +199,12 @@ export default async function PoliticianVotesPage({ params, searchParams }: Page
 
         {/* Sidebar */}
         <div>
-          <VoteStats stats={stats} />
+          <VoteStats
+            stats={stats}
+            isChamberPresident={politician.mandates.some(
+              (m) => m.role != null && /^Président /.test(m.role)
+            )}
+          />
         </div>
       </div>
     </div>

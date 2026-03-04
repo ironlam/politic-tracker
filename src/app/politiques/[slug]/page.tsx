@@ -154,6 +154,9 @@ export default async function PoliticianPage({ params }: PageProps) {
   const isActiveParliamentarian = politician.mandates.some(
     (m) => m.isCurrent && (m.type === "DEPUTE" || m.type === "SENATEUR")
   );
+  const isChamberPresident = politician.mandates.some(
+    (m) => m.isCurrent && m.role != null && /^Président /.test(m.role)
+  );
 
   // Get vote stats (for deputies and senators - both have votes tracked)
   const isParliamentarian =
@@ -664,6 +667,7 @@ export default async function PoliticianPage({ params }: PageProps) {
                         : null
                     }
                     currentGroup={currentGroup ?? null}
+                    isChamberPresident={isChamberPresident}
                   />
                 ) : null
               }

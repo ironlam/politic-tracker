@@ -90,19 +90,19 @@ const POSITION_MAPPING: Record<string, { type: MandateType; institution: string 
 
 // Role positions (president/VP of chamber) — update role on existing mandate
 const ROLE_POSITIONS: Record<string, { mandateType: MandateType; role: string }> = {
-  Q2824697: {
+  Q20968036: {
     mandateType: MandateType.DEPUTE,
     role: "Président de l'Assemblée nationale",
   },
-  Q42512885: {
+  Q3409222: {
     mandateType: MandateType.SENATEUR,
     role: "Président du Sénat",
   },
-  Q19600701: {
+  Q19955577: {
     mandateType: MandateType.DEPUTE,
     role: "Vice-président de l'Assemblée nationale",
   },
-  Q56055912: {
+  Q87432400: {
     mandateType: MandateType.SENATEUR,
     role: "Vice-président du Sénat",
   },
@@ -191,7 +191,8 @@ export async function syncCareers(options?: {
         // Check if this is a ROLE position
         const roleInfo = ROLE_POSITIONS[pos.positionId];
         if (roleInfo) {
-          const overlappingMandate = politician.mandates.find((m) => {
+          // Find ALL overlapping mandates (a presidency can span multiple legislatures)
+          const overlappingMandates = politician.mandates.filter((m) => {
             if (m.type !== roleInfo.mandateType) return false;
             const mStart = new Date(m.startDate);
             const mEnd = m.endDate ? new Date(m.endDate) : new Date();
@@ -199,16 +200,18 @@ export async function syncCareers(options?: {
             return mStart <= roleEnd && mEnd >= startDate;
           });
 
-          if (overlappingMandate) {
-            try {
-              await db.mandate.update({
-                where: { id: overlappingMandate.id },
-                data: { role: roleInfo.role },
-              });
-            } catch (error) {
-              stats.errors.push(`${politician.fullName} (role update): ${error}`);
+          if (overlappingMandates.length > 0) {
+            for (const mandate of overlappingMandates) {
+              try {
+                await db.mandate.update({
+                  where: { id: mandate.id },
+                  data: { role: roleInfo.role },
+                });
+              } catch (error) {
+                stats.errors.push(`${politician.fullName} (role update): ${error}`);
+              }
+              stats.mandatesSkipped++;
             }
-            stats.mandatesSkipped++;
           } else {
             const positionLabel = labels.get(pos.positionId) || pos.positionId;
             const externalMandateId = `wikidata-${extId.externalId}-${pos.positionId}-${startDate.toISOString().split("T")[0]}`;

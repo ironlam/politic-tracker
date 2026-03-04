@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
+import { Info } from "lucide-react";
 import type { PoliticianParliamentaryCardData } from "@/services/voteStats";
 
 interface ParliamentaryCardProps {
@@ -10,6 +11,7 @@ interface ParliamentaryCardProps {
   groupColor: string | null;
   constituency: string | null;
   mandateTitle: string;
+  isChamberPresident?: boolean;
 }
 
 /**
@@ -80,6 +82,7 @@ export function ParliamentaryCard({
   groupColor,
   constituency,
   mandateTitle,
+  isChamberPresident,
 }: ParliamentaryCardProps) {
   const chamberLabel = data.chamber === "AN" ? "Assemblée nationale" : "Sénat";
   const chamberColor =
@@ -122,68 +125,83 @@ export function ParliamentaryCard({
       </div>
 
       <CardContent className="pt-5 pb-4">
-        {/* Main layout: gauge + stats */}
-        <div className="flex items-start gap-5">
-          {/* Gauge */}
-          <div className="flex flex-col items-center shrink-0">
-            <ParticipationGauge rate={data.participationRate} />
-            <span className="text-[10px] text-muted-foreground mt-1 flex items-center gap-0.5">
-              Participation <InfoTooltip term="participationRate" size="sm" />
-            </span>
+        {isChamberPresident ? (
+          <div className="flex items-start gap-3 p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg">
+            <Info className="h-4 w-4 text-primary shrink-0 mt-0.5" aria-hidden="true" />
+            <div className="text-sm text-muted-foreground">
+              <p>
+                Par convention, le président de chambre ne participe pas aux scrutins afin de
+                garantir l&apos;impartialité de la présidence.
+              </p>
+              <p className="mt-1 text-xs">
+                Les statistiques de participation ne sont pas affichées.
+              </p>
+            </div>
           </div>
+        ) : (
+          /* Main layout: gauge + stats */
+          <div className="flex items-start gap-5">
+            {/* Gauge */}
+            <div className="flex flex-col items-center shrink-0">
+              <ParticipationGauge rate={data.participationRate} />
+              <span className="text-[10px] text-muted-foreground mt-1 flex items-center gap-0.5">
+                Participation <InfoTooltip term="participationRate" size="sm" />
+              </span>
+            </div>
 
-          {/* Stats grid */}
-          <div className="flex-1 space-y-3 min-w-0">
-            {/* Rank */}
-            <div className="flex items-baseline gap-2">
-              <span
-                className={`text-2xl font-bold tabular-nums ${rateColor(data.participationRate)}`}
+            {/* Stats grid */}
+            <div className="flex-1 space-y-3 min-w-0">
+              {/* Rank */}
+              <div className="flex items-baseline gap-2">
+                <span
+                  className={`text-2xl font-bold tabular-nums ${rateColor(data.participationRate)}`}
+                >
+                  {data.rank}
+                  <span className="text-sm font-normal text-muted-foreground align-super">
+                    {data.rank === 1 ? "er" : "e"}
+                  </span>
+                </span>
+                <span className="text-sm text-muted-foreground">
+                  / {data.totalPeers} {data.mandateType === "DEPUTE" ? "députés" : "sénateurs"}
+                </span>
+              </div>
+
+              {/* Votes fraction */}
+              <div>
+                <div className="flex justify-between text-sm mb-1">
+                  <span className="text-muted-foreground">Scrutins votés</span>
+                  <span className="font-medium tabular-nums">
+                    {data.votesCount.toLocaleString("fr-FR")} /{" "}
+                    {data.eligibleScrutins.toLocaleString("fr-FR")}
+                  </span>
+                </div>
+                <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all ${
+                      data.participationRate >= 75
+                        ? "bg-emerald-500"
+                        : data.participationRate >= 50
+                          ? "bg-amber-500"
+                          : "bg-red-500"
+                    }`}
+                    style={{
+                      width: `${Math.min(data.participationRate, 100)}%`,
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* CTA */}
+              <Link
+                href="/statistiques#participation"
+                prefetch={false}
+                className="inline-flex items-center text-xs text-primary hover:underline"
               >
-                {data.rank}
-                <span className="text-sm font-normal text-muted-foreground align-super">
-                  {data.rank === 1 ? "er" : "e"}
-                </span>
-              </span>
-              <span className="text-sm text-muted-foreground">
-                / {data.totalPeers} {data.mandateType === "DEPUTE" ? "députés" : "sénateurs"}
-              </span>
+                Voir le classement complet →
+              </Link>
             </div>
-
-            {/* Votes fraction */}
-            <div>
-              <div className="flex justify-between text-sm mb-1">
-                <span className="text-muted-foreground">Scrutins votés</span>
-                <span className="font-medium tabular-nums">
-                  {data.votesCount.toLocaleString("fr-FR")} /{" "}
-                  {data.eligibleScrutins.toLocaleString("fr-FR")}
-                </span>
-              </div>
-              <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-                <div
-                  className={`h-full rounded-full transition-all ${
-                    data.participationRate >= 75
-                      ? "bg-emerald-500"
-                      : data.participationRate >= 50
-                        ? "bg-amber-500"
-                        : "bg-red-500"
-                  }`}
-                  style={{
-                    width: `${Math.min(data.participationRate, 100)}%`,
-                  }}
-                />
-              </div>
-            </div>
-
-            {/* CTA */}
-            <Link
-              href="/statistiques#participation"
-              prefetch={false}
-              className="inline-flex items-center text-xs text-primary hover:underline"
-            >
-              Voir le classement complet →
-            </Link>
           </div>
-        </div>
+        )}
       </CardContent>
     </Card>
   );

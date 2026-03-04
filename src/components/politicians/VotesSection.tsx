@@ -32,6 +32,7 @@ interface VotesSectionProps {
     name: string;
     color: string | null;
   } | null;
+  isChamberPresident?: boolean;
 }
 
 export function VotesSection({
@@ -40,6 +41,7 @@ export function VotesSection({
   parliamentaryCard,
   currentMandate,
   currentGroup,
+  isChamberPresident,
 }: VotesSectionProps) {
   return (
     <div className="space-y-8">
@@ -52,6 +54,7 @@ export function VotesSection({
           groupColor={currentGroup?.color ?? null}
           constituency={currentMandate.constituency ?? null}
           mandateTitle={currentMandate.title}
+          isChamberPresident={isChamberPresident}
         />
       )}
 
@@ -94,28 +97,30 @@ export function VotesSection({
               </div>
             </div>
 
-            {/* Participation bar */}
-            <div>
-              <div className="flex justify-between text-sm mb-1">
-                <span id="participation-label" className="text-muted-foreground">
-                  Participation
-                </span>
-                <span className="font-medium">{voteData.stats.participationRate}%</span>
-              </div>
-              <div
-                className="h-2 bg-gray-100 rounded-full overflow-hidden"
-                role="progressbar"
-                aria-labelledby="participation-label"
-                aria-valuenow={voteData.stats.participationRate}
-                aria-valuemin={0}
-                aria-valuemax={100}
-              >
+            {/* Participation bar (hidden for chamber presidents) */}
+            {!isChamberPresident && (
+              <div>
+                <div className="flex justify-between text-sm mb-1">
+                  <span id="participation-label" className="text-muted-foreground">
+                    Participation
+                  </span>
+                  <span className="font-medium">{voteData.stats.participationRate}%</span>
+                </div>
                 <div
-                  className="h-full bg-primary"
-                  style={{ width: `${voteData.stats.participationRate}%` }}
-                />
+                  className="h-2 bg-gray-100 rounded-full overflow-hidden"
+                  role="progressbar"
+                  aria-labelledby="participation-label"
+                  aria-valuenow={voteData.stats.participationRate}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                >
+                  <div
+                    className="h-full bg-primary"
+                    style={{ width: `${voteData.stats.participationRate}%` }}
+                  />
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Recent votes */}
             {voteData.recentVotes.length > 0 && (

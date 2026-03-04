@@ -14,9 +14,10 @@ interface VoteStatsProps {
     absent: number;
     participationRate: number;
   };
+  isChamberPresident?: boolean;
 }
 
-export function VoteStats({ stats }: VoteStatsProps) {
+export function VoteStats({ stats, isChamberPresident }: VoteStatsProps) {
   const { total, pour, contre, abstention, nonVotant = 0, absent, participationRate } = stats;
 
   if (total === 0) {
@@ -34,21 +35,23 @@ export function VoteStats({ stats }: VoteStatsProps) {
         <CardTitle className="text-lg">Statistiques de vote</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Participation */}
-        <div>
-          <div className="flex justify-between text-sm mb-1">
-            <span className="text-muted-foreground flex items-center gap-1">
-              Participation <InfoTooltip term="participationRate" />
-            </span>
-            <span className="font-medium">{participationRate}%</span>
+        {/* Participation (hidden for chamber presidents) */}
+        {!isChamberPresident && (
+          <div>
+            <div className="flex justify-between text-sm mb-1">
+              <span className="text-muted-foreground flex items-center gap-1">
+                Participation <InfoTooltip term="participationRate" />
+              </span>
+              <span className="font-medium">{participationRate}%</span>
+            </div>
+            <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-blue-500 transition-all"
+                style={{ width: `${participationRate}%` }}
+              />
+            </div>
           </div>
-          <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-blue-500 transition-all"
-              style={{ width: `${participationRate}%` }}
-            />
-          </div>
-        </div>
+        )}
 
         {/* Distribution des votes */}
         <div>

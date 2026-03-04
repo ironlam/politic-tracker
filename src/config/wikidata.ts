@@ -90,10 +90,10 @@ export const WD_POSITIONS = {
   CONSEILLER_MUNICIPAL: "Q17519573",
 
   // Chamber roles (not separate mandates, roles on existing mandates)
-  PRESIDENT_AN: "Q2824697",
-  PRESIDENT_SENAT: "Q42512885",
-  VP_AN: "Q19600701",
-  VP_SENAT: "Q56055912",
+  PRESIDENT_AN: "Q20968036",
+  PRESIDENT_SENAT: "Q3409222",
+  VP_AN: "Q19955577",
+  VP_SENAT: "Q87432400",
 
   // Party leadership (generic positions)
   PARTY_LEADER: "Q1553195", // dirigeant de parti politique

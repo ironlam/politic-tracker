@@ -118,12 +118,12 @@ export function PoliticianCard({
                     Décédé{politician.civility === "Mme" ? "e" : ""}
                   </Badge>
                 )}
-                {showConvictionBadge && affairCount > 0 && (
+                {showConvictionBadge && hasCritiqueAffair && affairCount > 0 && (
                   <Badge
                     variant="outline"
                     className="text-xs text-destructive/80 border-destructive/40 bg-destructive/5"
                   >
-                    {affairCount} condamnation{affairCount > 1 ? "s" : ""}
+                    {affairCount} condamnation{affairCount > 1 ? "s" : ""} probité
                   </Badge>
                 )}
                 {showMissingDeclarationBadge && missingDeclaration && (

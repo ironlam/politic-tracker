@@ -23,8 +23,9 @@ export const getParty = cache(async function getParty(slug: string) {
               affairs: {
                 where: {
                   publicationStatus: "PUBLISHED",
-                  involvement: { notIn: ["VICTIM", "PLAINTIFF"] },
+                  involvement: "DIRECT",
                   status: "CONDAMNATION_DEFINITIVE",
+                  severity: "CRITIQUE",
                 },
               },
             },

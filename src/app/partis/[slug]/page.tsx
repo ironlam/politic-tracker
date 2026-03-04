@@ -349,12 +349,10 @@ export default async function PartyPage({ params }: PageProps) {
                         <Link
                           href={`/politiques/${politician.slug}/affaires`}
                           className="shrink-0 flex items-center gap-1 px-2 py-1 text-xs font-medium text-red-700 dark:text-red-400 bg-red-100 dark:bg-red-950/50 rounded-full hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
-                          title={`${politician._count.affairs} condamnation(s) définitive(s)`}
+                          title={`${politician._count.affairs} condamnation(s) définitive(s) pour atteinte à la probité`}
                         >
                           <span>{politician._count.affairs}</span>
-                          <span className="hidden sm:inline">
-                            affaire{politician._count.affairs > 1 ? "s" : ""}
-                          </span>
+                          <span className="hidden sm:inline">probité</span>
                         </Link>
                       )}
                     </div>

@@ -3,11 +3,28 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Search, Loader2, Users, Building2, Scale, Vote, ArrowRight, X } from "lucide-react";
+import {
+  Search,
+  Loader2,
+  Users,
+  Building2,
+  Scale,
+  Vote,
+  ArrowRight,
+  X,
+  CheckCircle2,
+  FileText,
+  MapPin,
+} from "lucide-react";
 import { PoliticianAvatar } from "@/components/politicians/PoliticianAvatar";
-import { MANDATE_TYPE_LABELS, CHAMBER_SHORT_LABELS, AFFAIR_STATUS_LABELS } from "@/config/labels";
+import {
+  MANDATE_TYPE_LABELS,
+  CHAMBER_SHORT_LABELS,
+  AFFAIR_STATUS_LABELS,
+  DOSSIER_STATUS_LABELS,
+} from "@/config/labels";
 import { formatDateShort } from "@/lib/utils";
-import type { MandateType, Chamber, AffairStatus } from "@/generated/prisma";
+import type { MandateType, Chamber, AffairStatus, DossierStatus } from "@/generated/prisma";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -46,14 +63,49 @@ interface ScrutinResult {
   chamber: Chamber;
 }
 
+interface FactCheckResult {
+  slug: string;
+  title: string;
+  source: string;
+  verdictRating: string | null;
+  publishedAt: string;
+  politicianName: string | null;
+}
+
+interface DossierResult {
+  slug: string;
+  title: string;
+  shortTitle: string | null;
+  status: DossierStatus;
+  filingDate: string | null;
+}
+
+interface CommuneResult {
+  id: string;
+  name: string;
+  departmentName: string;
+  population: number | null;
+}
+
 interface SearchResults {
   politicians: PoliticianResult[];
   parties: PartyResult[];
   affairs: AffairResult[];
   scrutins: ScrutinResult[];
+  factchecks: FactCheckResult[];
+  dossiers: DossierResult[];
+  communes: CommuneResult[];
 }
 
-type TabKey = "all" | "politicians" | "parties" | "affairs" | "scrutins";
+type TabKey =
+  | "all"
+  | "politicians"
+  | "parties"
+  | "affairs"
+  | "scrutins"
+  | "factchecks"
+  | "dossiers"
+  | "communes";
 
 const TABS: { key: TabKey; label: string }[] = [
   { key: "all", label: "Tout" },
@@ -61,6 +113,9 @@ const TABS: { key: TabKey; label: string }[] = [
   { key: "parties", label: "Partis" },
   { key: "affairs", label: "Affaires" },
   { key: "scrutins", label: "Votes" },
+  { key: "factchecks", label: "Fact-checks" },
+  { key: "dossiers", label: "Dossiers" },
+  { key: "communes", label: "Communes" },
 ];
 
 // ---------------------------------------------------------------------------
@@ -150,11 +205,17 @@ export function SearchClient() {
         parties: results.parties.length,
         affairs: results.affairs.length,
         scrutins: results.scrutins.length,
+        factchecks: results.factchecks.length,
+        dossiers: results.dossiers.length,
+        communes: results.communes.length,
         all:
           results.politicians.length +
           results.parties.length +
           results.affairs.length +
-          results.scrutins.length,
+          results.scrutins.length +
+          results.factchecks.length +
+          results.dossiers.length +
+          results.communes.length,
       }
     : null;
 
@@ -184,7 +245,7 @@ export function SearchClient() {
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Rechercher un représentant, parti, vote, affaire..."
+          placeholder="Rechercher un représentant, parti, vote, fact-check, commune..."
           className="w-full h-14 pl-12 pr-12 text-lg bg-background border-2 border-border rounded-2xl focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all placeholder:text-muted-foreground/50"
           aria-label="Recherche globale"
           autoComplete="off"
@@ -303,6 +364,58 @@ export function SearchClient() {
                     <ScrutinRow key={s.id} result={s} />
                   ))}
                 </div>
+                {activeTab === "all" && (
+                  <SectionFooter
+                    href={`/votes?search=${encodeURIComponent(query)}`}
+                    label="tous les votes"
+                  />
+                )}
+              </section>
+            )}
+
+            {/* Fact-checks */}
+            {showSection("factchecks", activeTab) && results.factchecks.length > 0 && (
+              <section>
+                <SectionHeader icon={CheckCircle2} label="Fact-checks" count={counts.factchecks} />
+                <div className="divide-y divide-border/50">
+                  {results.factchecks.map((fc) => (
+                    <FactCheckRow key={fc.slug} result={fc} />
+                  ))}
+                </div>
+                {activeTab === "all" && (
+                  <SectionFooter
+                    href={`/factchecks?search=${encodeURIComponent(query)}`}
+                    label="tous les fact-checks"
+                  />
+                )}
+              </section>
+            )}
+
+            {/* Dossiers législatifs */}
+            {showSection("dossiers", activeTab) && results.dossiers.length > 0 && (
+              <section>
+                <SectionHeader
+                  icon={FileText}
+                  label="Dossiers législatifs"
+                  count={counts.dossiers}
+                />
+                <div className="divide-y divide-border/50">
+                  {results.dossiers.map((d) => (
+                    <DossierRow key={d.slug} result={d} />
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Communes */}
+            {showSection("communes", activeTab) && results.communes.length > 0 && (
+              <section>
+                <SectionHeader icon={MapPin} label="Communes" count={counts.communes} />
+                <div className="divide-y divide-border/50">
+                  {results.communes.map((c) => (
+                    <CommuneRow key={c.id} result={c} />
+                  ))}
+                </div>
               </section>
             )}
           </div>
@@ -324,7 +437,7 @@ export function SearchClient() {
           <div className="text-center py-20 text-muted-foreground/50">
             <Search className="h-12 w-12 mx-auto mb-5 opacity-30" />
             <p className="text-lg font-medium text-muted-foreground/70">
-              Recherchez parmi les représentants, partis, affaires et votes
+              Recherchez parmi les représentants, partis, votes, fact-checks, dossiers et communes
             </p>
             <p className="text-sm mt-3 text-muted-foreground/40">
               Tapez au moins 2 caractères pour lancer la recherche
@@ -343,6 +456,35 @@ export function SearchClient() {
 function showSection(section: TabKey, activeTab: TabKey) {
   return activeTab === "all" || activeTab === section;
 }
+
+function formatPopulation(pop: number | null): string {
+  if (!pop) return "";
+  if (pop >= 1_000_000) return `${(pop / 1_000_000).toFixed(1)}M hab.`;
+  if (pop >= 1_000) return `${(pop / 1_000).toFixed(0)}k hab.`;
+  return `${pop} hab.`;
+}
+
+const VERDICT_COLORS: Record<string, string> = {
+  TRUE: "#2d6a4f",
+  MOSTLY_TRUE: "#52b788",
+  HALF_TRUE: "#e9a825",
+  MISLEADING: "#e76f51",
+  OUT_OF_CONTEXT: "#e76f51",
+  MOSTLY_FALSE: "#c1121f",
+  FALSE: "#c1121f",
+  UNVERIFIABLE: "#6b7280",
+};
+
+const VERDICT_SHORT_LABELS: Record<string, string> = {
+  TRUE: "Vrai",
+  MOSTLY_TRUE: "Plutôt vrai",
+  HALF_TRUE: "Mi-vrai",
+  MISLEADING: "Trompeur",
+  OUT_OF_CONTEXT: "Hors contexte",
+  MOSTLY_FALSE: "Plutôt faux",
+  FALSE: "Faux",
+  UNVERIFIABLE: "Invérifiable",
+};
 
 // ---------------------------------------------------------------------------
 // Sub-components
@@ -473,6 +615,86 @@ function ScrutinRow({ result }: { result: ScrutinResult }) {
       <span className="ml-auto text-xs text-muted-foreground shrink-0">
         {formatDateShort(result.votingDate)}
       </span>
+    </Link>
+  );
+}
+
+function FactCheckRow({ result }: { result: FactCheckResult }) {
+  const verdictColor = result.verdictRating ? VERDICT_COLORS[result.verdictRating] : undefined;
+  const verdictLabel = result.verdictRating ? VERDICT_SHORT_LABELS[result.verdictRating] : null;
+  return (
+    <Link
+      href={`/factchecks/${result.slug}`}
+      className="flex items-center gap-3 py-3 hover:bg-accent/40 rounded-lg transition-colors px-3 -mx-3"
+      prefetch={false}
+    >
+      <CheckCircle2
+        className="h-4 w-4 shrink-0"
+        style={{ color: verdictColor || "#6b7280" }}
+        aria-hidden="true"
+      />
+      <div className="flex-1 min-w-0">
+        <span className="font-medium text-sm truncate block">{result.title}</span>
+        <span className="text-xs text-muted-foreground">
+          {result.source}
+          {result.politicianName && ` · ${result.politicianName}`}
+        </span>
+      </div>
+      {verdictLabel && (
+        <span
+          className="text-[11px] px-2 py-0.5 rounded-full shrink-0 hidden sm:inline"
+          style={{
+            backgroundColor: verdictColor ? `${verdictColor}18` : undefined,
+            color: verdictColor,
+          }}
+        >
+          {verdictLabel}
+        </span>
+      )}
+    </Link>
+  );
+}
+
+function DossierRow({ result }: { result: DossierResult }) {
+  return (
+    <Link
+      href={`/assemblee/${result.slug}`}
+      className="flex items-center gap-3 py-3 hover:bg-accent/40 rounded-lg transition-colors px-3 -mx-3"
+      prefetch={false}
+    >
+      <FileText className="h-4 w-4 text-muted-foreground/60 shrink-0" aria-hidden="true" />
+      <div className="flex-1 min-w-0">
+        <span className="font-medium text-sm truncate block">
+          {result.shortTitle || result.title}
+        </span>
+        {result.filingDate && (
+          <span className="text-xs text-muted-foreground">
+            {formatDateShort(result.filingDate)}
+          </span>
+        )}
+      </div>
+      <span className="text-[11px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground shrink-0 hidden sm:inline">
+        {DOSSIER_STATUS_LABELS[result.status]}
+      </span>
+    </Link>
+  );
+}
+
+function CommuneRow({ result }: { result: CommuneResult }) {
+  return (
+    <Link
+      href={`/elections/municipales-2026/communes/${result.id}`}
+      className="flex items-center gap-3 py-3 hover:bg-accent/40 rounded-lg transition-colors px-3 -mx-3"
+      prefetch={false}
+    >
+      <MapPin className="h-4 w-4 text-muted-foreground/60 shrink-0" aria-hidden="true" />
+      <span className="font-medium text-sm truncate">{result.name}</span>
+      <span className="text-xs text-muted-foreground shrink-0">{result.departmentName}</span>
+      {result.population && (
+        <span className="ml-auto text-xs text-muted-foreground shrink-0">
+          {formatPopulation(result.population)}
+        </span>
+      )}
     </Link>
   );
 }

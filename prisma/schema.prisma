@@ -744,6 +744,10 @@ model Scrutin {
   // Thematic classification (AI-generated)
   theme ThemeCategory?
 
+  // AI-generated citizen impact explanation
+  citizenImpact     String?   @db.Text
+  citizenImpactDate DateTime?
+
   // Incremental sync: hash of vote data to detect changes
   votesHash String?
 

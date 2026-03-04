@@ -10,7 +10,8 @@ import { DailyVotesPage } from "@/components/votes/DailyVotesPage";
 import { PoliticianAvatar } from "@/components/politicians/PoliticianAvatar";
 import { formatDate } from "@/lib/utils";
 import { THEME_CATEGORY_LABELS, THEME_CATEGORY_COLORS } from "@/config/labels";
-import { ExternalLink, Calendar, Users, Sparkles } from "lucide-react";
+import { ExternalLink, Calendar, Users, Sparkles, Lightbulb } from "lucide-react";
+import { MarkdownText } from "@/components/ui/markdown";
 import { BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 import type { VotePosition } from "@/types";
 import { SITE_URL } from "@/config/site";
@@ -132,8 +133,13 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     return { title: "Scrutin non trouvé" };
   }
 
+  // Prefer citizen impact for SEO description (more user-friendly)
+  const citizenImpactFirstSentence = scrutin.citizenImpact
+    ?.replace(/\*\*/g, "")
+    .split(/[.!?]\s/)[0];
   const summaryFirstLine = scrutin.summary?.split("\n")[0];
   const description =
+    (citizenImpactFirstSentence ? citizenImpactFirstSentence + "." : null) ||
     summaryFirstLine ||
     `Scrutin du ${formatDate(scrutin.votingDate)} - ${scrutin.result === "ADOPTED" ? "Adopté" : "Rejeté"} avec ${scrutin.votesFor} pour, ${scrutin.votesAgainst} contre et ${scrutin.votesAbstain} abstentions.`;
 
@@ -282,6 +288,25 @@ export default async function ScrutinPage({ params }: PageProps) {
                   return <p key={i}>{line}</p>;
                 })}
               </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Citizen Impact */}
+        {scrutin.citizenImpact && (
+          <Card className="mb-8 border-amber-200 bg-amber-50/50 dark:bg-amber-950/20 dark:border-amber-900">
+            <CardHeader className="pb-2">
+              <div className="flex items-center gap-2">
+                <Lightbulb className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                <h2 className="text-lg font-semibold">Ce que ça change pour vous</h2>
+                <Badge variant="outline" className="gap-1 text-xs">
+                  <Sparkles className="h-3 w-3" />
+                  Décryptage IA
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <MarkdownText className="text-sm">{scrutin.citizenImpact}</MarkdownText>
             </CardContent>
           </Card>
         )}

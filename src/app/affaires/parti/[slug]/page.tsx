@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { PoliticianAvatar } from "@/components/politicians/PoliticianAvatar";
 import { BreadcrumbJsonLd, CollectionPageJsonLd } from "@/components/seo/JsonLd";
 import { ensureContrast } from "@/lib/contrast";
+import { stripMarkdown } from "@/lib/utils";
 import { SITE_URL } from "@/config/site";
 import {
   AFFAIR_STATUS_LABELS,
@@ -550,7 +551,7 @@ export default async function PartyAffairsPage({ params }: PageProps) {
                       </Link>
                     </div>
                     <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                      {affair.description}
+                      {stripMarkdown(affair.description)}
                     </p>
                     {AFFAIR_STATUS_NEEDS_PRESUMPTION[affair.status as AffairStatus] &&
                       MIS_EN_CAUSE.includes(affair.involvement as Involvement) && (

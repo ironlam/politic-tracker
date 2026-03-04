@@ -1,5 +1,5 @@
 import { Badge } from "@/components/ui/badge";
-import { formatDate } from "@/lib/utils";
+import { formatDate, stripMarkdown } from "@/lib/utils";
 import {
   AFFAIR_STATUS_LABELS,
   AFFAIR_STATUS_COLORS,
@@ -77,7 +77,7 @@ export function AffairCard({ affair, variant }: AffairCardProps) {
       </div>
 
       {/* Description */}
-      <p className="text-sm text-muted-foreground mb-3">{affair.description}</p>
+      <p className="text-sm text-muted-foreground mb-3">{stripMarkdown(affair.description)}</p>
 
       {/* Dates & details */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs mb-3">

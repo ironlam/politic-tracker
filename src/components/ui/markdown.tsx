@@ -7,7 +7,7 @@ interface MarkdownTextProps {
 
 /**
  * Simple markdown renderer for basic formatting
- * Supports: **bold**, *italic*, bullet points (• or -)
+ * Supports: **bold**, *italic*, [links](url), bullet points (• or -)
  */
 export function MarkdownText({ children, className }: MarkdownTextProps) {
   // Parse markdown to HTML
@@ -37,6 +37,15 @@ function parseMarkdown(text: string): string {
   // Italic: *text* or _text_
   html = html.replace(/\*([^*]+)\*/g, "<em>$1</em>");
   html = html.replace(/_([^_]+)_/g, "<em>$1</em>");
+
+  // Links: [text](url) — internal links stay in-page, external open new tab
+  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_match, linkText, url) => {
+    const isInternal = url.startsWith("/");
+    if (isInternal) {
+      return `<a href="${url}" class="text-primary hover:underline">${linkText}</a>`;
+    }
+    return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">${linkText}</a>`;
+  });
 
   // Convert line breaks to paragraphs
   const paragraphs = html.split(/\n\n+/);

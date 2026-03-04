@@ -9,7 +9,7 @@ import {
   AFFAIR_CATEGORY_LABELS,
   SEVERITY_SORT_ORDER,
 } from "@/config/labels";
-import { formatDate } from "@/lib/utils";
+import { formatDate, stripMarkdown } from "@/lib/utils";
 import type { AffairSeverity, AffairStatus, AffairCategory, Involvement } from "@/types";
 import { AffairCard } from "./AffairCard";
 
@@ -165,7 +165,7 @@ export function AffairsSection({ affairs, civility }: AffairsSectionProps) {
                         </div>
                         {affair.description && (
                           <p className="text-sm text-muted-foreground line-clamp-2">
-                            {affair.description}
+                            {stripMarkdown(affair.description)}
                           </p>
                         )}
                       </div>
@@ -227,7 +227,9 @@ export function AffairsSection({ affairs, civility }: AffairsSectionProps) {
                     </div>
                   </div>
 
-                  <p className="text-sm text-muted-foreground mb-3">{affair.description}</p>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    {stripMarkdown(affair.description)}
+                  </p>
 
                   {/* Dates */}
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs mb-3">

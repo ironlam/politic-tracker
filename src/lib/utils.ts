@@ -43,6 +43,18 @@ export function generateAffairSlug(politicianSlug: string, title: string): strin
   return generateSlug(`${politicianSlug} ${cleanTitle}`);
 }
 
+/**
+ * Strip markdown syntax for plain-text display in listing/SEO contexts.
+ */
+export function stripMarkdown(text: string): string {
+  return text
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1") // [text](url) → text
+    .replace(/\*\*([^*]+)\*\*/g, "$1") // **bold** → bold
+    .replace(/__([^_]+)__/g, "$1")
+    .replace(/\*([^*]+)\*/g, "$1") // *italic* → italic
+    .replace(/_([^_]+)_/g, "$1");
+}
+
 export function formatDate(date: Date | string | null): string {
   if (!date) return "—";
   const d = typeof date === "string" ? new Date(date) : date;

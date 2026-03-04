@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { ExportButton } from "@/components/ui/ExportButton";
 import { AffairesFilterBar } from "@/components/affairs/AffairesFilterBar";
 import { SeoIntro } from "@/components/seo/SeoIntro";
+import { stripMarkdown } from "@/lib/utils";
 import {
   getAffairs,
   getSuperCategoryCounts,
@@ -356,7 +357,7 @@ export default async function AffairesPage({ searchParams }: PageProps) {
                         )}
 
                         <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
-                          {affair.description}
+                          {stripMarkdown(affair.description)}
                         </p>
 
                         {AFFAIR_STATUS_NEEDS_PRESUMPTION[affair.status] &&

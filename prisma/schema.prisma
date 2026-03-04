@@ -407,7 +407,9 @@ model Affair {
   title       String // Ex: "Affaire des emplois fictifs du MoDem"
   slug        String   @unique
   oldSlugs    String[] @default([])
-  description String   @db.Text
+  description           String    @db.Text
+  originalDescription   String?   @db.Text // Pre-enrichment description (for rollback)
+  descriptionEnrichedAt DateTime? // When AI description enrichment was applied
 
   status      AffairStatus
   category    AffairCategory

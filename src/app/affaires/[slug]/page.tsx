@@ -5,7 +5,8 @@ import Link from "next/link";
 import { db } from "@/lib/db";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { formatDate } from "@/lib/utils";
+import { formatDate, stripMarkdown } from "@/lib/utils";
+import { MarkdownText } from "@/components/ui/markdown";
 import {
   AFFAIR_STATUS_LABELS,
   AFFAIR_STATUS_COLORS,
@@ -104,11 +105,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   return {
     title: `${affair.title} - ${affair.politician.fullName}`,
-    description: affair.description.slice(0, 160),
+    description: stripMarkdown(affair.description).slice(0, 160),
     alternates: { canonical: `/affaires/${affair.slug}` },
     openGraph: {
       title: `${affair.title} - ${affair.politician.fullName}`,
-      description: affair.description.slice(0, 160),
+      description: stripMarkdown(affair.description).slice(0, 160),
       type: "article",
     },
   };
@@ -133,7 +134,7 @@ export default async function AffairDetailPage({ params }: PageProps) {
     <>
       <ArticleJsonLd
         headline={`${affair.title} - ${affair.politician.fullName}`}
-        description={affair.description.slice(0, 300)}
+        description={stripMarkdown(affair.description).slice(0, 300)}
         datePublished={affair.factsDate?.toISOString().split("T")[0]}
         dateModified={affair.updatedAt?.toISOString().split("T")[0]}
         url={`${SITE_URL}/affaires/${affair.slug}`}
@@ -242,7 +243,7 @@ export default async function AffairDetailPage({ params }: PageProps) {
             <h2 className="text-lg font-semibold">Description</h2>
           </CardHeader>
           <CardContent>
-            <p className="text-muted-foreground whitespace-pre-line">{affair.description}</p>
+            <MarkdownText className="text-muted-foreground">{affair.description}</MarkdownText>
           </CardContent>
         </Card>
 

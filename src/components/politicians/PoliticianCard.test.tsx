@@ -91,7 +91,7 @@ describe("PoliticianCard", () => {
       _count: { affairs: 2 },
     };
     render(<PoliticianCard politician={politicianWithCritique} showConvictionBadge />);
-    expect(screen.getByText("2 condamnations probité")).toBeInTheDocument();
+    expect(screen.getByText("Probité : 2 condamnations")).toBeInTheDocument();
   });
 
   it("should not show conviction indicator when disabled", () => {
@@ -101,7 +101,7 @@ describe("PoliticianCard", () => {
       _count: { affairs: 2 },
     };
     render(<PoliticianCard politician={politicianWithCritique} showConvictionBadge={false} />);
-    expect(screen.queryByText("2 condamnations probité")).not.toBeInTheDocument();
+    expect(screen.queryByText("Probité : 2 condamnations")).not.toBeInTheDocument();
   });
 
   it("should render without party", () => {

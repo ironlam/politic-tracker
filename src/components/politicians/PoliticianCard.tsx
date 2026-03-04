@@ -123,7 +123,7 @@ export function PoliticianCard({
                     variant="outline"
                     className="text-xs text-destructive/80 border-destructive/40 bg-destructive/5"
                   >
-                    {affairCount} condamnation{affairCount > 1 ? "s" : ""} probité
+                    Probité : {affairCount} condamnation{affairCount > 1 ? "s" : ""}
                   </Badge>
                 )}
                 {showMissingDeclarationBadge && missingDeclaration && (

@@ -1,6 +1,7 @@
 import { cache } from "react";
 import { cacheTag, cacheLife } from "next/cache";
 import { db } from "@/lib/db";
+import { CONVICTION_BADGE_WHERE } from "@/config/labels";
 
 export const getParty = cache(async function getParty(slug: string) {
   "use cache";
@@ -20,14 +21,7 @@ export const getParty = cache(async function getParty(slug: string) {
           },
           _count: {
             select: {
-              affairs: {
-                where: {
-                  publicationStatus: "PUBLISHED",
-                  involvement: "DIRECT",
-                  status: "CONDAMNATION_DEFINITIVE",
-                  severity: "CRITIQUE",
-                },
-              },
+              affairs: { where: CONVICTION_BADGE_WHERE },
             },
           },
         },

@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import { cacheTag, cacheLife } from "next/cache";
 import { db } from "@/lib/db";
+import { CONVICTION_BADGE_WHERE } from "@/config/labels";
 import { type SortOption, type MandateFilter } from "@/components/politicians/FilterBar";
 import { MandateType } from "@/generated/prisma";
 import { StatCard } from "@/components/ui/StatCard";
@@ -123,14 +124,7 @@ async function queryPoliticians(
 
   if (withConviction) {
     conditions.push({
-      affairs: {
-        some: {
-          severity: "CRITIQUE",
-          status: "CONDAMNATION_DEFINITIVE",
-          publicationStatus: "PUBLISHED",
-          involvement: "DIRECT",
-        },
-      },
+      affairs: { some: CONVICTION_BADGE_WHERE },
     });
   }
 
@@ -170,23 +164,11 @@ async function queryPoliticians(
         currentParty: true,
         _count: {
           select: {
-            affairs: {
-              where: {
-                severity: "CRITIQUE",
-                status: "CONDAMNATION_DEFINITIVE",
-                publicationStatus: "PUBLISHED",
-                involvement: "DIRECT",
-              },
-            },
+            affairs: { where: CONVICTION_BADGE_WHERE },
           },
         },
         affairs: {
-          where: {
-            severity: "CRITIQUE",
-            status: "CONDAMNATION_DEFINITIVE",
-            publicationStatus: "PUBLISHED",
-            involvement: "DIRECT",
-          },
+          where: CONVICTION_BADGE_WHERE,
           select: { id: true },
           take: 1,
         },

@@ -1,0 +1,76 @@
+name: Security Headers
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 8 * * 1" # Every Monday at 8am
+
+jobs:
+  check-headers:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check security headers on production
+        run: |
+          HEADERS=$(curl -sI https://poligraph.fr)
+
+          echo "=== Security Headers Check ==="
+
+          # HSTS
+          echo "$HEADERS" | grep -qi "strict-transport-security" \
+            && echo "✅ HSTS present" \
+            || { echo "❌ HSTS missing"; exit 1; }
+
+          # X-Frame-Options
+          echo "$HEADERS" | grep -qi "x-frame-options" \
+            && echo "✅ X-Frame-Options present" \
+            || { echo "❌ X-Frame-Options missing"; exit 1; }
+
+          # X-Content-Type-Options
+          echo "$HEADERS" | grep -qi "x-content-type-options" \
+            && echo "✅ X-Content-Type-Options present" \
+            || { echo "❌ X-Content-Type-Options missing"; exit 1; }
+
+          # CSP
+          echo "$HEADERS" | grep -qi "content-security-policy" \
+            && echo "✅ CSP present" \
+            || { echo "❌ CSP missing"; exit 1; }
+
+          echo "=== All security headers OK ==="
+
+  check-code-patterns:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Admin routes must use withAdminAuth
+        run: |
+          echo "=== Checking admin routes for withAdminAuth ==="
+          VIOLATIONS=""
+          for f in $(find src/app/api/admin -name 'route.ts' ! -path '*/auth/*'); do
+            if ! grep -q 'withAdminAuth' "$f"; then
+              VIOLATIONS="$VIOLATIONS\n  ❌ $f"
+            fi
+          done
+          if [ -n "$VIOLATIONS" ]; then
+            echo -e "Admin routes missing withAdminAuth:$VIOLATIONS"
+            exit 1
+          fi
+          echo "✅ All admin routes use withAdminAuth"
+
+      - name: Mutation routes should use Zod validation (warning)
+        run: |
+          echo "=== Checking mutation routes for validation ==="
+          WARNINGS=""
+          for f in $(find src/app/api/admin -name 'route.ts' ! -path '*/auth/*'); do
+            if grep -qE 'export const (POST|PUT|PATCH)' "$f"; then
+              if ! grep -q 'security' "$f" && ! grep -q 'withValidation' "$f" && ! grep -q 'safeParse' "$f"; then
+                WARNINGS="$WARNINGS\n  ⚠️  $f"
+              fi
+            fi
+          done
+          if [ -n "$WARNINGS" ]; then
+            echo -e "Mutation routes without Zod validation (non-blocking):$WARNINGS"
+          else
+            echo "✅ All mutation routes have validation"
+          fi

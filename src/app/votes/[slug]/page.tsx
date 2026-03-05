@@ -21,10 +21,13 @@ const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 
 export const revalidate = 3600; // ISR: revalidate every hour
 
-// No static pre-rendering: each scrutin loads ~577 votes with nested politician data
-// (~17K objects for 30 pages). Pages are generated on-demand via ISR instead.
 export async function generateStaticParams() {
-  return [];
+  const scrutins = await db.scrutin.findMany({
+    select: { slug: true },
+    orderBy: { votingDate: "desc" },
+    take: 200,
+  });
+  return scrutins.map((s) => ({ slug: s.slug }));
 }
 
 interface PageProps {

@@ -30,9 +30,14 @@ import { SITE_URL } from "@/config/site";
 
 export const revalidate = 3600; // ISR: revalidate every hour
 
-// Affair pages load sources + events unbounded. Use ISR on-demand.
 export async function generateStaticParams() {
-  return [];
+  const affairs = await db.affair.findMany({
+    where: { publicationStatus: "PUBLISHED" },
+    select: { slug: true },
+    orderBy: { updatedAt: "desc" },
+    take: 200,
+  });
+  return affairs.map((a) => ({ slug: a.slug }));
 }
 
 interface PageProps {

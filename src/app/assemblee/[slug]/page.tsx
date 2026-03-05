@@ -15,9 +15,13 @@ import { formatDate } from "@/lib/utils";
 
 export const revalidate = 3600; // ISR: revalidate every hour
 
-// Dossier pages load amendments unbounded. Use ISR on-demand.
 export async function generateStaticParams() {
-  return [];
+  const dossiers = await db.legislativeDossier.findMany({
+    select: { slug: true },
+    orderBy: { filingDate: "desc" },
+    take: 200,
+  });
+  return dossiers.map((d) => ({ slug: d.slug }));
 }
 
 interface PageProps {

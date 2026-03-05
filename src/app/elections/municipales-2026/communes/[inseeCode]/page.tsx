@@ -14,10 +14,13 @@ import { db } from "@/lib/db";
 
 export const revalidate = 3600; // ISR: revalidate every hour
 
-// No static pre-rendering: large communes load 1000+ candidacies with nested data.
-// Pages are generated on-demand via ISR instead.
 export async function generateStaticParams() {
-  return [];
+  const communes = await db.commune.findMany({
+    select: { id: true },
+    orderBy: { population: "desc" },
+    take: 200,
+  });
+  return communes.map((c) => ({ inseeCode: c.id }));
 }
 
 interface PageProps {

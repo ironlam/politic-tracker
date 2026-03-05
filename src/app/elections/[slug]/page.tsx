@@ -29,6 +29,7 @@ export const revalidate = 3600; // ISR: revalidate every hour
 export async function generateStaticParams() {
   const elections = await db.election.findMany({
     select: { slug: true },
+    where: { type: { not: "MUNICIPALES" } },
     take: 50,
     orderBy: { round1Date: "desc" },
   });
@@ -55,36 +56,51 @@ function isPhaseAtLeast(current: ElectionStatus, target: ElectionStatus): boolea
 }
 
 const getElection = cache(async function getElection(slug: string) {
-  return db.election.findUnique({
+  const election = await db.election.findUnique({
     where: { slug },
     include: {
-      candidacies: {
-        include: {
-          politician: {
-            select: {
-              id: true,
-              slug: true,
-              fullName: true,
-              photoUrl: true,
-              civility: true,
-            },
-          },
-          party: {
-            select: {
-              id: true,
-              slug: true,
-              shortName: true,
-              color: true,
-            },
-          },
-        },
-        orderBy: { candidateName: "asc" },
-      },
       rounds: {
         orderBy: { round: "asc" },
       },
     },
   });
+  if (!election) return null;
+
+  // Municipal elections have 500K+ candidacies — skip loading them here.
+  // They have dedicated portals (e.g., /elections/municipales-2026/).
+  if (election.type === "MUNICIPALES") {
+    const totalCandidacies = await db.candidacy.count({
+      where: { electionId: election.id },
+    });
+    return { ...election, candidacies: [] as never[], totalCandidacies };
+  }
+
+  const candidacies = await db.candidacy.findMany({
+    where: { electionId: election.id },
+    include: {
+      politician: {
+        select: {
+          id: true,
+          slug: true,
+          fullName: true,
+          photoUrl: true,
+          civility: true,
+        },
+      },
+      party: {
+        select: {
+          id: true,
+          slug: true,
+          shortName: true,
+          color: true,
+        },
+      },
+    },
+    orderBy: { candidateName: "asc" },
+    take: 500,
+  });
+
+  return { ...election, candidacies, totalCandidacies: candidacies.length };
 });
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -193,24 +209,29 @@ export default async function ElectionDetailPage({ params }: PageProps) {
               </div>
             </div>
 
-            {/* Municipales 2026 portal banner */}
-            {slug === "municipales-2026" && (
+            {/* Municipales portal banner */}
+            {election.type === "MUNICIPALES" && (
               <div className="bg-gradient-to-r from-primary/10 to-accent/10 border border-primary/20 rounded-xl p-4 flex items-center gap-4">
                 <span className="text-2xl" aria-hidden="true">
                   🏛️
                 </span>
                 <div className="flex-1">
-                  <p className="font-semibold">Portail Municipales 2026</p>
+                  <p className="font-semibold">
+                    {election.totalCandidacies?.toLocaleString("fr-FR")} candidatures enregistrées
+                  </p>
                   <p className="text-sm text-muted-foreground">
-                    Découvrez les candidats, la carte politique, la parité et les cumuls de mandats.
+                    Les élections municipales concernent plus de 35 000 communes. Consultez les
+                    résultats commune par commune.
                   </p>
                 </div>
-                <Link
-                  href="/elections/municipales-2026"
-                  className="shrink-0 text-sm font-medium text-primary hover:underline"
-                >
-                  Explorer &rarr;
-                </Link>
+                {slug === "municipales-2026" && (
+                  <Link
+                    href="/elections/municipales-2026"
+                    className="shrink-0 text-sm font-medium text-primary hover:underline"
+                  >
+                    Explorer le portail &rarr;
+                  </Link>
+                )}
               </div>
             )}
 
@@ -270,8 +291,8 @@ export default async function ElectionDetailPage({ params }: PageProps) {
               status={election.status}
             />
 
-            {/* Candidacies */}
-            {isPhaseAtLeast(election.status, "CANDIDACIES") && (
+            {/* Candidacies — skip for MUNICIPALES (500K+ rows, use dedicated portal) */}
+            {isPhaseAtLeast(election.status, "CANDIDACIES") && election.type !== "MUNICIPALES" && (
               <section>
                 <h2 className="text-lg font-semibold mb-4">Candidatures</h2>
                 {election.candidacies.length > 0 ? (

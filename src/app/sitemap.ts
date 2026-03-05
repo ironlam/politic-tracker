@@ -333,7 +333,7 @@ async function buildCommunesSitemap(): Promise<MetadataRoute.Sitemap> {
     FROM "Commune" c
     INNER JOIN "Candidacy" ca ON ca."communeId" = c.id
     ORDER BY c.population DESC NULLS LAST
-    LIMIT 500
+    LIMIT 200
   `;
 
   return communes.map((c) => ({

@@ -6,6 +6,8 @@ const nextConfig: NextConfig = {
   staticPageGenerationTimeout: 120,
   experimental: {
     useCache: true,
+    webpackMemoryOptimizations: true,
+    webpackBuildWorker: true,
   },
   images: {
     remotePatterns: [

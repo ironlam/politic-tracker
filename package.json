@@ -5,7 +5,7 @@
   "scripts": {
     "setup": "bash scripts/setup.sh",
     "dev": "next dev",
-    "build": "export NODE_OPTIONS='--max-old-space-size=8192' && prisma generate && next build --webpack",
+    "build": "prisma generate && next build --webpack",
     "start": "next start",
     "lint": "eslint",
     "format": "prettier --write .",

@@ -20,6 +20,8 @@ interface CommuneResult {
 interface CommuneSearchProps {
   className?: string;
   placeholder?: string;
+  /** Base path for API and routing. Default: "/elections/municipales-2026" */
+  basePath?: string;
 }
 
 function LocationIcon({ className }: { className?: string }) {
@@ -59,6 +61,7 @@ function Spinner({ className }: { className?: string }) {
 export function CommuneSearch({
   className,
   placeholder = "Rechercher une commune...",
+  basePath = "/elections/municipales-2026",
 }: CommuneSearchProps) {
   const mounted = useIsMounted();
   const [query, setQuery] = useState("");
@@ -84,9 +87,7 @@ export function CommuneSearch({
 
     const timeoutId = setTimeout(async () => {
       try {
-        const response = await fetch(
-          `/api/elections/municipales-2026/communes?q=${encodeURIComponent(query)}`
-        );
+        const response = await fetch(`/api${basePath}/communes?q=${encodeURIComponent(query)}`);
         if (!response.ok) throw new Error("Erreur réseau");
         const data: CommuneResult[] = await response.json();
         const limited = data.slice(0, 8);
@@ -105,7 +106,7 @@ export function CommuneSearch({
       clearTimeout(timeoutId);
       setIsLoading(false);
     };
-  }, [query]);
+  }, [query, basePath]);
 
   // Click outside to close
   useEffect(() => {
@@ -122,9 +123,9 @@ export function CommuneSearch({
     (result: CommuneResult) => {
       setQuery(result.name);
       setIsOpen(false);
-      router.push(`/elections/municipales-2026/communes/${result.id}`);
+      router.push(`${basePath}/communes/${result.id}`);
     },
-    [router]
+    [router, basePath]
   );
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -164,14 +165,12 @@ export function CommuneSearch({
       async (position) => {
         const { latitude, longitude } = position.coords;
         try {
-          const response = await fetch(
-            `/api/elections/municipales-2026/communes?lat=${latitude}&lon=${longitude}`
-          );
+          const response = await fetch(`/api${basePath}/communes?lat=${latitude}&lon=${longitude}`);
           if (!response.ok) throw new Error("Erreur réseau");
           const data: CommuneResult[] = await response.json();
           if (data.length === 1) {
             // Single result: redirect directly
-            router.push(`/elections/municipales-2026/communes/${data[0]!.id}`);
+            router.push(`${basePath}/communes/${data[0]!.id}`);
           } else if (data.length > 0) {
             const limited = data.slice(0, 8);
             setResults(limited);
@@ -199,7 +198,7 @@ export function CommuneSearch({
       },
       { enableHighAccuracy: false, timeout: 10000 }
     );
-  }, [router]);
+  }, [router, basePath]);
 
   const formatPopulation = (pop: number | null) => {
     if (pop === null) return null;

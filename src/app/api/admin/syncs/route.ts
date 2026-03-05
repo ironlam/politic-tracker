@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { withAdminAuth } from "@/lib/api/with-admin-auth";
+import { withValidation } from "@/lib/security/validate";
+import { createSyncSchema } from "@/lib/security/schemas";
 import { parsePagination } from "@/lib/api/pagination";
 
 const STALE_JOB_TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes
@@ -42,43 +44,43 @@ export const GET = withAdminAuth(async (request) => {
   });
 });
 
-export const POST = withAdminAuth(async (request) => {
-  const { script } = await request.json();
-  if (!script || typeof script !== "string") {
-    return NextResponse.json({ error: "Script requis" }, { status: 400 });
-  }
-
-  // Check if this script is already running
-  const existing = await db.syncJob.findFirst({
-    where: { script, status: { in: ["PENDING", "RUNNING"] } },
-  });
-  if (existing) {
-    return NextResponse.json({ error: "Ce script est déjà en cours d'exécution" }, { status: 409 });
-  }
-
-  const job = await db.syncJob.create({
-    data: { script, status: "PENDING" },
-  });
-
-  // Trigger via Inngest
-  try {
-    const { inngest } = await import("@/inngest/client");
-    await inngest.send({
-      name: `sync/${script}`,
-      data: { jobId: job.id },
+export const POST = withAdminAuth(
+  withValidation(createSyncSchema, async (_request, _context, { script }) => {
+    // Check if this script is already running
+    const existing = await db.syncJob.findFirst({
+      where: { script, status: { in: ["PENDING", "RUNNING"] } },
     });
-  } catch (err) {
-    console.error("Failed to send Inngest event:", err);
-    await db.syncJob.update({
-      where: { id: job.id },
-      data: {
-        status: "FAILED",
-        error: "Impossible d'envoyer l'événement Inngest",
-        completedAt: new Date(),
-      },
-    });
-    return NextResponse.json({ error: "Erreur Inngest" }, { status: 503 });
-  }
+    if (existing) {
+      return NextResponse.json(
+        { error: "Ce script est déjà en cours d'exécution" },
+        { status: 409 }
+      );
+    }
 
-  return NextResponse.json(job, { status: 201 });
-});
+    const job = await db.syncJob.create({
+      data: { script, status: "PENDING" },
+    });
+
+    // Trigger via Inngest
+    try {
+      const { inngest } = await import("@/inngest/client");
+      await inngest.send({
+        name: `sync/${script}`,
+        data: { jobId: job.id },
+      });
+    } catch (err) {
+      console.error("Failed to send Inngest event:", err);
+      await db.syncJob.update({
+        where: { id: job.id },
+        data: {
+          status: "FAILED",
+          error: "Impossible d'envoyer l'événement Inngest",
+          completedAt: new Date(),
+        },
+      });
+      return NextResponse.json({ error: "Erreur Inngest" }, { status: 503 });
+    }
+
+    return NextResponse.json(job, { status: 201 });
+  })
+);

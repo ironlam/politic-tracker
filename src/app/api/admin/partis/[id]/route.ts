@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { withAdminAuth } from "@/lib/api/with-admin-auth";
+import { withValidation, getRequestMeta } from "@/lib/security";
+import { updatePartySchema } from "@/lib/security/schemas/party";
 import { invalidateEntity } from "@/lib/cache";
-import { PoliticalPosition } from "@/generated/prisma";
+import type { z } from "zod/v4";
+
+type UpdateBody = z.infer<typeof updatePartySchema>;
 
 export const GET = withAdminAuth(async (_request: NextRequest, context) => {
   const { id } = await context.params;
@@ -23,124 +27,104 @@ export const GET = withAdminAuth(async (_request: NextRequest, context) => {
   return NextResponse.json(party);
 });
 
-export const PUT = withAdminAuth(async (request: NextRequest, context) => {
-  const { id } = await context.params;
-  const body = await request.json();
+export const PUT = withAdminAuth(
+  withValidation(updatePartySchema, async (request, context, body: UpdateBody) => {
+    const { id } = await context.params;
 
-  // Validate required fields
-  if (!body.name || !body.shortName || !body.slug) {
-    return NextResponse.json({ error: "Nom, abréviation et slug sont requis" }, { status: 400 });
-  }
+    // Check if slug is unique (excluding current party)
+    const existingSlug = await db.party.findFirst({
+      where: {
+        slug: body.slug,
+        NOT: { id },
+      },
+    });
 
-  // Check if slug is unique (excluding current party)
-  const existingSlug = await db.party.findFirst({
-    where: {
-      slug: body.slug,
-      NOT: { id },
-    },
-  });
-
-  if (existingSlug) {
-    return NextResponse.json(
-      { error: "Ce slug est déjà utilisé par un autre parti" },
-      { status: 400 }
-    );
-  }
-
-  // Check if shortName is unique (excluding current party)
-  const existingShortName = await db.party.findFirst({
-    where: {
-      shortName: body.shortName,
-      NOT: { id },
-    },
-  });
-
-  if (existingShortName) {
-    return NextResponse.json(
-      { error: "Cette abréviation est déjà utilisée par un autre parti" },
-      { status: 400 }
-    );
-  }
-
-  // Validate political position if provided
-  const validPositions = Object.values(PoliticalPosition);
-  if (body.politicalPosition && !validPositions.includes(body.politicalPosition)) {
-    return NextResponse.json({ error: "Position politique invalide" }, { status: 400 });
-  }
-
-  // Prevent circular predecessor references
-  if (body.predecessorId) {
-    // Check if the predecessor would create a cycle
-    let currentId = body.predecessorId;
-    const visited = new Set<string>([id!]);
-
-    while (currentId) {
-      if (visited.has(currentId)) {
-        return NextResponse.json(
-          { error: "Référence circulaire détectée dans la chaîne des prédécesseurs" },
-          { status: 400 }
-        );
-      }
-      visited.add(currentId);
-
-      const predecessor = await db.party.findUnique({
-        where: { id: currentId },
-        select: { predecessorId: true },
-      });
-
-      currentId = predecessor?.predecessorId || null;
+    if (existingSlug) {
+      return NextResponse.json(
+        { error: "Ce slug est déjà utilisé par un autre parti" },
+        { status: 400 }
+      );
     }
-  }
 
-  // Validate source URL if provided
-  if (body.politicalPositionSourceUrl) {
-    try {
-      const sourceUrl = new URL(body.politicalPositionSourceUrl);
-      if (!["http:", "https:"].includes(sourceUrl.protocol)) {
-        return NextResponse.json({ error: "URL source invalide" }, { status: 400 });
-      }
-    } catch {
-      return NextResponse.json({ error: "URL source invalide" }, { status: 400 });
+    // Check if shortName is unique (excluding current party)
+    const existingShortName = await db.party.findFirst({
+      where: {
+        shortName: body.shortName,
+        NOT: { id },
+      },
+    });
+
+    if (existingShortName) {
+      return NextResponse.json(
+        { error: "Cette abréviation est déjà utilisée par un autre parti" },
+        { status: 400 }
+      );
     }
-  }
 
-  const updatedParty = await db.party.update({
-    where: { id },
-    data: {
-      slug: body.slug,
-      name: body.name,
-      shortName: body.shortName,
-      description: body.description || null,
-      color: body.color || null,
-      foundedDate: body.foundedDate ? new Date(body.foundedDate) : null,
-      dissolvedDate: body.dissolvedDate ? new Date(body.dissolvedDate) : null,
-      politicalPosition: body.politicalPosition || null,
-      politicalPositionSource: body.politicalPositionSource || null,
-      politicalPositionSourceUrl: body.politicalPositionSourceUrl || null,
-      politicalPositionOverride: body.politicalPositionOverride ?? false,
-      ideology: body.ideology || null,
-      headquarters: body.headquarters || null,
-      website: body.website || null,
-      predecessorId: body.predecessorId || null,
-    },
-  });
+    // Prevent circular predecessor references
+    if (body.predecessorId) {
+      let currentId: string | null = body.predecessorId;
+      const visited = new Set<string>([id!]);
 
-  await db.auditLog.create({
-    data: {
-      action: "UPDATE",
-      entityType: "Party",
-      entityId: id!,
-      changes: { name: updatedParty.name, shortName: updatedParty.shortName },
-    },
-  });
+      while (currentId) {
+        if (visited.has(currentId)) {
+          return NextResponse.json(
+            { error: "Référence circulaire détectée dans la chaîne des prédécesseurs" },
+            { status: 400 }
+          );
+        }
+        visited.add(currentId);
 
-  invalidateEntity("party", updatedParty.slug ?? undefined);
-  invalidateEntity("stats");
+        const predecessor: { predecessorId: string | null } | null = await db.party.findUnique({
+          where: { id: currentId },
+          select: { predecessorId: true },
+        });
 
-  return NextResponse.json(updatedParty);
-});
+        currentId = predecessor?.predecessorId || null;
+      }
+    }
 
-export const DELETE = withAdminAuth(async (_request: NextRequest, context) => {
+    const updatedParty = await db.party.update({
+      where: { id },
+      data: {
+        slug: body.slug,
+        name: body.name,
+        shortName: body.shortName,
+        description: body.description || null,
+        color: body.color || null,
+        foundedDate: body.foundedDate ? new Date(body.foundedDate) : null,
+        dissolvedDate: body.dissolvedDate ? new Date(body.dissolvedDate) : null,
+        politicalPosition: body.politicalPosition || null,
+        politicalPositionSource: body.politicalPositionSource || null,
+        politicalPositionSourceUrl: body.politicalPositionSourceUrl || null,
+        politicalPositionOverride: body.politicalPositionOverride ?? false,
+        ideology: body.ideology || null,
+        headquarters: body.headquarters || null,
+        website: body.website || null,
+        predecessorId: body.predecessorId || null,
+      },
+    });
+
+    const meta = getRequestMeta(request);
+    await db.auditLog.create({
+      data: {
+        action: "UPDATE",
+        entityType: "Party",
+        entityId: id!,
+        changes: { name: updatedParty.name, shortName: updatedParty.shortName },
+        ipAddress: meta.ip,
+        userAgent: meta.userAgent,
+      },
+    });
+
+    invalidateEntity("party", updatedParty.slug ?? undefined);
+    invalidateEntity("stats");
+
+    return NextResponse.json(updatedParty);
+  })
+);
+
+export const DELETE = withAdminAuth(async (request: NextRequest, context) => {
   const { id } = await context.params;
 
   // Check if party has any references
@@ -202,12 +186,15 @@ export const DELETE = withAdminAuth(async (_request: NextRequest, context) => {
   await db.externalId.deleteMany({ where: { partyId: id } });
   await db.party.delete({ where: { id } });
 
+  const meta = getRequestMeta(request);
   await db.auditLog.create({
     data: {
       action: "DELETE",
       entityType: "Party",
       entityId: id!,
       changes: { name: party.name, shortName: party.shortName },
+      ipAddress: meta.ip,
+      userAgent: meta.userAgent,
     },
   });
 

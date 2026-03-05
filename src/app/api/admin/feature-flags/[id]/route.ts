@@ -1,37 +1,69 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { withAdminAuth } from "@/lib/api/with-admin-auth";
+import { withValidation, getRequestMeta } from "@/lib/security";
+import { updateFeatureFlagSchema } from "@/lib/security/schemas/feature-flag";
 import { revalidateTags } from "@/lib/cache";
 import { revalidatePath } from "next/cache";
+import type { z } from "zod/v4";
 
-export const PUT = withAdminAuth(async (request, context) => {
+type UpdateFeatureFlagBody = z.infer<typeof updateFeatureFlagSchema>;
+
+export const PUT = withAdminAuth(
+  withValidation(updateFeatureFlagSchema, async (request, context, body: UpdateFeatureFlagBody) => {
+    const { id } = await context.params;
+
+    const flag = await db.featureFlag.update({
+      where: { id },
+      data: {
+        ...(body.label !== undefined && { label: body.label }),
+        ...(body.description !== undefined && { description: body.description }),
+        ...(body.enabled !== undefined && { enabled: body.enabled }),
+        ...(body.value !== undefined && { value: body.value as string }),
+        ...(body.startDate !== undefined && {
+          startDate: body.startDate ? new Date(body.startDate) : null,
+        }),
+        ...(body.endDate !== undefined && {
+          endDate: body.endDate ? new Date(body.endDate) : null,
+        }),
+      },
+    });
+
+    // Audit log
+    const meta = getRequestMeta(request);
+    await db.auditLog.create({
+      data: {
+        action: "UPDATE",
+        entityType: "FeatureFlag",
+        entityId: id!,
+        changes: body as Record<string, string>,
+        ipAddress: meta.ip,
+        userAgent: meta.userAgent,
+      },
+    });
+
+    revalidateTags(["feature-flags"]);
+    revalidatePath("/", "layout");
+    return NextResponse.json(flag);
+  })
+);
+
+export const DELETE = withAdminAuth(async (request, context) => {
   const { id } = await context.params;
-  const data = await request.json();
+  await db.featureFlag.delete({ where: { id } });
 
-  const flag = await db.featureFlag.update({
-    where: { id },
+  // Audit log
+  const meta = getRequestMeta(request);
+  await db.auditLog.create({
     data: {
-      ...(data.label !== undefined && { label: data.label }),
-      ...(data.description !== undefined && { description: data.description }),
-      ...(data.enabled !== undefined && { enabled: data.enabled }),
-      ...(data.value !== undefined && { value: data.value }),
-      ...(data.startDate !== undefined && {
-        startDate: data.startDate ? new Date(data.startDate) : null,
-      }),
-      ...(data.endDate !== undefined && {
-        endDate: data.endDate ? new Date(data.endDate) : null,
-      }),
+      action: "DELETE",
+      entityType: "FeatureFlag",
+      entityId: id!,
+      ipAddress: meta.ip,
+      userAgent: meta.userAgent,
     },
   });
 
-  revalidateTags(["feature-flags"]);
-  revalidatePath("/", "layout");
-  return NextResponse.json(flag);
-});
-
-export const DELETE = withAdminAuth(async (_request, context) => {
-  const { id } = await context.params;
-  await db.featureFlag.delete({ where: { id } });
   revalidateTags(["feature-flags"]);
   revalidatePath("/", "layout");
 

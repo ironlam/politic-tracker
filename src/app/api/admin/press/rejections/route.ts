@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { withAdminAuth } from "@/lib/api/with-admin-auth";
+import { withValidation } from "@/lib/security/validate";
+import { deleteRejectionsSchema } from "@/lib/security/schemas";
 import { parsePagination } from "@/lib/api/pagination";
 
 export const GET = withAdminAuth(async (request: NextRequest) => {
@@ -50,17 +52,12 @@ export const GET = withAdminAuth(async (request: NextRequest) => {
   });
 });
 
-export const DELETE = withAdminAuth(async (request: NextRequest) => {
-  const body = await request.json();
-  const ids = body.ids;
+export const DELETE = withAdminAuth(
+  withValidation(deleteRejectionsSchema, async (_request, _context, { ids }) => {
+    const result = await db.pressAnalysisRejection.deleteMany({
+      where: { id: { in: ids } },
+    });
 
-  if (!Array.isArray(ids) || ids.length === 0) {
-    return NextResponse.json({ error: "ids requis" }, { status: 400 });
-  }
-
-  const result = await db.pressAnalysisRejection.deleteMany({
-    where: { id: { in: ids } },
-  });
-
-  return NextResponse.json({ deleted: result.count });
-});
+    return NextResponse.json({ deleted: result.count });
+  })
+);

@@ -1,6 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { withAdminAuth } from "@/lib/api/with-admin-auth";
+import { withValidation } from "@/lib/security/validate";
+import { recoverRejectionSchema } from "@/lib/security/schemas";
 import { generateAffairSlug } from "@/lib/utils";
 import { invalidateEntity } from "@/lib/cache";
 import { computeSeverity, isInherentlyMandateCategory } from "@/config/labels";
@@ -36,118 +38,113 @@ const FEED_PUBLISHERS: Record<string, string> = {
   googlenews: "Google News",
 };
 
-export const POST = withAdminAuth(async (request: NextRequest) => {
-  const body = await request.json();
-  const { rejectionId } = body;
-
-  if (!rejectionId || typeof rejectionId !== "string") {
-    return NextResponse.json({ error: "rejectionId requis" }, { status: 400 });
-  }
-
-  // Load rejection with article data
-  const rejection = await db.pressAnalysisRejection.findUnique({
-    where: { id: rejectionId },
-    include: {
-      article: {
-        select: { id: true, title: true, url: true, feedSource: true, publishedAt: true },
+export const POST = withAdminAuth(
+  withValidation(recoverRejectionSchema, async (_request, _context, { rejectionId }) => {
+    // Load rejection with article data
+    const rejection = await db.pressAnalysisRejection.findUnique({
+      where: { id: rejectionId },
+      include: {
+        article: {
+          select: { id: true, title: true, url: true, feedSource: true, publishedAt: true },
+        },
       },
-    },
-  });
+    });
 
-  if (!rejection) {
-    return NextResponse.json({ error: "Rejet introuvable" }, { status: 404 });
-  }
+    if (!rejection) {
+      return NextResponse.json({ error: "Rejet introuvable" }, { status: 404 });
+    }
 
-  if (!rejection.politicianId) {
-    return NextResponse.json(
-      { error: "Pas de politicien lié — récupération impossible" },
-      { status: 400 }
-    );
-  }
+    if (!rejection.politicianId) {
+      return NextResponse.json(
+        { error: "Pas de politicien lié — récupération impossible" },
+        { status: 400 }
+      );
+    }
 
-  const detected = rejection.detectedAffair as unknown as DetectedAffair;
-  const title = `[À VÉRIFIER] ${detected.title}`;
+    const detected = rejection.detectedAffair as unknown as DetectedAffair;
+    const title = `[À VÉRIFIER] ${detected.title}`;
 
-  // Get politician slug for SEO-friendly affair slug
-  const politician = await db.politician.findUnique({
-    where: { id: rejection.politicianId! },
-    select: { slug: true },
-  });
+    // Get politician slug for SEO-friendly affair slug
+    const politician = await db.politician.findUnique({
+      where: { id: rejection.politicianId! },
+      select: { slug: true },
+    });
 
-  // Generate unique slug with politician name
-  const baseSlug = generateAffairSlug(politician?.slug ?? "", title);
-  let slug = baseSlug;
-  let counter = 1;
-  while (await db.affair.findUnique({ where: { slug }, select: { id: true } })) {
-    slug = `${baseSlug}-${counter}`;
-    counter++;
-  }
+    // Generate unique slug with politician name
+    const baseSlug = generateAffairSlug(politician?.slug ?? "", title);
+    let slug = baseSlug;
+    let counter = 1;
+    while (await db.affair.findUnique({ where: { slug }, select: { id: true } })) {
+      slug = `${baseSlug}-${counter}`;
+      counter++;
+    }
 
-  const category = detected.category as AffairCategory;
-  const mandateRelated = isInherentlyMandateCategory(category);
-  const severity = computeSeverity(category, mandateRelated);
-  const publisher = FEED_PUBLISHERS[rejection.article.feedSource] || rejection.article.feedSource;
+    const category = detected.category as AffairCategory;
+    const mandateRelated = isInherentlyMandateCategory(category);
+    const severity = computeSeverity(category, mandateRelated);
+    const publisher = FEED_PUBLISHERS[rejection.article.feedSource] || rejection.article.feedSource;
 
-  // Create affair in a transaction
-  const affair = await db.$transaction(async (tx) => {
-    const created = await tx.affair.create({
-      data: {
-        politicianId: rejection.politicianId!,
-        title,
-        slug,
-        description: detected.description,
-        status: detected.status as AffairStatus,
-        category,
-        severity,
-        isRelatedToMandate: mandateRelated,
-        involvement:
-          (detected.involvement as
-            | "DIRECT"
-            | "INDIRECT"
-            | "MENTIONED_ONLY"
-            | "VICTIM"
-            | "PLAINTIFF") || "MENTIONED_ONLY",
-        publicationStatus: "DRAFT",
-        confidenceScore: detected.confidenceScore,
-        factsDate: detected.factsDate ? new Date(detected.factsDate) : null,
-        court: detected.court,
-        verifiedAt: null,
-        sources: {
-          create: {
-            url: rejection.article.url,
-            title: rejection.article.title,
-            publisher,
-            publishedAt: rejection.article.publishedAt,
-            sourceType: "PRESSE",
-            excerpt: detected.excerpts[0] || null,
+    // Create affair in a transaction
+    const affair = await db.$transaction(async (tx) => {
+      const created = await tx.affair.create({
+        data: {
+          politicianId: rejection.politicianId!,
+          title,
+          slug,
+          description: detected.description,
+          status: detected.status as AffairStatus,
+          category,
+          severity,
+          isRelatedToMandate: mandateRelated,
+          involvement:
+            (detected.involvement as
+              | "DIRECT"
+              | "INDIRECT"
+              | "MENTIONED_ONLY"
+              | "VICTIM"
+              | "PLAINTIFF") || "MENTIONED_ONLY",
+          publicationStatus: "DRAFT",
+          confidenceScore: detected.confidenceScore,
+          factsDate: detected.factsDate ? new Date(detected.factsDate) : null,
+          court: detected.court,
+          verifiedAt: null,
+          sources: {
+            create: {
+              url: rejection.article.url,
+              title: rejection.article.title,
+              publisher,
+              publishedAt: rejection.article.publishedAt,
+              sourceType: "PRESSE",
+              excerpt: detected.excerpts[0] || null,
+            },
           },
         },
-      },
-    });
+      });
 
-    // Link article to affair
-    await tx.pressArticleAffair.upsert({
-      where: {
-        articleId_affairId: {
+      // Link article to affair
+      await tx.pressArticleAffair.upsert({
+        where: {
+          articleId_affairId: {
+            articleId: rejection.article.id,
+            affairId: created.id,
+          },
+        },
+        create: {
           articleId: rejection.article.id,
           affairId: created.id,
+          role: "REVELATION",
         },
-      },
-      create: {
-        articleId: rejection.article.id,
-        affairId: created.id,
-        role: "REVELATION",
-      },
-      update: { role: "REVELATION" },
+        update: { role: "REVELATION" },
+      });
+
+      // Delete the rejection record
+      await tx.pressAnalysisRejection.delete({ where: { id: rejectionId } });
+
+      return created;
     });
 
-    // Delete the rejection record
-    await tx.pressAnalysisRejection.delete({ where: { id: rejectionId } });
+    invalidateEntity("affair");
 
-    return created;
-  });
-
-  invalidateEntity("affair");
-
-  return NextResponse.json({ affairId: affair.id, title: affair.title }, { status: 201 });
-});
+    return NextResponse.json({ affairId: affair.id, title: affair.title }, { status: 201 });
+  })
+);

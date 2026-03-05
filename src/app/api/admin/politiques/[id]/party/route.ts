@@ -1,60 +1,49 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { withAdminAuth } from "@/lib/api/with-admin-auth";
+import { withValidation, getRequestMeta } from "@/lib/security";
+import { addPartyMembershipSchema } from "@/lib/security/schemas/party";
 import { invalidateEntity } from "@/lib/cache";
 import { setCurrentParty, removeParty } from "@/services/politician";
-import type { PartyRole } from "@/generated/prisma";
+import type { z } from "zod/v4";
 
-const VALID_ROLES: PartyRole[] = [
-  "MEMBER",
-  "FOUNDER",
-  "SPOKESPERSON",
-  "COORDINATOR",
-  "HONORARY_PRESIDENT",
-  "SECRETARY_GENERAL",
-];
+type AddBody = z.infer<typeof addPartyMembershipSchema>;
 
-export const POST = withAdminAuth(async (request: NextRequest, context) => {
-  const { id } = await context.params;
+export const POST = withAdminAuth(
+  withValidation(addPartyMembershipSchema, async (request, context, body: AddBody) => {
+    const { id } = await context.params;
 
-  const body = await request.json();
+    const politician = await db.politician.findUnique({
+      where: { id },
+      select: { id: true, slug: true },
+    });
 
-  if (!body.partyId) {
-    return NextResponse.json({ error: "partyId est requis" }, { status: 400 });
-  }
+    if (!politician) {
+      return NextResponse.json({ error: "Politicien non trouvé" }, { status: 404 });
+    }
 
-  const politician = await db.politician.findUnique({
-    where: { id },
-    select: { id: true, slug: true },
-  });
+    await setCurrentParty(id!, body.partyId, {
+      startDate: body.startDate ? new Date(body.startDate) : new Date(),
+      role: body.role || undefined,
+    });
 
-  if (!politician) {
-    return NextResponse.json({ error: "Politicien non trouvé" }, { status: 404 });
-  }
+    const meta = getRequestMeta(request);
+    await db.auditLog.create({
+      data: {
+        action: "UPDATE",
+        entityType: "Politician",
+        entityId: id!,
+        changes: { partyChanged: body.partyId, startDate: body.startDate },
+        ipAddress: meta.ip,
+        userAgent: meta.userAgent,
+      },
+    });
 
-  // Validate role if provided
-  if (body.role && !VALID_ROLES.includes(body.role)) {
-    return NextResponse.json({ error: "Rôle invalide" }, { status: 400 });
-  }
+    invalidateEntity("politician", politician.slug);
 
-  await setCurrentParty(id!, body.partyId, {
-    startDate: body.startDate ? new Date(body.startDate) : new Date(),
-    role: body.role || undefined,
-  });
-
-  await db.auditLog.create({
-    data: {
-      action: "UPDATE",
-      entityType: "Politician",
-      entityId: id!,
-      changes: { partyChanged: body.partyId, startDate: body.startDate },
-    },
-  });
-
-  invalidateEntity("politician", politician.slug);
-
-  return NextResponse.json({ success: true });
-});
+    return NextResponse.json({ success: true });
+  })
+);
 
 export const DELETE = withAdminAuth(async (request: NextRequest, context) => {
   const { id } = await context.params;
@@ -77,6 +66,7 @@ export const DELETE = withAdminAuth(async (request: NextRequest, context) => {
 
   await removeParty(id!, endDate);
 
+  const meta = getRequestMeta(request);
   await db.auditLog.create({
     data: {
       action: "UPDATE",
@@ -86,6 +76,8 @@ export const DELETE = withAdminAuth(async (request: NextRequest, context) => {
         partyRemoved: politician.currentPartyId,
         endDate: endDate.toISOString(),
       },
+      ipAddress: meta.ip,
+      userAgent: meta.userAgent,
     },
   });
 

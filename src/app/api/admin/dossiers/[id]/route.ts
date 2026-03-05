@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { withAdminAuth } from "@/lib/api/with-admin-auth";
+import { withValidation, getRequestMeta } from "@/lib/security";
+import { updateDossierSchema } from "@/lib/security/schemas/dossier";
 import { invalidateEntity } from "@/lib/cache";
+import type { z } from "zod/v4";
+
+type UpdateDossierBody = z.infer<typeof updateDossierSchema>;
 
 // GET /api/admin/dossiers/[id] - Get dossier details
 export const GET = withAdminAuth(async (_request: NextRequest, context) => {
@@ -24,51 +29,63 @@ export const GET = withAdminAuth(async (_request: NextRequest, context) => {
 });
 
 // PUT /api/admin/dossiers/[id] - Update dossier
-export const PUT = withAdminAuth(async (request: NextRequest, context) => {
-  const { id } = await context.params;
+export const PUT = withAdminAuth(
+  withValidation(updateDossierSchema, async (request, context, body: UpdateDossierBody) => {
+    const { id } = await context.params;
 
-  const body = await request.json();
-  const { summary, shortTitle, category, status, theme } = body;
+    // Check dossier exists
+    const existing = await db.legislativeDossier.findUnique({
+      where: { id },
+    });
 
-  // Check dossier exists
-  const existing = await db.legislativeDossier.findUnique({
-    where: { id },
-  });
+    if (!existing) {
+      return NextResponse.json({ error: "Dossier non trouvé" }, { status: 404 });
+    }
 
-  if (!existing) {
-    return NextResponse.json({ error: "Dossier non trouvé" }, { status: 404 });
-  }
+    // Build update data
+    const updateData: Record<string, unknown> = {};
 
-  // Build update data
-  const updateData: Record<string, unknown> = {};
+    if (body.summary !== undefined) {
+      updateData.summary = body.summary;
+      updateData.summaryDate = new Date();
+    }
 
-  if (summary !== undefined) {
-    updateData.summary = summary;
-    updateData.summaryDate = new Date();
-  }
+    if (body.shortTitle !== undefined) {
+      updateData.shortTitle = body.shortTitle;
+    }
 
-  if (shortTitle !== undefined) {
-    updateData.shortTitle = shortTitle;
-  }
+    if (body.category !== undefined) {
+      updateData.category = body.category;
+    }
 
-  if (category !== undefined) {
-    updateData.category = category;
-  }
+    if (body.status !== undefined) {
+      updateData.status = body.status;
+    }
 
-  if (status !== undefined) {
-    updateData.status = status;
-  }
+    if (body.theme !== undefined) {
+      updateData.theme = body.theme;
+    }
 
-  if (theme !== undefined) {
-    updateData.theme = theme;
-  }
+    const updated = await db.legislativeDossier.update({
+      where: { id },
+      data: updateData,
+    });
 
-  const updated = await db.legislativeDossier.update({
-    where: { id },
-    data: updateData,
-  });
+    // Audit log
+    const meta = getRequestMeta(request);
+    await db.auditLog.create({
+      data: {
+        action: "UPDATE",
+        entityType: "LegislativeDossier",
+        entityId: id!,
+        changes: updateData as Record<string, string>,
+        ipAddress: meta.ip,
+        userAgent: meta.userAgent,
+      },
+    });
 
-  invalidateEntity("dossier");
+    invalidateEntity("dossier");
 
-  return NextResponse.json(updated);
-});
+    return NextResponse.json(updated);
+  })
+);

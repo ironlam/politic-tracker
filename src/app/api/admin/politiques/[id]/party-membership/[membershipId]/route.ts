@@ -1,94 +1,89 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { withAdminAuth } from "@/lib/api/with-admin-auth";
+import { withValidation, getRequestMeta } from "@/lib/security";
+import { updatePartyMembershipSchema } from "@/lib/security/schemas/party";
 import { invalidateEntity } from "@/lib/cache";
-import type { PartyRole } from "@/generated/prisma";
+import type { z } from "zod/v4";
 
-const VALID_ROLES: PartyRole[] = [
-  "MEMBER",
-  "FOUNDER",
-  "SPOKESPERSON",
-  "COORDINATOR",
-  "HONORARY_PRESIDENT",
-  "SECRETARY_GENERAL",
-];
+type UpdateBody = z.infer<typeof updatePartyMembershipSchema>;
 
-export const PATCH = withAdminAuth(async (request: NextRequest, context) => {
-  const { id, membershipId } = await context.params;
+export const PATCH = withAdminAuth(
+  withValidation(updatePartyMembershipSchema, async (request, context, body: UpdateBody) => {
+    const { id, membershipId } = await context.params;
 
-  const body = await request.json();
+    const membership = await db.partyMembership.findUnique({
+      where: { id: membershipId },
+      select: { id: true, politicianId: true },
+    });
 
-  const membership = await db.partyMembership.findUnique({
-    where: { id: membershipId },
-    select: { id: true, politicianId: true },
-  });
-
-  if (!membership || membership.politicianId !== id) {
-    return NextResponse.json({ error: "Membership non trouvé" }, { status: 404 });
-  }
-
-  const updateData: Record<string, unknown> = {};
-
-  if (body.startDate !== undefined) {
-    updateData.startDate = body.startDate ? new Date(body.startDate) : null;
-  }
-
-  if (body.endDate !== undefined) {
-    updateData.endDate = body.endDate ? new Date(body.endDate) : null;
-  }
-
-  if (body.role !== undefined) {
-    if (!VALID_ROLES.includes(body.role)) {
-      return NextResponse.json({ error: "Rôle invalide" }, { status: 400 });
+    if (!membership || membership.politicianId !== id) {
+      return NextResponse.json({ error: "Membership non trouvé" }, { status: 404 });
     }
-    updateData.role = body.role;
-  }
 
-  // Validate dates
-  if (updateData.startDate && updateData.endDate) {
-    if (new Date(updateData.startDate as string) >= new Date(updateData.endDate as string)) {
-      return NextResponse.json(
-        { error: "La date de début doit être avant la date de fin" },
-        { status: 400 }
-      );
+    const updateData: Record<string, unknown> = {};
+
+    if (body.startDate !== undefined) {
+      updateData.startDate = body.startDate ? new Date(body.startDate) : null;
     }
-  }
 
-  if (Object.keys(updateData).length === 0) {
-    return NextResponse.json({ error: "Aucun champ à mettre à jour" }, { status: 400 });
-  }
+    if (body.endDate !== undefined) {
+      updateData.endDate = body.endDate ? new Date(body.endDate) : null;
+    }
 
-  const updated = await db.partyMembership.update({
-    where: { id: membershipId },
-    data: updateData,
-  });
+    if (body.role !== undefined) {
+      updateData.role = body.role;
+    }
 
-  const politician = await db.politician.findUnique({
-    where: { id },
-    select: { slug: true },
-  });
+    // Validate dates
+    if (updateData.startDate && updateData.endDate) {
+      if (new Date(updateData.startDate as string) >= new Date(updateData.endDate as string)) {
+        return NextResponse.json(
+          { error: "La date de début doit être avant la date de fin" },
+          { status: 400 }
+        );
+      }
+    }
 
-  await db.auditLog.create({
-    data: {
-      action: "UPDATE",
-      entityType: "PartyMembership",
-      entityId: membershipId!,
-      changes: {
-        startDate: updateData.startDate ? String(updateData.startDate) : undefined,
-        endDate: updateData.endDate !== undefined ? String(updateData.endDate) : undefined,
-        role: updateData.role ? String(updateData.role) : undefined,
+    if (Object.keys(updateData).length === 0) {
+      return NextResponse.json({ error: "Aucun champ à mettre à jour" }, { status: 400 });
+    }
+
+    const updated = await db.partyMembership.update({
+      where: { id: membershipId },
+      data: updateData,
+    });
+
+    const politician = await db.politician.findUnique({
+      where: { id },
+      select: { slug: true },
+    });
+
+    const meta = getRequestMeta(request);
+    await db.auditLog.create({
+      data: {
+        action: "UPDATE",
+        entityType: "PartyMembership",
+        entityId: membershipId!,
+        changes: {
+          startDate: updateData.startDate ? String(updateData.startDate) : undefined,
+          endDate: updateData.endDate !== undefined ? String(updateData.endDate) : undefined,
+          role: updateData.role ? String(updateData.role) : undefined,
+        },
+        ipAddress: meta.ip,
+        userAgent: meta.userAgent,
       },
-    },
-  });
+    });
 
-  if (politician) {
-    invalidateEntity("politician", politician.slug);
-  }
+    if (politician) {
+      invalidateEntity("politician", politician.slug);
+    }
 
-  return NextResponse.json(updated);
-});
+    return NextResponse.json(updated);
+  })
+);
 
-export const DELETE = withAdminAuth(async (_request: NextRequest, context) => {
+export const DELETE = withAdminAuth(async (request: NextRequest, context) => {
   const { id, membershipId } = await context.params;
 
   const membership = await db.partyMembership.findUnique({
@@ -129,12 +124,15 @@ export const DELETE = withAdminAuth(async (_request: NextRequest, context) => {
     select: { slug: true },
   });
 
+  const meta = getRequestMeta(request);
   await db.auditLog.create({
     data: {
       action: "DELETE",
       entityType: "PartyMembership",
       entityId: membershipId!,
       changes: { partyId: membership.partyId },
+      ipAddress: meta.ip,
+      userAgent: meta.userAgent,
     },
   });
 

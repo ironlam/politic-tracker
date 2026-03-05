@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { withAdminAuth } from "@/lib/api/with-admin-auth";
+import { withValidation, getRequestMeta } from "@/lib/security";
+import { updateMandateSchema, patchMandateSchema } from "@/lib/security/schemas/mandate";
 import { invalidateEntity } from "@/lib/cache";
+import type { z } from "zod/v4";
+
+type UpdateMandateBody = z.infer<typeof updateMandateSchema>;
+type PatchMandateBody = z.infer<typeof patchMandateSchema>;
 
 /**
  * GET /api/admin/mandates/[id]
@@ -29,118 +35,125 @@ export const GET = withAdminAuth(async (_request: NextRequest, context) => {
  * PATCH /api/admin/mandates/[id]
  * Partial update (URLs only — legacy)
  */
-export const PATCH = withAdminAuth(async (request: NextRequest, context) => {
-  const { id } = await context.params;
+export const PATCH = withAdminAuth(
+  withValidation(patchMandateSchema, async (request, context, body: PatchMandateBody) => {
+    const { id } = await context.params;
 
-  const data = await request.json();
+    const existing = await db.mandate.findUnique({
+      where: { id },
+      select: { id: true },
+    });
 
-  const existing = await db.mandate.findUnique({
-    where: { id },
-    select: { id: true },
-  });
+    if (!existing) {
+      return NextResponse.json({ error: "Mandat non trouvé" }, { status: 404 });
+    }
 
-  if (!existing) {
-    return NextResponse.json({ error: "Mandat non trouvé" }, { status: 404 });
-  }
-
-  const mandate = await db.mandate.update({
-    where: { id },
-    data: {
-      officialUrl: data.officialUrl ?? undefined,
-      sourceUrl: data.sourceUrl ?? undefined,
-    },
-  });
-
-  await db.auditLog.create({
-    data: {
-      action: "UPDATE",
-      entityType: "Mandate",
-      entityId: mandate.id,
-      changes: {
-        officialUrl: mandate.officialUrl,
-        sourceUrl: mandate.sourceUrl,
+    const mandate = await db.mandate.update({
+      where: { id },
+      data: {
+        officialUrl: body.officialUrl ?? undefined,
+        sourceUrl: body.sourceUrl ?? undefined,
       },
-    },
-  });
+    });
 
-  invalidateEntity("mandate");
+    const meta = getRequestMeta(request);
+    await db.auditLog.create({
+      data: {
+        action: "UPDATE",
+        entityType: "Mandate",
+        entityId: mandate.id,
+        changes: {
+          officialUrl: mandate.officialUrl,
+          sourceUrl: mandate.sourceUrl,
+        },
+        ipAddress: meta.ip,
+        userAgent: meta.userAgent,
+      },
+    });
 
-  return NextResponse.json(mandate);
-});
+    invalidateEntity("mandate");
+
+    return NextResponse.json(mandate);
+  })
+);
 
 /**
  * PUT /api/admin/mandates/[id]
  * Full update of a leadership mandate
  */
-export const PUT = withAdminAuth(async (request: NextRequest, context) => {
-  const { id } = await context.params;
+export const PUT = withAdminAuth(
+  withValidation(updateMandateSchema, async (request, context, body: UpdateMandateBody) => {
+    const { id } = await context.params;
 
-  const data = await request.json();
-  const { title, startDate, endDate, sourceUrl, officialUrl } = data;
+    const { title, startDate, endDate, sourceUrl, officialUrl } = body;
 
-  const existing = await db.mandate.findUnique({
-    where: { id },
-    select: { id: true, partyId: true, type: true },
-  });
+    const existing = await db.mandate.findUnique({
+      where: { id },
+      select: { id: true, partyId: true, type: true },
+    });
 
-  if (!existing) {
-    return NextResponse.json({ error: "Mandat non trouvé" }, { status: 404 });
-  }
+    if (!existing) {
+      return NextResponse.json({ error: "Mandat non trouvé" }, { status: 404 });
+    }
 
-  const isCurrent = !endDate;
+    const isCurrent = !endDate;
 
-  // If making this mandate current, close other current leadership mandates for same party
-  if (isCurrent && existing.partyId && existing.type === "PRESIDENT_PARTI") {
-    await db.mandate.updateMany({
-      where: {
-        type: "PRESIDENT_PARTI",
-        partyId: existing.partyId,
-        isCurrent: true,
-        id: { not: id },
-      },
+    // If making this mandate current, close other current leadership mandates for same party
+    if (isCurrent && existing.partyId && existing.type === "PRESIDENT_PARTI") {
+      await db.mandate.updateMany({
+        where: {
+          type: "PRESIDENT_PARTI",
+          partyId: existing.partyId,
+          isCurrent: true,
+          id: { not: id },
+        },
+        data: {
+          isCurrent: false,
+          endDate: startDate ? new Date(startDate) : new Date(),
+        },
+      });
+    }
+
+    const mandate = await db.mandate.update({
+      where: { id },
       data: {
-        isCurrent: false,
-        endDate: new Date(startDate),
+        title: title ?? undefined,
+        startDate: startDate ? new Date(startDate) : undefined,
+        endDate: endDate ? new Date(endDate) : null,
+        isCurrent,
+        sourceUrl: sourceUrl ?? undefined,
+        officialUrl: officialUrl ?? undefined,
+      },
+      include: {
+        politician: { select: { id: true, fullName: true, slug: true } },
+        party: { select: { id: true, name: true, shortName: true } },
       },
     });
-  }
 
-  const mandate = await db.mandate.update({
-    where: { id },
-    data: {
-      title: title ?? undefined,
-      startDate: startDate ? new Date(startDate) : undefined,
-      endDate: endDate ? new Date(endDate) : null,
-      isCurrent,
-      sourceUrl: sourceUrl ?? undefined,
-      officialUrl: officialUrl ?? undefined,
-    },
-    include: {
-      politician: { select: { id: true, fullName: true, slug: true } },
-      party: { select: { id: true, name: true, shortName: true } },
-    },
-  });
+    const meta = getRequestMeta(request);
+    await db.auditLog.create({
+      data: {
+        action: "UPDATE",
+        entityType: "Mandate",
+        entityId: mandate.id,
+        changes: { title, startDate, endDate, isCurrent },
+        ipAddress: meta.ip,
+        userAgent: meta.userAgent,
+      },
+    });
 
-  await db.auditLog.create({
-    data: {
-      action: "UPDATE",
-      entityType: "Mandate",
-      entityId: mandate.id,
-      changes: { title, startDate, endDate, isCurrent },
-    },
-  });
+    invalidateEntity("mandate");
+    if (mandate.politician?.slug) invalidateEntity("politician", mandate.politician.slug);
 
-  invalidateEntity("mandate");
-  if (mandate.politician?.slug) invalidateEntity("politician", mandate.politician.slug);
-
-  return NextResponse.json(mandate);
-});
+    return NextResponse.json(mandate);
+  })
+);
 
 /**
  * DELETE /api/admin/mandates/[id]
  * Delete a mandate (warns if source is WIKIDATA)
  */
-export const DELETE = withAdminAuth(async (_request: NextRequest, context) => {
+export const DELETE = withAdminAuth(async (request: NextRequest, context) => {
   const { id } = await context.params;
 
   const existing = await db.mandate.findUnique({
@@ -154,6 +167,7 @@ export const DELETE = withAdminAuth(async (_request: NextRequest, context) => {
 
   await db.mandate.delete({ where: { id } });
 
+  const meta = getRequestMeta(request);
   await db.auditLog.create({
     data: {
       action: "DELETE",
@@ -165,6 +179,8 @@ export const DELETE = withAdminAuth(async (_request: NextRequest, context) => {
         source: existing.source,
         politicianId: existing.politicianId,
       },
+      ipAddress: meta.ip,
+      userAgent: meta.userAgent,
     },
   });
 

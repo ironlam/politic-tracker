@@ -1,8 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { withAdminAuth } from "@/lib/api/with-admin-auth";
+import { withValidation } from "@/lib/security/validate";
+import { revalidateCacheSchema } from "@/lib/security/schemas";
 import { db } from "@/lib/db";
-import { ALL_TAGS, revalidateAll, revalidateTags } from "@/lib/cache";
-import type { CacheTag } from "@/lib/cache";
+import { revalidateAll, revalidateTags } from "@/lib/cache";
 
 /**
  * POST /api/admin/cache/revalidate
@@ -10,54 +11,34 @@ import type { CacheTag } from "@/lib/cache";
  * Invalidate Next.js cache from the admin UI.
  * Body: { all: true } or { tags: CacheTag[] }
  */
-export const POST = withAdminAuth(async (request: NextRequest) => {
-  let body: { all?: boolean; tags?: string[] };
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
-  }
+export const POST = withAdminAuth(
+  withValidation(revalidateCacheSchema, async (_request, _context, body) => {
+    if ("all" in body) {
+      revalidateAll();
 
-  if (body.all) {
-    revalidateAll();
+      await db.auditLog.create({
+        data: {
+          action: "INVALIDATE",
+          entityType: "Cache",
+          entityId: "all",
+          changes: { scope: "all" },
+        },
+      });
 
-    await db.auditLog.create({
-      data: {
-        action: "INVALIDATE",
-        entityType: "Cache",
-        entityId: "all",
-        changes: { scope: "all" },
-      },
-    });
-
-    return NextResponse.json({ revalidated: "all" });
-  }
-
-  if (Array.isArray(body.tags) && body.tags.length > 0) {
-    const validTags = body.tags.filter((t): t is CacheTag =>
-      (ALL_TAGS as readonly string[]).includes(t)
-    );
-
-    if (validTags.length === 0) {
-      return NextResponse.json({ error: "Aucun tag valide fourni" }, { status: 400 });
+      return NextResponse.json({ revalidated: "all" });
     }
 
-    revalidateTags(validTags);
+    revalidateTags(body.tags);
 
     await db.auditLog.create({
       data: {
         action: "INVALIDATE",
         entityType: "Cache",
-        entityId: validTags.join(","),
-        changes: { scope: "selective", tags: validTags },
+        entityId: body.tags.join(","),
+        changes: { scope: "selective", tags: body.tags },
       },
     });
 
-    return NextResponse.json({ revalidated: validTags });
-  }
-
-  return NextResponse.json(
-    { error: "Body must contain { all: true } or { tags: string[] }" },
-    { status: 400 }
-  );
-});
+    return NextResponse.json({ revalidated: body.tags });
+  })
+);

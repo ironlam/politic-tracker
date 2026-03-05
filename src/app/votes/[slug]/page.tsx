@@ -25,7 +25,7 @@ export async function generateStaticParams() {
   const scrutins = await db.scrutin.findMany({
     select: { slug: true },
     orderBy: { votingDate: "desc" },
-    take: 200,
+    take: 50,
   });
   return scrutins.map((s) => ({ slug: s.slug }));
 }

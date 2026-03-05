@@ -18,7 +18,7 @@ export async function generateStaticParams() {
   const communes = await db.commune.findMany({
     select: { id: true },
     orderBy: { population: "desc" },
-    take: 200,
+    take: 50,
   });
   return communes.map((c) => ({ inseeCode: c.id }));
 }

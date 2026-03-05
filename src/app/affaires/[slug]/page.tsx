@@ -35,7 +35,7 @@ export async function generateStaticParams() {
     where: { publicationStatus: "PUBLISHED" },
     select: { slug: true },
     orderBy: { updatedAt: "desc" },
-    take: 200,
+    take: 50,
   });
   return affairs.map((a) => ({ slug: a.slug }));
 }

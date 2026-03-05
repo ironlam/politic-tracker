@@ -37,7 +37,7 @@ export async function generateStaticParams() {
   const politicians = await db.politician.findMany({
     where: { publicationStatus: "PUBLISHED" },
     select: { slug: true },
-    take: 100,
+    take: 30,
     orderBy: { prominenceScore: "desc" },
   });
   return politicians.map((p) => ({ slug: p.slug }));

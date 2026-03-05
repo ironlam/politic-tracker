@@ -19,7 +19,7 @@ export async function generateStaticParams() {
   const dossiers = await db.legislativeDossier.findMany({
     where: { slug: { not: null } },
     select: { slug: true },
-    take: 200,
+    take: 30,
     orderBy: { filingDate: "desc" },
   });
   return dossiers.filter((d) => d.slug !== null).map((d) => ({ slug: d.slug! }));

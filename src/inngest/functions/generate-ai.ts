@@ -16,14 +16,14 @@ export const generateAi = inngest.createFunction(
       const bioStats = await step.run("biographies", async () => {
         const { generateBiographies } = await import("@/services/sync/generate-biographies");
         const result = await generateBiographies();
-        if (jobId) await updateJobProgress(jobId, 25);
+        if (jobId) await updateJobProgress(jobId, 20);
         return result;
       });
 
       const summaryStats = await step.run("summaries", async () => {
         const { generateSummaries } = await import("@/services/sync/generate-summaries");
         const result = await generateSummaries({ limit: 10 });
-        if (jobId) await updateJobProgress(jobId, 50);
+        if (jobId) await updateJobProgress(jobId, 40);
         return result;
       });
 
@@ -31,7 +31,15 @@ export const generateAi = inngest.createFunction(
         const { generateScrutinSummaries } =
           await import("@/services/sync/generate-scrutin-summaries");
         const result = await generateScrutinSummaries({ limit: 20 });
-        if (jobId) await updateJobProgress(jobId, 75);
+        if (jobId) await updateJobProgress(jobId, 60);
+        return result;
+      });
+
+      const citizenImpactStats = await step.run("citizen-impacts", async () => {
+        const { generateScrutinCitizenImpacts } =
+          await import("@/services/sync/generate-scrutin-citizen-impacts");
+        const result = await generateScrutinCitizenImpacts({ limit: 20 });
+        if (jobId) await updateJobProgress(jobId, 80);
         return result;
       });
 
@@ -42,10 +50,17 @@ export const generateAi = inngest.createFunction(
 
       if (jobId)
         await markJobCompleted(jobId, {
-          steps: ["biographies", "summaries", "scrutin-summaries", "classify-themes"],
+          steps: [
+            "biographies",
+            "summaries",
+            "scrutin-summaries",
+            "citizen-impacts",
+            "classify-themes",
+          ],
           bioStats,
           summaryStats,
           scrutinStats,
+          citizenImpactStats,
           themeStats,
         });
     } catch (err) {

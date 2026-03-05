@@ -77,6 +77,12 @@ const migratedFunctions = [
     const limit = (data.limit as number) || 30;
     return classifyThemes({ limit });
   }),
+  createSyncFunction("generate-citizen-impacts", async (data) => {
+    const { generateScrutinCitizenImpacts } =
+      await import("@/services/sync/generate-scrutin-citizen-impacts");
+    const limit = (data.limit as number) || 20;
+    return generateScrutinCitizenImpacts({ limit });
+  }),
 ];
 
 // Phase 2a: Migrated — services already exist, just wire them up

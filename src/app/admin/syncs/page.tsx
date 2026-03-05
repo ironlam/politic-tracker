@@ -133,6 +133,11 @@ const SCRIPT_CATALOG: ScriptCategory[] = [
         description: "Résumés IA des votes",
       },
       { id: "classify-themes", label: "Classification", description: "Thèmes des dossiers" },
+      {
+        id: "generate-citizen-impacts",
+        label: "Impact citoyen",
+        description: "Décryptage IA des votes",
+      },
       { id: "index-embeddings", label: "Embeddings", description: "Index vectoriel RAG" },
     ],
   },

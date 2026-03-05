@@ -50,6 +50,14 @@ const DAILY_STEPS: DailyStep[] = [
     },
   },
   {
+    name: "citizen-impacts",
+    run: async () => {
+      const { generateScrutinCitizenImpacts } =
+        await import("@/services/sync/generate-scrutin-citizen-impacts");
+      return generateScrutinCitizenImpacts({ limit: 20 });
+    },
+  },
+  {
     name: "press-rss",
     run: async () => {
       const { syncPress } = await import("@/services/sync/press");

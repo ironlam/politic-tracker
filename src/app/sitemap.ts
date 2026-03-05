@@ -329,7 +329,7 @@ async function buildScrutinsSitemap(): Promise<MetadataRoute.Sitemap> {
 // Sitemap 4: Top 500 communes by population (priority 0.6)
 async function buildCommunesSitemap(): Promise<MetadataRoute.Sitemap> {
   const communes: Array<{ id: string }> = await db.$queryRaw`
-    SELECT DISTINCT c.id
+    SELECT DISTINCT c.id, c.population
     FROM "Commune" c
     INNER JOIN "Candidacy" ca ON ca."communeId" = c.id
     ORDER BY c.population DESC NULLS LAST

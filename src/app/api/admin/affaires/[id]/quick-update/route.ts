@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { withAdminAuth } from "@/lib/api/with-admin-auth";
-import { withValidation } from "@/lib/security/validate";
+import { withValidation, getRequestMeta } from "@/lib/security";
 import { quickUpdateAffairSchema } from "@/lib/security/schemas/affair";
 import { invalidateEntity } from "@/lib/cache";
 import { trackStatusChange } from "@/services/affairs/status-tracking";
@@ -11,7 +11,7 @@ import type { z } from "zod/v4";
 type QuickUpdateBody = z.infer<typeof quickUpdateAffairSchema>;
 
 export const PATCH = withAdminAuth(
-  withValidation(quickUpdateAffairSchema, async (_request, context, body: QuickUpdateBody) => {
+  withValidation(quickUpdateAffairSchema, async (request, context, body: QuickUpdateBody) => {
     const { id } = await context.params;
 
     const affair = await db.affair.findUnique({
@@ -62,12 +62,15 @@ export const PATCH = withAdminAuth(
     });
 
     // Audit log
+    const meta = getRequestMeta(request);
     await db.auditLog.create({
       data: {
         action: "UPDATE",
         entityType: "Affair",
         entityId: id!,
         changes: updateData,
+        ipAddress: meta.ip,
+        userAgent: meta.userAgent,
       },
     });
 

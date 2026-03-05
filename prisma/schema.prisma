@@ -693,6 +693,7 @@ model AuditLog {
   userId     String? // Admin who made the change
   userEmail  String?
   ipAddress  String?
+  userAgent  String?
 
   createdAt DateTime @default(now())
 

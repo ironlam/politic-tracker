@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { withAdminAuth } from "@/lib/api/with-admin-auth";
-import { withValidation } from "@/lib/security/validate";
+import { withValidation, getRequestMeta } from "@/lib/security";
 import { updatePoliticianSchema } from "@/lib/security/schemas/politician";
 import { generateSlug } from "@/lib/utils";
 import { invalidateEntity } from "@/lib/cache";
@@ -30,7 +30,7 @@ export const GET = withAdminAuth(async (_request: NextRequest, context) => {
 });
 
 export const PUT = withAdminAuth(
-  withValidation(updatePoliticianSchema, async (_request, context, body: UpdateBody) => {
+  withValidation(updatePoliticianSchema, async (request, context, body: UpdateBody) => {
     const { id } = await context.params;
 
     // Check politician exists
@@ -146,6 +146,7 @@ export const PUT = withAdminAuth(
     }
 
     // Log action
+    const meta = getRequestMeta(request);
     await db.auditLog.create({
       data: {
         action: "UPDATE",
@@ -157,6 +158,8 @@ export const PUT = withAdminAuth(
           publicationStatus: politician.publicationStatus,
           externalIdsCount: externalIds.length,
         },
+        ipAddress: meta.ip,
+        userAgent: meta.userAgent,
       },
     });
 

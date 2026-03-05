@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { withAdminAuth } from "@/lib/api/with-admin-auth";
-import { withValidation } from "@/lib/security/validate";
+import { withValidation, getRequestMeta } from "@/lib/security";
 import { mergeAffairsSchema } from "@/lib/security/schemas/affair";
 import { invalidateEntity } from "@/lib/cache";
 import type { z } from "zod/v4";
@@ -9,7 +9,7 @@ import type { z } from "zod/v4";
 type MergeBody = z.infer<typeof mergeAffairsSchema>;
 
 export const POST = withAdminAuth(
-  withValidation(mergeAffairsSchema, async (_request, _context, body: MergeBody) => {
+  withValidation(mergeAffairsSchema, async (request, _context, body: MergeBody) => {
     const { primaryId, secondaryId } = body;
 
     if (primaryId === secondaryId) {
@@ -84,6 +84,7 @@ export const POST = withAdminAuth(
     await db.affair.delete({ where: { id: secondaryId } });
 
     // Audit log
+    const meta = getRequestMeta(request);
     await db.auditLog.create({
       data: {
         action: "UPDATE",
@@ -97,6 +98,8 @@ export const POST = withAdminAuth(
           eventsMoved: secondary.events.length,
           identifiersMerged: Object.keys(updates),
         },
+        ipAddress: meta.ip,
+        userAgent: meta.userAgent,
       },
     });
 

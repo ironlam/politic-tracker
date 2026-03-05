@@ -15,6 +15,7 @@ import {
   SUFFRAGE_TYPE_LABELS,
 } from "@/config/labels";
 import { ElectionCountdown } from "@/components/elections/ElectionCountdown";
+import { ElectionUpcomingHero } from "@/components/elections/ElectionUpcomingHero";
 import { ElectionKeyDates } from "@/components/elections/ElectionKeyDates";
 import { ElectionScrutinInfo } from "@/components/elections/ElectionScrutinInfo";
 import { AddToCalendar } from "@/components/elections/AddToCalendar";
@@ -128,6 +129,60 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
+function CandidacyCard({
+  candidacy,
+}: {
+  candidacy: {
+    id: string;
+    candidateName: string;
+    partyLabel: string | null;
+    constituencyName: string | null;
+    isElected: boolean;
+    politician: { slug: string } | null;
+    party: { color: string | null } | null;
+  };
+}) {
+  return (
+    <Card className="hover:shadow-sm transition-shadow">
+      <CardContent className="py-3 px-4">
+        <div className="flex items-center gap-3">
+          {candidacy.party?.color && (
+            <span
+              className="w-3 h-3 rounded-full flex-shrink-0"
+              style={{ backgroundColor: candidacy.party.color }}
+              aria-hidden="true"
+            />
+          )}
+          <div className="min-w-0">
+            <p className="font-medium truncate">
+              {candidacy.politician ? (
+                <Link
+                  href={`/politiques/${candidacy.politician.slug}`}
+                  className="hover:text-primary transition-colors"
+                  prefetch={false}
+                >
+                  {candidacy.candidateName}
+                </Link>
+              ) : (
+                candidacy.candidateName
+              )}
+            </p>
+            {candidacy.partyLabel && (
+              <p className="text-sm text-muted-foreground truncate">{candidacy.partyLabel}</p>
+            )}
+            {candidacy.constituencyName && (
+              <p className="text-xs text-muted-foreground">{candidacy.constituencyName}</p>
+            )}
+          </div>
+          {candidacy.isElected && (
+            <Badge className="bg-green-100 text-green-800 ml-auto flex-shrink-0">Élu(e)</Badge>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default async function ElectionDetailPage({ params }: PageProps) {
   const { slug } = await params;
   const election = await getElection(slug);
@@ -232,18 +287,35 @@ export default async function ElectionDetailPage({ params }: PageProps) {
                     Explorer le portail &rarr;
                   </Link>
                 )}
+                {slug === "municipales-2020" && (
+                  <Link
+                    href="/elections/municipales-2020"
+                    className="shrink-0 text-sm font-medium text-primary hover:underline"
+                  >
+                    Voir les résultats &rarr;
+                  </Link>
+                )}
               </div>
             )}
 
-            {/* Countdown */}
-            {showCountdown && (
-              <ElectionCountdown
-                targetDate={election.round1Date!.toISOString()}
-                electionTitle={election.title}
-                electionIcon={icon}
-                dateConfirmed={election.dateConfirmed}
-              />
-            )}
+            {/* Countdown / Upcoming Hero */}
+            {showCountdown &&
+              (election.candidacies.length === 0 &&
+              !isPhaseAtLeast(election.status, "CANDIDACIES") ? (
+                <ElectionUpcomingHero
+                  targetDate={election.round1Date!.toISOString()}
+                  dateConfirmed={election.dateConfirmed}
+                  electionTitle={election.title}
+                  electionIcon={icon}
+                />
+              ) : (
+                <ElectionCountdown
+                  targetDate={election.round1Date!.toISOString()}
+                  electionTitle={election.title}
+                  electionIcon={icon}
+                  dateConfirmed={election.dateConfirmed}
+                />
+              ))}
 
             {/* Description */}
             {election.description && (
@@ -296,52 +368,81 @@ export default async function ElectionDetailPage({ params }: PageProps) {
               <section>
                 <h2 className="text-lg font-semibold mb-4">Candidatures</h2>
                 {election.candidacies.length > 0 ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {election.candidacies.map((candidacy) => (
-                      <Card key={candidacy.id} className="hover:shadow-sm transition-shadow">
-                        <CardContent className="py-3 px-4">
-                          <div className="flex items-center gap-3">
-                            {candidacy.party?.color && (
-                              <span
-                                className="w-3 h-3 rounded-full flex-shrink-0"
-                                style={{ backgroundColor: candidacy.party.color }}
-                                aria-hidden="true"
-                              />
-                            )}
-                            <div className="min-w-0">
-                              <p className="font-medium truncate">
-                                {candidacy.politician ? (
-                                  <Link
-                                    href={`/politiques/${candidacy.politician.slug}`}
-                                    className="hover:text-primary transition-colors"
-                                  >
-                                    {candidacy.candidateName}
-                                  </Link>
-                                ) : (
-                                  candidacy.candidateName
-                                )}
-                              </p>
-                              {candidacy.partyLabel && (
-                                <p className="text-sm text-muted-foreground truncate">
-                                  {candidacy.partyLabel}
-                                </p>
-                              )}
-                              {candidacy.constituencyName && (
-                                <p className="text-xs text-muted-foreground">
-                                  {candidacy.constituencyName}
-                                </p>
-                              )}
-                            </div>
-                            {candidacy.isElected && (
-                              <Badge className="bg-green-100 text-green-800 ml-auto flex-shrink-0">
-                                Élu(e)
-                              </Badge>
-                            )}
-                          </div>
+                  <>
+                    {/* Stats bar */}
+                    <div className="grid grid-cols-3 gap-3 mb-6">
+                      <Card>
+                        <CardContent className="py-3 text-center">
+                          <p className="text-xl font-bold tabular-nums">
+                            {election.candidacies.length}
+                          </p>
+                          <p className="text-xs text-muted-foreground">candidats</p>
                         </CardContent>
                       </Card>
-                    ))}
-                  </div>
+                      <Card>
+                        <CardContent className="py-3 text-center">
+                          <p className="text-xl font-bold tabular-nums">
+                            {
+                              new Set(election.candidacies.map((c) => c.partyLabel).filter(Boolean))
+                                .size
+                            }
+                          </p>
+                          <p className="text-xs text-muted-foreground">partis</p>
+                        </CardContent>
+                      </Card>
+                      <Card>
+                        <CardContent className="py-3 text-center">
+                          <p className="text-xl font-bold tabular-nums">
+                            {election.candidacies.filter((c) => c.isElected).length}
+                          </p>
+                          <p className="text-xs text-muted-foreground">élus</p>
+                        </CardContent>
+                      </Card>
+                    </div>
+                    {/* Grouped candidacies */}
+                    {(() => {
+                      const groups = new Map<string, typeof election.candidacies>();
+                      for (const c of election.candidacies) {
+                        const key = c.constituencyName || c.partyLabel || "Autres";
+                        if (!groups.has(key)) groups.set(key, []);
+                        groups.get(key)!.push(c);
+                      }
+                      const entries = Array.from(groups.entries()).sort((a, b) =>
+                        a[0].localeCompare(b[0], "fr")
+                      );
+
+                      if (entries.length <= 1) {
+                        return (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            {election.candidacies.map((candidacy) => (
+                              <CandidacyCard key={candidacy.id} candidacy={candidacy} />
+                            ))}
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <div className="space-y-3">
+                          {entries.map(([groupName, members]) => (
+                            <details key={groupName} open={members.length <= 10}>
+                              <summary className="cursor-pointer py-2 px-3 bg-muted/40 rounded-lg font-medium text-sm hover:bg-muted/60 transition-colors">
+                                {groupName}
+                                <span className="text-muted-foreground ml-2">
+                                  ({members.length} candidat
+                                  {members.length > 1 ? "s" : ""})
+                                </span>
+                              </summary>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2 pl-3">
+                                {members.map((candidacy) => (
+                                  <CandidacyCard key={candidacy.id} candidacy={candidacy} />
+                                ))}
+                              </div>
+                            </details>
+                          ))}
+                        </div>
+                      );
+                    })()}
+                  </>
                 ) : (
                   <Card>
                     <CardContent className="py-8 text-center text-muted-foreground">

@@ -257,9 +257,24 @@ export async function syncCareers(options?: {
           continue;
         }
 
-        // Check if mandate already exists (within 30 days)
+        // Check if mandate already exists:
+        // 1. For DEPUTE/SENATEUR: skip if an authoritative source (SENAT/AN) mandate
+        //    already exists — Wikidata is lower priority for parliamentary mandates
+        // 2. For other types: check within 30-day tolerance
+        const isParliamentary =
+          mandateInfo.type === MandateType.DEPUTE || mandateInfo.type === MandateType.SENATEUR;
+        const authoritativeSources: DataSource[] = [
+          DataSource.SENAT,
+          DataSource.ASSEMBLEE_NATIONALE,
+        ];
+
         const existingMandate = politician.mandates.find((m) => {
           if (m.type !== mandateInfo.type) return false;
+          // For parliamentary mandates, any authoritative-source mandate wins
+          if (isParliamentary && m.source && authoritativeSources.includes(m.source)) {
+            return true;
+          }
+          // Date-based check (30-day tolerance)
           if (!m.startDate) return false;
           const existingStart = new Date(m.startDate);
           const diff = Math.abs(existingStart.getTime() - startDate.getTime());

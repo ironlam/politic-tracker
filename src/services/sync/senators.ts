@@ -178,11 +178,13 @@ async function syncSenator(
 
     // Parse mandate start date
     let mandateStart: Date | null = null;
+    const hasApiDate = Boolean(extraData?.mandat_debut);
     if (extraData?.mandat_debut) {
       mandateStart = new Date(extraData.mandat_debut);
       if (isNaN(mandateStart.getTime())) mandateStart = null;
     }
-    // Fallback: derive from senate renewal series
+    // Fallback: derive from senate renewal series (only for new senators;
+    // for existing senators without API date, we preserve their existing startDate)
     // Serie 1 → elected Sept 24, 2023 | Serie 2 → elected Sept 27, 2020
     if (!mandateStart && sen.serie) {
       mandateStart = sen.serie === 1 ? new Date("2023-10-01") : new Date("2020-10-01");
@@ -280,15 +282,21 @@ async function syncSenator(
       // Upsert external ID
       await upsertExternalIds(existing.id, sen.matricule, slug);
 
-      // Update or create mandate
-      const existingMandate = existing.mandates.find(
-        (m) => m.externalId === mandateData.externalId || m.type === MandateType.SENATEUR
-      );
+      // Update or create mandate — prefer matching by externalId, then by current SENATEUR
+      const existingMandate =
+        existing.mandates.find((m) => m.externalId === mandateData.externalId) ||
+        existing.mandates.find((m) => m.type === MandateType.SENATEUR && m.isCurrent);
 
       if (existingMandate) {
+        // If API didn't provide mandat_debut, preserve existing startDate
+        // (avoids overwriting accurate dates with series fallback for remplaçants)
+        const updateData = { ...mandateData };
+        if (!hasApiDate && existingMandate.startDate) {
+          updateData.startDate = existingMandate.startDate;
+        }
         await db.mandate.update({
           where: { id: existingMandate.id },
-          data: mandateData,
+          data: updateData,
         });
       } else {
         await db.mandate.create({
@@ -387,7 +395,7 @@ export async function syncSenators(): Promise<SenatSyncResult> {
     const apiMatricules = new Set(senators.map((s) => s.matricule));
 
     const currentDbMandates = await db.mandate.findMany({
-      where: { type: MandateType.SENATEUR, isCurrent: true },
+      where: { type: MandateType.SENATEUR, isCurrent: true, source: DataSource.SENAT },
       include: {
         politician: {
           select: {

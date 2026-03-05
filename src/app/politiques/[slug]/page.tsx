@@ -33,14 +33,10 @@ import { SITE_URL } from "@/config/site";
 
 export const revalidate = 3600; // ISR: revalidate every hour
 
+// Politician pages load all affairs/mandates/sources/events unbounded.
+// Pre-rendering causes OOM — use ISR on-demand instead.
 export async function generateStaticParams() {
-  const politicians = await db.politician.findMany({
-    where: { publicationStatus: "PUBLISHED" },
-    select: { slug: true },
-    take: 100,
-    orderBy: { prominenceScore: "desc" },
-  });
-  return politicians.map((p) => ({ slug: p.slug }));
+  return [];
 }
 
 interface PageProps {

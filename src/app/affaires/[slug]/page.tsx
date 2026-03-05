@@ -34,7 +34,7 @@ export async function generateStaticParams() {
   const affairs = await db.affair.findMany({
     where: { publicationStatus: "PUBLISHED" },
     select: { slug: true },
-    take: 30,
+    take: 200,
     orderBy: { createdAt: "desc" },
   });
   return affairs.map((a) => ({ slug: a.slug }));

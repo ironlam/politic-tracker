@@ -30,7 +30,7 @@ export async function generateStaticParams() {
   const parties = await db.party.findMany({
     select: { slug: true },
     orderBy: { name: "asc" },
-    take: 20,
+    take: 50,
   });
   return parties.map((p) => ({ slug: p.slug }));
 }

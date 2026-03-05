@@ -16,7 +16,7 @@ export async function generateStaticParams() {
   const factChecks = await db.factCheck.findMany({
     where: { slug: { not: null } },
     select: { slug: true },
-    take: 30,
+    take: 100,
     orderBy: { publishedAt: "desc" },
   });
   return factChecks.filter((fc) => fc.slug !== null).map((fc) => ({ slug: fc.slug! }));

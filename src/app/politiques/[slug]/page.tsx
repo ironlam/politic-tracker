@@ -19,6 +19,7 @@ import { MandateTimeline } from "@/components/politicians/MandateTimeline";
 import { InteractiveTimeline } from "@/components/politicians/InteractiveTimeline";
 import { PersonJsonLd, BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 import { DeclarationCard } from "@/components/declarations/DeclarationCard";
+import { MarkdownText } from "@/components/ui/markdown";
 import type { DeclarationDetails } from "@/types/hatvp";
 import { BetaDisclaimer } from "@/components/BetaDisclaimer";
 import { ProfileTabs } from "@/components/politicians/ProfileTabs";
@@ -324,9 +325,9 @@ export default async function PoliticianPage({ params }: PageProps) {
                   {politician.biography && (
                     <Card id="biographie">
                       <CardContent className="pt-6">
-                        <p className="text-muted-foreground leading-relaxed">
+                        <MarkdownText className="text-muted-foreground leading-relaxed">
                           {politician.biography}
-                        </p>
+                        </MarkdownText>
                         <div className="flex items-center gap-2 mt-3 pt-3 border-t border-dashed text-xs text-muted-foreground">
                           <svg
                             xmlns="http://www.w3.org/2000/svg"

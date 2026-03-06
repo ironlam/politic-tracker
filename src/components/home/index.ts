@@ -4,3 +4,4 @@ export { QuickTools } from "./QuickTools";
 export { UpcomingElections } from "./UpcomingElections";
 export { ElectionBanner } from "./ElectionBanner";
 export { TodayVotesWidget } from "./TodayVotesWidget";
+export { HomeRecapSection } from "./HomeRecapSection";

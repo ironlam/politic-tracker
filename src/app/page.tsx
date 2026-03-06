@@ -1,19 +1,24 @@
 import { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { cacheTag, cacheLife } from "next/cache";
-import { db } from "@/lib/db";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ActivityTabs, QuickTools, UpcomingElections, TodayVotesWidget } from "@/components/home";
+import {
+  QuickTools,
+  UpcomingElections,
+  TodayVotesWidget,
+  HomeRecapSection,
+} from "@/components/home";
 import { WebSiteJsonLd } from "@/components/seo/JsonLd";
 import { Heart } from "lucide-react";
 import { HexPattern } from "@/components/ui/HexPattern";
 import { FadeIn } from "@/components/motion";
 import { isFeatureEnabled } from "@/lib/feature-flags";
-import { FACTCHECK_ALLOWED_SOURCES } from "@/config/labels";
 import { SITE_URL } from "@/config/site";
 import { getTodayVotesSummary } from "@/lib/data/votes";
+import { getWeeklyRecap, getWeekStart } from "@/lib/data/recap";
+import { cacheTag, cacheLife } from "next/cache";
+import { db } from "@/lib/db";
 
 export const metadata: Metadata = {
   title: "Poligraph — Observatoire citoyen de la politique française",
@@ -21,126 +26,6 @@ export const metadata: Metadata = {
     "Suivez les votes, affaires judiciaires, fact-checks et déclarations de patrimoine des politiques français. Données ouvertes, transparence citoyenne.",
   alternates: { canonical: "/" },
 };
-
-async function getRecentFactChecks() {
-  "use cache";
-  cacheTag("factchecks", "homepage");
-  cacheLife("minutes");
-
-  const factChecks = await db.factCheck.findMany({
-    where: { source: { in: FACTCHECK_ALLOWED_SOURCES } },
-    take: 5,
-    orderBy: { publishedAt: "desc" },
-    select: {
-      id: true,
-      slug: true,
-      title: true,
-      source: true,
-      sourceUrl: true,
-      verdictRating: true,
-      publishedAt: true,
-      mentions: {
-        take: 1,
-        select: {
-          politician: {
-            select: { fullName: true, slug: true },
-          },
-        },
-      },
-    },
-  });
-
-  return factChecks.map((fc) => ({
-    id: fc.id,
-    slug: fc.slug,
-    title: fc.title,
-    source: fc.source,
-    sourceUrl: fc.sourceUrl,
-    verdictRating: fc.verdictRating,
-    publishedAt: fc.publishedAt,
-    politician: fc.mentions[0]?.politician || null,
-  }));
-}
-
-async function getRecentVotes() {
-  "use cache";
-  cacheTag("votes", "homepage");
-  cacheLife("minutes");
-
-  const scrutins = await db.scrutin.findMany({
-    take: 5,
-    orderBy: { votingDate: "desc" },
-    select: {
-      id: true,
-      slug: true,
-      title: true,
-      votingDate: true,
-      result: true,
-      chamber: true,
-    },
-  });
-
-  // Map to the expected format
-  return scrutins.map((s) => ({
-    id: s.id,
-    slug: s.slug,
-    title: s.title,
-    date: s.votingDate,
-    result: s.result === "ADOPTED" ? "ADOPTE" : "REJETE",
-    chamber: s.chamber,
-  }));
-}
-
-async function getActiveDossiers() {
-  "use cache";
-  cacheTag("dossiers", "homepage");
-  cacheLife("minutes");
-
-  return db.legislativeDossier.findMany({
-    where: { status: "EN_COURS" },
-    orderBy: { filingDate: "desc" },
-    take: 5,
-    select: {
-      id: true,
-      slug: true,
-      title: true,
-      shortTitle: true,
-      status: true,
-      filingDate: true,
-    },
-  });
-}
-
-async function getRecentArticles() {
-  "use cache";
-  cacheTag("press", "homepage");
-  cacheLife("minutes");
-
-  // Only fetch articles that have at least one politician or party mention
-  const articles = await db.pressArticle.findMany({
-    where: {
-      OR: [
-        { mentions: { some: {} } }, // Has politician mentions
-        { partyMentions: { some: {} } }, // Has party mentions
-      ],
-    },
-    take: 5,
-    orderBy: { publishedAt: "desc" },
-    select: {
-      id: true,
-      title: true,
-      feedSource: true,
-      publishedAt: true,
-      url: true,
-    },
-  });
-
-  // Map feedSource to the expected format
-  return articles.map((a) => ({
-    ...a,
-    source: a.feedSource.toUpperCase(),
-  }));
-}
 
 async function getUpcomingElections() {
   "use cache";
@@ -158,57 +43,17 @@ async function getUpcomingElections() {
   });
 }
 
-async function getRecentAffairs() {
-  "use cache";
-  cacheTag("affairs", "homepage");
-  cacheLife("minutes");
-
-  const affairs = await db.affair.findMany({
-    where: { publicationStatus: "PUBLISHED", involvement: "DIRECT" },
-    take: 5,
-    orderBy: [
-      { verdictDate: { sort: "desc", nulls: "last" } },
-      { startDate: { sort: "desc", nulls: "last" } },
-      { factsDate: { sort: "desc", nulls: "last" } },
-      { createdAt: "desc" },
-    ],
-    select: {
-      id: true,
-      slug: true,
-      title: true,
-      status: true,
-      verdictDate: true,
-      startDate: true,
-      factsDate: true,
-      politician: {
-        select: { fullName: true, slug: true },
-      },
-    },
-  });
-
-  return affairs.map((a) => ({
-    ...a,
-    date: a.verdictDate || a.startDate || a.factsDate,
-  }));
-}
-
 export default async function HomePage() {
-  const [
-    recentFactChecks,
-    recentVotes,
-    activeDossiers,
-    recentArticles,
-    recentAffairs,
-    upcomingElections,
-    todayVotes,
-  ] = await Promise.all([
-    getRecentFactChecks(),
-    getRecentVotes(),
-    getActiveDossiers(),
-    getRecentArticles(),
-    getRecentAffairs(),
+  // Previous week's Monday for the recap
+  const now = new Date();
+  const currentWeekStart = getWeekStart(now);
+  const prevWeekStart = new Date(currentWeekStart);
+  prevWeekStart.setUTCDate(prevWeekStart.getUTCDate() - 7);
+
+  const [upcomingElections, todayVotes, weeklyRecap] = await Promise.all([
     getUpcomingElections(),
     getTodayVotesSummary(),
+    getWeeklyRecap(prevWeekStart),
   ]);
 
   const statsEnabled = await isFeatureEnabled("STATISTIQUES_SECTION");
@@ -283,12 +128,12 @@ export default async function HomePage() {
           <HexPattern className="absolute inset-0 text-primary opacity-[0.03] dark:opacity-[0.05] pointer-events-none" />
         </section>
 
-        {/* Upcoming Elections */}
+        {/* Upcoming Elections (conditional — renders null when no elections) */}
         <FadeIn>
           <UpcomingElections elections={upcomingElections} />
         </FadeIn>
 
-        {/* Today's Votes Widget */}
+        {/* Today's Votes (conditional — renders null when no votes today) */}
         <FadeIn>
           <TodayVotesWidget
             total={todayVotes.total}
@@ -297,15 +142,9 @@ export default async function HomePage() {
           />
         </FadeIn>
 
-        {/* Activity Tabs */}
+        {/* Weekly Recap */}
         <FadeIn>
-          <ActivityTabs
-            factChecks={recentFactChecks}
-            votes={recentVotes}
-            dossiers={activeDossiers}
-            articles={recentArticles}
-            affairs={recentAffairs}
-          />
+          <HomeRecapSection data={weeklyRecap} />
         </FadeIn>
 
         {/* Quick Tools */}

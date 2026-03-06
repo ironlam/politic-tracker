@@ -22,6 +22,8 @@ interface CommuneSearchProps {
   placeholder?: string;
   /** Base path for API and routing. Default: "/elections/municipales-2026" */
   basePath?: string;
+  /** Label above the search input. Default: "Qui se présente chez moi ?" */
+  label?: string;
 }
 
 function LocationIcon({ className }: { className?: string }) {
@@ -62,6 +64,7 @@ export function CommuneSearch({
   className,
   placeholder = "Rechercher une commune...",
   basePath = "/elections/municipales-2026",
+  label = "Qui se présente chez moi ?",
 }: CommuneSearchProps) {
   const mounted = useIsMounted();
   const [query, setQuery] = useState("");
@@ -214,7 +217,7 @@ export function CommuneSearch({
         htmlFor="commune-search-input"
         className="block text-lg md:text-xl font-display font-semibold mb-3"
       >
-        Qui se présente chez moi ?
+        {label}
       </label>
 
       <div ref={containerRef} className="relative w-full max-w-lg">

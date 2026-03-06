@@ -75,6 +75,7 @@ export function Municipales2020Nav() {
             <CommuneSearch
               basePath="/elections/municipales-2020"
               placeholder="Rechercher une commune..."
+              label="Résultats dans ma commune"
               className="max-w-md"
             />
           </div>

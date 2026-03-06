@@ -124,7 +124,7 @@ export default async function Municipales2020Page() {
 
         {/* Commune search */}
         <section className="py-8">
-          <CommuneSearch basePath="/elections/municipales-2020" />
+          <CommuneSearch basePath="/elections/municipales-2020" label="Résultats dans ma commune" />
         </section>
 
         {/* Comparison link */}

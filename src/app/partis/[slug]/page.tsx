@@ -16,6 +16,7 @@ import {
   AFFAIR_SEVERITY_COLORS,
   AFFAIR_SEVERITY_EDITORIAL,
   SEVERITY_SORT_ORDER,
+  POLITICAL_POSITION_LABELS,
 } from "@/config/labels";
 import type { AffairStatus, AffairSeverity } from "@/types";
 import { PoliticianAvatar } from "@/components/politicians/PoliticianAvatar";
@@ -49,9 +50,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   const memberCount = party.politicians.length;
   const affairCount = party.affairsAtTime.length;
+  const positionLabel = party.politicalPosition
+    ? POLITICAL_POSITION_LABELS[party.politicalPosition]
+    : null;
   const description =
     party.description ||
-    `${party.name} (${party.shortName}) - ${memberCount} membre${memberCount > 1 ? "s" : ""} actuels.${affairCount > 0 ? ` ${affairCount} affaire${affairCount > 1 ? "s" : ""} judiciaire${affairCount > 1 ? "s" : ""} documentée${affairCount > 1 ? "s" : ""}.` : ""} Consultez la liste des élus et l'historique du parti.`;
+    `${party.name} (${party.shortName})${positionLabel ? `, parti de ${positionLabel.toLowerCase()}` : ""} — ${memberCount} membre${memberCount > 1 ? "s" : ""} actuels.${affairCount > 0 ? ` ${affairCount} affaire${affairCount > 1 ? "s" : ""} judiciaire${affairCount > 1 ? "s" : ""} documentée${affairCount > 1 ? "s" : ""}.` : ""} Consultez la liste des élus et l'historique du parti.`;
 
   return {
     title: `${party.name} (${party.shortName})`,

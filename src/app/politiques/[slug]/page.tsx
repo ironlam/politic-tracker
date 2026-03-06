@@ -29,6 +29,7 @@ import { VotesSection } from "@/components/politicians/VotesSection";
 import { getPoliticianVotingStats, getPoliticianParliamentaryCard } from "@/services/voteStats";
 import { getPolitician } from "@/lib/data/politicians";
 import { FollowButton } from "@/components/politicians/FollowButton";
+import { ExportButton } from "@/components/ui/ExportButton";
 import { SITE_URL } from "@/config/site";
 
 export const revalidate = 3600; // ISR: revalidate every hour
@@ -237,6 +238,13 @@ export default async function PoliticianPage({ params }: PageProps) {
             <div className="flex items-center gap-3 mb-2">
               <h1 className="text-3xl font-bold">{politician.fullName}</h1>
               <FollowButton slug={politician.slug} />
+              <ExportButton
+                endpoint={`/api/cards/politician/${politician.slug}`}
+                filename={`poligraph-${politician.slug}.png`}
+                label="Fiche PNG"
+                size="sm"
+                variant="ghost"
+              />
             </div>
             <div className="flex flex-wrap items-center gap-2">
               {politician.currentParty && (

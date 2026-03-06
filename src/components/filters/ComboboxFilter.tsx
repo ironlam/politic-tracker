@@ -82,19 +82,27 @@ export function ComboboxFilter({
         <span className="truncate">{selectedLabel || placeholder}</span>
         <div className="flex items-center gap-1 shrink-0">
           {value && (
-            <span
-              role="button"
-              tabIndex={-1}
+            <button
+              type="button"
+              tabIndex={0}
               onClick={(e) => {
                 e.stopPropagation();
                 onChange("");
                 setOpen(false);
               }}
-              className="text-muted-foreground hover:text-foreground"
-              aria-label="Effacer"
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onChange("");
+                  setOpen(false);
+                }
+              }}
+              className="flex items-center justify-center w-6 h-6 rounded-sm text-muted-foreground hover:text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+              aria-label="Effacer la sélection"
             >
               <X className="h-3.5 w-3.5" />
-            </span>
+            </button>
           )}
           <ChevronDown
             className={cn(

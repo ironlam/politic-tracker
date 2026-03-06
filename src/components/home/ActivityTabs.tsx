@@ -127,7 +127,11 @@ export function ActivityTabs({
         </div>
 
         {/* Tab content */}
-        <div className="bg-card border rounded-xl overflow-hidden">
+        <div
+          role="tabpanel"
+          aria-label={tabs.find((t) => t.id === activeTab)?.label}
+          className="bg-card border rounded-xl overflow-hidden"
+        >
           {activeTab === "factchecks" && <FactChecksContent factChecks={factChecks} />}
           {activeTab === "affaires" && <AffairesContent affairs={affairs} />}
           {activeTab === "votes" && <VotesContent votes={votes} />}
@@ -151,6 +155,7 @@ function FactChecksContent({ factChecks }: { factChecks: FactCheckItem[] }) {
           <li key={fc.id}>
             <Link
               href={`/factchecks/${fc.slug || fc.id}`}
+              prefetch={false}
               className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors group"
             >
               <div className="flex-1 min-w-0 mr-4">
@@ -200,6 +205,7 @@ function AffairesContent({ affairs }: { affairs: AffairItem[] }) {
           <li key={affair.id}>
             <Link
               href={`/affaires/${affair.slug || affair.id}`}
+              prefetch={false}
               className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors group"
             >
               <div className="flex-1 min-w-0 mr-4">
@@ -243,6 +249,7 @@ function VotesContent({ votes }: { votes: VoteItem[] }) {
           <li key={vote.id}>
             <Link
               href={`/votes/${vote.slug || vote.id}`}
+              prefetch={false}
               className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors group"
             >
               <div className="flex-1 min-w-0 mr-4">
@@ -310,6 +317,7 @@ function DossiersContent({ dossiers }: { dossiers: DossierItem[] }) {
           <li key={dossier.id}>
             <Link
               href={`/assemblee/${dossier.slug || dossier.id}`}
+              prefetch={false}
               className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors group"
             >
               <div className="flex-1 min-w-0 mr-4">

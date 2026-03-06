@@ -58,7 +58,11 @@ export function DossierCard({
             )}
             <CategoryBadge category={category} theme={theme} showIcon={false} />
           </div>
-          <Link href={href} className="text-sm font-medium hover:text-primary line-clamp-1">
+          <Link
+            href={href}
+            prefetch={false}
+            className="text-sm font-medium hover:text-primary line-clamp-1"
+          >
             {displayTitle}
           </Link>
         </div>
@@ -95,7 +99,7 @@ export function DossierCard({
           {/* Title */}
           <div>
             <h3 className="text-lg font-semibold mb-1">
-              <Link href={href} className="hover:text-primary">
+              <Link href={href} prefetch={false} className="hover:text-primary">
                 {displayTitle}
               </Link>
             </h3>
@@ -133,7 +137,7 @@ export function DossierCard({
             </div>
 
             <div className="flex items-center gap-2">
-              <Link href={href} className="text-sm text-primary hover:underline">
+              <Link href={href} prefetch={false} className="text-sm text-primary hover:underline">
                 Détails
               </Link>
               {sourceUrl && (

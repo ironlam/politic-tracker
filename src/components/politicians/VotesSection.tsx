@@ -66,6 +66,7 @@ export function VotesSection({
               <h2 className="leading-none font-semibold">Votes parlementaires</h2>
               <Link
                 href={`/politiques/${slug}/votes`}
+                prefetch={false}
                 className="text-sm text-primary hover:underline"
               >
                 Voir tout →
@@ -132,7 +133,11 @@ export function VotesSection({
                       <span
                         className={`w-2 h-2 mt-1.5 shrink-0 rounded-full ${VOTE_POSITION_DOT_COLORS[vote.position]}`}
                       />
-                      <Link href={`/votes/${vote.scrutin.id}`} className="flex-1 hover:underline">
+                      <Link
+                        href={`/votes/${vote.scrutin.id}`}
+                        prefetch={false}
+                        className="flex-1 hover:underline"
+                      >
                         {vote.scrutin.title}
                       </Link>
                       <VotePositionBadge position={vote.position} size="sm" />

@@ -13,6 +13,7 @@ import type { CacheTag } from "@/lib/cache";
 const TAG_LABELS: Record<CacheTag, string> = {
   politicians: "Politiques",
   parties: "Partis",
+  affairs: "Affaires",
   votes: "Votes",
   stats: "Statistiques",
   dossiers: "Dossiers",

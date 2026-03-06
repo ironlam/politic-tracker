@@ -31,6 +31,37 @@ export function ChatWidget() {
     requestAnimationFrame(() => triggerRef.current?.focus());
   }
 
+  // Trap focus inside panel and handle Escape
+  useEffect(() => {
+    if (!isOpen || isMinimized) return;
+    const panel = panelRef.current;
+    if (!panel) return;
+
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        handleClose();
+        return;
+      }
+      if (e.key !== "Tab") return;
+      const focusable = panel.querySelectorAll<HTMLElement>(
+        'button, [href], input, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      if (focusable.length === 0) return;
+      const first = focusable[0]!;
+      const last = focusable[focusable.length - 1]!;
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [isOpen, isMinimized]);
+
   // Don't show on /chat page
   const isOnChatPage = pathname === "/chat";
 
@@ -76,6 +107,9 @@ export function ChatWidget() {
       {isOpen && (
         <div
           ref={panelRef}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Assistant IA"
           className={cn(
             "fixed z-50 bg-background border rounded-lg shadow-2xl",
             "flex flex-col overflow-hidden",

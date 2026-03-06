@@ -186,6 +186,7 @@ async function queryDeclarationsList(
 
   const politicians = await db.politician.findMany({
     where,
+    take: 2000,
     include: {
       currentParty: { select: { id: true, name: true, shortName: true, color: true } },
       declarations: {

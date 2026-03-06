@@ -3,6 +3,11 @@
  * @see https://schema.org
  */
 
+/** Safely serialize JSON-LD — escapes </script> to prevent injection */
+function safeJsonLd(data: object): string {
+  return JSON.stringify(data).replace(/<\/script/gi, "<\\/script");
+}
+
 interface PersonJsonLdProps {
   name: string;
   givenName?: string;
@@ -66,10 +71,7 @@ export function PersonJsonLd({
   };
 
   return (
-    <script
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-    />
+    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }} />
   );
 }
 
@@ -108,10 +110,7 @@ export function OrganizationJsonLd({
   };
 
   return (
-    <script
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-    />
+    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }} />
   );
 }
 
@@ -139,10 +138,7 @@ export function WebSiteJsonLd({ name, description, url }: WebSiteJsonLdProps) {
   };
 
   return (
-    <script
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-    />
+    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }} />
   );
 }
 
@@ -166,10 +162,7 @@ export function BreadcrumbJsonLd({ items }: BreadcrumbJsonLdProps) {
   };
 
   return (
-    <script
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-    />
+    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }} />
   );
 }
 
@@ -195,10 +188,7 @@ export function FAQJsonLd({ questions }: FAQJsonLdProps) {
   };
 
   return (
-    <script
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-    />
+    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }} />
   );
 }
 
@@ -235,10 +225,7 @@ export function ItemListJsonLd({ name, description, items, url }: ItemListJsonLd
   };
 
   return (
-    <script
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-    />
+    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }} />
   );
 }
 
@@ -282,10 +269,7 @@ export function EventJsonLd({
   };
 
   return (
-    <script
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-    />
+    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }} />
   );
 }
 
@@ -315,10 +299,7 @@ export function LegislationJsonLd({
   };
 
   return (
-    <script
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-    />
+    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }} />
   );
 }
 
@@ -364,10 +345,7 @@ export function ArticleJsonLd({
   };
 
   return (
-    <script
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-    />
+    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }} />
   );
 }
 
@@ -447,10 +425,7 @@ export function ClaimReviewJsonLd({
   };
 
   return (
-    <script
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-    />
+    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }} />
   );
 }
 
@@ -489,10 +464,7 @@ export function GovernmentOrganizationJsonLd({
   };
 
   return (
-    <script
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-    />
+    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }} />
   );
 }
 
@@ -538,9 +510,6 @@ export function CollectionPageJsonLd({
   };
 
   return (
-    <script
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-    />
+    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }} />
   );
 }

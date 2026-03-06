@@ -56,7 +56,7 @@ export function VoteCard({
       <CardContent className="p-4">
         <div className="flex items-start justify-between gap-4 mb-3">
           <div className="flex-1 min-w-0">
-            <Link href={href} className="hover:underline">
+            <Link href={href} prefetch={false} className="hover:underline">
               <h3 className="font-medium text-sm line-clamp-2">{title}</h3>
             </Link>
             <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">

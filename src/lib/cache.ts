@@ -66,6 +66,10 @@ export function invalidateEntity(type: EntityType, slug?: string): void {
 
     case "affair":
       revalidatePath("/api/affaires", "layout");
+      if (slug) {
+        revalidatePath(`/api/affaires/${slug}`, "layout");
+      }
+      revalidateTag("affairs", CACHE_PROFILE);
       break;
 
     case "mandate":
@@ -108,6 +112,7 @@ export function invalidateEntity(type: EntityType, slug?: string): void {
 export const ALL_TAGS = [
   "politicians",
   "parties",
+  "affairs",
   "votes",
   "stats",
   "dossiers",

@@ -29,6 +29,7 @@ interface PageProps {
     dept?: string;
     party?: string;
     gender?: string;
+    fiche?: string;
     page?: string;
   }>;
 }
@@ -39,6 +40,7 @@ export default async function MairesPage({ searchParams }: PageProps) {
   const deptFilter = params.dept || "";
   const partyFilter = params.party || "";
   const genderFilter = params.gender || "";
+  const ficheFilter = params.fiche === "1";
   const rawPage = parseInt(params.page || "1", 10);
   const page = Number.isFinite(rawPage) && rawPage >= 1 ? rawPage : 1;
 
@@ -49,7 +51,8 @@ export default async function MairesPage({ searchParams }: PageProps) {
       deptFilter || undefined,
       partyFilter || undefined,
       genderFilter || undefined,
-      page
+      page,
+      ficheFilter || undefined
     ),
     getMaireParties(),
   ]);
@@ -62,6 +65,7 @@ export default async function MairesPage({ searchParams }: PageProps) {
       dept: deptFilter,
       party: partyFilter,
       gender: genderFilter,
+      fiche: ficheFilter ? "1" : "",
       page: String(page),
       ...overrides,
     };
@@ -73,7 +77,9 @@ export default async function MairesPage({ searchParams }: PageProps) {
     return `/elections/municipales-2026/maires${qs ? `?${qs}` : ""}`;
   }
 
-  const activeFilterCount = [deptFilter, partyFilter, genderFilter].filter(Boolean).length;
+  const activeFilterCount = [deptFilter, partyFilter, genderFilter, ficheFilter ? "1" : ""].filter(
+    Boolean
+  ).length;
 
   // Department options for select
   const deptOptions = Object.entries(DEPARTMENTS)

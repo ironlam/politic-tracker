@@ -547,7 +547,8 @@ async function queryMaires(
   departmentCode?: string,
   partyId?: string,
   gender?: string,
-  page = 1
+  page = 1,
+  fichePoligraph?: boolean
 ) {
   const limit = 50;
   const skip = (page - 1) * limit;
@@ -574,6 +575,10 @@ async function queryMaires(
 
   if (gender) {
     conditions.push({ gender });
+  }
+
+  if (fichePoligraph) {
+    conditions.push({ politicianId: { not: null } });
   }
 
   const where = { AND: conditions };
@@ -606,12 +611,13 @@ export async function getMairesFiltered(
   departmentCode?: string,
   partyId?: string,
   gender?: string,
-  page = 1
+  page = 1,
+  fichePoligraph?: boolean
 ) {
   "use cache";
   cacheTag("maires-listing", "elections");
   cacheLife("minutes");
-  return queryMaires(undefined, departmentCode, partyId, gender, page);
+  return queryMaires(undefined, departmentCode, partyId, gender, page, fichePoligraph);
 }
 
 /** Uncached path — free-text search */
@@ -620,9 +626,10 @@ export async function searchMaires(
   departmentCode?: string,
   partyId?: string,
   gender?: string,
-  page = 1
+  page = 1,
+  fichePoligraph?: boolean
 ) {
-  return queryMaires(search, departmentCode, partyId, gender, page);
+  return queryMaires(search, departmentCode, partyId, gender, page, fichePoligraph);
 }
 
 /** Router: cached when no search, uncached when searching */
@@ -631,12 +638,13 @@ export async function getMaires(
   departmentCode?: string,
   partyId?: string,
   gender?: string,
-  page = 1
+  page = 1,
+  fichePoligraph?: boolean
 ) {
   if (search) {
-    return searchMaires(search, departmentCode, partyId, gender, page);
+    return searchMaires(search, departmentCode, partyId, gender, page, fichePoligraph);
   }
-  return getMairesFiltered(departmentCode, partyId, gender, page);
+  return getMairesFiltered(departmentCode, partyId, gender, page, fichePoligraph);
 }
 
 /** Get parties that have at least one maire (for filter dropdown) */

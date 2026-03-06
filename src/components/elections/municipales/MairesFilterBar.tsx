@@ -4,6 +4,7 @@ import { DebouncedSearchInput, ComboboxFilter, SelectFilter } from "@/components
 import type { ComboboxOption, SelectOption } from "@/components/filters";
 import { useFilterParams } from "@/hooks/useFilterParams";
 import { FilterBarShell } from "@/components/filters/FilterBarShell";
+import { PoligraphBadge } from "@/components/elections/PoligraphBadge";
 
 interface MairesFilterBarProps {
   departments: ComboboxOption[];
@@ -28,6 +29,7 @@ export function MairesFilterBar({
   const dept = searchParams.get("dept") || "";
   const party = searchParams.get("party") || "";
   const gender = searchParams.get("gender") || "";
+  const fiche = searchParams.get("fiche") || "";
 
   return (
     <FilterBarShell isPending={isPending} className="space-y-3">
@@ -71,6 +73,19 @@ export function MairesFilterBar({
         />
       </div>
 
+      {/* Fiche PoliGraph toggle */}
+      <label className="inline-flex items-center gap-2 cursor-pointer select-none">
+        <input
+          type="checkbox"
+          checked={fiche === "1"}
+          onChange={(e) => updateParams({ fiche: e.target.checked ? "1" : "" })}
+          className="rounded border-input h-4 w-4 accent-primary"
+        />
+        <span className="text-sm flex items-center gap-1.5">
+          Uniquement les maires avec <PoligraphBadge className="text-xs" />
+        </span>
+      </label>
+
       {/* Active filter count + clear */}
       <div className="flex items-center gap-3 text-sm">
         <span className="text-muted-foreground">
@@ -79,7 +94,7 @@ export function MairesFilterBar({
         {activeFilterCount > 0 && (
           <button
             type="button"
-            onClick={() => updateParams({ search: "", dept: "", party: "", gender: "" })}
+            onClick={() => updateParams({ search: "", dept: "", party: "", gender: "", fiche: "" })}
             className="text-primary hover:underline text-xs"
           >
             Effacer les filtres ({activeFilterCount})

@@ -218,7 +218,7 @@ export default async function Commune2020DetailPage({ params }: PageProps) {
             <Card className="border-blue-200 bg-blue-50/50 dark:bg-blue-950/20 dark:border-blue-900">
               <CardContent className="pt-5">
                 <div className="flex gap-3">
-                  <Info className="h-5 w-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+                  <Info className="h-5 w-5 text-primary shrink-0 mt-0.5" />
                   <div>
                     <p className="font-medium mb-1">Scrutin par arrondissement</p>
                     <p className="text-sm text-muted-foreground">

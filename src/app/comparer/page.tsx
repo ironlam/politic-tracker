@@ -20,6 +20,7 @@ import {
   type GroupComparisonData,
   type PartyVoteComparisonRow,
 } from "@/lib/data/compare";
+import { ExportButton } from "@/components/ui/ExportButton";
 
 export const revalidate = 300;
 
@@ -97,6 +98,19 @@ export default async function ComparerPage({ searchParams }: PageProps) {
 
       {/* VS separator + sticky mobile bar */}
       <CompareHeader left={previewA} right={previewB} />
+
+      {/* Download card button — politician categories only */}
+      {previewA && previewB && slugA && slugB && cat !== "partis" && cat !== "groupes" && (
+        <div className="flex justify-center mb-6">
+          <ExportButton
+            endpoint={`/api/cards/compare?a=${slugA}&b=${slugB}`}
+            filename={`poligraph-compare-${slugA}-vs-${slugB}.png`}
+            label="Fiche comparative PNG"
+            size="sm"
+            variant="outline"
+          />
+        </div>
+      )}
 
       {/* Comparison content */}
       {comparison ? (

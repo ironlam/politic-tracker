@@ -11,6 +11,7 @@ import { PoliticianAvatar } from "@/components/politicians/PoliticianAvatar";
 import { formatDate } from "@/lib/utils";
 import { THEME_CATEGORY_LABELS, THEME_CATEGORY_COLORS } from "@/config/labels";
 import { ExternalLink, Calendar, Users, Sparkles, Lightbulb } from "lucide-react";
+import { ExportButton } from "@/components/ui/ExportButton";
 import { MarkdownText } from "@/components/ui/markdown";
 import { BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 import type { VotePosition } from "@/types";
@@ -250,6 +251,15 @@ export default async function ScrutinPage({ params }: PageProps) {
                     ? "Voir sur NosDéputés.fr"
                     : "Voir la source"}
               </a>
+            )}
+            {scrutin.slug && (
+              <ExportButton
+                endpoint={`/api/cards/vote/${scrutin.slug}`}
+                filename={`poligraph-vote-${scrutin.slug}.png`}
+                label="Fiche PNG"
+                size="sm"
+                variant="ghost"
+              />
             )}
           </div>
         </div>

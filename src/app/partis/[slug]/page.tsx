@@ -26,6 +26,7 @@ import { OrganizationJsonLd, BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 import { ensureContrast } from "@/lib/contrast";
 import { SITE_URL } from "@/config/site";
 import { db } from "@/lib/db";
+import { FollowButton } from "@/components/politicians/FollowButton";
 
 export async function generateStaticParams() {
   const parties = await db.party.findMany({
@@ -174,8 +175,11 @@ export default async function PartyPage({ params }: PageProps) {
                 {party.shortName.substring(0, 2)}
               </div>
             )}
-            <div>
-              <h1 className="text-3xl font-bold">{party.name}</h1>
+            <div className="flex-1">
+              <div className="flex items-center gap-3">
+                <h1 className="text-3xl font-bold">{party.name}</h1>
+                {party.slug && <FollowButton slug={party.slug} type="party" />}
+              </div>
               <div className="flex items-center gap-2 mt-1">
                 <Badge
                   style={{

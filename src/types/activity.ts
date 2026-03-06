@@ -6,14 +6,31 @@ export interface WatchlistPolitician {
   partyColor: string | null;
 }
 
+export interface WatchlistParty {
+  slug: string;
+  name: string;
+  shortName: string | null;
+  color: string | null;
+  memberCount: number;
+}
+
 export interface ActivityItem {
-  type: "vote" | "press" | "affair";
+  type: "vote" | "press" | "affair" | "party-update";
   date: string;
-  politician: WatchlistPolitician;
+  politician: WatchlistPolitician | null;
+  party: WatchlistParty | null;
   data: Record<string, unknown>;
+}
+
+export interface ActivityStats {
+  votesCount: number;
+  pressCount: number;
+  activeAffairsCount: number;
 }
 
 export interface ActivityResponse {
   activity: ActivityItem[];
   politicians: WatchlistPolitician[];
+  parties: WatchlistParty[];
+  stats: ActivityStats;
 }

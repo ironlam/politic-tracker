@@ -1,0 +1,149 @@
+"use client";
+
+import Link from "next/link";
+import { X, Building2, Plus } from "lucide-react";
+import { useWatchlist } from "@/hooks/useWatchlist";
+import { PoliticianAvatar } from "@/components/politicians/PoliticianAvatar";
+import { Button } from "@/components/ui/button";
+import type { WatchlistPolitician, WatchlistParty } from "@/types/activity";
+
+interface WatchlistSidebarProps {
+  politicians: WatchlistPolitician[];
+  parties: WatchlistParty[];
+  onAddClick?: () => void;
+}
+
+export function WatchlistSidebar({ politicians, parties, onAddClick }: WatchlistSidebarProps) {
+  const { items, remove } = useWatchlist();
+
+  // Slugs that are in items but not yet resolved into politicians/parties
+  const resolvedPoliticianSlugs = new Set(politicians.map((p) => p.slug));
+  const resolvedPartySlugs = new Set(parties.map((p) => p.slug));
+  const unresolvedPoliticians = items.filter(
+    (i) => i.type === "politician" && !resolvedPoliticianSlugs.has(i.slug)
+  );
+  const unresolvedParties = items.filter(
+    (i) => i.type === "party" && !resolvedPartySlugs.has(i.slug)
+  );
+
+  return (
+    <div className="space-y-6">
+      {/* Politicians */}
+      {(politicians.length > 0 || unresolvedPoliticians.length > 0) && (
+        <div>
+          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+            Politiques ({politicians.length + unresolvedPoliticians.length})
+          </h3>
+          <div className="space-y-1.5">
+            {politicians.map((p) => (
+              <div
+                key={p.slug}
+                className="flex items-center gap-2 group rounded-md p-1.5 -mx-1.5 hover:bg-accent/50 transition-colors"
+              >
+                <Link
+                  href={`/politiques/${p.slug}`}
+                  className="flex items-center gap-2 min-w-0 flex-1"
+                  prefetch={false}
+                >
+                  <PoliticianAvatar photoUrl={p.photoUrl} fullName={p.fullName} size="sm" />
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium truncate group-hover:text-primary transition-colors">
+                      {p.fullName}
+                    </p>
+                    {p.party && <p className="text-xs text-muted-foreground truncate">{p.party}</p>}
+                  </div>
+                </Link>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => remove(p.slug, "politician")}
+                  className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                  aria-label={`Retirer ${p.fullName}`}
+                >
+                  <X className="size-3.5" />
+                </Button>
+              </div>
+            ))}
+            {/* Loading skeletons for unresolved politicians */}
+            {unresolvedPoliticians.map((item) => (
+              <div key={item.slug} className="flex items-center gap-2 p-1.5 -mx-1.5">
+                <div className="size-10 rounded-full bg-muted animate-pulse shrink-0" />
+                <div className="min-w-0 flex-1 space-y-1.5">
+                  <div className="h-3.5 w-24 bg-muted rounded animate-pulse" />
+                  <div className="h-3 w-16 bg-muted rounded animate-pulse" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Parties */}
+      {(parties.length > 0 || unresolvedParties.length > 0) && (
+        <div>
+          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+            Partis ({parties.length + unresolvedParties.length})
+          </h3>
+          <div className="space-y-1.5">
+            {parties.map((p) => (
+              <div
+                key={p.slug}
+                className="flex items-center gap-2 group rounded-md p-1.5 -mx-1.5 hover:bg-accent/50 transition-colors"
+              >
+                <Link
+                  href={`/partis/${p.slug}`}
+                  className="flex items-center gap-2 min-w-0 flex-1"
+                  prefetch={false}
+                >
+                  <div
+                    className="size-10 rounded-full flex items-center justify-center shrink-0"
+                    style={{
+                      backgroundColor: p.color ? `${p.color}20` : "#e5e7eb",
+                    }}
+                  >
+                    <Building2 className="size-5" style={{ color: p.color || "#6b7280" }} />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium truncate group-hover:text-primary transition-colors">
+                      {p.shortName || p.name}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {p.memberCount} membre{p.memberCount !== 1 ? "s" : ""}
+                    </p>
+                  </div>
+                </Link>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => remove(p.slug, "party")}
+                  className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                  aria-label={`Retirer ${p.shortName || p.name}`}
+                >
+                  <X className="size-3.5" />
+                </Button>
+              </div>
+            ))}
+            {/* Loading skeletons for unresolved parties */}
+            {unresolvedParties.map((item) => (
+              <div key={item.slug} className="flex items-center gap-2 p-1.5 -mx-1.5">
+                <div className="size-10 rounded-full bg-muted animate-pulse shrink-0" />
+                <div className="min-w-0 flex-1 space-y-1.5">
+                  <div className="h-3.5 w-20 bg-muted rounded animate-pulse" />
+                  <div className="h-3 w-14 bg-muted rounded animate-pulse" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Add button */}
+      {onAddClick && (
+        <Button variant="outline" size="sm" className="w-full" onClick={onAddClick}>
+          <Plus className="size-4" />
+          Ajouter
+        </Button>
+      )}
+    </div>
+  );
+}

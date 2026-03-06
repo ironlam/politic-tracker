@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
+import { PoligraphBadge } from "@/components/elections/PoligraphBadge";
 
 interface IncumbentMayorCardProps {
   mayor: {
@@ -48,10 +49,10 @@ export function IncumbentMayorCard({ mayor, isRunningAgain }: IncumbentMayorCard
           {mayor.politician && (
             <Link
               href={`/politiques/${mayor.politician.slug}`}
-              className="text-sm text-primary hover:underline"
               prefetch={false}
+              className="flex items-center gap-2"
             >
-              Voir sa fiche
+              <PoligraphBadge />
             </Link>
           )}
         </div>

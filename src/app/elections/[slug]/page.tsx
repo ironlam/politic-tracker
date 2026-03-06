@@ -22,6 +22,7 @@ import { AddToCalendar } from "@/components/elections/AddToCalendar";
 import { isFeatureEnabled } from "@/lib/feature-flags";
 import { ELECTION_GUIDES } from "@/config/election-guides";
 import { EventJsonLd, BreadcrumbJsonLd } from "@/components/seo/JsonLd";
+import { PoligraphBadge } from "@/components/elections/PoligraphBadge";
 import type { ElectionStatus } from "@/types";
 import { SITE_URL } from "@/config/site";
 
@@ -174,9 +175,10 @@ function CandidacyCard({
               <p className="text-xs text-muted-foreground">{candidacy.constituencyName}</p>
             )}
           </div>
-          {candidacy.isElected && (
-            <Badge className="bg-green-100 text-green-800 ml-auto flex-shrink-0">Élu(e)</Badge>
-          )}
+          <div className="ml-auto flex items-center gap-1.5 shrink-0">
+            {candidacy.politician && <PoligraphBadge />}
+            {candidacy.isElected && <Badge className="bg-green-100 text-green-800">Élu(e)</Badge>}
+          </div>
         </div>
       </CardContent>
     </Card>

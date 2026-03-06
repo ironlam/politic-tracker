@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { DEPARTMENTS } from "@/config/departments";
+import { PoligraphBadge } from "@/components/elections/PoligraphBadge";
 
 interface MaireCardProps {
   maire: {
@@ -53,7 +54,7 @@ export function MaireCard({ maire }: MaireCardProps) {
 
         <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
           {startYear && <span>En poste depuis {startYear}</span>}
-          {maire.politician && <span className="text-primary font-medium">Voir la fiche →</span>}
+          {maire.politician && <PoligraphBadge />}
         </div>
       </CardContent>
     </Card>

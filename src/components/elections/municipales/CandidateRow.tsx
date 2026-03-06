@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { PoligraphBadge } from "@/components/elections/PoligraphBadge";
 
 interface CandidateRowProps {
   position: number | null;
@@ -70,11 +71,7 @@ export function CandidateRow({
       )}
 
       {/* Fiche PoliGraph badge */}
-      {politician && (
-        <Badge variant="outline" className="shrink-0 text-xs">
-          Fiche PoliGraph
-        </Badge>
-      )}
+      {politician && <PoligraphBadge />}
     </div>
   );
 }

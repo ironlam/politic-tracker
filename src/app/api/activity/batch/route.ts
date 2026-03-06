@@ -156,9 +156,12 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Generate party-update activity items
+    // Generate party-update activity items (only for parties with slugs)
     const partyActivityItems: ActivityItem[] = [];
     for (const party of resolvedParties) {
+      const partyInfo = partyInfoMap.get(party.id);
+      if (!partyInfo) continue; // skip parties without slug
+
       const recentVoteCount = await db.vote.count({
         where: {
           politician: { currentPartyId: party.id },
@@ -170,7 +173,7 @@ export async function POST(request: NextRequest) {
           type: "party-update",
           date: new Date().toISOString(),
           politician: null,
-          party: partyInfoMap.get(party.id)!,
+          party: partyInfo,
           data: {
             scrutinCount: recentVoteCount,
             message: `${recentVoteCount} vote${recentVoteCount > 1 ? "s" : ""} récent${recentVoteCount > 1 ? "s" : ""} des membres du parti`,

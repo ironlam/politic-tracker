@@ -38,9 +38,12 @@ export function WatchlistSearch() {
   const inputRef = useRef<HTMLInputElement>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Autofocus on mount
+  // Autofocus on mount + cleanup debounce timer
   useEffect(() => {
     inputRef.current?.focus();
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
   }, []);
 
   const fetchResults = useCallback(async (q: string) => {

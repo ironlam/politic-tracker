@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
-import { NAV_GROUPS, NAV_TOP_LEVEL, CTA_ASSISTANT } from "@/config/navigation";
+import { NAV_GROUPS, NAV_TOP_LEVEL, NAV_TOOLS, CTA_ASSISTANT } from "@/config/navigation";
 import {
   ArrowLeftRight,
   Bot,
@@ -16,10 +16,11 @@ import {
   Scale,
   BookOpen,
   Calendar,
+  CalendarDays,
+  BarChart3,
   Vote,
   Landmark,
   Search,
-  Telescope,
   type LucideIcon,
 } from "lucide-react";
 
@@ -32,9 +33,38 @@ const ICON_MAP: Record<string, LucideIcon> = {
   scale: Scale,
   BookOpen: BookOpen,
   calendar: Calendar,
+  calendarDays: CalendarDays,
+  barChart: BarChart3,
   vote: Vote,
   landmark: Landmark,
+  arrowLeftRight: ArrowLeftRight,
 };
+
+/** Tricolor owl icon — Poligraph brand for Mon Observatoire */
+function OwlIconMobile({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+      aria-hidden="true"
+    >
+      <ellipse cx="10" cy="8" rx="7" ry="5.5" fill="#002654" />
+      <path d="M4.5 4.5L3 1.5c1 .3 2.2 1.3 2.8 2.5z" fill="#002654" />
+      <path d="M15.5 4.5L17 1.5c-1 .3-2.2 1.3-2.8 2.5z" fill="#002654" />
+      <ellipse cx="10" cy="14.5" rx="5.5" ry="5" fill="#002654" />
+      <ellipse cx="10" cy="15.5" rx="3.5" ry="3.2" fill="white" />
+      <circle cx="7.5" cy="8" r="2.2" fill="white" />
+      <circle cx="7.8" cy="7.8" r="1.2" fill="#4A9FD9" />
+      <circle cx="8.1" cy="7.5" r="0.5" fill="white" />
+      <circle cx="12.5" cy="8" r="2.2" fill="white" />
+      <circle cx="12.2" cy="7.8" r="1.2" fill="#4A9FD9" />
+      <circle cx="11.9" cy="7.5" r="0.5" fill="white" />
+      <path d="M10 10l-1.2 1.8h2.4z" fill="#ED2939" />
+    </svg>
+  );
+}
 
 // Get all focusable elements within a container
 function getFocusableElements(container: HTMLElement): HTMLElement[] {
@@ -47,11 +77,9 @@ function getFocusableElements(container: HTMLElement): HTMLElement[] {
 interface MobileMenuProps {
   /** Enabled feature flag names, passed from server component */
   enabledFlags?: string[];
-  /** Whether the Comparer CTA is visible (pre-computed from feature flags) */
-  showComparer?: boolean;
 }
 
-export function MobileMenu({ enabledFlags = [], showComparer = false }: MobileMenuProps) {
+export function MobileMenu({ enabledFlags = [] }: MobileMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
   const menuRef = useRef<HTMLDivElement>(null);
@@ -64,6 +92,8 @@ export function MobileMenu({ enabledFlags = [], showComparer = false }: MobileMe
     ...group,
     items: group.items.filter((item) => isVisible(item.featureFlag)),
   })).filter((group) => group.items.length > 0);
+
+  const filteredTools = NAV_TOOLS.filter((item) => isVisible(item.featureFlag));
 
   // Handle keyboard navigation (Escape to close, Tab for focus trap)
   const handleKeyDown = useCallback(
@@ -83,13 +113,11 @@ export function MobileMenu({ enabledFlags = [], showComparer = false }: MobileMe
         const lastElement = focusableElements[focusableElements.length - 1];
 
         if (event.shiftKey) {
-          // Shift+Tab: if on first element, go to last
           if (document.activeElement === firstElement) {
             event.preventDefault();
             lastElement!.focus();
           }
         } else {
-          // Tab: if on last element, go to first
           if (document.activeElement === lastElement) {
             event.preventDefault();
             firstElement!.focus();
@@ -104,11 +132,9 @@ export function MobileMenu({ enabledFlags = [], showComparer = false }: MobileMe
   useEffect(() => {
     if (isOpen) {
       document.addEventListener("keydown", handleKeyDown);
-      // Focus first link when menu opens
       if (menuRef.current) {
         const focusableElements = getFocusableElements(menuRef.current);
         if (focusableElements.length > 0) {
-          // Small delay to ensure DOM is ready
           setTimeout(() => focusableElements[0]!.focus(), 10);
         }
       }
@@ -123,7 +149,7 @@ export function MobileMenu({ enabledFlags = [], showComparer = false }: MobileMe
   return (
     <div className="lg:hidden">
       {/* Header icon bar */}
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-0.5">
         <Link
           href="/recherche"
           className="p-2 rounded-lg hover:bg-accent transition-colors touch-target"
@@ -131,22 +157,35 @@ export function MobileMenu({ enabledFlags = [], showComparer = false }: MobileMe
         >
           <Search className="w-5 h-5" aria-hidden="true" />
         </Link>
-        <Link
-          href="/mon-observatoire"
-          className="p-2 rounded-lg hover:bg-accent transition-colors touch-target"
-          aria-label="Mon Observatoire — Suivre des représentants"
-        >
-          <Telescope className="w-5 h-5" aria-hidden="true" />
-        </Link>
-        {showComparer && (
-          <Link
-            href="/comparer"
-            className="p-2 rounded-lg hover:bg-accent transition-colors touch-target"
-            aria-label="Comparer des représentants"
-          >
-            <ArrowLeftRight className="w-5 h-5" aria-hidden="true" />
-          </Link>
-        )}
+
+        {/* Tool icons (filtered by feature flags) */}
+        {filteredTools.map((tool) => {
+          if (tool.icon === "telescope") {
+            return (
+              <Link
+                key={tool.href}
+                href={tool.href}
+                className="p-2 rounded-lg hover:bg-accent transition-colors touch-target"
+                aria-label={tool.label}
+              >
+                <OwlIconMobile className="w-5 h-5" />
+              </Link>
+            );
+          }
+          const Icon = tool.icon ? ICON_MAP[tool.icon] : null;
+          if (!Icon) return null;
+          return (
+            <Link
+              key={tool.href}
+              href={tool.href}
+              className="p-2 rounded-lg hover:bg-accent transition-colors touch-target"
+              aria-label={tool.label}
+            >
+              <Icon className="w-5 h-5" aria-hidden="true" />
+            </Link>
+          );
+        })}
+
         <ThemeToggle />
         <button
           ref={buttonRef}
@@ -202,9 +241,9 @@ export function MobileMenu({ enabledFlags = [], showComparer = false }: MobileMe
           aria-label="Menu de navigation"
         >
           <nav className="container mx-auto px-4 py-4" aria-label="Navigation mobile">
-            {/* Transparency links (top priority) */}
+            {/* Top-level links (hero row) */}
             <div className="flex gap-2 mb-4">
-              {NAV_TOP_LEVEL.map((item) => {
+              {NAV_TOP_LEVEL.filter((item) => isVisible(item.featureFlag)).map((item) => {
                 const Icon = item.icon ? ICON_MAP[item.icon] : null;
                 const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
                 return (

@@ -1,5 +1,5 @@
 // Navigation configuration
-// 2 top-level transparency links + 2 thematic dropdowns + 2 standalone CTAs
+// 3 top-level links + 2 thematic dropdowns + icon tool rail
 
 export interface NavItem {
   href: string;
@@ -15,20 +15,8 @@ export interface NavGroup {
   items: NavItem[];
 }
 
-// Top-level transparency links (displayed as direct links, not in a dropdown)
+// Top-level links (displayed as direct links, not in a dropdown)
 export const NAV_TOP_LEVEL: NavItem[] = [
-  {
-    href: "/affaires",
-    label: "Affaires",
-    icon: "scale",
-    description: "Dossiers judiciaires documentés avec sources",
-  },
-  {
-    href: "/factchecks",
-    label: "Fact-checks",
-    icon: "shieldCheck",
-    description: "Vérification des déclarations politiques",
-  },
   {
     href: "/recap",
     label: "Le Recap",
@@ -42,13 +30,35 @@ export const NAV_TOP_LEVEL: NavItem[] = [
     description: "Tableaux de bord et analyses",
     featureFlag: "STATISTIQUES_SECTION",
   },
+  {
+    href: "/factchecks",
+    label: "Fact-checks",
+    icon: "shieldCheck",
+    description: "Vérification des déclarations politiques",
+  },
 ];
 
-// Main navigation groups (3 thematic dropdowns)
+// Main navigation groups (2 thematic dropdowns)
 export const NAV_GROUPS: NavGroup[] = [
   {
-    label: "Élections",
+    label: "Représentants",
     items: [
+      {
+        href: "/politiques",
+        label: "Tous les représentants",
+        description: "Députés, sénateurs, ministres, eurodéputés",
+      },
+      {
+        href: "/partis",
+        label: "Partis politiques",
+        description: "Les partis et leurs membres",
+      },
+      {
+        href: "/affaires",
+        label: "Affaires judiciaires",
+        icon: "scale",
+        description: "Dossiers judiciaires documentés avec sources",
+      },
       {
         href: "/elections",
         label: "Calendrier électoral",
@@ -69,33 +79,6 @@ export const NAV_GROUPS: NavGroup[] = [
         description: "Annuaire des maires sortants",
         featureFlag: "MUNICIPALES_2026",
       },
-    ],
-  },
-  {
-    label: "Politique",
-    items: [
-      {
-        href: "/politiques",
-        label: "Tous les représentants",
-        description: "Députés, sénateurs, ministres, eurodéputés",
-      },
-      {
-        href: "/partis",
-        label: "Partis politiques",
-        description: "Les partis et leurs membres",
-      },
-      {
-        href: "/votes",
-        label: "Votes parlementaires",
-        description: "Scrutins et positions des élus",
-      },
-      {
-        href: "/carte",
-        label: "Carte de France",
-        icon: "map",
-        description: "Visualisez les élus par département",
-        featureFlag: "CARTE_SECTION",
-      },
       {
         href: "/mon-depute",
         label: "Mon député",
@@ -103,46 +86,16 @@ export const NAV_GROUPS: NavGroup[] = [
         description: "Trouvez votre député par code postal",
         featureFlag: "MON_DEPUTE_SECTION",
       },
-      {
-        href: "/mon-observatoire",
-        label: "Mon Observatoire",
-        icon: "star",
-        description: "Suivez l'activité de vos représentants",
-      },
     ],
   },
   {
-    label: "Données",
+    label: "Parlement",
     items: [
       {
-        href: "/declarations-et-patrimoine",
-        label: "Patrimoine & déclarations",
-        description: "Intérêts, patrimoine et participations des élus",
-      },
-      {
-        href: "/statistiques",
-        label: "Statistiques",
-        description: "Tableaux de bord et analyses",
-        featureFlag: "STATISTIQUES_SECTION",
-      },
-      {
-        href: "/sources",
-        label: "Sources et méthodologie",
-        icon: "BookOpen",
-        description: "Nos sources de données et notre approche",
-      },
-      {
-        href: "/recap",
-        label: "Le Recap",
-        icon: "calendarDays",
-        description: "Synthèse hebdomadaire de la vie politique",
-      },
-      {
-        href: "/presse",
-        label: "Revue de presse",
-        icon: "newspaper",
-        description: "Articles Le Monde, Politico, Mediapart",
-        featureFlag: "PRESS_SECTION",
+        href: "/votes",
+        label: "Votes parlementaires",
+        icon: "vote",
+        description: "Scrutins et positions des élus",
       },
       {
         href: "/assemblee",
@@ -151,17 +104,45 @@ export const NAV_GROUPS: NavGroup[] = [
         description: "Textes en discussion à l'Assemblée",
         featureFlag: "ASSEMBLEE_SECTION",
       },
+      {
+        href: "/declarations-et-patrimoine",
+        label: "Patrimoine & déclarations",
+        description: "Intérêts, patrimoine et participations des élus",
+      },
     ],
   },
 ] as const;
 
-// CTA buttons (standalone actions in header)
-export const CTA_COMPARER: NavItem = {
-  href: "/comparer",
-  label: "Comparer",
-  description: "Comparez des représentants, partis ou groupes parlementaires",
-  featureFlag: "COMPARISON_TOOL",
-};
+// Icon-only tool buttons in the header utility rail
+export const NAV_TOOLS: NavItem[] = [
+  {
+    href: "/carte",
+    label: "Carte de France",
+    icon: "map",
+    description: "Visualisez les élus par département",
+    featureFlag: "CARTE_SECTION",
+  },
+  {
+    href: "/presse",
+    label: "Revue de presse",
+    icon: "newspaper",
+    description: "Articles Le Monde, Politico, Mediapart",
+    featureFlag: "PRESS_SECTION",
+  },
+  {
+    href: "/mon-observatoire",
+    label: "Mon Observatoire",
+    icon: "telescope",
+    description: "Suivez l'activité de vos représentants",
+  },
+  {
+    href: "/comparer",
+    label: "Comparer",
+    icon: "arrowLeftRight",
+    description: "Comparez des représentants, partis ou groupes parlementaires",
+    featureFlag: "COMPARISON_TOOL",
+  },
+];
 
 export const CTA_ASSISTANT: NavItem = {
   href: "/chat",
@@ -171,6 +152,12 @@ export const CTA_ASSISTANT: NavItem = {
 };
 
 // Legacy exports for backwards compatibility
+export const CTA_COMPARER: NavItem = {
+  href: "/comparer",
+  label: "Comparer",
+  description: "Comparez des représentants, partis ou groupes parlementaires",
+  featureFlag: "COMPARISON_TOOL",
+};
 export const CTA_MON_DEPUTE: NavItem = {
   href: "/mon-depute",
   label: "Mon député",
@@ -188,37 +175,37 @@ export interface FooterSection {
 
 export const FOOTER_SECTIONS: FooterSection[] = [
   {
-    title: "Politique",
+    title: "Représentants",
     links: [
-      { href: "/politiques", label: "Représentants" },
+      { href: "/politiques", label: "Tous les représentants" },
       { href: "/partis", label: "Partis politiques" },
-      { href: "/votes", label: "Votes parlementaires" },
+      { href: "/affaires", label: "Affaires judiciaires" },
       { href: "/elections", label: "Élections" },
       {
         href: "/elections/municipales-2026",
         label: "Municipales 2026",
         featureFlag: "MUNICIPALES_2026",
       },
+      { href: "/mon-depute", label: "Mon député", featureFlag: "MON_DEPUTE_SECTION" },
     ],
   },
   {
-    title: "Transparence",
+    title: "Parlement",
     links: [
-      { href: "/affaires", label: "Affaires judiciaires" },
-      { href: "/factchecks", label: "Fact-checks" },
+      { href: "/votes", label: "Votes parlementaires" },
+      { href: "/assemblee", label: "Dossiers législatifs", featureFlag: "ASSEMBLEE_SECTION" },
       { href: "/declarations-et-patrimoine", label: "Patrimoine & déclarations" },
+      { href: "/factchecks", label: "Fact-checks" },
       { href: "/statistiques", label: "Statistiques", featureFlag: "STATISTIQUES_SECTION" },
-      { href: "/recap", label: "Le Recap" },
-      { href: "/presse", label: "Revue de presse", featureFlag: "PRESS_SECTION" },
     ],
   },
   {
     title: "Explorer",
     links: [
+      { href: "/recap", label: "Le Recap" },
       { href: "/carte", label: "Carte de France", featureFlag: "CARTE_SECTION" },
+      { href: "/presse", label: "Revue de presse", featureFlag: "PRESS_SECTION" },
       { href: "/departements", label: "Départements" },
-      { href: "/assemblee", label: "Dossiers législatifs", featureFlag: "ASSEMBLEE_SECTION" },
-      { href: "/institutions", label: "Institutions", featureFlag: "INSTITUTIONS_SECTION" },
       { href: "/recherche", label: "Recherche" },
       { href: "/mon-observatoire", label: "Mon Observatoire" },
     ],

@@ -30,6 +30,12 @@ export const NAV_TOP_LEVEL: NavItem[] = [
     description: "Vérification des déclarations politiques",
   },
   {
+    href: "/recap",
+    label: "Le Recap",
+    icon: "calendarDays",
+    description: "Synthèse hebdomadaire de la vie politique",
+  },
+  {
     href: "/statistiques",
     label: "Statistiques",
     icon: "barChart",
@@ -126,6 +132,12 @@ export const NAV_GROUPS: NavGroup[] = [
         description: "Nos sources de données et notre approche",
       },
       {
+        href: "/recap",
+        label: "Le Recap",
+        icon: "calendarDays",
+        description: "Synthèse hebdomadaire de la vie politique",
+      },
+      {
         href: "/presse",
         label: "Revue de presse",
         icon: "newspaper",
@@ -196,6 +208,7 @@ export const FOOTER_SECTIONS: FooterSection[] = [
       { href: "/factchecks", label: "Fact-checks" },
       { href: "/declarations-et-patrimoine", label: "Patrimoine & déclarations" },
       { href: "/statistiques", label: "Statistiques", featureFlag: "STATISTIQUES_SECTION" },
+      { href: "/recap", label: "Le Recap" },
       { href: "/presse", label: "Revue de presse", featureFlag: "PRESS_SECTION" },
     ],
   },

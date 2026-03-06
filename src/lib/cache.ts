@@ -71,6 +71,7 @@ export function invalidateEntity(type: EntityType, slug?: string): void {
     case "mandate":
       revalidatePath("/api/mandats", "layout");
       revalidatePath("/api/deputies/by-department", "layout");
+      revalidatePath("/api/deputies/by-commune", "layout");
       revalidateTag("politicians", CACHE_PROFILE);
       break;
 

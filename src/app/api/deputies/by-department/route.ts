@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { withCache } from "@/lib/cache";
+import { withPublicRoute } from "@/lib/api/with-public-route";
 
 /**
  * @openapi
@@ -42,11 +43,11 @@ import { withCache } from "@/lib/cache";
  *                   party:
  *                     $ref: '#/components/schemas/PartySummary'
  *       400:
- *         description: Paramètre department manquant
+ *         description: Paramètre department manquant ou invalide
  *       500:
  *         description: Erreur serveur
  */
-export async function GET(request: NextRequest) {
+export const GET = withPublicRoute(async (request: NextRequest) => {
   const searchParams = request.nextUrl.searchParams;
   const department = searchParams.get("department");
 
@@ -54,76 +55,73 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Le paramètre 'department' est requis" }, { status: 400 });
   }
 
-  try {
-    // Find deputies with current mandate in this department
-    // Use startsWith to avoid matching "Bouches-du-Rhône" when searching for "Rhône"
-    const deputies = await db.politician.findMany({
-      where: {
-        mandates: {
-          some: {
-            type: "DEPUTE",
-            isCurrent: true,
-            constituency: {
-              startsWith: department,
-              mode: "insensitive",
-            },
-          },
-        },
-      },
-      include: {
-        currentParty: {
-          select: {
-            name: true,
-            shortName: true,
-            color: true,
-          },
-        },
-        mandates: {
-          where: {
-            type: "DEPUTE",
-            isCurrent: true,
-          },
-          select: {
-            constituency: true,
-          },
-          take: 1,
-        },
-      },
-      orderBy: [
-        // Order by constituency number (extract number from "Département (X)")
-        { lastName: "asc" },
-      ],
-    });
-
-    // Format response
-    const result = deputies.map((deputy) => ({
-      id: deputy.id,
-      slug: deputy.slug,
-      fullName: deputy.fullName,
-      photoUrl: deputy.photoUrl,
-      constituency: deputy.mandates[0]?.constituency || null,
-      party: deputy.currentParty
-        ? {
-            name: deputy.currentParty.name,
-            shortName: deputy.currentParty.shortName,
-            color: deputy.currentParty.color,
-          }
-        : null,
-    }));
-
-    // Sort by constituency number
-    result.sort((a, b) => {
-      const numA = a.constituency?.match(/\((\d+)\)/)?.[1];
-      const numB = b.constituency?.match(/\((\d+)\)/)?.[1];
-      if (numA && numB) {
-        return parseInt(numA) - parseInt(numB);
-      }
-      return 0;
-    });
-
-    return withCache(NextResponse.json(result), "daily");
-  } catch (error) {
-    console.error("Error fetching deputies:", error);
-    return NextResponse.json({ error: "Erreur lors de la recherche des députés" }, { status: 500 });
+  if (department.length > 100) {
+    return NextResponse.json({ error: "Paramètre 'department' invalide" }, { status: 400 });
   }
-}
+
+  // Find deputies with current mandate in this department
+  // Use startsWith to avoid matching "Bouches-du-Rhône" when searching for "Rhône"
+  const deputies = await db.politician.findMany({
+    where: {
+      publicationStatus: "PUBLISHED",
+      mandates: {
+        some: {
+          type: "DEPUTE",
+          isCurrent: true,
+          constituency: {
+            startsWith: department,
+            mode: "insensitive",
+          },
+        },
+      },
+    },
+    include: {
+      currentParty: {
+        select: {
+          name: true,
+          shortName: true,
+          color: true,
+        },
+      },
+      mandates: {
+        where: {
+          type: "DEPUTE",
+          isCurrent: true,
+        },
+        select: {
+          constituency: true,
+        },
+        take: 1,
+      },
+    },
+    orderBy: [{ lastName: "asc" }],
+  });
+
+  // Format response
+  const result = deputies.map((deputy) => ({
+    id: deputy.id,
+    slug: deputy.slug,
+    fullName: deputy.fullName,
+    photoUrl: deputy.photoUrl,
+    constituency: deputy.mandates[0]?.constituency || null,
+    party: deputy.currentParty
+      ? {
+          name: deputy.currentParty.name,
+          shortName: deputy.currentParty.shortName,
+          color: deputy.currentParty.color,
+        }
+      : null,
+  }));
+
+  // Sort by constituency number
+  result.sort((a, b) => {
+    const numA = a.constituency?.match(/\((\d+)\)/)?.[1];
+    const numB = b.constituency?.match(/\((\d+)\)/)?.[1];
+    if (numA && numB) {
+      return Number(numA) - Number(numB);
+    }
+    return 0;
+  });
+
+  return withCache(NextResponse.json(result), "daily");
+});

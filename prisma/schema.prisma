@@ -1465,13 +1465,15 @@ model Commune {
   population     Int?
   latitude       Float?
   longitude      Float?
-  totalSeats     Int? // Conseil municipal seats (computed from population)
-  website        String?
+  totalSeats          Int? // Conseil municipal seats (computed from population)
+  constituencyNumber  Int? // Legislative constituency (CIRCO_LEG from INSEE COG)
+  website             String?
 
   candidacies    Candidacy[]
   localOfficials LocalOfficial[]
 
   @@index([departmentCode])
+  @@index([departmentCode, constituencyNumber])
   @@index([name])
 }
 

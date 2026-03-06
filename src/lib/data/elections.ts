@@ -203,7 +203,17 @@ export const getCommuneResults2020 = cache(async function getCommuneResults2020(
     orderBy: [{ listName: "asc" }, { listPosition: "asc" }],
   });
 
-  if (candidacies.length === 0) return null;
+  if (candidacies.length === 0) {
+    return {
+      inseeCode: commune.id,
+      communeName: commune.name,
+      departmentCode: commune.departmentCode,
+      departmentName: commune.departmentName,
+      population: commune.population,
+      totalSeats: commune.totalSeats,
+      lists: [],
+    };
+  }
 
   // Group candidacies by listName
   const listsMap = new Map<

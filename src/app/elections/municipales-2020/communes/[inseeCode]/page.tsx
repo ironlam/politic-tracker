@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { getCommuneResults2020 } from "@/lib/data/elections";
 import { BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 import { SITE_URL } from "@/config/site";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, Info } from "lucide-react";
 
 export const revalidate = 3600;
 
@@ -14,6 +14,9 @@ export const revalidate = 3600;
 export async function generateStaticParams() {
   return [];
 }
+
+/** Paris, Lyon, Marseille have arrondissement-based elections (scrutin de secteur) */
+const PLM_CODES = new Set(["75056", "69123", "13055"]);
 
 interface PageProps {
   params: Promise<{ inseeCode: string }>;
@@ -38,13 +41,17 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   const title = `Municipales 2020 à ${commune.communeName} — Résultats | Poligraph`;
   const description =
-    `Résultats des élections municipales 2020 à ${commune.communeName}` +
-    ` (${commune.departmentName}) : ${commune.lists.length} listes en compétition.`;
+    commune.lists.length > 0
+      ? `Résultats des élections municipales 2020 à ${commune.communeName}` +
+        ` (${commune.departmentName}) : ${commune.lists.length} listes en compétition.`
+      : `Résultats des élections municipales 2020 à ${commune.communeName} (${commune.departmentName}).`;
 
   return {
     title,
     description,
     alternates: { canonical: `/elections/municipales-2020/communes/${inseeCode}` },
+    // Don't index pages with no results
+    ...(commune.lists.length === 0 && { robots: { index: false } }),
   };
 }
 
@@ -207,6 +214,22 @@ export default async function Commune2020DetailPage({ params }: PageProps) {
                 </Card>
               ))}
             </div>
+          ) : PLM_CODES.has(inseeCode) ? (
+            <Card className="border-blue-200 bg-blue-50/50 dark:bg-blue-950/20 dark:border-blue-900">
+              <CardContent className="pt-5">
+                <div className="flex gap-3">
+                  <Info className="h-5 w-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-medium mb-1">Scrutin par arrondissement</p>
+                    <p className="text-sm text-muted-foreground">
+                      {commune.communeName} élit ses conseillers municipaux par arrondissement
+                      (scrutin de secteur). Les résultats détaillés ne sont pas disponibles au
+                      niveau de la commune dans nos données.
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           ) : (
             <p className="text-muted-foreground">Aucun résultat disponible pour cette commune.</p>
           )}

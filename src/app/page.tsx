@@ -17,8 +17,7 @@ import { isFeatureEnabled } from "@/lib/feature-flags";
 import { SITE_URL } from "@/config/site";
 import { getTodayVotesSummary } from "@/lib/data/votes";
 import { getWeeklyRecap, getWeekStart } from "@/lib/data/recap";
-import { cacheTag, cacheLife } from "next/cache";
-import { db } from "@/lib/db";
+import { getUpcomingElections } from "@/lib/data/elections";
 
 export const metadata: Metadata = {
   title: "Poligraph — Observatoire citoyen de la politique française",
@@ -26,22 +25,6 @@ export const metadata: Metadata = {
     "Suivez les votes, affaires judiciaires, fact-checks et déclarations de patrimoine des politiques français. Données ouvertes, transparence citoyenne.",
   alternates: { canonical: "/" },
 };
-
-async function getUpcomingElections() {
-  "use cache";
-  cacheTag("elections", "homepage");
-  cacheLife("minutes");
-
-  const now = new Date();
-  return db.election.findMany({
-    where: {
-      status: { not: "COMPLETED" },
-      round1Date: { gte: now },
-    },
-    orderBy: { round1Date: "asc" },
-    take: 4,
-  });
-}
 
 export default async function HomePage() {
   // Previous week's Monday for the recap

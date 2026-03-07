@@ -1,6 +1,8 @@
 import { cache } from "react";
+import { cacheTag, cacheLife } from "next/cache";
 import { Prisma } from "@/generated/prisma";
 import { db } from "@/lib/db";
+import type { ElectionType } from "@/types";
 
 // ============================================
 // Types
@@ -297,3 +299,56 @@ export const getCommuneResults2020 = cache(async function getCommuneResults2020(
     lists,
   };
 });
+
+// ============================================
+// 5. getUpcomingElections
+// ============================================
+
+export async function getUpcomingElections() {
+  "use cache";
+  cacheTag("elections", "homepage");
+  cacheLife("minutes");
+
+  const now = new Date();
+  return db.election.findMany({
+    where: {
+      status: { not: "COMPLETED" },
+      round1Date: { gte: now },
+    },
+    orderBy: { round1Date: "asc" },
+    take: 4,
+  });
+}
+
+// ============================================
+// 6. getElections (listing with optional type filter)
+// ============================================
+
+export async function getElections(typeFilter?: ElectionType) {
+  "use cache";
+  cacheTag("elections");
+  cacheLife("minutes");
+
+  const where = typeFilter ? { type: typeFilter } : {};
+
+  return db.election.findMany({
+    where,
+    orderBy: [{ round1Date: { sort: "asc", nulls: "last" } }],
+  });
+}
+
+// ============================================
+// 7. getTypeCounts
+// ============================================
+
+export async function getTypeCounts() {
+  "use cache";
+  cacheTag("elections");
+  cacheLife("minutes");
+
+  return db.election.groupBy({
+    by: ["type"],
+    _count: true,
+    orderBy: { _count: { type: "desc" } },
+  });
+}

@@ -1,8 +1,6 @@
 import { Metadata } from "next";
 import Link from "next/link";
-import { cacheTag, cacheLife } from "next/cache";
 import { SimplePagination } from "@/components/ui/SimplePagination";
-import { db } from "@/lib/db";
 import { VoteCard } from "@/components/votes";
 import { VotesSearchInput } from "@/components/votes/VotesSearchInput";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +12,7 @@ import {
   THEME_CATEGORY_ICONS,
   THEME_CATEGORY_COLORS,
 } from "@/config/labels";
+import { getScrutins, getLegislatures, getChambers, getThemeCounts } from "@/lib/data/votes";
 import type { VotingResult, Chamber, ThemeCategory } from "@/types";
 
 export const revalidate = 300; // 5 minutes — CDN edge cache with ISR
@@ -34,124 +33,6 @@ interface PageProps {
     theme?: string;
     search?: string;
   }>;
-}
-
-// Core query logic shared by cached and uncached paths
-async function queryScrutins(params: {
-  page: number;
-  limit: number;
-  result?: VotingResult;
-  legislature?: number;
-  chamber?: Chamber;
-  theme?: ThemeCategory;
-  search?: string;
-}) {
-  const { page, limit, result, legislature, chamber, theme, search } = params;
-  const skip = (page - 1) * limit;
-
-  const where = {
-    ...(result && { result }),
-    ...(legislature && { legislature }),
-    ...(chamber && { chamber }),
-    ...(theme && { theme }),
-    ...(search && {
-      title: { contains: search, mode: "insensitive" as const },
-    }),
-  };
-
-  const [scrutins, total, stats] = await Promise.all([
-    db.scrutin.findMany({
-      where,
-      orderBy: { votingDate: "desc" },
-      skip,
-      take: limit,
-    }),
-    db.scrutin.count({ where }),
-    db.scrutin.groupBy({
-      by: ["result"],
-      _count: true,
-    }),
-  ]);
-
-  return {
-    scrutins,
-    total,
-    totalPages: Math.ceil(total / limit),
-    stats: stats.reduce(
-      (acc, s) => {
-        acc[s.result] = s._count;
-        return acc;
-      },
-      {} as Record<string, number>
-    ),
-  };
-}
-
-// Cached path — bounded key space (enums + page, no free-text search)
-async function getScrutinsFiltered(params: {
-  page: number;
-  limit: number;
-  result?: VotingResult;
-  legislature?: number;
-  chamber?: Chamber;
-  theme?: ThemeCategory;
-}) {
-  "use cache";
-  cacheTag("votes");
-  cacheLife("minutes");
-  return queryScrutins(params);
-}
-
-// Router: use cached path when no search, uncached when searching
-async function getScrutins(params: {
-  page: number;
-  limit: number;
-  result?: VotingResult;
-  legislature?: number;
-  chamber?: Chamber;
-  theme?: ThemeCategory;
-  search?: string;
-}) {
-  if (params.search) {
-    return queryScrutins(params);
-  }
-  return getScrutinsFiltered(params);
-}
-
-async function getLegislatures() {
-  "use cache";
-  cacheTag("votes");
-  cacheLife("minutes");
-
-  return db.scrutin.groupBy({
-    by: ["legislature"],
-    _count: true,
-    orderBy: { legislature: "desc" },
-  });
-}
-
-async function getChambers() {
-  "use cache";
-  cacheTag("votes");
-  cacheLife("minutes");
-
-  return db.scrutin.groupBy({
-    by: ["chamber"],
-    _count: true,
-  });
-}
-
-async function getThemeCounts() {
-  "use cache";
-  cacheTag("votes");
-  cacheLife("minutes");
-
-  const counts = await db.scrutin.groupBy({
-    by: ["theme"],
-    _count: true,
-    orderBy: { _count: { theme: "desc" } },
-  });
-  return counts.filter((c) => c.theme !== null) as { theme: ThemeCategory; _count: number }[];
 }
 
 export default async function VotesPage({ searchParams }: PageProps) {

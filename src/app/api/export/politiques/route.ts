@@ -1,13 +1,13 @@
-import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { toCSV, formatDateForCSV, createCSVResponse } from "@/lib/csv";
 import { MANDATE_TYPE_LABELS } from "@/config/labels";
 import type { MandateType } from "@/types";
 import { SITE_URL } from "@/config/site";
+import { withPublicRoute } from "@/lib/api/with-public-route";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(request: NextRequest) {
+export const GET = withPublicRoute(async (request) => {
   const searchParams = request.nextUrl.searchParams;
 
   // Optional filters
@@ -98,4 +98,4 @@ export async function GET(request: NextRequest) {
   const filename = `politiques-${new Date().toISOString().split("T")[0]}.csv`;
 
   return createCSVResponse(csv, filename);
-}
+});

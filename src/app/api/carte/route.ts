@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { withCache } from "@/lib/cache";
 import { getElectionMapData } from "@/services/electionMap";
+import { withPublicRoute } from "@/lib/api/with-public-route";
 
 export interface MapDepartmentData {
   code: string;
@@ -26,15 +27,10 @@ export interface MapDepartmentData {
   }[];
 }
 
-export async function GET(request: NextRequest) {
+export const GET = withPublicRoute(async (request: NextRequest) => {
   const { searchParams } = new URL(request.url);
   const electionSlug = searchParams.get("election") || "legislatives-2024";
 
-  try {
-    const { departments } = await getElectionMapData(electionSlug);
-    return withCache(NextResponse.json({ departments, election: electionSlug }), "daily");
-  } catch (error) {
-    console.error("API /carte error:", error);
-    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
-  }
-}
+  const { departments } = await getElectionMapData(electionSlug);
+  return withCache(NextResponse.json({ departments, election: electionSlug }), "daily");
+});

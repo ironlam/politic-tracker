@@ -1,10 +1,10 @@
 import { Metadata } from "next";
 import Link from "next/link";
-import { db } from "@/lib/db";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { ElectionCountdown, ElectionTimeline } from "@/components/elections";
 import { ELECTION_TYPE_LABELS, ELECTION_TYPE_ICONS } from "@/config/labels";
+import { getElections, getTypeCounts } from "@/lib/data/elections";
 import type { ElectionType } from "@/types";
 
 export const revalidate = 300; // ISR: revalidate every 5 minutes
@@ -20,23 +20,6 @@ interface PageProps {
   searchParams: Promise<{
     type?: string;
   }>;
-}
-
-async function getElections(typeFilter?: ElectionType) {
-  const where = typeFilter ? { type: typeFilter } : {};
-
-  return db.election.findMany({
-    where,
-    orderBy: [{ round1Date: { sort: "asc", nulls: "last" } }],
-  });
-}
-
-async function getTypeCounts() {
-  return db.election.groupBy({
-    by: ["type"],
-    _count: true,
-    orderBy: { _count: { type: "desc" } },
-  });
 }
 
 export default async function ElectionsPage({ searchParams }: PageProps) {

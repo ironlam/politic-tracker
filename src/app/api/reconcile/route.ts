@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { normalizeText } from "@/lib/name-matching";
+import { withPublicRoute } from "@/lib/api/with-public-route";
 
 interface ReconciliationQuery {
   query: string;
@@ -22,7 +23,7 @@ interface ReconciliationResult {
  * W3C Reconciliation Service API v0.2
  * https://www.w3.org/community/reports/reconciliation/CG-FINAL-specs-0.2-20230410/
  */
-export async function GET(request: NextRequest) {
+export const GET = withPublicRoute(async (request) => {
   const url = new URL(request.url);
   const queriesParam = url.searchParams.get("queries");
 
@@ -39,13 +40,13 @@ export async function GET(request: NextRequest) {
 
   const queries: Record<string, ReconciliationQuery> = JSON.parse(queriesParam);
   return handleQueries(queries);
-}
+});
 
-export async function POST(request: NextRequest) {
+export const POST = withPublicRoute(async (request) => {
   const body = await request.json();
   const queries: Record<string, ReconciliationQuery> = body.queries ?? body;
   return handleQueries(queries);
-}
+});
 
 async function handleQueries(queries: Record<string, ReconciliationQuery>): Promise<NextResponse> {
   const results: Record<string, { result: ReconciliationResult[] }> = {};

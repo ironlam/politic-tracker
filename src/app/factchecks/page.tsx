@@ -1,8 +1,6 @@
 import { Metadata } from "next";
 import Link from "next/link";
-import { cacheTag, cacheLife } from "next/cache";
 import { SimplePagination } from "@/components/ui/SimplePagination";
-import { db } from "@/lib/db";
 import { Card, CardContent } from "@/components/ui/card";
 import { StatCard } from "@/components/ui/StatCard";
 import { Badge } from "@/components/ui/badge";
@@ -13,9 +11,13 @@ import {
   FACTCHECK_RATING_LABELS,
   FACTCHECK_RATING_COLORS,
   FACTCHECK_RATING_DESCRIPTIONS,
-  FACTCHECK_ALLOWED_SOURCES,
 } from "@/config/labels";
-import { factcheckStatsService } from "@/services/factcheckStats";
+import {
+  getFactchecks,
+  getFactcheckStats,
+  getFactcheckSources,
+  getPoliticianNameBySlug,
+} from "@/lib/data/factchecks";
 import type { FactCheckRating } from "@/types";
 
 export const revalidate = 300; // 5 minutes — CDN edge cache with ISR
@@ -57,117 +59,6 @@ const VERDICT_ACCENT: Record<string, { border: string; bg: string }> = {
   vrai: { border: "#2d6a4f", bg: "#2d6a4f0a" },
 };
 
-/** Generic claimant patterns — must match GENERIC_CLAIMANT_PATTERNS in labels.ts */
-const GENERIC_CLAIMANT_PATTERNS = [
-  "réseaux sociaux",
-  "sources multiples",
-  "sites internet",
-  "publications",
-  "utilisateurs",
-  "internautes",
-  "viral",
-  "facebook",
-  "twitter",
-  "tiktok",
-  "whatsapp",
-  "telegram",
-  "youtube",
-  "instagram",
-  "chaîne de mails",
-  "rumeur",
-  "blog",
-  "forum",
-];
-
-function buildDirectClaimFilter() {
-  return {
-    claimant: { not: null },
-    NOT: GENERIC_CLAIMANT_PATTERNS.map((pattern) => ({
-      claimant: { contains: pattern, mode: "insensitive" as const },
-    })),
-  };
-}
-
-async function getFactChecks(params: {
-  page: number;
-  limit: number;
-  source?: string;
-  verdict?: string;
-  politicianSlug?: string;
-  search?: string;
-  directOnly?: boolean;
-}) {
-  const { page, limit, source, verdict, politicianSlug, search, directOnly } = params;
-  const skip = (page - 1) * limit;
-
-  const where = {
-    source: source || { in: FACTCHECK_ALLOWED_SOURCES },
-    ...(verdict && { verdictRating: verdict as FactCheckRating }),
-    ...(politicianSlug && {
-      mentions: {
-        some: {
-          politician: { slug: politicianSlug },
-        },
-      },
-    }),
-    ...(search && {
-      OR: [
-        { title: { contains: search, mode: "insensitive" as const } },
-        { claimText: { contains: search, mode: "insensitive" as const } },
-      ],
-    }),
-    ...(directOnly && buildDirectClaimFilter()),
-  };
-
-  const [factChecks, total] = await Promise.all([
-    db.factCheck.findMany({
-      where,
-      orderBy: { publishedAt: "desc" },
-      skip,
-      take: limit,
-      include: {
-        mentions: {
-          select: {
-            isClaimant: true,
-            politician: {
-              select: { slug: true, fullName: true },
-            },
-          },
-        },
-      },
-    }),
-    db.factCheck.count({ where }),
-  ]);
-
-  return {
-    factChecks,
-    total,
-    totalPages: Math.ceil(total / limit),
-  };
-}
-
-async function getStats() {
-  "use cache";
-  cacheTag("factchecks");
-  cacheLife("minutes");
-
-  return factcheckStatsService.getPageStats();
-}
-
-async function getSources() {
-  "use cache";
-  cacheTag("factchecks");
-  cacheLife("minutes");
-
-  const sources = await db.factCheck.groupBy({
-    by: ["source"],
-    where: { source: { in: FACTCHECK_ALLOWED_SOURCES } },
-    _count: true,
-    orderBy: { _count: { source: "desc" } },
-  });
-  return sources.map((s) => ({ name: s.source, count: s._count }));
-}
-
 export default async function FactChecksPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const page = Math.max(1, parseInt(params.page || "1", 10));
@@ -180,20 +71,13 @@ export default async function FactChecksPage({ searchParams }: PageProps) {
   const directOnly = type === "direct";
 
   const [{ factChecks, total, totalPages }, stats, sources] = await Promise.all([
-    getFactChecks({ page, limit, source, verdict, politicianSlug, search, directOnly }),
-    getStats(),
-    getSources(),
+    getFactchecks({ page, limit, source, verdict, politicianSlug, search, directOnly }),
+    getFactcheckStats(),
+    getFactcheckSources(),
   ]);
 
   // Get politician name if filtering
-  let politicianName: string | null = null;
-  if (politicianSlug) {
-    const p = await db.politician.findUnique({
-      where: { slug: politicianSlug },
-      select: { fullName: true },
-    });
-    politicianName = p?.fullName || null;
-  }
+  const politicianName = politicianSlug ? await getPoliticianNameBySlug(politicianSlug) : null;
 
   const buildUrl = (newParams: Record<string, string | undefined>) => {
     const current = new URLSearchParams();

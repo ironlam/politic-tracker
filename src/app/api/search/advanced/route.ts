@@ -3,6 +3,7 @@ import { searchPoliticians, SearchFilters } from "@/services/search";
 import { MandateType } from "@/generated/prisma";
 import { withCache } from "@/lib/cache";
 import { parsePagination } from "@/lib/api/pagination";
+import { withPublicRoute } from "@/lib/api/with-public-route";
 
 /**
  * @openapi
@@ -115,7 +116,7 @@ import { parsePagination } from "@/lib/api/pagination";
  *       500:
  *         description: Erreur serveur
  */
-export async function GET(request: NextRequest) {
+export const GET = withPublicRoute(async (request: NextRequest) => {
   const { searchParams } = new URL(request.url);
 
   const query = searchParams.get("q") || "";
@@ -139,14 +140,9 @@ export async function GET(request: NextRequest) {
     isActive,
   };
 
-  try {
-    const results = await searchPoliticians(filters, page, limit);
-    return withCache(NextResponse.json(results), "daily");
-  } catch (error) {
-    console.error("Search error:", error);
-    return NextResponse.json({ error: "Erreur de recherche" }, { status: 500 });
-  }
-}
+  const results = await searchPoliticians(filters, page, limit);
+  return withCache(NextResponse.json(results), "daily");
+});
 
 /**
  * @openapi

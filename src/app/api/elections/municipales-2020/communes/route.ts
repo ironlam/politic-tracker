@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { Prisma } from "@/generated/prisma";
 import { withCache } from "@/lib/cache";
+import { withPublicRoute } from "@/lib/api/with-public-route";
 
 type CommuneRow = {
   id: string;
@@ -143,7 +144,7 @@ function formatResults(
  *       404:
  *         description: Élection municipales-2020 introuvable
  */
-export async function GET(request: NextRequest) {
+export const GET = withPublicRoute(async (request) => {
   const electionId = await getElectionId();
   if (!electionId) {
     return NextResponse.json({ error: "Élection municipales-2020 introuvable" }, { status: 404 });
@@ -171,7 +172,7 @@ export async function GET(request: NextRequest) {
   }
 
   return NextResponse.json({ error: "Paramètre requis : q, lat+lon, ou dept" }, { status: 400 });
-}
+});
 
 // ─── Mode 1: Text search ────────────────────────────────────────
 

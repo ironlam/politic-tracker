@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { factcheckStatsService } from "@/services/factcheckStats";
 import { withCache } from "@/lib/cache";
 import { parsePagination } from "@/lib/api/pagination";
+import { withPublicRoute } from "@/lib/api/with-public-route";
 
 /**
  * @openapi
@@ -25,18 +26,13 @@ import { parsePagination } from "@/lib/api/pagination";
  *       500:
  *         description: Erreur serveur
  */
-export async function GET(request: NextRequest) {
+export const GET = withPublicRoute(async (request: NextRequest) => {
   const { limit } = parsePagination(request.nextUrl.searchParams, {
     defaultLimit: 15,
     maxLimit: 50,
   });
 
-  try {
-    const stats = await factcheckStatsService.getFactCheckStats({ limit });
+  const stats = await factcheckStatsService.getFactCheckStats({ limit });
 
-    return withCache(NextResponse.json(stats), "stats");
-  } catch (error) {
-    console.error("Error fetching factcheck stats:", error);
-    return NextResponse.json({ error: "Failed to fetch factcheck stats" }, { status: 500 });
-  }
-}
+  return withCache(NextResponse.json(stats), "stats");
+});

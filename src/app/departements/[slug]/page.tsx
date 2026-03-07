@@ -1,12 +1,12 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { db } from "@/lib/db";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { PoliticianAvatar } from "@/components/politicians/PoliticianAvatar";
 import { ensureContrast } from "@/lib/contrast";
 import { getDepartmentBySlug, DEPARTMENTS } from "@/config/departments";
+import { getDeputiesByDepartment, getSenatorsByDepartment } from "@/lib/data/departments";
 
 export const revalidate = 3600; // ISR: revalidate every hour
 
@@ -16,68 +16,6 @@ export function generateStaticParams() {
 
 interface PageProps {
   params: Promise<{ slug: string }>;
-}
-
-async function getDeputiesByDepartment(departmentName: string) {
-  return db.politician.findMany({
-    where: {
-      mandates: {
-        some: {
-          type: "DEPUTE",
-          isCurrent: true,
-          constituency: {
-            startsWith: departmentName,
-            mode: "insensitive",
-          },
-        },
-      },
-    },
-    include: {
-      currentParty: true,
-      mandates: {
-        where: {
-          type: "DEPUTE",
-          isCurrent: true,
-        },
-        select: {
-          constituency: true,
-        },
-        take: 1,
-      },
-    },
-    orderBy: { lastName: "asc" },
-  });
-}
-
-async function getSenatorsByDepartment(departmentName: string) {
-  return db.politician.findMany({
-    where: {
-      mandates: {
-        some: {
-          type: "SENATEUR",
-          isCurrent: true,
-          constituency: {
-            contains: departmentName,
-            mode: "insensitive",
-          },
-        },
-      },
-    },
-    include: {
-      currentParty: true,
-      mandates: {
-        where: {
-          type: "SENATEUR",
-          isCurrent: true,
-        },
-        select: {
-          constituency: true,
-        },
-        take: 1,
-      },
-    },
-    orderBy: { lastName: "asc" },
-  });
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {

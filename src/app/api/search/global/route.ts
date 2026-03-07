@@ -1,8 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { Prisma } from "@/generated/prisma";
 import { withCache } from "@/lib/cache";
 import { FACTCHECK_ALLOWED_SOURCES } from "@/config/labels";
+import { withPublicRoute } from "@/lib/api/with-public-route";
 
 const LIMIT = 8;
 
@@ -65,7 +66,7 @@ interface RawCommune {
   population: number | null;
 }
 
-export async function GET(request: NextRequest) {
+export const GET = withPublicRoute(async (request) => {
   const query = request.nextUrl.searchParams.get("q") || "";
 
   if (query.length < 2) {
@@ -227,4 +228,4 @@ export async function GET(request: NextRequest) {
     }),
     "daily"
   );
-}
+});

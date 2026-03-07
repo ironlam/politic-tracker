@@ -134,9 +134,10 @@ export async function GET(
                 fontWeight: 700,
                 color: "white",
                 marginBottom: 12,
+                display: "flex",
               }}
             >
-              {politician.firstName} {politician.lastName.toUpperCase()}
+              {`${politician.firstName} ${politician.lastName.toUpperCase()}`}
             </div>
             {role && (
               <div

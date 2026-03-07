@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { MandateType } from "@/generated/prisma";
 import { DEPARTMENTS } from "@/config/departments";
 import { withCache } from "@/lib/cache";
+import { withPublicRoute } from "@/lib/api/with-public-route";
 
 export interface DepartmentStats {
   code: string;
@@ -27,134 +28,129 @@ export interface DepartmentStats {
   }[];
 }
 
-export async function GET(request: NextRequest) {
+export const GET = withPublicRoute(async (request: NextRequest) => {
   const searchParams = request.nextUrl.searchParams;
   const filter = searchParams.get("filter") as "all" | "deputes" | "senateurs" | null;
 
-  try {
-    // Build type filter
-    const mandateTypes =
-      filter === "deputes"
-        ? [MandateType.DEPUTE]
-        : filter === "senateurs"
-          ? [MandateType.SENATEUR]
-          : [MandateType.DEPUTE, MandateType.SENATEUR];
+  // Build type filter
+  const mandateTypes =
+    filter === "deputes"
+      ? [MandateType.DEPUTE]
+      : filter === "senateurs"
+        ? [MandateType.SENATEUR]
+        : [MandateType.DEPUTE, MandateType.SENATEUR];
 
-    // Get all current mandates with department codes, grouped by department and party
-    const mandatesByDept = await db.$queryRaw<
-      {
-        departmentCode: string;
-        mandateType: MandateType;
-        partyId: string | null;
-        partyName: string | null;
-        partyShortName: string | null;
-        partyColor: string | null;
-        count: bigint;
-      }[]
-    >`
-      SELECT
-        m."departmentCode",
-        m.type as "mandateType",
-        p.id as "partyId",
-        p.name as "partyName",
-        p."shortName" as "partyShortName",
-        p.color as "partyColor",
-        COUNT(DISTINCT pol.id) as count
-      FROM "Mandate" m
-      JOIN "Politician" pol ON m."politicianId" = pol.id
-      LEFT JOIN "Party" p ON pol."currentPartyId" = p.id
-      WHERE m."isCurrent" = true
-        AND m."departmentCode" IS NOT NULL
-        AND m.type = ANY(${mandateTypes}::"MandateType"[])
-      GROUP BY m."departmentCode", m.type, p.id, p.name, p."shortName", p.color
-      ORDER BY m."departmentCode", count DESC
-    `;
+  // Get all current mandates with department codes, grouped by department and party
+  const mandatesByDept = await db.$queryRaw<
+    {
+      departmentCode: string;
+      mandateType: MandateType;
+      partyId: string | null;
+      partyName: string | null;
+      partyShortName: string | null;
+      partyColor: string | null;
+      count: bigint;
+    }[]
+  >`
+    SELECT
+      m."departmentCode",
+      m.type as "mandateType",
+      p.id as "partyId",
+      p.name as "partyName",
+      p."shortName" as "partyShortName",
+      p.color as "partyColor",
+      COUNT(DISTINCT pol.id) as count
+    FROM "Mandate" m
+    JOIN "Politician" pol ON m."politicianId" = pol.id
+    LEFT JOIN "Party" p ON pol."currentPartyId" = p.id
+    WHERE m."isCurrent" = true
+      AND m."departmentCode" IS NOT NULL
+      AND m.type = ANY(${mandateTypes}::"MandateType"[])
+    GROUP BY m."departmentCode", m.type, p.id, p.name, p."shortName", p.color
+    ORDER BY m."departmentCode", count DESC
+  `;
 
-    // Aggregate stats by department
-    const deptMap = new Map<string, DepartmentStats>();
+  // Aggregate stats by department
+  const deptMap = new Map<string, DepartmentStats>();
 
-    for (const row of mandatesByDept) {
-      const code = row.departmentCode;
-      const deptInfo = DEPARTMENTS[code];
+  for (const row of mandatesByDept) {
+    const code = row.departmentCode;
+    const deptInfo = DEPARTMENTS[code];
 
-      if (!deptMap.has(code)) {
-        deptMap.set(code, {
-          code,
-          name: deptInfo?.name || code,
-          region: deptInfo?.region || "Inconnu",
-          totalElus: 0,
-          deputes: 0,
-          senateurs: 0,
-          dominantParty: null,
-          parties: [],
+    if (!deptMap.has(code)) {
+      deptMap.set(code, {
+        code,
+        name: deptInfo?.name || code,
+        region: deptInfo?.region || "Inconnu",
+        totalElus: 0,
+        deputes: 0,
+        senateurs: 0,
+        dominantParty: null,
+        parties: [],
+      });
+    }
+
+    const dept = deptMap.get(code)!;
+    const count = Number(row.count);
+
+    dept.totalElus += count;
+
+    if (row.mandateType === MandateType.DEPUTE) {
+      dept.deputes += count;
+    } else if (row.mandateType === MandateType.SENATEUR) {
+      dept.senateurs += count;
+    }
+
+    // Track party stats
+    if (row.partyId) {
+      const existingParty = dept.parties.find((p) => p.id === row.partyId);
+      if (existingParty) {
+        existingParty.count += count;
+      } else {
+        dept.parties.push({
+          id: row.partyId,
+          name: row.partyName || "Inconnu",
+          shortName: row.partyShortName || "?",
+          color: row.partyColor,
+          count,
         });
       }
-
-      const dept = deptMap.get(code)!;
-      const count = Number(row.count);
-
-      dept.totalElus += count;
-
-      if (row.mandateType === MandateType.DEPUTE) {
-        dept.deputes += count;
-      } else if (row.mandateType === MandateType.SENATEUR) {
-        dept.senateurs += count;
-      }
-
-      // Track party stats
-      if (row.partyId) {
-        const existingParty = dept.parties.find((p) => p.id === row.partyId);
-        if (existingParty) {
-          existingParty.count += count;
-        } else {
-          dept.parties.push({
-            id: row.partyId,
-            name: row.partyName || "Inconnu",
-            shortName: row.partyShortName || "?",
-            color: row.partyColor,
-            count,
-          });
-        }
-      }
     }
-
-    // Calculate dominant party for each department
-    for (const dept of deptMap.values()) {
-      // Sort parties by count (descending)
-      dept.parties.sort((a, b) => b.count - a.count);
-
-      // Set dominant party only if the top party has strictly more representatives than the second
-      if (
-        dept.parties.length === 1 ||
-        (dept.parties.length > 1 && dept.parties[0]!.count > dept.parties[1]!.count)
-      ) {
-        dept.dominantParty = dept.parties[0]!;
-      }
-    }
-
-    // Convert to array and sort by department code
-    const departments = Array.from(deptMap.values()).sort((a, b) =>
-      a.code.localeCompare(b.code, "fr", { numeric: true })
-    );
-
-    // Calculate global stats
-    const totalStats = {
-      totalDepartments: departments.length,
-      totalElus: departments.reduce((sum, d) => sum + d.totalElus, 0),
-      totalDeputes: departments.reduce((sum, d) => sum + d.deputes, 0),
-      totalSenateurs: departments.reduce((sum, d) => sum + d.senateurs, 0),
-    };
-
-    return withCache(
-      NextResponse.json({
-        departments,
-        stats: totalStats,
-        filter: filter || "all",
-      }),
-      "stats"
-    );
-  } catch (error) {
-    console.error("Error fetching department stats:", error);
-    return NextResponse.json({ error: "Failed to fetch department stats" }, { status: 500 });
   }
-}
+
+  // Calculate dominant party for each department
+  for (const dept of deptMap.values()) {
+    // Sort parties by count (descending)
+    dept.parties.sort((a, b) => b.count - a.count);
+
+    // Set dominant party only if the top party has strictly more representatives than the second
+    if (
+      dept.parties.length === 1 ||
+      (dept.parties.length > 1 && dept.parties[0]!.count > dept.parties[1]!.count)
+    ) {
+      dept.dominantParty = dept.parties[0]!;
+    }
+  }
+
+  // Convert to array and sort by department code
+  const departments = Array.from(deptMap.values()).sort((a, b) =>
+    a.code.localeCompare(b.code, "fr", { numeric: true })
+  );
+
+  // Calculate global stats
+  const totalStats = {
+    totalDepartments: departments.length,
+    totalElus: departments.reduce((sum, d) => sum + d.totalElus, 0),
+    totalDeputes: departments.reduce((sum, d) => sum + d.deputes, 0),
+    totalSenateurs: departments.reduce((sum, d) => sum + d.senateurs, 0),
+  };
+
+  return withCache(
+    NextResponse.json({
+      departments,
+      stats: totalStats,
+      filter: filter || "all",
+    }),
+    "stats"
+  );
+});

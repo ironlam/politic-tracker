@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { withCache } from "@/lib/cache";
+import { withPublicRoute } from "@/lib/api/with-public-route";
 
 /**
  * @openapi
@@ -36,7 +37,7 @@ import { withCache } from "@/lib/cache";
  *                 $ref: '#/components/schemas/SearchResult'
  *               maxItems: 8
  */
-export async function GET(request: NextRequest) {
+export const GET = withPublicRoute(async (request) => {
   const searchParams = request.nextUrl.searchParams;
   const query = searchParams.get("q") || "";
   const activeOnly = searchParams.get("active") === "true";
@@ -98,4 +99,4 @@ export async function GET(request: NextRequest) {
   }));
 
   return withCache(NextResponse.json(results), "daily");
-}
+});

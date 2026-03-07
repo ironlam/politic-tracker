@@ -1,10 +1,11 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { put } from "@vercel/blob";
 import { db } from "@/lib/db";
+import { withPublicRoute } from "@/lib/api/with-public-route";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export const GET = withPublicRoute(async (_req, { params }) => {
   const { id } = await params;
 
   const politician = await db.politician.findUnique({
@@ -64,4 +65,4 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
       },
     });
   }
-}
+});

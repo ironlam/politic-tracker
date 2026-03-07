@@ -4,13 +4,14 @@ import { Redis } from "@upstash/redis";
 
 // ─── Rate limit tiers ────────────────────────────────────────────
 
-type RateLimitTier = "general" | "search" | "export" | "admin";
+type RateLimitTier = "general" | "search" | "export" | "admin" | "subscribe";
 
 const TIER_CONFIG: Record<RateLimitTier, { tokens: number; window: string }> = {
   general: { tokens: 60, window: "1m" },
   search: { tokens: 30, window: "1m" },
   export: { tokens: 5, window: "1m" },
   admin: { tokens: 30, window: "1m" },
+  subscribe: { tokens: 8, window: "1m" },
 };
 
 // ─── Lazy-init rate limiters ─────────────────────────────────────
@@ -57,6 +58,7 @@ function getTier(pathname: string): RateLimitTier | null {
   // Admin routes — separate tier (auth endpoint has its own stricter limiter too)
   if (pathname.startsWith("/api/admin")) return "admin";
 
+  if (pathname.startsWith("/api/newsletter/subscribe")) return "subscribe";
   if (pathname.startsWith("/api/export")) return "export";
   if (pathname.startsWith("/api/search")) return "search";
   if (pathname.startsWith("/api/")) return "general";

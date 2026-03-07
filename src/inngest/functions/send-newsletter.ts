@@ -80,18 +80,28 @@ export const sendNewsletter = inngest.createFunction(
     const aiContent = await step.run("generate-editorial", async () => {
       const { callAnthropic, extractText } = await import("@/lib/api/anthropic");
 
-      const introPrompt = `Tu es un journaliste politique français. Résume cette semaine parlementaire en 2-3 phrases concises et factuelles, dans un ton informatif mais engageant. Pas de formules comme "Cette semaine" ou "Au programme". Données :
-- ${recap.votes.total} scrutins (${recap.votes.adopted} adoptés, ${recap.votes.rejected} rejetés)
-- ${recap.affairs.total} nouvelles affaires judiciaires
-- ${recap.factChecks.total} fact-checks publiés
-- ${recap.press.articleCount} articles de presse analysés
-Votes notables : ${recap.votes.scrutins
+      // Sanitize vote titles to prevent prompt injection
+      const sanitize = (s: string) => s.replace(/["\n\r]/g, " ").slice(0, 200);
+      const voteSummary = recap.votes.scrutins
         .slice(0, 3)
         .map(
           (s: { title: string; result: string }) =>
-            `"${s.title}" (${s.result === "ADOPTED" ? "adopté" : "rejeté"})`
+            `- ${sanitize(s.title)} (${s.result === "ADOPTED" ? "adopté" : "rejeté"})`
         )
-        .join(", ")}`;
+        .join("\n");
+
+      const introPrompt = `Tu es un journaliste politique français. Résume cette semaine parlementaire en 2-3 phrases concises et factuelles, dans un ton informatif mais engageant. Pas de formules comme "Cette semaine" ou "Au programme".
+
+<données>
+Scrutins : ${recap.votes.total} (${recap.votes.adopted} adoptés, ${recap.votes.rejected} rejetés)
+Affaires judiciaires : ${recap.affairs.total}
+Fact-checks : ${recap.factChecks.total}
+Articles de presse : ${recap.press.articleCount}
+</données>
+
+<votes_notables>
+${voteSummary}
+</votes_notables>`;
 
       const introRes = await callAnthropic([{ role: "user", content: introPrompt }], {
         model: "claude-haiku-4-5-20251001",
@@ -101,7 +111,13 @@ Votes notables : ${recap.votes.scrutins
 
       let politicianBio = "";
       if (politicianData) {
-        const bioPrompt = `En 1-2 phrases, présente brièvement ${politicianData.fullName}, ${politicianData.mandateTitle || "élu(e)"} (${politicianData.partyShortName || "sans étiquette"}). Ton factuel et neutre, pas de jugement de valeur.`;
+        const bioPrompt = `En 1-2 phrases, présente brièvement la personne suivante. Ton factuel et neutre, pas de jugement de valeur.
+
+<personne>
+Nom : ${sanitize(politicianData.fullName)}
+Mandat : ${sanitize(politicianData.mandateTitle || "élu(e)")}
+Parti : ${sanitize(politicianData.partyShortName || "sans étiquette")}
+</personne>`;
         const bioRes = await callAnthropic([{ role: "user", content: bioPrompt }], {
           model: "claude-haiku-4-5-20251001",
           maxTokens: 100,

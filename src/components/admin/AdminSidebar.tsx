@@ -19,6 +19,8 @@ import {
   X,
   ExternalLink,
   ShieldX,
+  Newspaper,
+  ShieldCheck,
 } from "lucide-react";
 
 const STORAGE_KEY = "admin-sidebar-collapsed";
@@ -34,6 +36,8 @@ const contentItems: NavItem[] = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/affaires", label: "Affaires", icon: Scale },
   { href: "/admin/press/rejections", label: "Rejets presse", icon: ShieldX },
+  { href: "/admin/presse", label: "Presse", icon: Newspaper },
+  { href: "/admin/factchecks", label: "Fact-checks", icon: ShieldCheck },
   { href: "/admin/politiques", label: "Politiques", icon: Users },
   { href: "/admin/partis", label: "Partis", icon: Building2 },
   { href: "/admin/dossiers", label: "Dossiers", icon: FileText },

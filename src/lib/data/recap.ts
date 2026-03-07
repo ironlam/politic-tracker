@@ -144,23 +144,30 @@ async function queryWeeklyRecap(weekStart: Date, weekEnd: Date): Promise<WeeklyR
       LIMIT 5
     `,
 
-    // 3. New affairs this week
-    db.affair.findMany({
-      where: {
-        publicationStatus: "PUBLISHED",
-        createdAt: { gte: weekStart, lt: weekEnd },
-      },
-      select: {
-        slug: true,
-        title: true,
-        severity: true,
-        politician: {
-          select: { fullName: true, slug: true },
-        },
-      },
-      orderBy: { severity: "desc" },
-      take: 10,
-    }),
+    // 3. New affairs this week — use revelation/facts date, not import date
+    db.$queryRaw<
+      Array<{
+        slug: string;
+        title: string;
+        severity: string;
+        politicianName: string;
+        politicianSlug: string;
+      }>
+    >`
+      SELECT
+        a.slug,
+        a.title,
+        a.severity,
+        p."fullName" as "politicianName",
+        p.slug as "politicianSlug"
+      FROM "Affair" a
+      JOIN "Politician" p ON a."politicianId" = p.id
+      WHERE a."publicationStatus" = 'PUBLISHED'
+        AND COALESCE(a."startDate", a."factsDate", a."createdAt") >= ${weekStart}
+        AND COALESCE(a."startDate", a."factsDate", a."createdAt") < ${weekEnd}
+      ORDER BY a.severity DESC
+      LIMIT 10
+    `,
 
     // 4. Fact-checks this week
     Promise.all([
@@ -281,13 +288,7 @@ async function queryWeeklyRecap(weekStart: Date, weekEnd: Date): Promise<WeeklyR
       topVoters: toBigintSafe(topVoters),
     },
     affairs: {
-      newAffairs: affairs.map((a) => ({
-        slug: a.slug,
-        title: a.title,
-        severity: a.severity,
-        politicianName: a.politician.fullName,
-        politicianSlug: a.politician.slug,
-      })),
+      newAffairs: affairs,
       total: affairs.length,
     },
     factChecks: {

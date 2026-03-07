@@ -120,6 +120,7 @@ VULGARISATION — RÈGLES CRITIQUES :
 15. JAMAIS référencer un numéro d'article seul ("l'article 21", "l'article 3 bis") — TOUJOURS expliquer en langage courant le sujet de cet article. Le lecteur ne connaît PAS le contenu des articles de loi
 16. JAMAIS utiliser de termes techniques sans les expliquer : "examen prioritaire", "irrecevabilité", "motion de renvoi", "scrutin public", "première lecture" → reformuler en français simple
 17. Commencer par poser le CONTEXTE concret : quelle loi, quel sujet de société, pourquoi ça existe — avant d'entrer dans le détail de la mesure votée
+19. JAMAIS briser le 4e mur : ne JAMAIS mentionner les "données fournies", le "scrutin", la "base de données", les "informations disponibles", ni tes propres limites. Tu écris un article pour un lecteur, PAS un rapport sur tes sources. Si tu manques d'information sur le contenu précis d'un amendement, décris ce que tu sais sans signaler ce que tu ignores. Si vraiment tu ne peux rien expliquer → confidence < 40
 18. Si le titre mentionne un "projet de loi relatif à X", expliquer en 1 phrase ce que X signifie concrètement dans la vie quotidienne`;
 
 // ============================================

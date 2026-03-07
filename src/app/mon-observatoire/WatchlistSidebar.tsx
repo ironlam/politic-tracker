@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { X, Building2, Plus, Check } from "lucide-react";
 import { useWatchlist } from "@/hooks/useWatchlist";
 import { PoliticianAvatar } from "@/components/politicians/PoliticianAvatar";
@@ -79,14 +78,7 @@ export function WatchlistSidebar({
                 >
                   <PoliticianAvatar photoUrl={p.photoUrl} fullName={p.fullName} size="sm" />
                   <div className="min-w-0 flex-1">
-                    <Link
-                      href={`/politiques/${p.slug}`}
-                      className="text-sm font-medium truncate block hover:text-primary transition-colors"
-                      prefetch={false}
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      {p.fullName}
-                    </Link>
+                    <p className="text-sm font-medium truncate">{p.fullName}</p>
                     {p.party && <p className="text-xs text-muted-foreground truncate">{p.party}</p>}
                   </div>
                   {isSelected ? (
@@ -158,14 +150,7 @@ export function WatchlistSidebar({
                     <Building2 className="size-5" style={{ color: p.color || "#6b7280" }} />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <Link
-                      href={`/partis/${p.slug}`}
-                      className="text-sm font-medium truncate block hover:text-primary transition-colors"
-                      prefetch={false}
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      {p.shortName || p.name}
-                    </Link>
+                    <p className="text-sm font-medium truncate">{p.shortName || p.name}</p>
                     <p className="text-xs text-muted-foreground">
                       {p.memberCount} membre{p.memberCount !== 1 ? "s" : ""}
                     </p>

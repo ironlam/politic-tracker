@@ -149,7 +149,7 @@ export async function generateCitizenImpact(
   }
 
   return {
-    citizenImpact: output.citizen_impact,
+    citizenImpact: sanitizeInternalLinks(output.citizen_impact),
     confidence: output.confidence ?? 0,
   };
 }
@@ -159,6 +159,14 @@ export { SONNET_MODEL, HAIKU_MODEL };
 // ============================================
 // HELPERS
 // ============================================
+
+/**
+ * Fix AI hallucination where the model adds https:// to our relative internal links.
+ * e.g. https://assemblee/slug → /assemblee/slug, https://votes/slug → /votes/slug
+ */
+function sanitizeInternalLinks(text: string): string {
+  return text.replace(/https?:\/\/(assemblee|votes|partis|elections)\//g, "/$1/");
+}
 
 function buildUserMessage(input: CitizenImpactInput): string {
   const sections: string[] = [];

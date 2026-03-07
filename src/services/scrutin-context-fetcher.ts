@@ -40,7 +40,7 @@ export async function fetchScrutinContext(
   sourceUrl: string | null,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   db: any,
-  options?: { skipScrape?: boolean }
+  options?: { skipScrape?: boolean; dossierLegislatifId?: string | null }
 ): Promise<ScrutinEnrichedContext> {
   const result: ScrutinEnrichedContext = {
     dossierTitle: null,
@@ -49,14 +49,26 @@ export async function fetchScrutinContext(
     sourcePageText: null,
   };
 
-  // 1. Match dossier from title (DB query, fast)
-  const lawFragment = extractLawFragment(title);
-  if (lawFragment) {
-    const dossier = await findDossierByTitle(db, lawFragment);
+  // 1. Prefer FK-linked dossier (reliable), fallback to title matching (fuzzy)
+  if (options?.dossierLegislatifId) {
+    const dossier = await db.legislativeDossier.findUnique({
+      where: { id: options.dossierLegislatifId },
+      select: { title: true, summary: true, slug: true },
+    });
     if (dossier) {
       result.dossierTitle = dossier.title;
       result.dossierSummary = dossier.summary;
       result.dossierSlug = dossier.slug;
+    }
+  } else {
+    const lawFragment = extractLawFragment(title);
+    if (lawFragment) {
+      const dossier = await findDossierByTitle(db, lawFragment);
+      if (dossier) {
+        result.dossierTitle = dossier.title;
+        result.dossierSummary = dossier.summary;
+        result.dossierSlug = dossier.slug;
+      }
     }
   }
 

@@ -59,6 +59,7 @@ export async function generateScrutinCitizenImpacts(options?: {
       chamber: true,
       votingDate: true,
       sourceUrl: true,
+      dossierLegislatifId: true,
     },
   });
 
@@ -76,9 +77,10 @@ export async function generateScrutinCitizenImpacts(options?: {
     const scrutin = scrutins[i]!;
 
     try {
-      // 1. Fetch enriched context (dossier match + optional scrape)
+      // 1. Fetch enriched context (prefer FK, fallback to title match)
       const context = await fetchScrutinContext(scrutin.title, scrutin.sourceUrl, db, {
         skipScrape,
+        dossierLegislatifId: scrutin.dossierLegislatifId,
       });
 
       if (context.dossierTitle || context.sourcePageText) {
@@ -95,6 +97,26 @@ export async function generateScrutinCitizenImpacts(options?: {
       if (context.dossierSlug) {
         links.dossierUrl = `/assemblee/${context.dossierSlug}`;
         links.dossierLabel = context.dossierTitle ?? "Dossier législatif";
+      }
+
+      // Find related votes on the same dossier via FK
+      if (scrutin.dossierLegislatifId) {
+        const relatedScrutins = await db.scrutin.findMany({
+          where: {
+            dossierLegislatifId: scrutin.dossierLegislatifId,
+            id: { not: scrutin.id },
+            slug: { not: null },
+          },
+          select: { slug: true, title: true },
+          orderBy: { votingDate: "desc" },
+          take: 3,
+        });
+        for (const related of relatedScrutins) {
+          links.relatedVotes.push({
+            url: `/votes/${related.slug}`,
+            label: related.title.slice(0, 80),
+          });
+        }
       }
 
       // 3. Build input

@@ -756,7 +756,9 @@ model Scrutin {
   votesHash String?
 
   // Relations
-  votes Vote[]
+  votes               Vote[]
+  dossierLegislatifId String?
+  dossierLegislatif   LegislativeDossier? @relation(fields: [dossierLegislatifId], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -767,6 +769,7 @@ model Scrutin {
   @@index([chamber, votingDate]) // participation stats: mandate date range queries
   @@index([theme])
   @@index([result, votingDate]) // result filter + default date sort
+  @@index([dossierLegislatifId])
 }
 
 model Vote {
@@ -846,6 +849,7 @@ model LegislativeDossier {
   documentExternalId String? // ex: PRJLANR5L17B1906
 
   amendments Amendment[]
+  scrutins   Scrutin[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

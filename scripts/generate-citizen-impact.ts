@@ -278,6 +278,11 @@ Requirements:
         dossierTitle: context.dossierTitle,
         dossierSummary: context.dossierSummary,
         sourcePageText: context.sourcePageText,
+        links: {
+          dossierUrl: context.dossierSlug ? `/assemblee/${context.dossierSlug}` : null,
+          dossierLabel: context.dossierTitle ?? null,
+          relatedVotes: [],
+        },
       };
 
       // 3. Generate

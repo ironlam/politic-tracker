@@ -17,6 +17,7 @@ const SCRAPE_RATE_LIMIT_MS = 2000;
 export interface ScrutinEnrichedContext {
   dossierTitle: string | null;
   dossierSummary: string | null;
+  dossierSlug: string | null;
   sourcePageText: string | null;
 }
 
@@ -44,6 +45,7 @@ export async function fetchScrutinContext(
   const result: ScrutinEnrichedContext = {
     dossierTitle: null,
     dossierSummary: null,
+    dossierSlug: null,
     sourcePageText: null,
   };
 
@@ -54,6 +56,7 @@ export async function fetchScrutinContext(
     if (dossier) {
       result.dossierTitle = dossier.title;
       result.dossierSummary = dossier.summary;
+      result.dossierSlug = dossier.slug;
     }
   }
 
@@ -113,7 +116,7 @@ async function findDossierByTitle(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   db: any,
   fragment: string
-): Promise<{ title: string; summary: string | null } | null> {
+): Promise<{ title: string; summary: string | null; slug: string | null } | null> {
   // Extract keywords (skip very short/common words)
   const keywords = fragment
     .toLowerCase()
@@ -163,7 +166,7 @@ async function findDossierByTitle(
       title: { contains: searchKeyword, mode: "insensitive" },
       summary: { not: null },
     },
-    select: { title: true, summary: true },
+    select: { title: true, summary: true, slug: true },
     take: 10,
   });
 

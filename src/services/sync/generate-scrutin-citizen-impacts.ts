@@ -48,6 +48,7 @@ export async function generateScrutinCitizenImpacts(options?: {
     orderBy: { votingDate: "desc" },
     select: {
       id: true,
+      slug: true,
       title: true,
       summary: true,
       theme: true,
@@ -84,7 +85,19 @@ export async function generateScrutinCitizenImpacts(options?: {
         stats.contextHits++;
       }
 
-      // 2. Build input
+      // 2. Build internal links for AI to embed
+      const links: CitizenImpactInput["links"] = {
+        dossierUrl: null,
+        dossierLabel: null,
+        relatedVotes: [],
+      };
+
+      if (context.dossierSlug) {
+        links.dossierUrl = `/assemblee/${context.dossierSlug}`;
+        links.dossierLabel = context.dossierTitle ?? "Dossier législatif";
+      }
+
+      // 3. Build input
       const input: CitizenImpactInput = {
         title: scrutin.title,
         summary: scrutin.summary,
@@ -98,19 +111,20 @@ export async function generateScrutinCitizenImpacts(options?: {
         dossierTitle: context.dossierTitle,
         dossierSummary: context.dossierSummary,
         sourcePageText: context.sourcePageText,
+        links,
       };
 
-      // 3. Generate (Haiku for cost-effective batch processing)
+      // 4. Generate (Haiku for cost-effective batch processing)
       const result = await generateCitizenImpact(input, HAIKU_MODEL);
 
-      // 4. Skip low-confidence (procedural votes)
+      // 5. Skip low-confidence (procedural votes)
       if (result.confidence < 40) {
         stats.skipped++;
         stats.processed++;
         continue;
       }
 
-      // 5. Update DB
+      // 6. Update DB
       await db.scrutin.update({
         where: { id: scrutin.id },
         data: {

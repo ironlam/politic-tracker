@@ -12,7 +12,7 @@ import { callAnthropic, extractToolUse } from "@/lib/api/anthropic";
 
 const HAIKU_MODEL = "claude-haiku-4-5-20251001";
 const SONNET_MODEL = "claude-sonnet-4-5-20250929";
-const MAX_TOKENS = 800;
+const MAX_TOKENS = 2000;
 
 // ============================================
 // TYPES
@@ -32,6 +32,12 @@ export interface CitizenImpactInput {
   dossierTitle: string | null;
   dossierSummary: string | null;
   sourcePageText: string | null;
+  // Internal links for the AI to embed as markdown
+  links: {
+    dossierUrl: string | null;
+    dossierLabel: string | null;
+    relatedVotes: { url: string; label: string }[];
+  };
 }
 
 export interface CitizenImpactOutput {
@@ -53,10 +59,11 @@ const CITIZEN_IMPACT_TOOL = {
       citizen_impact: {
         type: "string",
         description:
-          "Explication factuelle et neutre en 80-200 mots, en français courant. " +
-          "Structure : ce que la mesure proposait → résultat du vote → arguments pour ET contre (même poids) → qui est concerné. " +
-          "Utilise le **gras** pour la mesure concrète. Vouvoie le lecteur. " +
-          "NEUTRALITÉ STRICTE : pas de jugement de valeur, pas de réassurance, pas de parti-pris.",
+          "Explication factuelle et neutre en français courant (pas de limite stricte, utiliser autant de mots que nécessaire pour bien expliquer). " +
+          "Structure : contexte de la loi en langage simple → ce que la mesure proposait → résultat du vote → arguments pour ET contre (même poids) → qui est concerné. " +
+          "JAMAIS de référence à un numéro d'article sans expliquer son sujet. " +
+          "Utilise le **gras** pour la mesure concrète et des liens markdown vers les pages Poligraph fournies dans LIENS DISPONIBLES. " +
+          "Vouvoie le lecteur. NEUTRALITÉ STRICTE.",
       },
       confidence: {
         type: "integer",
@@ -75,19 +82,22 @@ const CITIZEN_IMPACT_TOOL = {
 
 const SYSTEM_PROMPT = `Tu es un rédacteur factuel pour Poligraph, un observatoire citoyen de la politique française.
 
-MISSION : Expliquer factuellement ce que ce vote parlementaire change, ce que la mesure proposait, et pourquoi elle a été adoptée ou rejetée — en restant STRICTEMENT neutre.
+MISSION : Expliquer factuellement ce que ce vote parlementaire change, ce que la mesure proposait, et pourquoi elle a été adoptée ou rejetée — en restant STRICTEMENT neutre. Le lecteur n'a AUCUNE connaissance juridique ou parlementaire préalable.
 
 FORMAT :
-- 80 à 200 mots, en français courant (pas de jargon parlementaire)
+- Pas de limite de mots — utiliser autant de mots que nécessaire pour bien expliquer le contexte et la mesure. Viser la clarté, pas la brièveté
+- Français courant (pas de jargon parlementaire)
 - Vouvoyer le lecteur avec "vous"
 - Mettre en **gras** la mesure concrète votée
 - Pas de bullet points, pas de titres — texte fluide
+- Utiliser des liens markdown vers les pages Poligraph quand des LIENS DISPONIBLES sont fournis (dossier législatif, votes liés). Exemple : [consulter le dossier complet](url)
 
 STRUCTURE :
-1. Ce que la mesure/l'amendement proposait concrètement (1-2 phrases)
-2. Le résultat du vote et ce que cela implique (1 phrase)
-3. Les arguments des partisans ET des opposants, présentés avec le même poids (2-3 phrases)
-4. Qui est directement concerné par cette décision (1 phrase)
+1. CONTEXTE — De quoi parle la loi/le texte en question, en une phrase accessible (1-2 phrases). Ne JAMAIS écrire "l'article 21" ou "l'article 3 bis" sans expliquer en langage courant ce que cet article traite. Exemple : au lieu de "l'article 21 du projet de loi contre les fraudes", écrire "la partie du projet de loi qui porte sur [sujet concret de l'article]"
+2. MESURE — Ce que la mesure/l'amendement proposait concrètement (1-2 phrases)
+3. RÉSULTAT — Le résultat du vote et ce que cela implique (1 phrase)
+4. DÉBAT — Les arguments des partisans ET des opposants, présentés avec le même poids (2-3 phrases)
+5. CONCERNÉS — Qui est directement concerné par cette décision (1 phrase)
 
 NEUTRALITÉ — RÈGLES ABSOLUES :
 1. JAMAIS de jugement de valeur : pas de "bonne foi", "juste", "important", "nécessaire", "dangereux"
@@ -102,8 +112,14 @@ NEUTRALITÉ — RÈGLES ABSOLUES :
 10. Si les données sont trop minces pour identifier un impact citoyen → confidence < 40
 11. Votes purement procéduraux (organisation des débats, demande de scrutin public, renvoi en commission) → confidence < 40
 12. Ne PAS commencer par "Ce vote..." — varier les accroches
-13. Si le scrutin porte sur un amendement, expliquer ce que l'amendement proposait de modifier
-14. Utiliser le contexte du dossier législatif et de la page source quand disponibles`;
+13. Si le scrutin porte sur un amendement, expliquer DANS LE CONTEXTE DE LA LOI ce que l'amendement proposait de modifier — le lecteur doit d'abord comprendre de quoi parle la loi
+14. Utiliser le contexte du dossier législatif et de la page source quand disponibles
+
+VULGARISATION — RÈGLES CRITIQUES :
+15. JAMAIS référencer un numéro d'article seul ("l'article 21", "l'article 3 bis") — TOUJOURS expliquer en langage courant le sujet de cet article. Le lecteur ne connaît PAS le contenu des articles de loi
+16. JAMAIS utiliser de termes techniques sans les expliquer : "examen prioritaire", "irrecevabilité", "motion de renvoi", "scrutin public", "première lecture" → reformuler en français simple
+17. Commencer par poser le CONTEXTE concret : quelle loi, quel sujet de société, pourquoi ça existe — avant d'entrer dans le détail de la mesure votée
+18. Si le titre mentionne un "projet de loi relatif à X", expliquer en 1 phrase ce que X signifie concrètement dans la vie quotidienne`;
 
 // ============================================
 // MAIN FUNCTION
@@ -176,6 +192,20 @@ function buildUserMessage(input: CitizenImpactInput): string {
     sections.push("");
     sections.push("CONTENU DE LA PAGE SOURCE :");
     sections.push(input.sourcePageText);
+  }
+
+  // Available Poligraph links for the AI to embed
+  const linkLines: string[] = [];
+  if (input.links.dossierUrl) {
+    linkLines.push(`Dossier législatif : [${input.links.dossierLabel}](${input.links.dossierUrl})`);
+  }
+  for (const v of input.links.relatedVotes) {
+    linkLines.push(`Vote lié : [${v.label}](${v.url})`);
+  }
+  if (linkLines.length > 0) {
+    sections.push("");
+    sections.push("LIENS DISPONIBLES (à insérer dans l'explication quand pertinent) :");
+    sections.push(...linkLines);
   }
 
   return sections.join("\n");

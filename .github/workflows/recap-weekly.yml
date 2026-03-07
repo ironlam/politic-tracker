@@ -1,0 +1,30 @@
+name: Weekly Recap
+
+on:
+  schedule:
+    # Monday 6:00 UTC (~7h Paris winter / ~8h summer)
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+jobs:
+  warm-recap:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Warm recap cache
+        run: |
+          echo "Warming /recap cache..."
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://poligraph.fr/recap)
+          echo "Status: $STATUS"
+          if [ "$STATUS" != "200" ]; then
+            echo "::warning::Recap page returned $STATUS"
+          fi
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## Weekly Recap Warm" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Date**: $(date -u +'%Y-%m-%d %H:%M UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY

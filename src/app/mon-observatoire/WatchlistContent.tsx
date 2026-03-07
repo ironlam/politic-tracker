@@ -14,6 +14,7 @@ import type { ActivityItem, ActivityResponse } from "@/types/activity";
 import { WatchlistSearch } from "./WatchlistSearch";
 import { WatchlistSidebar } from "./WatchlistSidebar";
 import { WatchlistDashboard } from "./WatchlistDashboard";
+import { WatchlistAvatarBar } from "./WatchlistAvatarBar";
 
 // --- Constants ---
 
@@ -72,6 +73,20 @@ export function WatchlistContent() {
 
   // Filter state
   const [activeFilter, setActiveFilter] = useState("all");
+  const [selectedSlugs, setSelectedSlugs] = useState<Set<string>>(new Set());
+
+  const toggleSlugFilter = useCallback((slug: string) => {
+    setSelectedSlugs((prev) => {
+      const next = new Set(prev);
+      if (next.has(slug)) next.delete(slug);
+      else next.add(slug);
+      return next;
+    });
+  }, []);
+
+  const clearSlugFilter = useCallback(() => {
+    setSelectedSlugs(new Set());
+  }, []);
 
   // "New" alert state
   const [hasNew, setHasNew] = useState(false);
@@ -156,12 +171,17 @@ export function WatchlistContent() {
     }
   }, [activeTab, data, loading]);
 
-  // Filtered activity
+  // Filtered activity — combines type filter + person filter
   const filteredActivity = useMemo(() => {
     if (!data) return [];
-    if (activeFilter === "all") return data.activity;
-    return data.activity.filter((a) => a.type === activeFilter);
-  }, [data, activeFilter]);
+    return data.activity.filter((a) => {
+      if (activeFilter !== "all" && a.type !== activeFilter) return false;
+      if (selectedSlugs.size === 0) return true;
+      const matchesPolitician = !!a.politician && selectedSlugs.has(a.politician.slug);
+      const matchesParty = !!a.party && selectedSlugs.has(a.party.slug);
+      return matchesPolitician || matchesParty;
+    });
+  }, [data, activeFilter, selectedSlugs]);
 
   // Empty state — no items followed
   if (count === 0 && activeTab !== "add") {
@@ -196,6 +216,9 @@ export function WatchlistContent() {
           <WatchlistSidebar
             politicians={data?.politicians ?? []}
             parties={data?.parties ?? []}
+            selectedSlugs={selectedSlugs}
+            onToggleFilter={toggleSlugFilter}
+            onClearFilter={clearSlugFilter}
             onAddClick={() => setActiveTab("add")}
           />
         </aside>
@@ -211,8 +234,15 @@ export function WatchlistContent() {
             <>
               <WatchlistDashboard
                 stats={data?.stats ?? null}
+                filteredActivity={filteredActivity}
+                hasPersonFilter={selectedSlugs.size > 0}
                 activeFilter={activeFilter}
                 onFilterChange={setActiveFilter}
+                selectedSlugs={selectedSlugs}
+                politicians={data?.politicians ?? []}
+                parties={data?.parties ?? []}
+                onRemoveSlug={toggleSlugFilter}
+                onClearFilter={clearSlugFilter}
               />
               <ActivityFeed activity={filteredActivity} loading={loading} error={error} />
             </>
@@ -247,11 +277,24 @@ export function WatchlistContent() {
         {/* Tab content */}
         <div className="pt-4">
           {activeTab === "activity" && (
-            <div className="space-y-6">
+            <div className="space-y-4">
+              <WatchlistAvatarBar
+                politicians={data?.politicians ?? []}
+                parties={data?.parties ?? []}
+                selectedSlugs={selectedSlugs}
+                onToggleFilter={toggleSlugFilter}
+              />
               <WatchlistDashboard
                 stats={data?.stats ?? null}
+                filteredActivity={filteredActivity}
+                hasPersonFilter={selectedSlugs.size > 0}
                 activeFilter={activeFilter}
                 onFilterChange={setActiveFilter}
+                selectedSlugs={selectedSlugs}
+                politicians={data?.politicians ?? []}
+                parties={data?.parties ?? []}
+                onRemoveSlug={toggleSlugFilter}
+                onClearFilter={clearSlugFilter}
               />
               <ActivityFeed activity={filteredActivity} loading={loading} error={error} />
             </div>
@@ -260,6 +303,9 @@ export function WatchlistContent() {
             <WatchlistSidebar
               politicians={data?.politicians ?? []}
               parties={data?.parties ?? []}
+              selectedSlugs={selectedSlugs}
+              onToggleFilter={toggleSlugFilter}
+              onClearFilter={clearSlugFilter}
               onAddClick={() => setActiveTab("add")}
             />
           )}

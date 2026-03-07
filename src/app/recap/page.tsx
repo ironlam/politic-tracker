@@ -8,6 +8,7 @@ import { FadeIn } from "@/components/motion/FadeIn";
 import { HexPattern } from "@/components/ui/HexPattern";
 import { getWeeklyRecap, getWeekStart, getWeekEnd, getISOWeekNumber } from "@/lib/data/recap";
 import { AFFAIR_SEVERITY_LABELS } from "@/config/labels";
+import { NewsletterCTA } from "./NewsletterCTA";
 import type { AffairSeverity } from "@/types";
 
 export const revalidate = 300;
@@ -468,8 +469,13 @@ export default async function RecapPage({ searchParams }: PageProps) {
               </FadeIn>
             )}
 
-            {/* ── Footer CTA ─────────────────────────── */}
+            {/* ── Newsletter CTA ─────────────────────── */}
             <FadeIn delay={0.4}>
+              <NewsletterCTA />
+            </FadeIn>
+
+            {/* ── Footer CTA ─────────────────────────── */}
+            <FadeIn delay={0.45}>
               <div className="text-center py-8 border-t">
                 <p className="text-sm text-muted-foreground mb-3">
                   Le Recap est mis à jour chaque lundi matin.

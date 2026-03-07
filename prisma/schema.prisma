@@ -69,6 +69,7 @@ model Politician {
   localOffices        LocalOfficial[] // Local offices from RNE
   participation       PoliticianParticipation? // Pre-computed participation stats
   identityDecisions   IdentityDecision[] // Identity resolution audit trail
+  newsletterEditions  NewsletterEdition[] // Weeks featured as "politician of the week"
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1550,5 +1551,21 @@ model Candidate {
 
   @@unique([firstName, lastName, politicianId])
   @@index([lastName])
+  @@index([politicianId])
+}
+
+// ============================================
+// NEWSLETTER EDITIONS (weekly email digest tracking)
+// ============================================
+
+model NewsletterEdition {
+  id             String     @id @default(cuid())
+  weekStart      DateTime   @unique
+  politicianId   String
+  politician     Politician @relation(fields: [politicianId], references: [id])
+  sentAt         DateTime?
+  recipientCount Int        @default(0)
+  createdAt      DateTime   @default(now())
+
   @@index([politicianId])
 }

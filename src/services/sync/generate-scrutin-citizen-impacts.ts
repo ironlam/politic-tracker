@@ -92,6 +92,7 @@ export async function generateScrutinCitizenImpacts(options?: {
         dossierUrl: null,
         dossierLabel: null,
         relatedVotes: [],
+        politicians: [],
       };
 
       if (context.dossierSlug) {
@@ -117,6 +118,35 @@ export async function generateScrutinCitizenImpacts(options?: {
             label: related.title.slice(0, 80),
           });
         }
+      }
+
+      // Find notable politicians who voted on this scrutin (highest prominence, for + against)
+      const notableVoters = await db.vote.findMany({
+        where: {
+          scrutinId: scrutin.id,
+          position: { in: ["POUR", "CONTRE"] },
+        },
+        include: {
+          politician: {
+            select: { slug: true, firstName: true, lastName: true, prominenceScore: true },
+          },
+        },
+        orderBy: { politician: { prominenceScore: "desc" } },
+        take: 6,
+      });
+      // Pick up to 2 POUR + 2 CONTRE (most prominent)
+      const pourVoters = notableVoters
+        .filter((v) => v.position === "POUR" && v.politician.slug)
+        .slice(0, 2);
+      const contreVoters = notableVoters
+        .filter((v) => v.position === "CONTRE" && v.politician.slug)
+        .slice(0, 2);
+      for (const v of [...pourVoters, ...contreVoters]) {
+        links.politicians.push({
+          url: `/politiques/${v.politician.slug}`,
+          label: `${v.politician.firstName} ${v.politician.lastName}`,
+          position: v.position === "POUR" ? "pour" : "contre",
+        });
       }
 
       // 3. Build input

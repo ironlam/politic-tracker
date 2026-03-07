@@ -282,6 +282,7 @@ Requirements:
           dossierUrl: context.dossierSlug ? `/assemblee/${context.dossierSlug}` : null,
           dossierLabel: context.dossierTitle ?? null,
           relatedVotes: [],
+          politicians: [],
         },
       };
 

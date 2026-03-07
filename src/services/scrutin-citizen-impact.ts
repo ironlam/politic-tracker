@@ -37,6 +37,7 @@ export interface CitizenImpactInput {
     dossierUrl: string | null;
     dossierLabel: string | null;
     relatedVotes: { url: string; label: string }[];
+    politicians: { url: string; label: string; position: string }[];
   };
 }
 
@@ -209,6 +210,9 @@ function buildUserMessage(input: CitizenImpactInput): string {
   }
   for (const v of input.links.relatedVotes) {
     linkLines.push(`Vote lié : [${v.label}](${v.url})`);
+  }
+  for (const p of input.links.politicians) {
+    linkLines.push(`Député·e (${p.position}) : [${p.label}](${p.url})`);
   }
   if (linkLines.length > 0) {
     sections.push("");

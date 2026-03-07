@@ -35,6 +35,13 @@ const DAILY_STEPS: DailyStep[] = [
     },
   },
   {
+    name: "reconcile-scrutin-dossier",
+    run: async () => {
+      const { reconcileScrutinDossier } = await import("@/services/sync/reconcile-scrutin-dossier");
+      return reconcileScrutinDossier();
+    },
+  },
+  {
     name: "summaries-dossiers",
     run: async () => {
       const { generateSummaries } = await import("@/services/sync/generate-summaries");

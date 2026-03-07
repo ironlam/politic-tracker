@@ -355,7 +355,7 @@ function ActivityFeed({
   if (activity.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-muted-foreground">Pas d{"'"}activité récente pour vos suivis.</p>
+        <p className="text-muted-foreground">Aucune activité sur les 30 derniers jours.</p>
       </div>
     );
   }

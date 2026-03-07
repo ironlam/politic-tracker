@@ -77,16 +77,19 @@ export function WatchlistDashboard({
 
   return (
     <div className="space-y-4">
-      {/* Stats row */}
+      {/* Period label + Stats row */}
       {displayStats && (
-        <div className="grid grid-cols-3 gap-3">
-          <StatCard count={displayStats.votesCount} label="Votes" accent={STAT_ACCENTS.votes} />
-          <StatCard count={displayStats.pressCount} label="Presse" accent={STAT_ACCENTS.press} />
-          <StatCard
-            count={displayStats.activeAffairsCount}
-            label="Affaires"
-            accent={STAT_ACCENTS.affairs}
-          />
+        <div className="space-y-3">
+          <p className="text-xs text-muted-foreground">30 derniers jours</p>
+          <div className="grid grid-cols-3 gap-3">
+            <StatCard count={displayStats.votesCount} label="Votes" accent={STAT_ACCENTS.votes} />
+            <StatCard count={displayStats.pressCount} label="Presse" accent={STAT_ACCENTS.press} />
+            <StatCard
+              count={displayStats.activeAffairsCount}
+              label="Affaires"
+              accent={STAT_ACCENTS.affairs}
+            />
+          </div>
         </div>
       )}
 

@@ -181,19 +181,17 @@ function DepartmentMapComponent({
         </ComposableMap>
       </div>
 
-      {/* Île-de-France inset */}
+      {/* Île-de-France inset — responsive: smaller on tablets, larger on desktops */}
       <div
         aria-label="Carte de l'Île-de-France"
-        className="absolute top-2 right-2 border rounded-lg overflow-hidden"
+        className="absolute top-2 right-2 border rounded-lg overflow-hidden w-[140px] h-[130px] lg:w-[200px] lg:h-[180px] xl:w-[220px] xl:h-[200px]"
         style={{
-          width: 220,
-          height: 200,
           backgroundColor: isDarkMode ? "rgba(17,24,39,0.85)" : "rgba(255,255,255,0.85)",
           backdropFilter: "blur(4px)",
         }}
       >
         <div
-          className="text-[10px] font-medium text-center py-1"
+          className="text-[9px] lg:text-[10px] font-medium text-center py-0.5 lg:py-1"
           style={{
             color: isDarkMode ? "#d1d5db" : "#6b7280",
             borderBottom: `1px solid ${isDarkMode ? "#374151" : "#e5e7eb"}`,
@@ -207,7 +205,7 @@ function DepartmentMapComponent({
             center: [2.35, 48.86],
             scale: 12000,
           }}
-          style={{ width: "100%", height: "calc(100% - 24px)" }}
+          style={{ width: "100%", height: "calc(100% - 20px)" }}
         >
           <Geographies geography={geoUrl}>
             {({ geographies }) =>
@@ -219,13 +217,15 @@ function DepartmentMapComponent({
         </ComposableMap>
       </div>
 
-      {/* DOM-TOM insets */}
+      {/* DOM-TOM insets — styled as map tiles */}
       {domtomDepts.length > 0 && (
         <div
           aria-label="Territoires d'outre-mer"
-          className="flex justify-center gap-2 py-2 border-t border-border/50"
+          className="flex flex-wrap justify-center gap-1.5 sm:gap-2 py-2 border-t border-border/50"
         >
-          <span className="text-xs text-muted-foreground self-center mr-2">Outre-mer:</span>
+          <span className="text-[10px] sm:text-xs text-muted-foreground self-center mr-1 sm:mr-2">
+            Outre-mer :
+          </span>
           {DOMTOM_CODES.map((code) => {
             const dept = deptMap.get(code);
             const isSelected = selectedDepartment === code;
@@ -237,18 +237,32 @@ function DepartmentMapComponent({
                 onClick={() => dept && onDepartmentClick(dept)}
                 onMouseEnter={(e) => dept && onDepartmentHover(dept, e)}
                 onMouseLeave={() => onDepartmentHover(null)}
-                className={`flex items-center gap-1 px-2 py-1 rounded text-xs transition-all ${
+                className={`flex flex-col items-center rounded-md border transition-all ${
                   isSelected ? "ring-2 ring-primary" : ""
-                } ${dept ? "cursor-pointer hover:opacity-80" : "opacity-50 cursor-default"}`}
-                style={{ backgroundColor: color }}
+                } ${dept ? "cursor-pointer hover:scale-105" : "opacity-50 cursor-default"}`}
+                style={{
+                  backgroundColor: isDarkMode ? "rgba(17,24,39,0.85)" : "rgba(255,255,255,0.85)",
+                  borderColor: isDarkMode ? "#374151" : "#e5e7eb",
+                  backdropFilter: "blur(4px)",
+                  minWidth: 64,
+                }}
                 disabled={!dept}
                 title={
                   dept ? `${DOMTOM_NAMES[code]}: ${dept.totalSeats} sièges` : DOMTOM_NAMES[code]
                 }
               >
-                <span className="text-white" style={{ textShadow: "0 0 2px rgba(0,0,0,0.5)" }}>
-                  {DOMTOM_NAMES[code]} &middot; {dept?.winningParty?.shortName || "\u2014"}
-                </span>
+                {/* Colored strip representing territory */}
+                <div className="w-full h-5 rounded-t-[5px]" style={{ backgroundColor: color }} />
+                <div className="px-1.5 py-1 text-center">
+                  <span className="text-[9px] sm:text-[10px] font-medium leading-tight block truncate">
+                    {DOMTOM_NAMES[code]}
+                  </span>
+                  {dept && (
+                    <span className="text-[8px] sm:text-[9px] text-muted-foreground leading-tight block">
+                      {dept.winningParty?.shortName || "\u2014"}
+                    </span>
+                  )}
+                </div>
               </button>
             );
           })}

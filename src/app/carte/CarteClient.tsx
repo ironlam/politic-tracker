@@ -107,8 +107,8 @@ export function CarteClient({ initialDepartments, totalSeats }: CarteClientProps
       <div className="relative flex">
         {/* Map */}
         <div
-          className={`flex-1 h-[600px] bg-muted/20 rounded-lg overflow-hidden transition-all ${
-            selectedDept ? "mr-80" : ""
+          className={`flex-1 h-[450px] lg:h-[600px] bg-muted/20 rounded-lg overflow-hidden transition-all ${
+            selectedDept ? "lg:mr-80" : ""
           }`}
         >
           <DepartmentMap
@@ -123,7 +123,7 @@ export function CarteClient({ initialDepartments, totalSeats }: CarteClientProps
 
         {/* Sidebar */}
         {selectedDept && (
-          <div className="absolute right-0 top-0 h-[600px] w-80">
+          <div className="absolute right-0 top-0 h-[450px] lg:h-[600px] w-80 hidden lg:block">
             <MapSidebar department={selectedDept} onClose={handleCloseSidebar} />
           </div>
         )}

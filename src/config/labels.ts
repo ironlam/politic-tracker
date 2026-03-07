@@ -497,6 +497,8 @@ export const DATA_SOURCE_LABELS: Record<DataSource, string> = {
   MANUAL: "Saisie manuelle",
   RNE: "Répertoire National des Élus",
   MUNICIPALES: "Candidatures municipales",
+  PRESS: "Presse",
+  FACTCHECK: "Fact-checks",
 };
 
 export const DATA_SOURCE_URLS: Record<DataSource, string> = {
@@ -512,6 +514,8 @@ export const DATA_SOURCE_URLS: Record<DataSource, string> = {
   RNE: "https://www.data.gouv.fr/fr/datasets/repertoire-national-des-elus-1/",
   MUNICIPALES:
     "https://www.data.gouv.fr/datasets/elections-municipales-2026-listes-candidates-au-premier-tour",
+  PRESS: "",
+  FACTCHECK: "",
 };
 
 // Political position labels (for parties)

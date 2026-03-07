@@ -6,6 +6,7 @@
  */
 
 import { db } from "@/lib/db";
+import { DataSource } from "@/generated/prisma";
 import { searchClaims, mapTextualRating, fetchPageTitle } from "@/lib/api";
 import { FACTCHECK_RATE_LIMIT_MS } from "@/config/rate-limits";
 import {
@@ -16,6 +17,7 @@ import {
 } from "@/lib/name-matching";
 import { isDirectPoliticianClaim } from "@/config/labels";
 import { generateDateSlug, generateUniqueSlug, sleep } from "@/lib/utils";
+import { loadMentionBlocklist, type MentionBlocklist } from "@/lib/identity/mention-blocklist";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -35,6 +37,7 @@ export interface FactcheckSyncStats {
   factChecksCreated: number;
   factChecksSkipped: number;
   mentionsCreated: number;
+  mentionsBlocked: number;
   apiErrors: number;
   errors: string[];
 }
@@ -57,11 +60,14 @@ async function generateUniqueFactCheckSlug(date: Date | null, title: string): Pr
  */
 function computeClaimantIds(
   claimant: string | null | undefined,
-  allPoliticians: PoliticianName[]
+  allPoliticians: PoliticianName[],
+  blocklist: MentionBlocklist
 ): Set<string> {
   if (!claimant || !isDirectPoliticianClaim(claimant)) return new Set();
   return new Set(
-    findMentions(claimant, allPoliticians, { fullNameOnly: true }).map((m) => m.politicianId)
+    findMentions(claimant, allPoliticians, { fullNameOnly: true })
+      .filter((m) => !blocklist.isBlocked(m.matchedName, m.politicianId))
+      .map((m) => m.politicianId)
   );
 }
 
@@ -86,12 +92,14 @@ export async function syncFactchecks(
     factChecksCreated: 0,
     factChecksSkipped: 0,
     mentionsCreated: 0,
+    mentionsBlocked: 0,
     apiErrors: 0,
     errors: [],
   };
 
-  // Build politician index for mention matching
+  // Build politician index + blocklist for mention matching
   const allPoliticians = await buildPoliticianIndex();
+  const blocklist = await loadMentionBlocklist(DataSource.FACTCHECK);
 
   // Determine which politicians to search
   let searchTargets: Array<{ id: string; fullName: string }>;
@@ -145,7 +153,14 @@ export async function syncFactchecks(
 
           // Find all politician mentions in the claim text + title
           const searchText = `${claim.text} ${review.title} ${claim.claimant || ""}`;
-          const mentions = findMentions(searchText, allPoliticians);
+          const rawMentions = findMentions(searchText, allPoliticians);
+          const mentions = rawMentions.filter((m) => {
+            if (blocklist.isBlocked(m.matchedName, m.politicianId)) {
+              stats.mentionsBlocked++;
+              return false;
+            }
+            return true;
+          });
 
           // If no politician matched, at least link to the target
           if (mentions.length === 0) {
@@ -156,7 +171,7 @@ export async function syncFactchecks(
           }
 
           // Determine which mentioned politicians are the actual claimant
-          const claimantIds = computeClaimantIds(claim.claimant, allPoliticians);
+          const claimantIds = computeClaimantIds(claim.claimant, allPoliticians, blocklist);
 
           const verdictRating = mapTextualRating(review.textualRating);
           const reviewDate = review.reviewDate ? new Date(review.reviewDate) : new Date();

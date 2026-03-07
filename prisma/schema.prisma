@@ -146,6 +146,8 @@ enum DataSource {
   MANUAL
   RNE
   MUNICIPALES
+  PRESS
+  FACTCHECK
 }
 
 enum MatchMethod {

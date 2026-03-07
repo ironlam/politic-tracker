@@ -5,6 +5,7 @@
  */
 
 import { db } from "@/lib/db";
+import { DataSource } from "@/generated/prisma";
 import { RSSClient } from "@/lib/api";
 import { RSS_RATE_LIMIT_MS } from "@/config/rate-limits";
 import {
@@ -13,6 +14,7 @@ import {
   findMentions,
   findPartyMentions,
 } from "@/lib/name-matching";
+import { loadMentionBlocklist } from "@/lib/identity/mention-blocklist";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -30,6 +32,7 @@ export interface PressSyncStats {
   articlesNew: number;
   articlesSkipped: number;
   mentionsCreated: number;
+  mentionsBlocked: number;
   partyMentionsCreated: number;
   errors: string[];
 }
@@ -47,13 +50,15 @@ export async function syncPress(options: PressSyncOptions = {}): Promise<PressSy
     articlesNew: 0,
     articlesSkipped: 0,
     mentionsCreated: 0,
+    mentionsBlocked: 0,
     partyMentionsCreated: 0,
     errors: [],
   };
 
-  // Build indices
+  // Build indices + blocklist
   const parties = await buildPartyIndex();
   const politicians = await buildPoliticianIndex();
+  const blocklist = await loadMentionBlocklist(DataSource.PRESS);
 
   // Fetch RSS feeds
   const rssClient = new RSSClient({ rateLimitMs: RSS_RATE_LIMIT_MS });
@@ -84,9 +89,16 @@ export async function syncPress(options: PressSyncOptions = {}): Promise<PressSy
           continue;
         }
 
-        // Find politician and party mentions
+        // Find politician and party mentions, filtering out known false positives
         const searchText = `${item.title} ${item.description || ""}`;
-        const mentions = findMentions(searchText, politicians);
+        const rawMentions = findMentions(searchText, politicians);
+        const mentions = rawMentions.filter((m) => {
+          if (blocklist.isBlocked(m.matchedName, m.politicianId)) {
+            stats.mentionsBlocked++;
+            return false;
+          }
+          return true;
+        });
         const partyMentions = findPartyMentions(searchText, parties);
 
         if (dryRun) {

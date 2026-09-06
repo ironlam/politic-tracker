@@ -74,6 +74,18 @@ export interface AnthropicOptions {
    * unreadable.
    */
   label?: string;
+  /**
+   * Cache the static prefix (tools + system) with a 5-minute breakpoint.
+   *
+   * Render order is tools -> system -> messages, so a breakpoint on the system
+   * block covers the tool schemas too. Reads bill at 0.1x the input rate and
+   * the 5-minute write at 1.25x, so it pays from the second call onward.
+   *
+   * Only worth setting where the prefix clears the model's minimum cacheable
+   * size: 1024 tokens on Sonnet, but 4096 on Haiku 4.5. Below the minimum the
+   * marker is a silent no-op - no error, just no cache entry.
+   */
+  cachePrefix?: boolean;
 }
 
 export interface AnthropicMessage {
@@ -151,6 +163,7 @@ export async function callAnthropic(
     tools,
     toolChoice,
     label,
+    cachePrefix = false,
   } = options;
 
   const body: Record<string, unknown> = {
@@ -158,7 +171,13 @@ export async function callAnthropic(
     max_tokens: maxTokens,
     messages,
   };
-  if (system) body.system = system;
+  if (system) {
+    // The breakpoint sits on the system block, which is rendered after the
+    // tools, so one marker caches the whole static prefix.
+    body.system = cachePrefix
+      ? [{ type: "text", text: system, cache_control: { type: "ephemeral" } }]
+      : system;
+  }
   if (tools) body.tools = tools;
   if (toolChoice) body.tool_choice = toolChoice;
 

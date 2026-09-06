@@ -631,6 +631,7 @@ INSTRUCTIONS :
 
   const data = await callAnthropic([{ role: "user", content: userMessage }], {
     label: "affair-enrichment",
+    cachePrefix: true,
     model: MODEL,
     maxTokens: MAX_TOKENS,
     system: SYSTEM_PROMPT,

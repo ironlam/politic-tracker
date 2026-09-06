@@ -242,6 +242,7 @@ ${truncatedWikitext}`;
 
   try {
     const data = await callAnthropic([{ role: "user", content: userContent }], {
+      label: "wikipedia-affair-extraction",
       model: MODEL,
       maxTokens: MAX_TOKENS,
       system: SYSTEM_PROMPT,

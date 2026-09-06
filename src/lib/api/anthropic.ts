@@ -68,6 +68,12 @@ export interface AnthropicOptions {
   system?: string;
   tools?: unknown[];
   toolChoice?: unknown;
+  /**
+   * Call-site name used in the usage log. Without it a line is attributable to
+   * a model but not to a feature, which is exactly the gap that makes a bill
+   * unreadable.
+   */
+  label?: string;
 }
 
 export interface AnthropicMessage {
@@ -77,8 +83,61 @@ export interface AnthropicMessage {
 
 export interface AnthropicResponse {
   content: Array<{ type: string; text?: string; input?: unknown; name?: string }>;
-  usage?: { input_tokens: number; output_tokens: number };
+  /**
+   * Four separately-priced quantities, not two. Cache writes bill at 1.25x the
+   * input rate (5-minute TTL) and reads at 0.1x, so a total that folds them
+   * together cannot be converted back into money.
+   */
+  usage?: {
+    input_tokens: number;
+    output_tokens: number;
+    cache_creation_input_tokens?: number;
+    cache_read_input_tokens?: number;
+  };
   stop_reason?: string;
+}
+
+export interface AnthropicUsageTotals {
+  calls: number;
+  inputTokens: number;
+  outputTokens: number;
+  cacheCreationTokens: number;
+  cacheReadTokens: number;
+}
+
+/**
+ * Process-wide usage meter, mirroring `getMistralTokensUsed()` in
+ * `@/lib/api/mistral`. The response already carried these numbers and the
+ * wrapper discarded them, so no bill could be attributed to a feature and no
+ * caching change could be verified. Kept per model AND per call-site label:
+ * the two questions ("which model costs what" and "which feature costs what")
+ * need different groupings.
+ */
+const usageByKey = new Map<string, AnthropicUsageTotals>();
+
+function recordUsage(key: string, usage: NonNullable<AnthropicResponse["usage"]>): void {
+  const t = usageByKey.get(key) ?? {
+    calls: 0,
+    inputTokens: 0,
+    outputTokens: 0,
+    cacheCreationTokens: 0,
+    cacheReadTokens: 0,
+  };
+  t.calls++;
+  t.inputTokens += usage.input_tokens ?? 0;
+  t.outputTokens += usage.output_tokens ?? 0;
+  t.cacheCreationTokens += usage.cache_creation_input_tokens ?? 0;
+  t.cacheReadTokens += usage.cache_read_input_tokens ?? 0;
+  usageByKey.set(key, t);
+}
+
+/** Totals per `<label>@<model>` since process start (or the last reset). */
+export function getAnthropicUsage(): Record<string, AnthropicUsageTotals> {
+  return Object.fromEntries(usageByKey);
+}
+
+export function resetAnthropicUsage(): void {
+  usageByKey.clear();
 }
 
 export async function callAnthropic(
@@ -91,6 +150,7 @@ export async function callAnthropic(
     system,
     tools,
     toolChoice,
+    label,
   } = options;
 
   const body: Record<string, unknown> = {
@@ -132,7 +192,22 @@ export async function callAnthropic(
     throw error;
   }
 
-  return response.json();
+  const json = (await response.json()) as AnthropicResponse;
+
+  if (json.usage) {
+    const key = `${label ?? "unlabelled"}@${model}`;
+    recordUsage(key, json.usage);
+    // One structured, greppable line per call. `cache_read` staying at 0 across
+    // a run is the signature of a cache that silently never fires.
+    console.log(
+      `[anthropic] usage site=${label ?? "unlabelled"} model=${model} ` +
+        `in=${json.usage.input_tokens ?? 0} out=${json.usage.output_tokens ?? 0} ` +
+        `cache_write=${json.usage.cache_creation_input_tokens ?? 0} ` +
+        `cache_read=${json.usage.cache_read_input_tokens ?? 0}`
+    );
+  }
+
+  return json;
 }
 
 export function extractToolUse(response: AnthropicResponse): unknown | null {

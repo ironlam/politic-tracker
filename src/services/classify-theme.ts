@@ -121,6 +121,7 @@ ${CATEGORY_GUIDE}`;
   ];
 
   const data = await callAnthropic([{ role: "user", content: prompt }], {
+    label: "classify-theme",
     model: ANTHROPIC_MODEL,
     maxTokens: 100,
     tools,

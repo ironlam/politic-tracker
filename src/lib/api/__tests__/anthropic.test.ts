@@ -213,3 +213,59 @@ describe("usage accounting", () => {
     expect(getAnthropicUsage()).toEqual({});
   });
 });
+
+describe("prompt caching", () => {
+  beforeEach(() => vi.stubEnv("ANTHROPIC_API_KEY", "test-key"));
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  function capture() {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      text: () => Promise.resolve(""),
+      json: () => Promise.resolve({ content: [] }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    return fetchMock;
+  }
+
+  const bodyOf = (m: ReturnType<typeof vi.fn>) =>
+    JSON.parse((m.mock.calls[0]![1] as { body: string }).body);
+
+  it("puts the breakpoint on the system block when cachePrefix is set", async () => {
+    const m = capture();
+    await callAnthropic([{ role: "user", content: "x" }], {
+      system: "SYS",
+      tools: [{ name: "t" }],
+      cachePrefix: true,
+    });
+    expect(bodyOf(m).system).toEqual([
+      { type: "text", text: "SYS", cache_control: { type: "ephemeral" } },
+    ]);
+  });
+
+  it("leaves the system prompt a plain string by default", async () => {
+    const m = capture();
+    await callAnthropic([{ role: "user", content: "x" }], { system: "SYS" });
+    expect(bodyOf(m).system).toBe("SYS");
+  });
+
+  it("still sends tools alongside the cached system block", async () => {
+    const m = capture();
+    await callAnthropic([{ role: "user", content: "x" }], {
+      system: "SYS",
+      tools: [{ name: "moderate_affair" }],
+      cachePrefix: true,
+    });
+    expect(bodyOf(m).tools).toEqual([{ name: "moderate_affair" }]);
+  });
+
+  it("sends no system field at all when there is no system prompt", async () => {
+    const m = capture();
+    await callAnthropic([{ role: "user", content: "x" }], { cachePrefix: true });
+    expect(bodyOf(m).system).toBeUndefined();
+  });
+});

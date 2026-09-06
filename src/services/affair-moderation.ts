@@ -348,6 +348,7 @@ export async function moderateAffair(input: ModerationInput): Promise<Moderation
 
   const data = await callAnthropic([{ role: "user", content: userContent }], {
     label: "affair-moderation",
+    cachePrefix: true,
     model: MODEL,
     maxTokens: MAX_TOKENS,
     system: SYSTEM_PROMPT,

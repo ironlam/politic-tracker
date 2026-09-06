@@ -86,6 +86,16 @@ export interface AnthropicOptions {
    * marker is a silent no-op - no error, just no cache entry.
    */
   cachePrefix?: boolean;
+  /**
+   * Passed through to the API untouched. Opt-in per call site on purpose:
+   * the accepted shapes differ by model, so a global value would 400 somewhere.
+   *
+   * Matters for cost on Claude Sonnet 5, where omitting this runs adaptive
+   * thinking at effort `high` by default and bills the thinking tokens as
+   * output - the opposite of what a cheaper per-token rate suggests. It also
+   * eats into `maxTokens`, which can truncate a forced tool call.
+   */
+  thinking?: unknown;
 }
 
 export interface AnthropicMessage {
@@ -157,13 +167,14 @@ export async function callAnthropic(
   options: AnthropicOptions = {}
 ): Promise<AnthropicResponse> {
   const {
-    model = "claude-sonnet-4-5-20250929",
+    model = "claude-sonnet-5",
     maxTokens = 2000,
     system,
     tools,
     toolChoice,
     label,
     cachePrefix = false,
+    thinking,
   } = options;
 
   const body: Record<string, unknown> = {
@@ -180,6 +191,7 @@ export async function callAnthropic(
   }
   if (tools) body.tools = tools;
   if (toolChoice) body.tool_choice = toolChoice;
+  if (thinking) body.thinking = thinking;
 
   const response = await fetch(ANTHROPIC_API_URL, {
     method: "POST",

@@ -15,7 +15,7 @@ import { AI_RATE_LIMIT_MS } from "@/config/rate-limits";
 import { callAnthropic, extractToolUse } from "@/lib/api/anthropic";
 import { AffairStatus } from "@/generated/prisma";
 
-const MODEL = "claude-sonnet-4-5-20250929";
+const MODEL = "claude-sonnet-5";
 const MAX_TOKENS = 2000;
 
 // ============================================
@@ -349,6 +349,7 @@ export async function moderateAffair(input: ModerationInput): Promise<Moderation
   const data = await callAnthropic([{ role: "user", content: userContent }], {
     label: "affair-moderation",
     cachePrefix: true,
+    thinking: { type: "disabled" },
     model: MODEL,
     maxTokens: MAX_TOKENS,
     system: SYSTEM_PROMPT,

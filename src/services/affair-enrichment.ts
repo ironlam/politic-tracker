@@ -24,7 +24,7 @@ import { removeSidebarElements } from "@/lib/parsing/html-utils";
 import { callAnthropic, extractToolUse } from "@/lib/api/anthropic";
 import { USER_AGENT } from "@/config/site";
 
-const MODEL = "claude-sonnet-4-5-20250929";
+const MODEL = "claude-sonnet-5";
 const MAX_TOKENS = 2000;
 const MAX_SCRAPE_LENGTH = 12_000;
 
@@ -632,6 +632,7 @@ INSTRUCTIONS :
   const data = await callAnthropic([{ role: "user", content: userMessage }], {
     label: "affair-enrichment",
     cachePrefix: true,
+    thinking: { type: "disabled" },
     model: MODEL,
     maxTokens: MAX_TOKENS,
     system: SYSTEM_PROMPT,

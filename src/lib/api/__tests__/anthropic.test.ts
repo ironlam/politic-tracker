@@ -4,6 +4,8 @@ import {
   AnthropicApiError,
   isInsufficientCreditError,
   __resetCreditAlertForTests,
+  getAnthropicUsage,
+  resetAnthropicUsage,
 } from "../anthropic";
 
 const CREDIT_BODY = JSON.stringify({
@@ -104,5 +106,110 @@ describe("callAnthropic error classification", () => {
     expect(
       spy.mock.calls.filter((c) => String(c[0]).includes("ANTHROPIC_CREDIT_EXHAUSTED"))
     ).toHaveLength(0);
+  });
+});
+
+describe("usage accounting", () => {
+  beforeEach(() => {
+    vi.stubEnv("ANTHROPIC_API_KEY", "test-key");
+    resetAnthropicUsage();
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  function okResponse(usage: Record<string, number> | undefined) {
+    return {
+      ok: true,
+      status: 200,
+      text: () => Promise.resolve(""),
+      json: () => Promise.resolve({ content: [], ...(usage ? { usage } : {}) }),
+    };
+  }
+
+  it("accumulates the four priced quantities per site and model", async () => {
+    vi.spyOn(console, "log").mockImplementation(() => {});
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        okResponse({
+          input_tokens: 500,
+          output_tokens: 200,
+          cache_creation_input_tokens: 3270,
+          cache_read_input_tokens: 0,
+        })
+      )
+    );
+
+    await callAnthropic([{ role: "user", content: "x" }], {
+      label: "affair-moderation",
+      model: "claude-sonnet-5",
+    });
+    await callAnthropic([{ role: "user", content: "x" }], {
+      label: "affair-moderation",
+      model: "claude-sonnet-5",
+    });
+
+    const totals = getAnthropicUsage()["affair-moderation@claude-sonnet-5"];
+    expect(totals).toEqual({
+      calls: 2,
+      inputTokens: 1000,
+      outputTokens: 400,
+      cacheCreationTokens: 6540,
+      cacheReadTokens: 0,
+    });
+  });
+
+  it("keeps sites and models in separate buckets", async () => {
+    vi.spyOn(console, "log").mockImplementation(() => {});
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(okResponse({ input_tokens: 10, output_tokens: 5 }))
+    );
+
+    await callAnthropic([{ role: "user", content: "x" }], { label: "a", model: "claude-sonnet-5" });
+    await callAnthropic([{ role: "user", content: "x" }], { label: "b", model: "claude-sonnet-5" });
+    await callAnthropic([{ role: "user", content: "x" }], { label: "a", model: "claude-haiku-4-5" });
+
+    expect(Object.keys(getAnthropicUsage()).sort()).toEqual([
+      "a@claude-haiku-4-5",
+      "a@claude-sonnet-5",
+      "b@claude-sonnet-5",
+    ]);
+  });
+
+  it("logs a greppable line carrying the cache meters", async () => {
+    const spy = vi.spyOn(console, "log").mockImplementation(() => {});
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        okResponse({
+          input_tokens: 500,
+          output_tokens: 200,
+          cache_creation_input_tokens: 0,
+          cache_read_input_tokens: 3270,
+        })
+      )
+    );
+
+    await callAnthropic([{ role: "user", content: "x" }], {
+      label: "affair-moderation",
+      model: "claude-sonnet-5",
+    });
+
+    const line = spy.mock.calls.map((c) => String(c[0])).find((l) => l.includes("[anthropic] usage"));
+    expect(line).toContain("site=affair-moderation");
+    expect(line).toContain("cache_read=3270");
+    expect(line).toContain("cache_write=0");
+  });
+
+  it("does not throw when the response carries no usage block", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(okResponse(undefined)));
+    await expect(
+      callAnthropic([{ role: "user", content: "x" }], { label: "a" })
+    ).resolves.toBeDefined();
+    expect(getAnthropicUsage()).toEqual({});
   });
 });

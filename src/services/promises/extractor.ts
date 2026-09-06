@@ -43,6 +43,7 @@ export async function extractPromisesFromText(input: {
 
   try {
     const response = await callAnthropic([{ role: "user", content: prompt }], {
+      label: "promises-extractor",
       model: HAIKU_MODEL,
       maxTokens: 2000,
     });

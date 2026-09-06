@@ -94,6 +94,7 @@ async function classifyWithPrompt(
   const prompt = promptTemplate.replace("{{TEXT}}", safe);
   try {
     const response = await callAnthropic([{ role: "user", content: prompt }], {
+      label: "promises-theme-classifier",
       model: HAIKU_MODEL,
       maxTokens: 100,
     });

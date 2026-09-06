@@ -630,6 +630,7 @@ INSTRUCTIONS :
 5. Indique ta confiance : haute si correspondance claire, basse si doute`;
 
   const data = await callAnthropic([{ role: "user", content: userMessage }], {
+    label: "affair-enrichment",
     model: MODEL,
     maxTokens: MAX_TOKENS,
     system: SYSTEM_PROMPT,

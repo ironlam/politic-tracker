@@ -119,6 +119,7 @@ ${official}
   for (let t = 0; t < 3; t++) {
     try {
       const resp = await callAnthropic([{ role: "user", content: user }], {
+        label: "judge-policy-titles",
         model: JUDGE_MODEL,
         maxTokens: 600,
         system: SYSTEM,

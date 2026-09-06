@@ -122,6 +122,7 @@ export async function enrichDescription(
   const validSlugs = buildValidSlugs(input);
 
   const response = await callAnthropic([{ role: "user", content: userMessage }], {
+    label: "affair-description-enrichment",
     model: MODEL,
     maxTokens: MAX_TOKENS,
     system: SYSTEM_PROMPT,

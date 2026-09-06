@@ -296,10 +296,10 @@ DÉTECTION DE DOUBLONS :
 // ============================================
 
 /**
- * Moderate an affair using Claude Sonnet 4.5 tool_use.
- * Returns a structured recommendation (PUBLISH / REJECT / NEEDS_REVIEW).
+ * Build the user message sent to the provider. Exported so the batch path
+ * builds the exact same request as the synchronous one.
  */
-export async function moderateAffair(input: ModerationInput): Promise<ModerationResult> {
+export function buildUserContent(input: ModerationInput): string {
   const today = input.today ?? new Date().toISOString().slice(0, 10);
 
   // Build user message with all affair data
@@ -346,22 +346,32 @@ export async function moderateAffair(input: ModerationInput): Promise<Moderation
     }
   }
 
-  const data = await callAnthropic([{ role: "user", content: userContent }], {
-    label: "affair-moderation",
-    cachePrefix: true,
-    thinking: { type: "disabled" },
+  return userContent;
+}
+
+/** Request body shared by the synchronous and the batch path. */
+export function buildModerationParams(input: ModerationInput): Record<string, unknown> {
+  return {
     model: MODEL,
-    maxTokens: MAX_TOKENS,
-    system: SYSTEM_PROMPT,
+    max_tokens: MAX_TOKENS,
+    system: [{ type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } }],
     tools: [MODERATION_TOOL],
-    toolChoice: { type: "tool", name: "moderate_affair" },
-  });
+    tool_choice: { type: "tool", name: "moderate_affair" },
+    thinking: { type: "disabled" },
+    messages: [{ role: "user", content: buildUserContent(input) }],
+  };
+}
 
-  const result = extractToolUse(data) as Record<string, unknown> | null;
-  if (!result) {
-    throw new Error("No tool_use content in API response");
-  }
-
+/**
+ * Validate and normalize a raw moderation payload into a ModerationResult.
+ * Provider- and transport-agnostic: every safety guard lives here rather than
+ * in the caller, so enum validation and the sensitive-category forcing apply
+ * whether the payload came from a synchronous call or a batch result.
+ */
+export function parseModerationResult(
+  result: Record<string, unknown>,
+  input: ModerationInput
+): ModerationResult {
   // Parse and validate the result
   const recommendation = validateEnum(
     result.recommendation as string,
@@ -443,6 +453,30 @@ export async function moderateAffair(input: ModerationInput): Promise<Moderation
     issues,
     model: MODEL,
   };
+}
+
+/**
+ * Moderate an affair using Claude Sonnet 5 tool_use.
+ * Returns a structured recommendation (PUBLISH / REJECT / NEEDS_REVIEW).
+ */
+export async function moderateAffair(input: ModerationInput): Promise<ModerationResult> {
+  const data = await callAnthropic([{ role: "user", content: buildUserContent(input) }], {
+    label: "affair-moderation",
+    cachePrefix: true,
+    thinking: { type: "disabled" },
+    model: MODEL,
+    maxTokens: MAX_TOKENS,
+    system: SYSTEM_PROMPT,
+    tools: [MODERATION_TOOL],
+    toolChoice: { type: "tool", name: "moderate_affair" },
+  });
+
+  const result = extractToolUse(data) as Record<string, unknown> | null;
+  if (!result) {
+    throw new Error("No tool_use content in API response");
+  }
+
+  return parseModerationResult(result, input);
 }
 
 // ============================================

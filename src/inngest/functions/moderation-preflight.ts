@@ -1,5 +1,17 @@
 import { inngest } from "../client";
 
+/**
+ * Preflight quotidien, via l'API Batch (moitié prix sur chaque token, cumulable
+ * avec le préfixe caché).
+ *
+ * Les résultats d'un batch arrivent « sous 24 h », ce qui est une expiration et
+ * non un délai garanti : impossible d'attendre en bloquant dans une fonction
+ * serverless. On passe donc par des étapes durables, chaque sommeil libérant le
+ * runtime entre deux relevés.
+ */
+const POLL_ATTEMPTS = 12;
+const POLL_INTERVAL = "5m";
+
 export const moderationPreflight = inngest.createFunction(
   {
     id: "moderation-preflight",
@@ -9,9 +21,50 @@ export const moderationPreflight = inngest.createFunction(
   },
   { cron: "TZ=Europe/Paris 30 4 * * *" },
   async ({ step }) => {
-    const report = await step.run("run-preflight", async () => {
-      const { runPreflight } = await import("@/lib/moderation/preflight");
-      return runPreflight({ source: "cron" });
+    const batch = await step.run("submit-moderation-batch", async () => {
+      const { buildModerationInputs } = await import("@/lib/moderation/preflight");
+      const { submitModerationBatch } = await import("@/services/affair-moderation-batch");
+
+      const inputs = await buildModerationInputs();
+      if (inputs.length === 0) return { batchId: null as string | null, count: 0 };
+
+      const batchId = await submitModerationBatch(inputs);
+      return { batchId, count: inputs.length };
+    });
+
+    let ready = batch.batchId === null;
+    for (let attempt = 0; attempt < POLL_ATTEMPTS && !ready; attempt++) {
+      await step.sleep(`wait-batch-${attempt}`, POLL_INTERVAL);
+      ready = await step.run(`check-batch-${attempt}`, async () => {
+        const { isBatchReady } = await import("@/services/affair-moderation-batch");
+        return isBatchReady(batch.batchId!);
+      });
+    }
+
+    const report = await step.run("assemble-report", async () => {
+      const { runPreflight, buildModerationInputs } = await import("@/lib/moderation/preflight");
+
+      if (!batch.batchId) return runPreflight({ source: "cron" });
+
+      const { collectModerationBatch } = await import("@/services/affair-moderation-batch");
+      const inputs = await buildModerationInputs();
+
+      if (!ready) {
+        // Batch non terminé : chaque draft retombe sur NEEDS_REVIEW, le défaut
+        // sûr, inchangé. L'identifiant est journalisé pour un relevé ultérieur
+        // plutôt que perdu — le batch est déjà payé.
+        console.error(
+          `[preflight] ALERT batch non terminé après ${POLL_ATTEMPTS} relevés, ` +
+            `batch=${batch.batchId} drafts=${batch.count}. Résultats récupérables manuellement.`
+        );
+        return runPreflight({ source: "cron", moderationResults: new Map() });
+      }
+
+      const { results, failures } = await collectModerationBatch(batch.batchId, inputs);
+      for (const [affairId, reason] of failures) {
+        console.error(`[preflight] moderateAffair (batch) failed for draft ${affairId}: ${reason}`);
+      }
+      return runPreflight({ source: "cron", moderationResults: results });
     });
 
     await step.run("persist-report-best-effort", async () => {
@@ -35,6 +88,7 @@ export const moderationPreflight = inngest.createFunction(
       needsReview: report.stats.needsReview,
       attributionIssues: report.stats.attributionIssues,
       duplicateGroups: report.stats.duplicateGroups,
+      batchId: batch.batchId,
     };
   }
 );

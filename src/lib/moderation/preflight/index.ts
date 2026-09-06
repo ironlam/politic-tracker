@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import {
   moderateAffair,
   getAIRateLimitMs,
+  type ModerationInput,
   type ModerationResult,
 } from "@/services/affair-moderation";
 import {
@@ -20,6 +21,70 @@ import type {
 interface RunPreflightOptions {
   source: "cron" | "manual";
   limit?: number;
+  /**
+   * Moderation results computed elsewhere, keyed by affair id — the batch path
+   * supplies these so the report is assembled without any synchronous AI call.
+   * A draft missing from the map still falls back to NEEDS_REVIEW below, so the
+   * safe default is identical on both transports.
+   */
+  moderationResults?: Map<string, ModerationResult>;
+}
+
+/**
+ * Build the moderation inputs for the current DRAFT backlog, without calling
+ * the API. Lets the batch path queue every request up front.
+ */
+export async function buildModerationInputs(limit?: number): Promise<ModerationInput[]> {
+  const drafts = await db.affair.findMany({
+    where: { publicationStatus: "DRAFT" },
+    orderBy: { createdAt: "asc" },
+    take: limit,
+    include: {
+      politician: { select: { id: true, slug: true, fullName: true } },
+      sources: true,
+    },
+  });
+
+  const politicianIds = [
+    ...new Set(drafts.map((d) => d.politicianId).filter((id): id is string => Boolean(id))),
+  ];
+  const published = politicianIds.length
+    ? await db.affair.findMany({
+        where: { politicianId: { in: politicianIds }, publicationStatus: "PUBLISHED" },
+        select: { politicianId: true, title: true },
+      })
+    : [];
+  const titlesByPolitician = new Map<string, string[]>();
+  for (const affair of published) {
+    const list = titlesByPolitician.get(affair.politicianId) ?? [];
+    list.push(affair.title);
+    titlesByPolitician.set(affair.politicianId, list);
+  }
+
+  return drafts
+    .filter((d) => d.politician)
+    .map((draft) => ({
+      affairId: draft.id,
+      title: draft.title,
+      description: draft.description ?? "",
+      status: draft.status,
+      category: draft.category ?? "AUTRE",
+      involvement: draft.involvement ?? "MENTIONED_ONLY",
+      politicianName: draft.politician!.fullName,
+      politicianSlug: draft.politician!.slug,
+      sources: draft.sources.map((s) => ({
+        url: s.url,
+        title: s.title ?? "",
+        publisher: s.publisher ?? "",
+        publishedAt: s.publishedAt?.toISOString() ?? "",
+      })),
+      factsDate: draft.factsDate?.toISOString() ?? null,
+      startDate: draft.startDate?.toISOString() ?? null,
+      verdictDate: draft.verdictDate?.toISOString() ?? null,
+      court: draft.court ?? null,
+      sentence: draft.sentence ?? null,
+      existingAffairTitles: titlesByPolitician.get(draft.politicianId) ?? [],
+    }));
 }
 
 export async function runPreflight(
@@ -80,7 +145,12 @@ export async function runPreflight(
     if (!draft.politician) continue;
 
     let moderation: ModerationResult;
+    const precomputed = options.moderationResults?.get(draft.id);
     try {
+      if (options.moderationResults) {
+        if (!precomputed) throw new Error("absent des résultats de modération fournis");
+        moderation = precomputed;
+      } else {
       moderation = await moderateAffair({
         affairId: draft.id,
         title: draft.title,
@@ -103,6 +173,7 @@ export async function runPreflight(
         sentence: draft.sentence ?? null,
         existingAffairTitles: publishedTitlesByPolitician.get(draft.politicianId) ?? [],
       });
+      }
     } catch (err) {
       console.error(`[preflight] moderateAffair failed for draft ${draft.id}:`, err);
       moderation = {
@@ -151,7 +222,9 @@ export async function runPreflight(
       },
     });
 
-    if (i < drafts.length - 1) {
+    // Pas de temporisation quand les résultats sont déjà là : le débit de
+    // l'API n'est plus en jeu.
+    if (!options.moderationResults && i < drafts.length - 1) {
       await sleep(getAIRateLimitMs());
     }
   }

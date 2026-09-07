@@ -95,7 +95,9 @@ describe("callAnthropic error classification", () => {
       await callAnthropic([{ role: "user", content: "x" }]).catch(() => {});
     }
 
-    const alerts = spy.mock.calls.filter((c) => String(c[0]).includes("ANTHROPIC_CREDIT_EXHAUSTED"));
+    const alerts = spy.mock.calls.filter((c) =>
+      String(c[0]).includes("ANTHROPIC_CREDIT_EXHAUSTED")
+    );
     expect(alerts).toHaveLength(1);
   });
 
@@ -171,7 +173,10 @@ describe("usage accounting", () => {
 
     await callAnthropic([{ role: "user", content: "x" }], { label: "a", model: "claude-sonnet-5" });
     await callAnthropic([{ role: "user", content: "x" }], { label: "b", model: "claude-sonnet-5" });
-    await callAnthropic([{ role: "user", content: "x" }], { label: "a", model: "claude-haiku-4-5" });
+    await callAnthropic([{ role: "user", content: "x" }], {
+      label: "a",
+      model: "claude-haiku-4-5",
+    });
 
     expect(Object.keys(getAnthropicUsage()).sort()).toEqual([
       "a@claude-haiku-4-5",
@@ -199,7 +204,9 @@ describe("usage accounting", () => {
       model: "claude-sonnet-5",
     });
 
-    const line = spy.mock.calls.map((c) => String(c[0])).find((l) => l.includes("[anthropic] usage"));
+    const line = spy.mock.calls
+      .map((c) => String(c[0]))
+      .find((l) => l.includes("[anthropic] usage"));
     expect(line).toContain("site=affair-moderation");
     expect(line).toContain("cache_read=3270");
     expect(line).toContain("cache_write=0");

@@ -7,10 +7,7 @@ vi.mock("@/lib/api/anthropic-batch", () => ({
 }));
 
 import { submitBatch, getBatchResults } from "@/lib/api/anthropic-batch";
-import {
-  submitModerationBatch,
-  collectModerationBatch,
-} from "@/services/affair-moderation-batch";
+import { submitModerationBatch, collectModerationBatch } from "@/services/affair-moderation-batch";
 import type { ModerationInput } from "@/services/affair-moderation";
 
 const input = (id: string, category = "CORRUPTION"): ModerationInput => ({

@@ -151,28 +151,28 @@ export async function runPreflight(
         if (!precomputed) throw new Error("absent des résultats de modération fournis");
         moderation = precomputed;
       } else {
-      moderation = await moderateAffair({
-        affairId: draft.id,
-        title: draft.title,
-        description: draft.description ?? "",
-        status: draft.status,
-        category: draft.category ?? "AUTRE",
-        involvement: draft.involvement ?? "MENTIONED_ONLY",
-        politicianName: draft.politician.fullName,
-        politicianSlug: draft.politician.slug,
-        sources: draft.sources.map((s) => ({
-          url: s.url,
-          title: s.title ?? "",
-          publisher: s.publisher ?? "",
-          publishedAt: s.publishedAt?.toISOString() ?? "",
-        })),
-        factsDate: draft.factsDate?.toISOString() ?? null,
-        startDate: draft.startDate?.toISOString() ?? null,
-        verdictDate: draft.verdictDate?.toISOString() ?? null,
-        court: draft.court ?? null,
-        sentence: draft.sentence ?? null,
-        existingAffairTitles: publishedTitlesByPolitician.get(draft.politicianId) ?? [],
-      });
+        moderation = await moderateAffair({
+          affairId: draft.id,
+          title: draft.title,
+          description: draft.description ?? "",
+          status: draft.status,
+          category: draft.category ?? "AUTRE",
+          involvement: draft.involvement ?? "MENTIONED_ONLY",
+          politicianName: draft.politician.fullName,
+          politicianSlug: draft.politician.slug,
+          sources: draft.sources.map((s) => ({
+            url: s.url,
+            title: s.title ?? "",
+            publisher: s.publisher ?? "",
+            publishedAt: s.publishedAt?.toISOString() ?? "",
+          })),
+          factsDate: draft.factsDate?.toISOString() ?? null,
+          startDate: draft.startDate?.toISOString() ?? null,
+          verdictDate: draft.verdictDate?.toISOString() ?? null,
+          court: draft.court ?? null,
+          sentence: draft.sentence ?? null,
+          existingAffairTitles: publishedTitlesByPolitician.get(draft.politicianId) ?? [],
+        });
       }
     } catch (err) {
       console.error(`[preflight] moderateAffair failed for draft ${draft.id}:`, err);

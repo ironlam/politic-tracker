@@ -73,13 +73,19 @@ export async function submitBatch(requests: BatchRequest[]): Promise<BatchHandle
   });
 
   const json = (await response.json()) as { id: string; processing_status: string };
-  return { id: json.id, processingStatus: json.processing_status as BatchHandle["processingStatus"] };
+  return {
+    id: json.id,
+    processingStatus: json.processing_status as BatchHandle["processingStatus"],
+  };
 }
 
 export async function getBatchStatus(batchId: string): Promise<BatchHandle> {
   const response = await request(`/${encodeURIComponent(batchId)}`, { method: "GET" });
   const json = (await response.json()) as { id: string; processing_status: string };
-  return { id: json.id, processingStatus: json.processing_status as BatchHandle["processingStatus"] };
+  return {
+    id: json.id,
+    processingStatus: json.processing_status as BatchHandle["processingStatus"],
+  };
 }
 
 /**

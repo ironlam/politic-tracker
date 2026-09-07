@@ -1,7 +1,7 @@
 /**
  * Batch path for affair moderation.
  *
- * Same prompt, same tool schema, same validation as `moderateAffair` — only the
+ * Same prompt, same tool schema, same validation as `moderateAffair`. Only the
  * transport differs. Every token bills at half the standard rate, and the
  * discount stacks with the cached prefix.
  *
@@ -15,13 +15,17 @@ import {
   getBatchResults,
   type BatchRequest,
 } from "@/lib/api/anthropic-batch";
-import { extractToolUse, type AnthropicResponse } from "@/lib/api/anthropic";
+import { extractToolUse, recordAnthropicUsage, type AnthropicResponse } from "@/lib/api/anthropic";
 import {
+  MODEL,
   buildModerationParams,
   parseModerationResult,
   type ModerationInput,
   type ModerationResult,
 } from "@/services/affair-moderation";
+
+/** Distinct from "affair-moderation": batch tokens bill at half the rate. */
+const BATCH_USAGE_LABEL = "affair-moderation-batch";
 
 export interface BatchModerationOutcome {
   /** Successfully parsed results, keyed by affairId. */
@@ -75,10 +79,13 @@ export async function collectModerationBatch(
       continue;
     }
 
-    const toolUse = extractToolUse(entry.message as AnthropicResponse) as Record<
-      string,
-      unknown
-    > | null;
+    const message = entry.message as AnthropicResponse;
+    // Batch responses carry their own usage block. Without this the cheapest
+    // half of the traffic would be invisible in getAnthropicUsage(), and the
+    // prompt-cache hits it relies on unverifiable.
+    recordAnthropicUsage(BATCH_USAGE_LABEL, MODEL, message.usage);
+
+    const toolUse = extractToolUse(message) as Record<string, unknown> | null;
     if (!toolUse) {
       failures.set(entry.customId, "no tool_use content in batch result");
       continue;

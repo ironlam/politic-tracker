@@ -16,6 +16,29 @@ const SENTRY_ENABLED = Boolean(SENTRY_DSN) && process.env.NEXT_PUBLIC_SENTRY_ENA
 const IS_ADMIN_ROUTE =
   typeof window !== "undefined" && /^\/admin(\/|$)/.test(window.location.pathname);
 
+// React's streaming renderer injects these inline scripts into the HTML document
+// to reveal a Suspense boundary ($RS), complete one ($RC) or reveal viewport
+// content ($RV). They dereference `document.getElementById(...)` with no null
+// check, so once the hidden template nodes are gone from the document every
+// remaining call throws. One page load therefore produces one TypeError per
+// Suspense boundary: the event count measures the page's boundary count, not
+// severity, and there is no application frame to fix. Collapse the family into a
+// single issue and keep one event per page load so a burst cannot read as an
+// escalating regression. Hydration errors are deliberately left untouched:
+// they are the actual signal these bursts sit downstream of.
+const REACT_STREAMING_SCRIPTS = new Set(["$RS", "$RC", "$RV"]);
+const REACT_STREAMING_FINGERPRINT = "react-streaming-reveal-script";
+
+let reactStreamingReported = false;
+
+function isReactStreamingScriptError(event: Sentry.ErrorEvent): boolean {
+  return (event.exception?.values ?? []).some((value) =>
+    (value.stacktrace?.frames ?? []).some(
+      (frame) => frame.function != null && REACT_STREAMING_SCRIPTS.has(frame.function)
+    )
+  );
+}
+
 if (SENTRY_ENABLED) {
   Sentry.init({
     dsn: SENTRY_DSN,
@@ -28,6 +51,12 @@ if (SENTRY_ENABLED) {
     integrations: IS_ADMIN_ROUTE
       ? []
       : [Sentry.replayIntegration({ maskAllText: false, blockAllMedia: true })],
+    beforeSend(event) {
+      if (!isReactStreamingScriptError(event)) return event;
+      if (reactStreamingReported) return null;
+      reactStreamingReported = true;
+      return { ...event, fingerprint: [REACT_STREAMING_FINGERPRINT] };
+    },
     ignoreErrors: [
       "ResizeObserver loop limit exceeded",
       "ResizeObserver loop completed with undelivered notifications",

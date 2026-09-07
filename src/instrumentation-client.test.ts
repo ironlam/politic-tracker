@@ -1,5 +1,30 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+type SentryEvent = {
+  exception?: { values?: { type?: string; value?: string; stacktrace?: { frames?: unknown[] } }[] };
+  fingerprint?: string[];
+};
+
+/** Builds an event whose stack sits in a React inline script, as Sentry receives it. */
+function reactStreamingEvent(fn: string, value: string): SentryEvent {
+  return {
+    exception: {
+      values: [
+        {
+          type: "TypeError",
+          value,
+          stacktrace: {
+            frames: [
+              { function: null, filename: "app:///affaires/condamnations", in_app: true },
+              { function: fn, filename: "app:///affaires/condamnations", in_app: true },
+            ],
+          },
+        },
+      ],
+    },
+  };
+}
+
 const mocks = vi.hoisted(() => ({
   init: vi.fn(),
   replayIntegration: vi.fn(() => ({ name: "Replay" })),
@@ -19,7 +44,10 @@ async function bootAt(pathname: string) {
   mocks.replayIntegration.mockClear();
   window.history.replaceState(null, "", pathname);
   await import("./instrumentation-client");
-  return (mocks.init.mock.calls[0]?.[0] ?? {}) as { integrations?: unknown[] };
+  return (mocks.init.mock.calls[0]?.[0] ?? {}) as {
+    integrations?: unknown[];
+    beforeSend?: (event: SentryEvent) => SentryEvent | null;
+  };
 }
 
 const hasReplay = (opts: { integrations?: unknown[] }) =>
@@ -57,5 +85,80 @@ describe("Session replay : périmètre d'enregistrement", () => {
 
   it("ne coupe pas une route publique dont le nom commence par admin", async () => {
     expect(hasReplay(await bootAt("/administration-publique"))).toBe(true);
+  });
+});
+
+describe("Scripts de streaming React : bruit non actionnable", () => {
+  // $RS/$RC/$RV sont les scripts inline que React injecte dans le HTML pour
+  // révéler une frontière Suspense. Ils déréférencent getElementById sans
+  // null-check : le nombre d'events égale le nombre de frontières de la page,
+  // et aucun frame applicatif n'est en cause.
+  it("regroupe la famille sous une empreinte unique", async () => {
+    const { beforeSend } = await bootAt("/affaires/condamnations");
+    const kept = beforeSend!(
+      reactStreamingEvent("$RS", "Cannot read properties of null (reading 'parentNode')")
+    );
+    expect(kept).not.toBeNull();
+    expect(kept!.fingerprint).toEqual(["react-streaming-reveal-script"]);
+  });
+
+  it("ne garde qu'un event par chargement de page", async () => {
+    const { beforeSend } = await bootAt("/affaires/condamnations");
+    const first = beforeSend!(
+      reactStreamingEvent("$RS", "Cannot read properties of null (reading 'parentNode')")
+    );
+    const second = beforeSend!(
+      reactStreamingEvent("$RS", "Cannot read properties of null (reading 'parentNode')")
+    );
+    const third = beforeSend!(
+      reactStreamingEvent("$RC", "Cannot read properties of null (reading 'tagName')")
+    );
+    expect(first).not.toBeNull();
+    expect(second).toBeNull();
+    expect(third).toBeNull();
+  });
+
+  it("laisse passer une vraie erreur applicative qui touche parentNode", async () => {
+    const { beforeSend } = await bootAt("/affaires/condamnations");
+    const appError: SentryEvent = {
+      exception: {
+        values: [
+          {
+            type: "TypeError",
+            value: "Cannot read properties of null (reading 'parentNode')",
+            stacktrace: {
+              frames: [
+                {
+                  function: "closeDropdown",
+                  filename: "app:///_next/static/chunks/8409-8295dd6356804e56.js",
+                  in_app: true,
+                },
+              ],
+            },
+          },
+        ],
+      },
+    };
+    const kept = beforeSend!(appError);
+    expect(kept).toBe(appError);
+    expect(kept!.fingerprint).toBeUndefined();
+  });
+
+  // POLIGRAPH-M est la cible réelle de l'investigation : la filtrer avec le
+  // bruit qu'elle produit reviendrait à masquer la cause.
+  it("laisse passer une erreur d'hydratation", async () => {
+    const { beforeSend } = await bootAt("/");
+    const hydration: SentryEvent = {
+      exception: {
+        values: [
+          {
+            type: "Error",
+            value: "Hydration failed because the server rendered HTML didn't match the client.",
+            stacktrace: { frames: [] },
+          },
+        ],
+      },
+    };
+    expect(beforeSend!(hydration)).toBe(hydration);
   });
 });

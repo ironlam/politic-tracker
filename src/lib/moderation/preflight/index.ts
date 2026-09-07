@@ -22,7 +22,7 @@ interface RunPreflightOptions {
   source: "cron" | "manual";
   limit?: number;
   /**
-   * Moderation results computed elsewhere, keyed by affair id — the batch path
+   * Moderation results computed elsewhere, keyed by affair id. The batch path
    * supplies these so the report is assembled without any synchronous AI call.
    * A draft missing from the map still falls back to NEEDS_REVIEW below, so the
    * safe default is identical on both transports.

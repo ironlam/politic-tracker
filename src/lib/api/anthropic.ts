@@ -153,6 +153,39 @@ function recordUsage(key: string, usage: NonNullable<AnthropicResponse["usage"]>
   usageByKey.set(key, t);
 }
 
+/**
+ * Record usage from a response this wrapper did not issue, so a transport that
+ * bypasses `callAnthropic` (the Batch API) still lands in the same meter.
+ *
+ * Give batch traffic its own label: every token in a batch bills at half the
+ * standard rate, so folding it into the synchronous label would make the totals
+ * impossible to convert back into money.
+ */
+export function recordAnthropicUsage(
+  label: string,
+  model: string,
+  usage: NonNullable<AnthropicResponse["usage"]> | undefined
+): void {
+  if (!usage) return;
+  recordUsage(`${label}@${model}`, usage);
+  logUsage(label, model, usage);
+}
+
+function logUsage(
+  label: string,
+  model: string,
+  usage: NonNullable<AnthropicResponse["usage"]>
+): void {
+  // One structured, greppable line per call. `cache_read` staying at 0 across
+  // a run is the signature of a cache that silently never fires.
+  console.log(
+    `[anthropic] usage site=${label} model=${model} ` +
+      `in=${usage.input_tokens ?? 0} out=${usage.output_tokens ?? 0} ` +
+      `cache_write=${usage.cache_creation_input_tokens ?? 0} ` +
+      `cache_read=${usage.cache_read_input_tokens ?? 0}`
+  );
+}
+
 /** Totals per `<label>@<model>` since process start (or the last reset). */
 export function getAnthropicUsage(): Record<string, AnthropicUsageTotals> {
   return Object.fromEntries(usageByKey);
@@ -213,7 +246,7 @@ export async function callAnthropic(
       // down until the account is topped up, and callers that fall back to a
       // safe default would otherwise hide that completely.
       console.error(
-        "[anthropic] ALERT ANTHROPIC_CREDIT_EXHAUSTED — crédit API épuisé, " +
+        "[anthropic] ALERT ANTHROPIC_CREDIT_EXHAUSTED : crédit API épuisé, " +
           "toutes les fonctionnalités IA sont dégradées jusqu'au rechargement " +
           "(Anthropic Console > Plans & Billing). " +
           `model=${model} status=${response.status}`
@@ -226,16 +259,8 @@ export async function callAnthropic(
   const json = (await response.json()) as AnthropicResponse;
 
   if (json.usage) {
-    const key = `${label ?? "unlabelled"}@${model}`;
-    recordUsage(key, json.usage);
-    // One structured, greppable line per call. `cache_read` staying at 0 across
-    // a run is the signature of a cache that silently never fires.
-    console.log(
-      `[anthropic] usage site=${label ?? "unlabelled"} model=${model} ` +
-        `in=${json.usage.input_tokens ?? 0} out=${json.usage.output_tokens ?? 0} ` +
-        `cache_write=${json.usage.cache_creation_input_tokens ?? 0} ` +
-        `cache_read=${json.usage.cache_read_input_tokens ?? 0}`
-    );
+    recordUsage(`${label ?? "unlabelled"}@${model}`, json.usage);
+    logUsage(label ?? "unlabelled", model, json.usage);
   }
 
   return json;

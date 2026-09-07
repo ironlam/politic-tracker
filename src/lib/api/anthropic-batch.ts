@@ -45,7 +45,7 @@ async function request(path: string, init: RequestInit): Promise<Response> {
     const error = new AnthropicApiError(response.status, body, errorType);
     if (isInsufficientCreditError(error)) {
       console.error(
-        "[anthropic] ALERT ANTHROPIC_CREDIT_EXHAUSTED — crédit API épuisé (batch). " +
+        "[anthropic] ALERT ANTHROPIC_CREDIT_EXHAUSTED : crédit API épuisé (batch). " +
           `status=${response.status}`
       );
     }

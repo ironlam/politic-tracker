@@ -14,8 +14,10 @@
 import { AI_RATE_LIMIT_MS } from "@/config/rate-limits";
 import { callAnthropic, extractToolUse } from "@/lib/api/anthropic";
 import { AffairStatus } from "@/generated/prisma";
+import { createHash } from "node:crypto";
+import { canonicalJson } from "@/lib/hash/canonical";
 
-const MODEL = "claude-sonnet-5";
+export const MODEL = "claude-sonnet-5";
 const MAX_TOKENS = 2000;
 
 // ============================================
@@ -347,6 +349,19 @@ export function buildUserContent(input: ModerationInput): string {
   }
 
   return userContent;
+}
+
+/**
+ * Fingerprint of everything that feeds the prompt.
+ *
+ * The batch path submits and collects hours apart, so a draft can be edited in
+ * between. Results are matched by affair id alone, which would attach an answer
+ * generated from the old snapshot to the new content. Comparing fingerprints at
+ * collection time turns that into a miss, and a miss already falls back to
+ * NEEDS_REVIEW.
+ */
+export function moderationInputFingerprint(input: ModerationInput): string {
+  return createHash("sha256").update(canonicalJson(input)).digest("hex").slice(0, 16);
 }
 
 /** Request body shared by the synchronous and the batch path. */

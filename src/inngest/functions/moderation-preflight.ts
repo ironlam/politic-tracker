@@ -25,11 +25,24 @@ export const moderationPreflight = inngest.createFunction(
       const { buildModerationInputs } = await import("@/lib/moderation/preflight");
       const { submitModerationBatch } = await import("@/services/affair-moderation-batch");
 
+      const { moderationInputFingerprint } = await import("@/services/affair-moderation");
+
       const inputs = await buildModerationInputs();
-      if (inputs.length === 0) return { batchId: null as string | null, count: 0 };
+      if (inputs.length === 0) {
+        return {
+          batchId: null as string | null,
+          count: 0,
+          fingerprints: {} as Record<string, string>,
+        };
+      }
 
       const batchId = await submitModerationBatch(inputs);
-      return { batchId, count: inputs.length };
+      // Snapshot fingerprints travel with the step output, so the collect step
+      // can tell whether a draft changed while the batch was processing.
+      const fingerprints = Object.fromEntries(
+        inputs.map((i) => [i.affairId, moderationInputFingerprint(i)])
+      );
+      return { batchId, count: inputs.length, fingerprints };
     });
 
     let ready = batch.batchId === null;
@@ -47,12 +60,13 @@ export const moderationPreflight = inngest.createFunction(
       if (!batch.batchId) return runPreflight({ source: "cron" });
 
       const { collectModerationBatch } = await import("@/services/affair-moderation-batch");
+      const { moderationInputFingerprint } = await import("@/services/affair-moderation");
       const inputs = await buildModerationInputs();
 
       if (!ready) {
         // Batch non terminé : chaque draft retombe sur NEEDS_REVIEW, le défaut
         // sûr, inchangé. L'identifiant est journalisé pour un relevé ultérieur
-        // plutôt que perdu — le batch est déjà payé.
+        // plutôt que perdu, le batch étant déjà payé.
         console.error(
           `[preflight] ALERT batch non terminé après ${POLL_ATTEMPTS} relevés, ` +
             `batch=${batch.batchId} drafts=${batch.count}. Résultats récupérables manuellement.`
@@ -61,6 +75,18 @@ export const moderationPreflight = inngest.createFunction(
       }
 
       const { results, failures } = await collectModerationBatch(batch.batchId, inputs);
+
+      // Reject any result whose draft changed since submission: the answer was
+      // generated from the old content. Dropping it falls back to NEEDS_REVIEW.
+      for (const input of inputs) {
+        if (!results.has(input.affairId)) continue;
+        const submitted = batch.fingerprints[input.affairId];
+        if (submitted && submitted !== moderationInputFingerprint(input)) {
+          results.delete(input.affairId);
+          failures.set(input.affairId, "affaire modifiée pendant le batch, résultat périmé");
+        }
+      }
+
       for (const [affairId, reason] of failures) {
         console.error(`[preflight] moderateAffair (batch) failed for draft ${affairId}: ${reason}`);
       }

@@ -4,6 +4,7 @@ import { withAdminAuth } from "@/lib/api/with-admin-auth";
 import { withValidation } from "@/lib/security/validate";
 import { moderateAffairSchema } from "@/lib/security/schemas/affair";
 import { invalidateEntity, invalidateAffectedPoliticians } from "@/lib/cache";
+import { closeModerationReviews } from "@/lib/affairs/close-moderation-reviews";
 import {
   assertPublishable,
   PublishGuardError,
@@ -110,6 +111,10 @@ export const POST = withAdminAuth(
             },
           })),
         });
+        // La décision est prise : les revues en attente de ces affaires n'ont
+        // plus rien à trancher. Sans ça la file « à modérer » grossit d'une
+        // ligne à chaque publication.
+        await closeModerationReviews(published, VERIFIED_BY_MODERATION);
         invalidateEntity("affair");
         invalidateAffectedPoliticians(politicianSlugs);
       }
@@ -132,6 +137,8 @@ export const POST = withAdminAuth(
         changes: { publicationStatus, moderationAction: action },
       })),
     });
+
+    await closeModerationReviews(ids, VERIFIED_BY_MODERATION);
 
     invalidateEntity("affair");
     invalidateAffectedPoliticians(politicianSlugs);

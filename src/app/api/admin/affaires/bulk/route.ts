@@ -4,6 +4,7 @@ import { withAdminAuth } from "@/lib/api/with-admin-auth";
 import { withValidation } from "@/lib/security/validate";
 import { bulkAffairSchema } from "@/lib/security/schemas/affair";
 import { invalidateEntity, invalidateAffectedPoliticians } from "@/lib/cache";
+import { closeModerationReviews } from "@/lib/affairs/close-moderation-reviews";
 import {
   assertPublishable,
   PublishGuardError,
@@ -41,6 +42,8 @@ export const POST = withAdminAuth(
         })),
       });
 
+      // Pas de closeModerationReviews ici : ModerationReview est en
+      // onDelete: Cascade, les revues partent avec l'affaire.
       invalidateEntity("affair");
       invalidateAffectedPoliticians(politicianSlugs);
 
@@ -74,6 +77,7 @@ export const POST = withAdminAuth(
             changes: { publicationStatus: PUBLISHED_STATUS, verifiedBy: VERIFIED_BY_MODERATION },
           })),
         });
+        await closeModerationReviews(published, VERIFIED_BY_MODERATION);
         invalidateEntity("affair");
         invalidateAffectedPoliticians(politicianSlugs);
       }
@@ -100,6 +104,7 @@ export const POST = withAdminAuth(
       })),
     });
 
+    await closeModerationReviews(ids, VERIFIED_BY_MODERATION);
     invalidateEntity("affair");
     invalidateAffectedPoliticians(politicianSlugs);
 

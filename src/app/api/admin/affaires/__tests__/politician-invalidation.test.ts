@@ -18,6 +18,8 @@ const h = vi.hoisted(() => ({
       update: vi.fn(),
     },
     auditLog: { create: vi.fn(), createMany: vi.fn() },
+    // Les trois routes de décision closent désormais les revues en attente.
+    moderationReview: { updateMany: vi.fn() },
   },
 }));
 
@@ -76,6 +78,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   db.auditLog.create.mockResolvedValue({});
   db.auditLog.createMany.mockResolvedValue({});
+  db.moderationReview.updateMany.mockResolvedValue({ count: 0 });
   db.$transaction.mockResolvedValue([{ id: "1" }, {}]);
 });
 
@@ -120,5 +123,71 @@ describe("affair mutations invalidate affected politician profiles", () => {
 
     expect(h.invalidateEntity).toHaveBeenCalledWith("affair", "aff-slug");
     expect(h.invalidateAffectedPoliticians).toHaveBeenCalledWith(["pol-x"]);
+  });
+});
+
+// Régression : `ModerationReview.appliedAt` gouverne toutes les files de
+// modération de l'admin et n'était écrit par AUCUN chemin. Chaque décision
+// éditoriale laissait donc une revue en attente pour toujours, et la file
+// grossissait d'une ligne à chaque fois qu'un humain faisait le travail.
+describe("une décision clôt les revues de modération de son affaire", () => {
+  const closeCall = () => db.moderationReview.updateMany.mock.calls[0]?.[0];
+
+  it("moderate (reject) clôt les revues des affaires visées", async () => {
+    db.affair.findMany.mockResolvedValue([{ politician: { slug: "p" } }]);
+    db.affair.updateMany.mockResolvedValue({ count: 2 });
+
+    await moderatePOST(req({ ids: ["a1", "a2"], action: "reject" }), ctx());
+
+    expect(closeCall().where.affairId).toEqual({ in: ["a1", "a2"] });
+    expect(closeCall().where.appliedAt).toBeNull();
+    expect(closeCall().data.appliedBy).toBe("Poligraph Moderation");
+  });
+
+  it("bulk (reject) clôt les revues des affaires visées", async () => {
+    db.affair.findMany.mockResolvedValue([{ politician: { slug: "p" } }]);
+    db.affair.updateMany.mockResolvedValue({ count: 1 });
+
+    await bulkPOST(req({ ids: ["b1"], action: "reject" }), ctx());
+
+    expect(closeCall().where.affairId).toEqual({ in: ["b1"] });
+  });
+
+  it("bulk (delete) ne clôt rien : la cascade supprime les revues", async () => {
+    db.affair.findMany.mockResolvedValue([{ politician: { slug: "p" } }]);
+    db.affair.deleteMany.mockResolvedValue({ count: 1 });
+
+    await bulkPOST(req({ ids: ["c1"], action: "delete" }), ctx());
+
+    expect(db.moderationReview.updateMany).not.toHaveBeenCalled();
+  });
+
+  it("quick-update ne clôt RIEN sur une simple correction de champ", async () => {
+    db.affair.findUnique.mockResolvedValue({
+      id: "d1",
+      slug: "s",
+      status: "RELAXE",
+      publicationStatus: "DRAFT",
+      politician: { slug: "p" },
+    });
+
+    // Corriger un titre ne tranche pas l'affaire : la recommandation reste à examiner.
+    await quickUpdatePATCH(req({ title: "Titre corrigé" }), ctx({ id: "d1" }));
+
+    expect(db.moderationReview.updateMany).not.toHaveBeenCalled();
+  });
+
+  it("quick-update clôt quand le statut de publication change", async () => {
+    db.affair.findUnique.mockResolvedValue({
+      id: "d2",
+      slug: "s",
+      status: "RELAXE",
+      publicationStatus: "PUBLISHED",
+      politician: { slug: "p" },
+    });
+
+    await quickUpdatePATCH(req({ publicationStatus: "REJECTED" }), ctx({ id: "d2" }));
+
+    expect(closeCall().where.affairId).toEqual({ in: ["d2"] });
   });
 });

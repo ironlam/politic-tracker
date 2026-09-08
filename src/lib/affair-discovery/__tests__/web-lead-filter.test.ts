@@ -7,7 +7,7 @@ const res = (
   publisher: string | null = "Le Monde"
 ): WebResult => ({
   title,
-  url: "https://example.org/a",
+  url: "https://www.lemonde.fr/article",
   description,
   publisher,
 });
@@ -16,6 +16,16 @@ describe("screenWebResult", () => {
   // Les cas de bruit ci-dessous sont RÉELS : relevés dans la file des articles
   // à lier, sur l'échantillon des douze candidats les mieux classés.
   describe("bruit mesuré en production", () => {
+    it("garde « Affaire Le Pen » quand l'élu EST Le Pen", () => {
+      // Une capture d'un seul mot donnait « Le », qui ne contient pas « le pen »,
+      // donc l'affaire propre de l'élue était jetée.
+      const d = screenWebResult(
+        res("Affaire Le Pen : la députée condamnée pour détournement de fonds"),
+        { firstName: "Marine", lastName: "Le Pen" }
+      );
+      expect(d.keep).toBe(true);
+    });
+
     it("écarte l'homonyme d'une affaire criminelle célèbre", () => {
       const d = screenWebResult(
         res("Affaire Xavier Dupont de Ligonnès : que risquent M6 et Julien Courbet"),
@@ -88,6 +98,37 @@ describe("screenWebResult", () => {
       });
       expect(d.keep).toBe(false);
       expect(d.reason).toContain("confiance");
+    });
+
+    it("écarte un éditeur de confiance non admis pour un fait judiciaire", () => {
+      // BFMTV est dans TRUSTED_PUBLISHERS mais pas dans les huit éditeurs que
+      // la règle 4 admet pour porter une affaire judiciaire. La source
+      // découverte devient l'unique source du brouillon.
+      const d = screenWebResult(
+        {
+          title: "Joseph Afribo mis en examen",
+          url: "https://www.bfmtv.com/a",
+          description: "",
+          publisher: "BFMTV",
+        },
+        { firstName: "Joseph", lastName: "Afribo" }
+      );
+      expect(d.keep).toBe(false);
+      expect(d.reason).toContain("admis");
+    });
+
+    it("garde Le Monde, Mediapart et l'AFP", () => {
+      for (const url of [
+        "https://www.lemonde.fr/a",
+        "https://www.mediapart.fr/b",
+        "https://www.afp.com/c",
+      ]) {
+        const d = screenWebResult(
+          { title: "Joseph Afribo mis en examen", url, description: "", publisher: "X" },
+          { firstName: "Joseph", lastName: "Afribo" }
+        );
+        expect(d.keep, url).toBe(true);
+      }
     });
 
     it("écarte un résultat qui ne nomme pas l'élu", () => {

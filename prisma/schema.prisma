@@ -1,10 +1,12 @@
 generator client {
   provider = "prisma-client-js"
   output   = "../src/generated/prisma"
+  previewFeatures = ["postgresqlExtensions"]
 }
 
 datasource db {
   provider = "postgresql"
+  extensions = [pg_trgm]
 }
 
 // ============================================
@@ -2361,6 +2363,7 @@ model Commune {
   @@index([departmentCode])
   @@index([departmentCode, constituencyNumber])
   @@index([name])
+  @@index([name(ops: raw("gin_trgm_ops"))], type: Gin, map: "idx_commune_name_trgm")
 }
 
 model CommuneElectionRound {

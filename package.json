@@ -41,7 +41,7 @@
     "test:security:data-path": "bash scripts/test-sec-02-data-path.sh",
     "test:security:least-privilege": "bash scripts/test-sec-03-least-privilege.sh",
     "test:security:function-privileges": "bash scripts/test-sec-06-function-privileges-reproduction.sh",
-    "db:push": "tsx scripts/check-schema-drift.ts && prisma db push",
+    "db:push": "tsx scripts/check-schema-drift.ts --push",
     "db:generate": "prisma generate",
     "db:studio": "prisma studio",
     "sync:assemblee": "tsx scripts/sync-assemblee.ts",
@@ -197,7 +197,8 @@
     "seed:parliamentary-groups": "tsx scripts/seed-parliamentary-groups.ts",
     "trigger": "tsx scripts/trigger.ts",
     "prepare": "husky",
-    "db:drift": "tsx scripts/check-schema-drift.ts"
+    "db:drift": "tsx scripts/check-schema-drift.ts",
+    "discover:affairs:web": "tsx scripts/discover-affairs-web.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.33",

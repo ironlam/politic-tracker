@@ -20,7 +20,7 @@ const limit = limitArg ? parseInt(limitArg.split("=")[1]!, 10) : 50;
 
 async function main() {
   console.log(
-    `Découverte web — ${limit} politiciens${dryRun ? " [DRY-RUN, aucune écriture]" : ""}`
+    `Découverte web : ${limit} politiciens${dryRun ? " [DRY-RUN, aucune écriture]" : ""}`
   );
   console.log("");
 

@@ -37,6 +37,8 @@ export const TRUSTED_PUBLISHERS: Record<string, string> = {
 };
 
 export interface BraveSearchResult {
+  /** Date de publication ISO renvoyée par Brave (`page_age`), quand elle existe. */
+  pageAge?: string;
   title: string;
   url: string;
   description: string;
@@ -131,8 +133,13 @@ export async function searchBrave(query: string): Promise<BraveSearchResult[]> {
   }
 
   const data = await response.json();
-  const webResults: { title: string; url: string; description: string; age?: string }[] =
-    data.web?.results ?? [];
+  const webResults: {
+    title: string;
+    url: string;
+    description: string;
+    age?: string;
+    page_age?: string;
+  }[] = data.web?.results ?? [];
 
   return webResults
     .map((r) => ({
@@ -140,6 +147,7 @@ export async function searchBrave(query: string): Promise<BraveSearchResult[]> {
       url: r.url,
       description: r.description,
       age: r.age,
+      pageAge: r.page_age,
       publisher: resolvePublisher(r.url),
     }))
     .filter((r) => r.publisher !== null);

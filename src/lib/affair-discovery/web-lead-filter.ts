@@ -41,7 +41,13 @@ const JUDICIAL_TERMS = [
  * pattern is `Affaire X : "quote", selon Y`, which puts both names in the title
  * and makes a name match meaningless on its own.
  */
-const OTHERS_CASE = /\baffaire\s+(?!de\s|du\s|des\s)([A-ZÉÈÀÂÎÔÛ][\wéèàâîôûç-]+)/i;
+const OTHERS_CASE =
+  // [Aa] explicite plutôt que le drapeau i : celui-ci rendrait aussi
+  // [A-ZÉÈÀÂÎÔÛ] insensible à la casse, or c'est la majuscule qui distingue un
+  // nom propre d'un mot courant.
+  /\b[Aa]ffaire\s+(?!de\s|du\s|des\s)((?:[A-ZÉÈÀÂÎÔÛ][\wéèàâîôûç-]+)(?:\s+(?:de|du|des|la|le|von|van)?\s*[A-ZÉÈÀÂÎÔÛ][\wéèàâîôûç-]+)*)/;
+
+import { isVerifiedAffairPressUrl } from "@/config/affair-sources";
 
 export interface WebResult {
   title: string;
@@ -67,9 +73,15 @@ function hasJudicialTerm(haystack: string): boolean {
 /**
  * Does the title present a case belonging to a different person?
  *
- * Returns false when the case is named after the politician themselves: an
- * article titled "Affaire Dupont" about Dupont is exactly what we are looking
- * for.
+ * The gate only fires when it is CERTAIN the case is someone else's. A
+ * single-word capture broke on compound surnames: "Affaire Le Pen" captured
+ * "Le", which does not contain "le pen", so an article about that politician's
+ * own case was discarded. The pattern now takes consecutive capitalised words
+ * and their particles.
+ *
+ * When the captured name contains the surname the case may well be theirs, so
+ * the result goes through to the judge rather than being dropped here. That
+ * costs one call on an ambiguous title, which is the right side to err on.
  */
 function namesSomeoneElsesCase(title: string, surname: string): boolean {
   const match = OTHERS_CASE.exec(title);
@@ -87,6 +99,14 @@ export function screenWebResult(
 ): LeadDecision {
   if (!result.publisher) {
     return { keep: false, reason: "éditeur hors liste de confiance" };
+  }
+  // TRUSTED_PUBLISHERS compte 25 domaines, dont BFMTV et 20 Minutes. La règle 4
+  // d'AGENTS.md en admet huit pour porter un fait judiciaire, et c'est cette
+  // liste-là qui compte : la source découverte devient l'unique source du
+  // brouillon, et la garde de publication vérifie qu'une source existe, pas
+  // qu'elle est admissible.
+  if (!isVerifiedAffairPressUrl(result.url)) {
+    return { keep: false, reason: "éditeur non admis pour un fait judiciaire" };
   }
 
   const haystack = normalize(`${result.title} ${result.description}`);

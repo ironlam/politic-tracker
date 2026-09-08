@@ -21,6 +21,7 @@ const mockPolitician = {
   biographyGeneratedAt: null,
   photoCheckedAt: null,
   careerCheckedAt: null,
+  webSearchCheckedAt: null,
   publicationStatus: "PUBLISHED" as const,
   statusOverride: false,
   source: "MANUAL" as const,

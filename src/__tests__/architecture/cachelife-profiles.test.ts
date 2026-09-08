@@ -30,9 +30,31 @@ const SRC_DIR = join(process.cwd(), "src");
  * file that carries them.
  */
 const SHORTER_PROFILE_ALLOWED = new Map([
-  ["lib/data/pipelines.ts", "admin pipeline dashboard: staleness is the thing being diagnosed"],
-  ["lib/data/elections.ts", "flips on the clock on polling day, and no tag purge happens that day"],
+  [
+    "lib/data/pipelines.ts",
+    {
+      profile: "minutes",
+      reason: "admin pipeline dashboard: staleness is the thing being diagnosed",
+    },
+  ],
+  [
+    "lib/data/elections.ts",
+    {
+      profile: "hours",
+      reason: "flips on the clock on polling day, and no tag purge happens that day",
+    },
+  ],
 ]);
+
+/**
+ * The offending profiles of one file. An exemption covers a single named profile, not the file:
+ * `elections.ts` legitimately carries one `hours` next to four `synced`, and skipping the whole
+ * file would let a `minutes` land there unnoticed.
+ */
+function offendingProfiles(relativePath: string, profiles: string[]): string[] {
+  const exemption = SHORTER_PROFILE_ALLOWED.get(relativePath);
+  return profiles.filter((profile) => profile !== "synced" && profile !== exemption?.profile);
+}
 
 /** Every source file, tests and generated Prisma client aside. */
 function sourceFiles(dir = SRC_DIR): string[] {
@@ -69,26 +91,29 @@ describe("profils cacheLife et revalidate ISR effectif", () => {
 
     for (const file of sourceFiles()) {
       const rel = relative(SRC_DIR, file);
-      if (SHORTER_PROFILE_ALLOWED.has(rel)) continue;
-      for (const profile of cacheLifeProfiles(file)) {
-        if (profile !== "synced") offenders.push(`${rel}: cacheLife("${profile}")`);
+      for (const profile of offendingProfiles(rel, cacheLifeProfiles(file))) {
+        offenders.push(`${rel}: cacheLife("${profile}")`);
       }
     }
 
     expect(offenders).toEqual([]);
   });
 
-  it("les exceptions autorisées existent encore et portent bien un profil court", () => {
-    // An allowlist entry that no longer matches reality is a stale exemption:
-    // it would silently permit a future `minutes` boundary in that file.
-    for (const [rel] of SHORTER_PROFILE_ALLOWED) {
+  it("les exceptions autorisées portent encore exactement le profil exempté", () => {
+    // An allowlist entry that no longer matches reality is a stale exemption: it would keep
+    // tolerating a shorter profile in that file after the reason for it disappeared.
+    for (const [rel, { profile }] of SHORTER_PROFILE_ALLOWED) {
       const profiles = cacheLifeProfiles(join(SRC_DIR, rel));
-      expect(profiles.length, `${rel} ne déclare plus de cacheLife`).toBeGreaterThan(0);
-      expect(
-        profiles.some((p) => p !== "synced"),
-        `${rel} est passé à synced`
-      ).toBe(true);
+      expect(profiles, `${rel} ne déclare plus cacheLife("${profile}")`).toContain(profile);
     }
+  });
+
+  it("n'exempte que la frontière nommée, pas tout le fichier", () => {
+    expect(offendingProfiles("lib/data/elections.ts", ["hours", "synced", "synced"])).toEqual([]);
+    expect(offendingProfiles("lib/data/elections.ts", ["hours", "minutes"])).toEqual(["minutes"]);
+    expect(offendingProfiles("lib/data/pipelines.ts", ["minutes"])).toEqual([]);
+    expect(offendingProfiles("lib/data/pipelines.ts", ["hours"])).toEqual(["hours"]);
+    expect(offendingProfiles("lib/data/statistics.ts", ["minutes"])).toEqual(["minutes"]);
   });
 
   it("ne se laisse pas berner par une mention en commentaire", () => {

@@ -210,7 +210,13 @@ Two distinct resolver systems:
 ### Caching strategy
 
 - `"use cache"` directive: only for functions with bounded params, never with free-text search.
-- `cacheLife("minutes")` default; `cacheLife("hours")` for election or reshuffle data only.
+- `cacheLife("synced")` everywhere (custom profile in `next.config.ts`, revalidate 24 h). A route's
+  effective ISR revalidate is the MIN of its own and of every `"use cache"` boundary it reads, so a
+  single short profile re-blocks the whole route: that is what produced 8.7M ISR writes in July 2026.
+  Freshness comes from `revalidateTag`, not from the timer. Two documented exceptions carry a shorter
+  profile: the admin pipeline dashboard, and election data that flips on the clock rather than on a
+  write. Enforced by `src/__tests__/architecture/cachelife-profiles.test.ts`, which also checks that
+  each exemption still matches reality.
 - `cacheTag()` uses entity-based tags (`politicians`, `affairs`, `parties`, `elections`) for targeted invalidation.
 - `export const revalidate = N` (ISR) for listing pages with search.
 - `React.cache()` to deduplicate between `generateMetadata()` and `page()`.

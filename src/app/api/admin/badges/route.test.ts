@@ -13,12 +13,22 @@ const h = vi.hoisted(() => ({
     syncJob: { count: vi.fn() },
   },
   duplicates: vi.fn(),
+  articlesToLink: vi.fn(),
+  recentRejections: vi.fn(),
+  recentFailedSyncs: vi.fn(),
   pipelines: vi.fn(),
   candidaciesHoldingBack: vi.fn(),
 }));
 
 vi.mock("@/lib/db", () => ({ db: h.db }));
 vi.mock("@/services/affairs/reconciliation", () => ({ findPotentialDuplicates: h.duplicates }));
+// Les prédicats de charge vivent dans @/lib/admin/queue-counts, partagés avec le
+// tableau de bord. La route délègue ; leur justesse se teste là-bas.
+vi.mock("@/lib/admin/queue-counts", () => ({
+  countArticlesToLink: h.articlesToLink,
+  countRecentPressRejections: h.recentRejections,
+  countRecentFailedSyncs: h.recentFailedSyncs,
+}));
 vi.mock("@/lib/data/pipelines", () => ({ getPipelineHealthAll: h.pipelines }));
 // Le compteur des candidatures vit dans la couche mesures : c'est elle qui porte le prédicat de
 // visibilité publique, la route ne fait que l'appeler.
@@ -40,9 +50,9 @@ beforeEach(() => {
   );
   h.db.moderationReview.count.mockResolvedValue(7);
   h.db.affairPoliticianDecision.count.mockResolvedValue(8);
-  h.db.pressArticle.count.mockResolvedValue(11);
-  h.db.pressAnalysisRejection.count.mockResolvedValue(9);
-  h.db.syncJob.count.mockResolvedValue(10);
+  h.articlesToLink.mockResolvedValue(11);
+  h.recentRejections.mockResolvedValue(9);
+  h.recentFailedSyncs.mockResolvedValue(10);
   h.duplicates.mockResolvedValue([{ id: "duplicate-1" }, { id: "duplicate-2" }]);
   h.candidaciesHoldingBack.mockResolvedValue(6);
   h.pipelines.mockResolvedValue([
@@ -65,8 +75,10 @@ describe("GET /api/admin/badges", () => {
       press: { rejectionsPending: 9 },
       operations: { failedPipelines: 2, failedSyncs: 10 },
     });
-    expect(h.db.pressArticle.count).toHaveBeenCalledWith({
-      where: { aiAnalyzedAt: { not: null }, isAffairRelated: true, affairLinks: { none: {} } },
-    });
+    // La route ne doit pas porter de copie locale du prédicat : le tableau de
+    // bord et la navigation afficheraient deux vérités au même écran.
+    expect(h.articlesToLink).toHaveBeenCalled();
+    expect(h.recentRejections).toHaveBeenCalled();
+    expect(h.recentFailedSyncs).toHaveBeenCalled();
   });
 });

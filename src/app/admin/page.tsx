@@ -1,5 +1,10 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
+import {
+  countArticlesToLink,
+  countRecentPressRejections,
+  countRecentFailedSyncs,
+} from "@/lib/admin/queue-counts";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
@@ -74,12 +79,8 @@ async function getDashboardData() {
     db.affairPoliticianDecision.count({ where: { judgment: "UNDECIDED", reviewedAt: null } }),
     countArticlesToLink(),
     findPotentialDuplicates(),
-    db.pressAnalysisRejection.count({ where: { rejectedAt: { gte: since(FAILURE_WINDOW_DAYS) } } }),
-    db.syncJob.count({
-      // Sans fenêtre, un échec de février compte encore en septembre : le
-      // compteur mesurait l'historique, pas ce qu'il reste à inspecter.
-      where: { status: "FAILED", createdAt: { gte: since(FAILURE_WINDOW_DAYS) } },
-    }),
+    countRecentPressRejections(),
+    countRecentFailedSyncs(),
     getPipelineHealthAll(),
     db.auditLog.findMany({ take: 10, orderBy: { createdAt: "desc" } }),
     db.syncJob.findMany({ take: 10, orderBy: { createdAt: "desc" } }),
@@ -162,42 +163,6 @@ function QueueGrid({ cards, emptyLabel }: { cards: QueueCard[]; emptyLabel: stri
       })}
     </div>
   );
-}
-
-/** Fenêtre au-delà de laquelle un échec relève de l'historique, pas de la file. */
-const FAILURE_WINDOW_DAYS = 7;
-
-function since(days: number): Date {
-  return new Date(Date.now() - days * 24 * 60 * 60 * 1000);
-}
-
-/**
- * Articles analysés qu'il reste vraiment à rattacher.
- *
- * Le compteur d'origine comptait aussi ceux dont le registre d'attribution a
- * déjà conclu qu'aucun politicien ne correspond : mesuré sur la base, 443 des
- * 1761 étaient dans ce cas. Un article résolu négatif n'est pas du travail en
- * attente, c'est une réponse.
- *
- * En SQL parce que `AffairPoliticianDecision.sourceRef` est une chaîne libre,
- * sans relation Prisma vers `PressArticle.url`.
- */
-async function countArticlesToLink(): Promise<number> {
-  const rows = await db.$queryRaw<{ count: bigint }[]>`
-    SELECT COUNT(*) AS count
-    FROM "PressArticle" a
-    WHERE a."aiAnalyzedAt" IS NOT NULL
-      AND a."isAffairRelated" = true
-      AND NOT EXISTS (
-        SELECT 1 FROM "PressArticleAffair" l WHERE l."articleId" = a.id
-      )
-      AND NOT EXISTS (
-        SELECT 1 FROM "AffairPoliticianDecision" d
-        WHERE d."sourceRef" = a.url
-          AND d.judgment IN ('NO_MATCH', 'NOT_SAME')
-      )
-  `;
-  return Number(rows[0]?.count ?? 0);
 }
 
 export default async function AdminDashboard() {

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { withAdminAuth } from "@/lib/api/with-admin-auth";
 import { invalidateEntity } from "@/lib/cache";
+import { closeModerationReviews } from "@/lib/affairs/close-moderation-reviews";
 import { generateAffairSlug } from "@/lib/utils";
 import { trackStatusChange } from "@/services/affairs/status-tracking";
 import { updateAffairSchema } from "@/lib/validations/affairs";
@@ -194,6 +195,16 @@ export const PUT = withAdminAuth(async (request: NextRequest, context) => {
       }
       throw err;
     }
+  }
+
+  // Le formulaire complet tranche aussi le statut : sans cette clôture, la file
+  // de modération continuerait de compter un travail déjà fait, par le chemin
+  // d'édition le plus courant.
+  const statusDecided =
+    wantsPublish ||
+    (data.publicationStatus !== undefined && data.publicationStatus !== existing.publicationStatus);
+  if (statusDecided) {
+    await closeModerationReviews([id!], VERIFIED_BY_MODERATION);
   }
 
   // Log action

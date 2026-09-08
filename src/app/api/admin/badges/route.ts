@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import {
+  countArticlesToLink,
+  countRecentPressRejections,
+  countRecentFailedSyncs,
+} from "@/lib/admin/queue-counts";
 import { withAdminAuth } from "@/lib/api/with-admin-auth";
 import { findPotentialDuplicates } from "@/services/affairs/reconciliation";
 import { getPipelineHealthAll } from "@/lib/data/pipelines";
@@ -42,12 +47,12 @@ export const GET = withAdminAuth(async () => {
     db.affairPoliticianDecision.count({
       where: { judgment: "UNDECIDED", reviewedAt: null },
     }),
-    db.pressArticle.count({
-      where: { aiAnalyzedAt: { not: null }, isAffairRelated: true, affairLinks: { none: {} } },
-    }),
+    // Mêmes prédicats que le tableau de bord : une copie locale afficherait
+    // l'historique dans la navigation et la charge sur /admin, au même écran.
+    countArticlesToLink(),
     findPotentialDuplicates(),
-    db.pressAnalysisRejection.count(),
-    db.syncJob.count({ where: { status: "FAILED" } }),
+    countRecentPressRejections(),
+    countRecentFailedSyncs(),
     getPipelineHealthAll(),
     countCandidaciesHoldingBackMeasures(),
   ]);

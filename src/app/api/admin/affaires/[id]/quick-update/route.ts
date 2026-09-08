@@ -4,6 +4,7 @@ import { withAdminAuth } from "@/lib/api/with-admin-auth";
 import { withValidation, getRequestMeta } from "@/lib/security";
 import { quickUpdateAffairSchema } from "@/lib/security/schemas/affair";
 import { invalidateEntity, invalidateAffectedPoliticians } from "@/lib/cache";
+import { closeModerationReviews } from "@/lib/affairs/close-moderation-reviews";
 import { trackStatusChange } from "@/services/affairs/status-tracking";
 import {
   assertPublishable,
@@ -131,6 +132,14 @@ export const PATCH = withAdminAuth(
 
     if (!updated) {
       updated = await db.affair.findUnique({ where: { id } });
+    }
+
+    // Une revue en attente ne se clôt que si le STATUT a été tranché. Sur une
+    // simple correction de champ (titre, dates), la recommandation reste à
+    // examiner et la file doit la garder.
+    const statusDecided = wantsPublish || updateData.publicationStatus !== undefined;
+    if (statusDecided) {
+      await closeModerationReviews([id!], VERIFIED_BY_MODERATION);
     }
 
     // Only past the commit. Purging "affairs" also regenerates the sitemap

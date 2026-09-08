@@ -13,6 +13,8 @@ const h = vi.hoisted(() => ({
     $transaction: vi.fn(),
     affair: { findUnique: vi.fn(), update: vi.fn() },
     auditLog: { create: vi.fn() },
+    // La dépublication clôt les revues en attente de l'affaire.
+    moderationReview: { updateMany: vi.fn() },
   },
 }));
 
@@ -76,6 +78,7 @@ const PUBLISHED_AFFAIR = {
 };
 
 beforeEach(() => {
+  h.db.moderationReview.updateMany.mockResolvedValue({ count: 0 });
   vi.clearAllMocks();
   db.affair.findUnique.mockResolvedValue(PUBLISHED_AFFAIR);
   db.auditLog.create.mockResolvedValue({});

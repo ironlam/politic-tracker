@@ -28,7 +28,12 @@ export async function getPresidentialOverviewStats(
   cacheTag("statistics", "affairs", "elections");
   // The overview joins several independently cached authorities and a judicial aggregation.
   // Cache the assembled result so every page view does not repeat that expensive cross-domain read.
-  cacheLife("minutes");
+  //
+  // `synced`, like every other boundary: the effective ISR revalidate of a route is the MIN of its
+  // own and of every boundary it reads, so `minutes` here re-blocked /statistiques at 60 s. The
+  // judicial aggregation below is the expensive one, an EXISTS over the 1.2M-row Candidacy table,
+  // and it was paying that toll every minute. Freshness comes from the tags above, not the timer.
+  cacheLife("synced");
 
   const [field, context, probityCandidates] = await Promise.all([
     getHubCandidacyField(electionSlug),

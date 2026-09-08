@@ -41,7 +41,7 @@
     "test:security:data-path": "bash scripts/test-sec-02-data-path.sh",
     "test:security:least-privilege": "bash scripts/test-sec-03-least-privilege.sh",
     "test:security:function-privileges": "bash scripts/test-sec-06-function-privileges-reproduction.sh",
-    "db:push": "prisma db push",
+    "db:push": "tsx scripts/check-schema-drift.ts && prisma db push",
     "db:generate": "prisma generate",
     "db:studio": "prisma studio",
     "sync:assemblee": "tsx scripts/sync-assemblee.ts",
@@ -196,7 +196,8 @@
     "seed:presidentielle-2027": "npx dotenv -e .env -- npx tsx scripts/seed-presidentielle-2027.ts",
     "seed:parliamentary-groups": "tsx scripts/seed-parliamentary-groups.ts",
     "trigger": "tsx scripts/trigger.ts",
-    "prepare": "husky"
+    "prepare": "husky",
+    "db:drift": "tsx scripts/check-schema-drift.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.33",

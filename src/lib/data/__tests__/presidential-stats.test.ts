@@ -48,7 +48,9 @@ describe("getPresidentialOverviewStats", () => {
       probityCandidateCount: 2,
     });
     expect(mocks.cacheTag).toHaveBeenCalledWith("statistics", "affairs", "elections");
-    expect(mocks.cacheLife).toHaveBeenCalledWith("minutes");
+    // `synced` and not a shorter profile: a route's effective ISR revalidate is the MIN of its own
+    // and of every boundary it reads, so `minutes` here held /statistiques at 60 s.
+    expect(mocks.cacheLife).toHaveBeenCalledWith("synced");
   });
 
   it("limite la probité aux condamnations publiées des personnalités suivies", async () => {

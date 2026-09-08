@@ -72,12 +72,14 @@ async function getDashboardData() {
     db.affairUpdateProposal.count({ where: { status: "CONFLICT" } }),
     db.moderationReview.count({ where: { appliedAt: null } }),
     db.affairPoliticianDecision.count({ where: { judgment: "UNDECIDED", reviewedAt: null } }),
-    db.pressArticle.count({
-      where: { aiAnalyzedAt: { not: null }, isAffairRelated: true, affairLinks: { none: {} } },
-    }),
+    countArticlesToLink(),
     findPotentialDuplicates(),
-    db.pressAnalysisRejection.count(),
-    db.syncJob.count({ where: { status: "FAILED" } }),
+    db.pressAnalysisRejection.count({ where: { rejectedAt: { gte: since(FAILURE_WINDOW_DAYS) } } }),
+    db.syncJob.count({
+      // Sans fenêtre, un échec de février compte encore en septembre : le
+      // compteur mesurait l'historique, pas ce qu'il reste à inspecter.
+      where: { status: "FAILED", createdAt: { gte: since(FAILURE_WINDOW_DAYS) } },
+    }),
     getPipelineHealthAll(),
     db.auditLog.findMany({ take: 10, orderBy: { createdAt: "desc" } }),
     db.syncJob.findMany({ take: 10, orderBy: { createdAt: "desc" } }),
@@ -125,6 +127,79 @@ function relativeTime(value: Date): string {
   return new Date(value).toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
 }
 
+/**
+ * Grille de cartes-compteurs. Extraite parce que le tableau de bord en rend
+ * maintenant deux : les files où l'on agit, et les stocks que l'on surveille.
+ * Le texte d'état vide diffère, une file se vide, un stock non.
+ */
+function QueueGrid({ cards, emptyLabel }: { cards: QueueCard[]; emptyLabel: string }) {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+      {cards.map((card) => {
+        const Icon = card.icon;
+        return (
+          <Link key={card.label} href={card.href}>
+            <Card className="h-full hover:shadow-md transition-shadow">
+              <CardContent className="p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="p-2 rounded-lg bg-primary/10">
+                    <Icon className="w-4 h-4 text-primary" aria-hidden="true" />
+                  </div>
+                  <span
+                    className={`text-2xl font-bold font-display ${card.count ? "text-primary" : "text-muted-foreground"}`}
+                  >
+                    {card.count}
+                  </span>
+                </div>
+                <p className="text-sm font-medium mt-3">{card.label}</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {card.count ? card.description : emptyLabel}
+                </p>
+              </CardContent>
+            </Card>
+          </Link>
+        );
+      })}
+    </div>
+  );
+}
+
+/** Fenêtre au-delà de laquelle un échec relève de l'historique, pas de la file. */
+const FAILURE_WINDOW_DAYS = 7;
+
+function since(days: number): Date {
+  return new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+}
+
+/**
+ * Articles analysés qu'il reste vraiment à rattacher.
+ *
+ * Le compteur d'origine comptait aussi ceux dont le registre d'attribution a
+ * déjà conclu qu'aucun politicien ne correspond : mesuré sur la base, 443 des
+ * 1761 étaient dans ce cas. Un article résolu négatif n'est pas du travail en
+ * attente, c'est une réponse.
+ *
+ * En SQL parce que `AffairPoliticianDecision.sourceRef` est une chaîne libre,
+ * sans relation Prisma vers `PressArticle.url`.
+ */
+async function countArticlesToLink(): Promise<number> {
+  const rows = await db.$queryRaw<{ count: bigint }[]>`
+    SELECT COUNT(*) AS count
+    FROM "PressArticle" a
+    WHERE a."aiAnalyzedAt" IS NOT NULL
+      AND a."isAffairRelated" = true
+      AND NOT EXISTS (
+        SELECT 1 FROM "PressArticleAffair" l WHERE l."articleId" = a.id
+      )
+      AND NOT EXISTS (
+        SELECT 1 FROM "AffairPoliticianDecision" d
+        WHERE d."sourceRef" = a.url
+          AND d.judgment IN ('NO_MATCH', 'NOT_SAME')
+      )
+  `;
+  return Number(rows[0]?.count ?? 0);
+}
+
 export default async function AdminDashboard() {
   const data = await getDashboardData();
   const queueCards: QueueCard[] = [
@@ -164,25 +239,11 @@ export default async function AdminDashboard() {
       icon: Newspaper,
     },
     {
-      label: "Liaisons à confirmer",
-      count: data.queues.decisionsPending,
-      description: "Confirmer ou rejeter les rapprochements.",
-      href: "/admin/affair-matching/review?tab=UNDECIDED",
-      icon: Fingerprint,
-    },
-    {
       label: "Doublons à trancher",
       count: data.queues.duplicates,
       description: "Comparer les paires proposées.",
       href: "/admin/affaires/doublons",
       icon: CopyCheck,
-    },
-    {
-      label: "Rejets presse",
-      count: data.queues.rejectionsPending,
-      description: "Prendre une décision éditoriale sur les rejets.",
-      href: "/admin/press/rejections",
-      icon: Newspaper,
     },
     {
       label: "Pipelines en échec",
@@ -197,6 +258,30 @@ export default async function AdminDashboard() {
       description: "Inspecter les exécutions interrompues.",
       href: "/admin/syncs?status=FAILED",
       icon: RefreshCw,
+    },
+  ];
+
+  // Ces deux compteurs ne sont pas des files : rien ne s'y clôt.
+  //
+  // « Liaisons » est le stock du registre d'attribution, dont la charge réelle
+  // (les affaires qu'une décision bloque) est déjà listée en tête de /review
+  // par loadBlockedAffairs. « Rejets presse » n'a aucun champ de décision au
+  // schéma, donc aucune ligne ne peut être marquée traitée.
+  const trackingCards: QueueCard[] = [
+    {
+      label: "Liaisons au registre",
+      count: data.queues.decisionsPending,
+      description:
+        "Stock de rapprochements non revus. Les blocages réels sont en tête de la revue.",
+      href: "/admin/affair-matching/review?tab=UNDECIDED",
+      icon: Fingerprint,
+    },
+    {
+      label: "Rejets presse (7 j)",
+      count: data.queues.rejectionsPending,
+      description: "Journal des rejets de l'analyse presse, sur les sept derniers jours.",
+      href: "/admin/press/rejections",
+      icon: Newspaper,
     },
   ];
 
@@ -226,33 +311,20 @@ export default async function AdminDashboard() {
             Chaque compteur correspond à une file distincte et ouvre son filtre de travail.
           </p>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
-          {queueCards.map((card) => {
-            const Icon = card.icon;
-            return (
-              <Link key={card.label} href={card.href}>
-                <Card className="h-full hover:shadow-md transition-shadow">
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="p-2 rounded-lg bg-primary/10">
-                        <Icon className="w-4 h-4 text-primary" aria-hidden="true" />
-                      </div>
-                      <span
-                        className={`text-2xl font-bold font-display ${card.count ? "text-primary" : "text-muted-foreground"}`}
-                      >
-                        {card.count}
-                      </span>
-                    </div>
-                    <p className="text-sm font-medium mt-3">{card.label}</p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {card.count ? card.description : "File vide, aucune action en attente."}
-                    </p>
-                  </CardContent>
-                </Card>
-              </Link>
-            );
-          })}
+        <QueueGrid cards={queueCards} emptyLabel="File vide, aucune action en attente." />
+      </section>
+
+      <section aria-labelledby="tracking-title" className="space-y-4">
+        <div>
+          <h2 id="tracking-title" className="text-lg font-display font-semibold">
+            Suivi
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Des stocks et des journaux, pas des files : ces compteurs ne se vident pas et n{"'"}
+            attendent aucune action de votre part.
+          </p>
         </div>
+        <QueueGrid cards={trackingCards} emptyLabel="Rien à signaler sur la période." />
       </section>
 
       <section aria-labelledby="health-title" className="space-y-4">

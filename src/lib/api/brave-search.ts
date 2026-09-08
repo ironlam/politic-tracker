@@ -51,6 +51,48 @@ export interface BraveSearchResult {
  * @param query - The search query (e.g. "Bernard Perrut détournement condamnation")
  * @returns Array of search results from trusted publishers
  */
+/**
+ * A non-2xx response from Brave Search, carrying the status so a spent credit
+ * balance can be told apart from a transient failure.
+ *
+ * The account draws on prepaid credits, the same shape that took the Anthropic
+ * pipeline down silently: every caller degrades, nothing says why.
+ */
+export class BraveApiError extends Error {
+  readonly status: number;
+  readonly body: string;
+
+  constructor(status: number, statusText: string, body: string) {
+    super(`Brave Search error: ${status} ${statusText}`);
+    this.name = "BraveApiError";
+    this.status = status;
+    this.body = body;
+  }
+}
+
+/**
+ * True for the statuses that mean "no more credit or allowance", as opposed to
+ * a bad request or a server blip.
+ *
+ * 402 is the payment-required case; 429 covers both the per-second rate limit
+ * and an exhausted window. They are folded together on purpose: from an
+ * operator's standpoint both mean "the search stopped working for quota
+ * reasons", and the alert names the status so the two stay distinguishable in
+ * the logs.
+ */
+export function isBraveQuotaError(err: unknown): boolean {
+  return err instanceof BraveApiError && (err.status === 402 || err.status === 429);
+}
+
+// One ALERT per process: a discovery pass over thousands of politicians would
+// otherwise emit thousands of identical lines.
+let quotaAlertEmitted = false;
+
+/** Test seam only. */
+export function __resetBraveQuotaAlertForTests(): void {
+  quotaAlertEmitted = false;
+}
+
 export async function searchBrave(query: string): Promise<BraveSearchResult[]> {
   const apiKey = process.env.BRAVE_API_KEY;
   if (!apiKey) {
@@ -73,7 +115,19 @@ export async function searchBrave(query: string): Promise<BraveSearchResult[]> {
   });
 
   if (!response.ok) {
-    throw new Error(`Brave Search error: ${response.status} ${response.statusText}`);
+    const body = await response.text().catch(() => "");
+    const error = new BraveApiError(response.status, response.statusText, body);
+
+    if (isBraveQuotaError(error) && !quotaAlertEmitted) {
+      quotaAlertEmitted = true;
+      console.error(
+        "[brave] ALERT BRAVE_QUOTA_EXHAUSTED : recherche web indisponible, " +
+          "solde de crédits ou débit épuisé. La découverte web est à l'arrêt " +
+          `jusqu'au rechargement (dashboard Brave). status=${response.status}`
+      );
+    }
+
+    throw error;
   }
 
   const data = await response.json();
